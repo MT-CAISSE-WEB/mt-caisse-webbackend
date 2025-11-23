@@ -11,6 +11,11 @@ const bodyParser = require('body-parser')
 const logger = require('./shared/middlewares/logger')
 const errorHandler = require('./shared/middlewares/error')
 
+// Declaration des routes
+const societesroutes = require("./feature/gestion_organisation/routes/societe.route");
+
+
+//connexion db
 const db = require('./config/db')
 
 dotenv.config({ path: './config/config.env' })
@@ -56,6 +61,7 @@ app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, 'views'))
 
 //Regrouper toutes les routes
+app.use("/API/societe", societesroutes);
 
 // GESTION DES ERREURS
 app.use(errorHandler)
