@@ -12,10 +12,12 @@ const queryInsert = `
 const queryUpdate = `UPDATE Societe SET raisonsociale = @raisonsociale, codedevisereference = @codedevisereference, codedevisereporting = @codedevisereporting, rccm = @rccm, numNUI = @numNUI, email = @remail, telephone = @telephone, logo = @logo, adresse = @adresse, suivibudgetaire = @suivibudgetaire, updatedAt = @updatedAt, updatedBy = @updatedBy OUTPUT INSERTED.* WHERE code = @code`;
 
 class societeModel {
-    constructor(idsociete, code, raisonsociale, rccm, numNUI, email, telephone, logo, adresse, suivibudgetaire, 
+    constructor(idsociete, code, codedevisereference, devisereference, raisonsociale, rccm, numNUI, email, telephone, logo, adresse, suivibudgetaire, 
         createdAt, updatedAt, createdBy, updatedBy)
     {
         this.idsociete = idsociete;
+        this.codedevisereference = codedevisereference;
+        this.devisereference = devisereference;
         this.code = code;
         this.raisonsociale = raisonsociale;
         this.rccm = rccm;

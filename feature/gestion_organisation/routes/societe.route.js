@@ -3,8 +3,6 @@ const router = express.Router();
 const societe_controller = require("../controllers/societe.controller");
 //const auth = require("../shared/middlewares/auth");
 
-// Toutes les routes protégées par authentification
-// router.use(auth.authMiddleware);
 
 // CRUD nature operation
 router.get("/", societe_controller.get_societes);
