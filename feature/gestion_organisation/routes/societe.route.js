@@ -3,7 +3,6 @@ const router = express.Router();
 const societe_controller = require("../controllers/societe.controller");
 //const auth = require("../shared/middlewares/auth");
 
-
 // CRUD nature operation
 router.get("/", societe_controller.get_societes);
 router.get("/:id", societe_controller.get_onesociete);

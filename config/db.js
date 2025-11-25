@@ -1,5 +1,5 @@
 const dotenv = require('dotenv');
-dotenv.config({path: './config/config.env'});
+dotenv.config({path: './config/.env'});
 const sql = require("mssql");
 const fs = require('fs');
 
@@ -17,8 +17,8 @@ const config = {
 
 const createDB = async () =>{
   try {
-    const db = await sql.connect({...config , database : 'DEVCAISSE'});
-    const table = fs.readFileSync("./config/test.sql", "utf8");
+    const db = await sql.connect({...config , database : 'MTCAISSEWEB'});
+    const table = fs.readFileSync("./config/db.sql", "utf8");
     await db.request().query(table);
     db.close();
     console.log(`Tables créees`.yellow.bold);
@@ -40,10 +40,9 @@ const connectDB = async () => {
 
 const connectInstance = async () => {
   try {
-    console.log(config)
     const pool = await sql.connect(config);
     console.log(`Connecté à SQL Server`.cyan.bold);
-    const dbPool = fs.readFileSync("./config/db.sql", "utf8");
+    const dbPool = fs.readFileSync("./config/init.sql", "utf8");
     try{
       await pool.request().query(dbPool);
       createDB();
