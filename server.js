@@ -11,12 +11,25 @@ const bodyParser = require('body-parser')
 const logger = require('./shared/middlewares/logger')
 const errorHandler = require('./shared/middlewares/error')
 
-// Declaration des routes
+//DECLARATION DES ROUTES
+// Societes routes
 const societesroutes = require("./feature/gestion_organisation/routes/societe.route");
+// Journal routes
+const journalRoutes = require("./feature/gestion_operation_caisse/routes/journal.route");
+// Caisse routes
+const caisseRoutes = require("./feature/gestion_operation_caisse/routes/caisse.route");
+// Utilisateur caisse routes
+const utilisateurcaisseRoutes = require("./feature/gestion_operation_caisse/routes/utilisateurcaisse.route");
+// Entete operation routes
+const enteteoperationRoutes = require("./feature/gestion_operation_caisse/routes/enteteoperation.route");
+// Ligne operation routes
+const ligneoperationRoutes = require("./feature/gestion_operation_caisse/routes/ligneoperation.route");
+// Type operation routes
+const typeoperationRoutes = require("./feature/gestion_operation_caisse/routes/operation.route");
 
 
 //connexion db
-const db = require('./config/db')
+const {connectInstance} = require('./config/db')
 
 dotenv.config({ path: './config/config.env' })
 // INIT EXPRESS
@@ -37,7 +50,8 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'))
 }
 
-db.connectInstance()
+//LANCEMENT DE LA BASE DE DONNEES
+connectInstance()
 
 // JOURNALISATION PERSONNALISEE
 app.use(logger)
@@ -62,6 +76,14 @@ app.set('views', path.join(__dirname, 'views'))
 
 //Regrouper toutes les routes
 app.use("/API/societe", societesroutes);
+
+//GESTION OPERATION CAISSE ROUTES
+app.use("/API/journal", journalRoutes);
+app.use("/API/caisse", caisseRoutes);
+app.use("/API/utilisateur_caisse", utilisateurcaisseRoutes);
+app.use("/API/entete_operation", enteteoperationRoutes);
+app.use("/API/ligne_operation", ligneoperationRoutes);
+app.use("/API/type_operation", typeoperationRoutes);
 
 // GESTION DES ERREURS
 app.use(errorHandler)
