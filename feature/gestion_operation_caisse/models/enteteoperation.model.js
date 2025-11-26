@@ -104,14 +104,13 @@ class enteteOperationModel {
             // S'il existe update
             if (check.recordset[0].count > 0) {
                 const result = await pool.request()
-                    //.input('codeoperation', sql.NVarChar(24), data.codeoperation)
+                    .input('codeoperation', sql.NVarChar(24), data.codeoperation)
                     .input('iddemande', sql.UniqueIdentifier, data.iddemande)
                     .input('codedemande', sql.NVarChar(24), data.codedemande)
                     .input('idsociete', sql.UniqueIdentifier, data.idsociete)
                     .input('codesociete', sql.NVarChar(24), data.codesociete)
-                    // .input('dateoperation', sql.DateTime, data.dateoperation)
-                    .input('updatedAt', sql.DateTime, new Date())
-                    .input('updatedBy', sql.NVarChar(100), data.updatedBy || 'System')
+                    .input('updatedat', sql.DateTime, new Date())
+                    .input('updatedby', sql.NVarChar(100), data.updatedby || 'System')
                     .query(queryUpdate);
                 return result;
             } else {

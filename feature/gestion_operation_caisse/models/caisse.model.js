@@ -122,7 +122,7 @@ class caisseModel {
             // S'il existe update
             if (check.recordset[0].count > 0) {
                 const result = await pool.request()
-                    //.input('codecaisse', sql.NVarChar(24), data.codecaisse)
+                    .input('codecaisse', sql.NVarChar(24), data.codecaisse)
                     .input('idjournal', sql.UniqueIdentifier, data.idjournal)
                     .input('iddevise', sql.UniqueIdentifier, data.iddevise)
                     .input('idsite', sql.UniqueIdentifier, data.idsite)
@@ -136,7 +136,7 @@ class caisseModel {
                     .input('libelle', sql.NVarChar(50), data.libelle)
                     .input('actif', sql.Int, data.actif)
                     .input('updatedAt', sql.DateTime, new Date())
-                    .input('updatedBy', sql.NVarChar(100), data.updatedBy || 'System')
+                    .input('updatedBy', sql.NVarChar(100), data.updatedby || 'System')
                     .query(queryUpdate);
                 return result;
             } else {
@@ -156,10 +156,10 @@ class caisseModel {
                     .input('numcompte', sql.NVarChar(24), data.numcompte)
                     .input('libelle', sql.NVarChar(50), data.libelle)
                     .input('actif', sql.Int, data.actif)
-                    .input('createdAt', sql.DateTime, new Date())
-                    .input('createdBy', sql.NVarChar(100), data.createdBy || 'System')
-                    .input('updatedAt', sql.DateTime, new Date())
-                    .input('updatedBy', sql.NVarChar(100), data.updatedBy || 'System')
+                    .input('createdat', sql.DateTime, new Date())
+                    .input('createdby', sql.NVarChar(100), data.createdby || 'System')
+                    .input('updatedat', sql.DateTime, new Date())
+                    .input('updatedby', sql.NVarChar(100), data.updatedby || 'System')
                     .query(queryInsert);
                 return result;
             }

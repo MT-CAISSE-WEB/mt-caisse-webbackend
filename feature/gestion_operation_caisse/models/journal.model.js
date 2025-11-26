@@ -75,6 +75,8 @@ class journalModel {
             // S'il existe update
             if (check.recordset[0].count > 0) {
                 const result = await pool.request()
+                    .input('idjournal', sql.UniqueIdentifier, data.idjournal)
+                    .input('codejournal', sql.NVarChar(24), data.codejournal)
                     .input('designation', sql.NVarChar(50), data.designation)
                     .input('actif', sql.Int, data.actif)
                     .input('updatedat', sql.DateTime, new Date())

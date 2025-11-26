@@ -27,7 +27,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:5000/API/journal/delete/37368B3E-679B-4CDF-A7A7-7644F6D743AC",
+              "raw": "http://localhost:5000/API/journal/delete/ADB106C1-E34D-4CFE-ACF6-1F6A81AE9202",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -37,7 +37,7 @@
                 "API",
                 "journal",
                 "delete",
-                "37368B3E-679B-4CDF-A7A7-7644F6D743AC"
+                "ADB106C1-E34D-4CFE-ACF6-1F6A81AE9202"
               ]
             }
           }
@@ -52,7 +52,7 @@
             "method": "PUT",
             "body": {
               "mode": "raw",
-              "raw": "{\r\n        \"codecaisse\": \"TESTDUP\",\r\n        \"libelle\": \"Caisse de duplication dollars\",\r\n        \"idjournal\": \"63A9D063-73D1-4B77-98A6-9B08F7B3A02C\",\r\n        \"iddevise\": null,\r\n        \"idsite\": null,\r\n        \"idsociete\": null,\r\n        \"idcompte\": null,\r\n        \"actif\": 1,\r\n        \"createdat\": \"2025-11-26T10:50:09.660Z\",\r\n        \"createdby\": \"System\",\r\n        \"updatedat\": \"2025-11-26T10:50:09.660Z\",\r\n        \"updatedby\": \"System\"\r\n}",
+              "raw": "{\r\n            \"idcaisse\": \"37368B3E-679B-4CDF-A7A7-7644F6D743AC\",\r\n            \"codecaisse\": \"3780367Y\",\r\n            \"libelle\": \"Caisse de test dollars\",\r\n            \"idjournal\": \"63A9D063-73D1-4B77-98A6-9B08F7B3A02C\",\r\n            \"codejournal\": \"ODDHG\",\r\n            \"iddevise\": null,\r\n            \"codedevise\": null,\r\n            \"idsite\": null,\r\n            \"codesite\": null,\r\n            \"idsociete\": null,\r\n            \"codesociete\": null,\r\n            \"idcompte\": null,\r\n            \"numcompte\": null,\r\n            \"actif\": 1,\r\n            \"createdat\": \"2025-11-26T10:50:09.660Z\",\r\n            \"createdby\": \"Chado\",\r\n            \"updatedat\": \"2025-11-26T11:14:10.250Z\",\r\n            \"updatedby\": \"Junior\"\r\n        }",
               "options": {
                 "raw": {
                   "language": "json"
@@ -60,7 +60,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:5000/API/caisse/update/37368B3E-679B-4CDF-A7A7-7644F6D743AC",
+              "raw": "http://localhost:5000/API/caisse/update/ADB106C1-E34D-4CFE-ACF6-1F6A81AE9202",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -70,7 +70,7 @@
                 "API",
                 "caisse",
                 "update",
-                "37368B3E-679B-4CDF-A7A7-7644F6D743AC"
+                "ADB106C1-E34D-4CFE-ACF6-1F6A81AE9202"
               ]
             }
           }
@@ -125,7 +125,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:5000/API/caisse/37368B3E-679B-4CDF-A7A7-7644F6D743AC",
+              "raw": "http://localhost:5000/API/caisse/ADB106C1-E34D-4CFE-ACF6-1F6A81AE9202",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -134,7 +134,7 @@
               "path": [
                 "API",
                 "caisse",
-                "37368B3E-679B-4CDF-A7A7-7644F6D743AC"
+                "ADB106C1-E34D-4CFE-ACF6-1F6A81AE9202"
               ]
             }
           }
@@ -219,7 +219,7 @@
             "method": "PUT",
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"codejournal\": \"JOPDAIE\",\r\n    \"designation\": \"Journal des opérations test à justifier\",\r\n    \"actif\": 0\r\n}",
+              "raw": "{\r\n        \"idjournal\": \"61BEFF06-AA41-4AE9-9399-5D7D511D6C92\",\r\n        \"codejournal\": \"J74800\",\r\n        \"designation\": \"Journal principal siege\",\r\n        \"actif\": 1,\r\n        \"createdat\": \"2025-11-26T10:36:08.857Z\",\r\n        \"createdby\": \"System\",\r\n        \"updatedat\": null,\r\n        \"updatedby\": \"Chado\"\r\n    }",
               "options": {
                 "raw": {
                   "language": "json"
@@ -227,7 +227,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:5000/API/journal/update/C9333F01-44C8-42AC-AFCA-4C265F82FE02",
+              "raw": "http://localhost:5000/API/journal/update/61BEFF06-AA41-4AE9-9399-5D7D511D6C92",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -237,7 +237,7 @@
                 "API",
                 "journal",
                 "update",
-                "C9333F01-44C8-42AC-AFCA-4C265F82FE02"
+                "61BEFF06-AA41-4AE9-9399-5D7D511D6C92"
               ]
             }
           }
@@ -317,7 +317,7 @@
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"codejournal\": \"ASUPPP\",\r\n    \"designation\": \"Journal des opérations à supprimer\",\r\n    \"actif\": 0\r\n}",
+              "raw": "{\r\n    \"idjournal\": \"B1E7C002-20FF-40A8-B576-29A5BF632B47\",\r\n    \"codejournal\": \"J74800\",\r\n    \"designation\": \"Journal principal caisse siege\",\r\n    \"actif\": 1,\r\n    \"createdat\": \"2025-11-26T10:36:08.857Z\",\r\n    \"createdby\": \"\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -392,7 +392,7 @@
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "",
+              "raw": "{\r\n            \"idoperation\": \"75D5B016-8740-44A7-A546-061A18BDA082\",\r\n            \"codeoperation\": \"\",\r\n            \"iddemande\": null,\r\n            \"codedemande\": null,\r\n            \"idsociete\": null,\r\n            \"codesociete\": null,\r\n            \"dateoperation\": \"2001-03-11\",\r\n            \"createdat\": \"2025-11-26T14:04:25.197Z\",\r\n            \"createdby\": \"System\",\r\n            \"updatedat\": \"2025-11-26T14:04:25.197Z\",\r\n            \"updatedby\": \"System\"\r\n        }",
               "options": {
                 "raw": {
                   "language": "json"
@@ -421,7 +421,7 @@
             "method": "PUT",
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"idoperation\": \"E8DA421F-B91A-4B77-88DD-7DEC2F50AAAE\",\r\n    \"codeoperation\": \"\",\r\n    \"iddemande\": null,\r\n    \"codedemande\": null,\r\n    \"idsociete\": null,\r\n    \"codesociete\": null,\r\n    \"dateoperation\": \"2025-04-08T00:00:00.000Z\",\r\n    \"createdat\": \"2025-11-26T14:04:44.530Z\",\r\n    \"createdby\": \"System\",\r\n    \"updatedat\": \"2025-11-26T14:04:44.530Z\",\r\n    \"updatedby\": \"System\"\r\n}",
+              "raw": "{\r\n    \"idoperation\": \"75D5B016-8740-44A7-A546-061A18BDA082\",\r\n    \"codeoperation\": \"num-2025-0003\",\r\n    \"iddemande\": null,\r\n    \"codedemande\": null,\r\n    \"idsociete\": null,\r\n    \"codesociete\": null,\r\n    \"dateoperation\": \"2025-01-10\",\r\n    \"createdat\": \"2025-11-26T14:04:25.197Z\",\r\n    \"createdby\": \"System\",\r\n    \"updatedat\": \"2025-11-26T14:04:25.197Z\",\r\n    \"updatedby\": \"System\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -429,7 +429,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:5000/API/entete_operation/update/E8DA421F-B91A-4B77-88DD-7DEC2F50AAAE",
+              "raw": "http://localhost:5000/API/entete_operation/update/75D5B016-8740-44A7-A546-061A18BDA082",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -439,7 +439,7 @@
                 "API",
                 "entete_operation",
                 "update",
-                "E8DA421F-B91A-4B77-88DD-7DEC2F50AAAE"
+                "75D5B016-8740-44A7-A546-061A18BDA082"
               ]
             }
           }
@@ -719,6 +719,35 @@
         }
       ],
       "id": "053029f3-d5d9-443d-9073-7c9811346300"
+    },
+    {
+      "name": "New Request",
+      "id": "47b2ca6b-4fff-46eb-b6da-5cec52939b9f",
+      "request": {
+        "method": "POST",
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"idjournal\": \"B1E7C002-20FF-40A8-B576-29A5BF632B47\",\r\n    \"codejournal\": \"JCOO99\",\r\n    \"designation\": \"Journal principal caisse Site\",\r\n    \"actif\": 1,\r\n    \"createdat\": \"2025-11-26T10:36:08.857Z\",\r\n    \"createdby\": \"System\",\r\n    \"updatedat\": \"2025-11-26T10:36:08.857Z\",\r\n    \"updatedby\": \"System\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5000/API/journal/create",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "API",
+            "journal",
+            "create"
+          ]
+        }
+      }
     }
   ]
 }
