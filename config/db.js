@@ -13,6 +13,7 @@ const config = {
     trustServerCertificate: false,
     //instanceName: process.env.DB_INSTANCE || undefined, // Nom de l'instance SQL Server, si applicable
   },
+
 };
 
 const createDB = async () =>{
@@ -54,3 +55,4 @@ const connectInstance = async () => {
 }
 
 module.exports =  {connectInstance,connectDB, sql};
+

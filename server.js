@@ -11,6 +11,7 @@ const bodyParser = require('body-parser')
 const logger = require('./shared/middlewares/logger')
 const errorHandler = require('./shared/middlewares/error')
 
+
 //DECLARATION DES ROUTES
 // Societes routes
 const societesroutes = require("./feature/gestion_organisation/routes/societe.route");
@@ -26,6 +27,10 @@ const enteteoperationRoutes = require("./feature/gestion_operation_caisse/routes
 const ligneoperationRoutes = require("./feature/gestion_operation_caisse/routes/ligneoperation.route");
 // Type operation routes
 const typeoperationRoutes = require("./feature/gestion_operation_caisse/routes/operation.route");
+// Budget
+const budget_route = require('./feature/gestion_budget/routes/budget.route')
+// Ligne budgetaire
+const ligne_budgetaire_route = require('./feature/gestion_budget/routes/lignebudget.route')
 
 
 //connexion db
@@ -84,6 +89,10 @@ app.use("/API/utilisateur_caisse", utilisateurcaisseRoutes);
 app.use("/API/entete_operation", enteteoperationRoutes);
 app.use("/API/ligne_operation", ligneoperationRoutes);
 app.use("/API/type_operation", typeoperationRoutes);
+//Budget
+app.use('/api/budget', budget_route)
+//Ligne budgetaire
+app.use('/api/ligne-budgetaire', ligne_budgetaire_route)
 
 // GESTION DES ERREURS
 app.use(errorHandler)
