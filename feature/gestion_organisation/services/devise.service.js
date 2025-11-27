@@ -42,7 +42,7 @@ async function createdevise(data){
     }
 
     //upsert devise
-   async function upsertdevise({ code, intitule, codeiso, actif, createdby }) {
+   async function upsertdevise({ code, intitule, codeiso, actif, createdby,updatedby }) {
     try {
         const iddevise = uuidv4();
 
@@ -74,6 +74,7 @@ async function createdevise(data){
             .input("codeiso", db.sql.NVarChar, codeiso)
             .input("actif", db.sql.Int, actif)
             .input("createdby", db.sql.NVarChar, createdby)
+            .input("updatedby", db.sql.NVarChar, updatedby )
             .query(query);
 
         return {

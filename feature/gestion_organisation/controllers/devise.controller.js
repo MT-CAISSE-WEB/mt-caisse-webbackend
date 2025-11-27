@@ -25,8 +25,8 @@ module.exports.getonedevise = asyncHandler (async(req,res, next)=>{
 
 module.exports.upsertdevise = asyncHandler (async(req,res, next)=>{
     try {
-        const { code, intitule,codeiso,actif,updatedby } = req.body;
-        const updateddevise = await deviseservice.upsertdevise({code,intitule,codeiso,actif,updatedby});
+        const { code, intitule,codeiso,actif,updatedby,createdby } = req.body;
+        const updateddevise = await deviseservice.upsertdevise({code,intitule,codeiso,actif,updatedby,createdby});
         res.status(updateddevise.status).json({success: updateddevise.success,message:updateddevise.message, data: updateddevise.data });
     } catch (error) {
         res.status(500).json({ success: false, message: "Erreur serveur", error });
