@@ -31,6 +31,16 @@ const typeoperationRoutes = require("./feature/gestion_operation_caisse/routes/o
 const budget_route = require('./feature/gestion_budget/routes/budget.route')
 // Ligne budgetaire
 const ligne_budgetaire_route = require('./feature/gestion_budget/routes/lignebudget.route')
+// Devise routes
+const deviseroute = require('./feature/gestion_organisation/routes/devise.route');
+// Taux de devise routes
+const tauxdeviseroute = require('./feature/gestion_organisation/routes/tauxdevise.route');
+// Societe routes
+const societeroute = require('./feature/gestion_organisation/routes/societe.route');
+// Site routes
+const siteroute = require('./feature/gestion_organisation/routes/site.route');
+// Département routes
+const departementroute = require('./feature/gestion_organisation/routes/departement.route');
 
 
 //connexion db
@@ -93,6 +103,12 @@ app.use("/API/type_operation", typeoperationRoutes);
 app.use('/API/budget', budget_route)
 //Ligne budgetaire
 app.use('/API/ligne-budgetaire', ligne_budgetaire_route)
+//API
+app.use('/API',deviseroute);
+app.use('/API',tauxdeviseroute);
+app.use('/API',societeroute);
+app.use('/API',siteroute);
+app.use('/API',departementroute);
 
 // GESTION DES ERREURS
 app.use(errorHandler)
@@ -113,3 +129,5 @@ process.on('unhandledRejection', (err, promise) => {
   // Close server & exit process
   server.close(() => process.exit(1))
 })
+
+
