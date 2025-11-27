@@ -8,7 +8,8 @@ async function get_all_journals() {
   const result = await journal.get_alljournals();
   journals = result.recordset.map(item => new journalmodel(
     item.idjournal,
-    item.codejournal, 
+    item.codejournal,
+    item.idsociete, 
     item.designation, 
     item.actif, 
     item.createdat, 

@@ -20,7 +20,7 @@ module.exports.create_budget = asyncHandler(async (req, res, next) => {
 
 module.exports.get_all_budgets = asyncHandler(async (req, res, next) => {
   try {
-    const budgets = await budget_service.get_all_budgets()
+    const budgets = await budget_service.get_all_budgets();
     res.json({ success: true, data: budgets })
   } catch (error) {
     res

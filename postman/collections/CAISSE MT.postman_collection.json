@@ -721,33 +721,30 @@
       "id": "053029f3-d5d9-443d-9073-7c9811346300"
     },
     {
-      "name": "New Request",
-      "id": "47b2ca6b-4fff-46eb-b6da-5cec52939b9f",
-      "request": {
-        "method": "POST",
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"idjournal\": \"B1E7C002-20FF-40A8-B576-29A5BF632B47\",\r\n    \"codejournal\": \"JCOO99\",\r\n    \"designation\": \"Journal principal caisse Site\",\r\n    \"actif\": 1,\r\n    \"createdat\": \"2025-11-26T10:36:08.857Z\",\r\n    \"createdby\": \"System\",\r\n    \"updatedat\": \"2025-11-26T10:36:08.857Z\",\r\n    \"updatedby\": \"System\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+      "name": "BUDGET",
+      "item": [
+        {
+          "name": "GET BUDGET",
+          "id": "2d66606f-8e36-466e-9d53-8727251f2a9a",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5000/API/budget/",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "API",
+                "budget",
+                ""
+              ]
             }
           }
-        },
-        "url": {
-          "raw": "http://localhost:5000/API/journal/create",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "5000",
-          "path": [
-            "API",
-            "journal",
-            "create"
-          ]
         }
-      }
+      ],
+      "id": "70337b26-2f25-4b18-b15f-337c37f05e40"
     }
   ]
 }

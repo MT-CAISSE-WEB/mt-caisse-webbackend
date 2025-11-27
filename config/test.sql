@@ -95,7 +95,6 @@ USE MTCAISSEWEB
     CREATE TABLE CentreAnalytique (
         idcentreanalytique UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
 		idsociete UNIQUEIDENTIFIER,
-		codesociete NVARCHAR(50),
 		code NVARCHAR(50) UNIQUE,
 		libelle NVARCHAR(150),
 		actif INT DEFAULT 0,
@@ -133,9 +132,7 @@ USE MTCAISSEWEB
     CREATE TABLE Departement (
         iddepartement UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
 		idsociete UNIQUEIDENTIFIER,
-		codesociete NVARCHAR(50),
 		idsite UNIQUEIDENTIFIER,
-		codesite NVARCHAR(50),
 		responsable UNIQUEIDENTIFIER NULL,
 		codedept NVARCHAR(50) UNIQUE,
 		libelle NVARCHAR(150),
@@ -160,7 +157,6 @@ USE MTCAISSEWEB
     CREATE TABLE PlanComptable (
         idcompte UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
 		idsociete UNIQUEIDENTIFIER,
-		codesociete NVARCHAR(50),
 		numcompte NVARCHAR(50) UNIQUE,
 		libelle NVARCHAR(150),
 		ventillable INT DEFAULT 1,
@@ -183,7 +179,6 @@ USE MTCAISSEWEB
         idnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
 		codenature NVARCHAR(50) UNIQUE,
 		idsociete UNIQUEIDENTIFIER,
-		codesociete NVARCHAR(50),
 		idcompte UNIQUEIDENTIFIER,
 		numcompte NVARCHAR(50),
 		libelle NVARCHAR(150),
@@ -627,7 +622,9 @@ USE MTCAISSEWEB
 	CREATE TABLE Compteurs (
 		prefixe NVARCHAR(10) NOT NULL,
 		annee INT NOT NULL,
+		mois INT NOT NULL,
+		jour INT NOT NULL,
 		compteur INT NOT NULL DEFAULT 0,
-		PRIMARY KEY (prefixe, annee)
+		PRIMARY KEY (prefixe, annee, mois, jour)
 	);
 

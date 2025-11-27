@@ -90,9 +90,9 @@ app.use("/API/entete_operation", enteteoperationRoutes);
 app.use("/API/ligne_operation", ligneoperationRoutes);
 app.use("/API/type_operation", typeoperationRoutes);
 //Budget
-app.use('/api/budget', budget_route)
+app.use('/API/budget', budget_route)
 //Ligne budgetaire
-app.use('/api/ligne-budgetaire', ligne_budgetaire_route)
+app.use('/API/ligne-budgetaire', ligne_budgetaire_route)
 
 // GESTION DES ERREURS
 app.use(errorHandler)

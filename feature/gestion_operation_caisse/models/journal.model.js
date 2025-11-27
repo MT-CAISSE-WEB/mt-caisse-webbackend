@@ -3,7 +3,7 @@ const {sql, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 
 const queryInsert = `
-        INSERT INTO Journal (idjournal, codejournal, designation, actif, createdat, createdby, updatedat, updatedby)
+        INSERT INTO Journal (idjournal, idsociete, codejournal, designation, actif, createdat, createdby, updatedat, updatedby)
         OUTPUT INSERTED.*
         VALUES (@idjournal,@codejournal, @designation, @actif, @createdat, @createdby, @updatedat, @updatedby)
         `;
@@ -11,9 +11,10 @@ const queryInsert = `
 const queryUpdate = `UPDATE Journal SET codejournal = @codejournal, designation = @designation, actif = @actif, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE codejournal = @codejournal`;
 
 class journalModel {
-    constructor(idjournal,codejournal,designation,actif,createdat,createdby,updatedat,updatedby)
+    constructor(idjournal,codejournal, idsociete, designation,actif,createdat,createdby,updatedat,updatedby)
     {
         this.idjournal = idjournal;
+        this.idsociete = idsociete;
         this.codejournal = codejournal;
         this.designation = designation;
         this.actif = actif;
@@ -28,6 +29,7 @@ class journalModel {
         try {
             const result = await pool.request()
             .input('idjournal', sql.UniqueIdentifier, this.idjournal)
+            .input('idsociete', sql.UniqueIdentifier, this.idsociete)
             .input('codejournal', sql.NVarChar(24), this.codejournal)
             .input('designation', sql.NVarChar(50), this.designation)
             .input('actif', sql.Int, this.actif)
@@ -45,7 +47,7 @@ class journalModel {
 
     async get_alljournals () {
         const pool = await connectDB();
-        const query = "SELECT * FROM Journal"
+        const query = "SELECT *, s FROM Journal"
         try {
             const result = await pool.request().query(query);
             return result;
