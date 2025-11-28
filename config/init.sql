@@ -1,40 +1,13 @@
+USE MTCAISSEWEB;
+-- OK
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Devise')
 BEGIN
     CREATE TABLE Devise (
         iddevise UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        code NVARCHAR(3) UNIQUE,
+        codedevise NVARCHAR(3) UNIQUE,
         intitule NVARCHAR(150),
-        codeIso NVARCHAR(150),
+        codeiso NVARCHAR(150),
         actif INT DEFAULT 0,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50)
-    );
-END
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Tiers')
-BEGIN
-    CREATE TABLE Tiers (
-        idtiers UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        codetiers NVARCHAR(24) UNIQUE,
-        designation NVARCHAR(150),
-        typetiers NVARCHAR(50),
-        actif INT DEFAULT 1,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50)
-    );
-END
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Journal')
-BEGIN
-    CREATE TABLE Journal (
-        idjournal UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        codejournal NVARCHAR(24) UNIQUE,
-        designation NVARCHAR(150),
-        actif INT DEFAULT 1,
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
@@ -51,9 +24,7 @@ BEGIN
     CREATE TABLE Tauxdevise (
         idtauxdevise UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         iddeviseorigine UNIQUEIDENTIFIER,
-        codedevori NVARCHAR(3),
         iddevisedestination UNIQUEIDENTIFIER,
-        codedevdest NVARCHAR(3),
         codetauxdevise NVARCHAR(50) UNIQUE,
         intitule NVARCHAR(150),
         typecours NVARCHAR(50),
@@ -69,6 +40,7 @@ BEGIN
     );
 END
 
+
 -- ============================================
 -- 3️⃣ Societe (dépend de Devise)
 -- ============================================
@@ -79,13 +51,11 @@ BEGIN
         idsociete UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codesociete NVARCHAR(50) UNIQUE,
         iddevisereference UNIQUEIDENTIFIER,
-        codedevisereference NVARCHAR(3),
         iddevisereporting UNIQUEIDENTIFIER,
-        codedevisereporting NVARCHAR(3),
         raisonsociale NVARCHAR(150),
         sigle NVARCHAR(50),
         rccm NVARCHAR(50),
-        numNUI NVARCHAR(50),
+        numnui NVARCHAR(50),
         email NVARCHAR(30),
         telephone NVARCHAR(20),
         logo NVARCHAR(50),
@@ -100,6 +70,143 @@ BEGIN
     );
 END
 
+
+-- ============================================
+-- 6️⃣ CentreAnalytique & Sites (dépend de Societe)
+-- ============================================
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CentreAnalytique')
+BEGIN
+    CREATE TABLE CentreAnalytique (
+        idcentreanalytique UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idsociete UNIQUEIDENTIFIER,
+        codecentreanalytique NVARCHAR(50) UNIQUE,
+        libelle NVARCHAR(150),
+        actif INT DEFAULT 0,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+    );
+END
+
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Site')
+BEGIN
+    CREATE TABLE Site (
+        idsite UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codesite NVARCHAR(50) UNIQUE,
+        idsociete UNIQUEIDENTIFIER,
+        idcentreanalytique UNIQUEIDENTIFIER,
+        libelle NVARCHAR(150),
+        email NVARCHAR(30),
+        telephone NVARCHAR(20),
+        adresse NVARCHAR(200),
+        estcentreanalytique INT DEFAULT 0,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+    );
+END
+
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Utilisateur')
+BEGIN
+    CREATE TABLE Utilisateur (
+		idutilisateur UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+		codeutilisateur NVARCHAR(24) UNIQUE,
+		nom NVARCHAR(100),
+		prenom NVARCHAR(100),
+		adresse NVARCHAR(100),
+		telephone NVARCHAR(50),
+		email NVARCHAR(50) UNIQUE,
+		typeentitesite INT DEFAULT 0,
+		typeentitedepartement INT DEFAULT 0,
+		typeentitesociete INT DEFAULT 0,
+		acheteur INT DEFAULT 0,
+		iddepartement UNIQUEIDENTIFIER NULL,
+		idsociete UNIQUEIDENTIFIER,
+        idsite UNIQUEIDENTIFIER NULL,
+        login NVARCHAR(50) UNIQUE,
+        password NVARCHAR(50),
+        createdat Datetime,
+		createdby NVARCHAR(50),
+		updatedat Datetime,
+		updatedby NVARCHAR(50),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+		FOREIGN KEY (idsite) REFERENCES Site(idsite),
+    );
+END
+
+-- ============================================
+-- 8️⃣ Departement (dépend de Sites, Societe, Utilisateur)
+-- ============================================
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Departement')
+BEGIN
+    CREATE TABLE Departement (
+        iddepartement UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idsociete UNIQUEIDENTIFIER,
+        idsite UNIQUEIDENTIFIER,
+        responsable UNIQUEIDENTIFIER NULL,
+        codedept NVARCHAR(50) UNIQUE,
+        libelle NVARCHAR(150),
+        email NVARCHAR(30),
+        telephone NVARCHAR(20),
+        adresse NVARCHAR(200),
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
+        FOREIGN KEY (responsable) REFERENCES Utilisateur(idutilisateur),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+    );
+END
+
+IF OBJECT_ID('dbo.Utilisateur', 'U') IS NOT NULL
+AND OBJECT_ID('dbo.Departement', 'U') IS NOT NULL
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM sys.foreign_keys 
+        WHERE name = 'FK_Utilisateur_Departement'
+    )
+    BEGIN
+        ALTER TABLE Utilisateur
+        ADD CONSTRAINT FK_Utilisateur_Departement
+        FOREIGN KEY (iddepartement) 
+        REFERENCES Departement(iddepartement);
+    END
+END
+
+
+
+-- En ce qui concerne la gestion des demandes
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AffectationUserDepartement')
+BEGIN
+    CREATE TABLE AffectationUserDepartement (
+		iduserdepartement UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+		idutilisateur UNIQUEIDENTIFIER,
+		iddepartement UNIQUEIDENTIFIER,
+		idsociete UNIQUEIDENTIFIER,
+		debutactivite Datetime,
+		finactivite Datetime,
+		createdat Datetime,
+		createdby NVARCHAR(50),
+		updatedat Datetime,
+		updatedby NVARCHAR(50),
+		FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
+		FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
+		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+    );
+END
+
+
 -- ============================================
 -- 4️⃣ PlanComptable (dépend de Societe)
 -- ============================================
@@ -109,7 +216,6 @@ BEGIN
     CREATE TABLE PlanComptable (
         idcompte UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
         numcompte NVARCHAR(50) UNIQUE,
         libelle NVARCHAR(150),
         ventillable INT DEFAULT 1,
@@ -135,14 +241,12 @@ BEGIN
         idnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codenature NVARCHAR(50) UNIQUE,
         idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
         idcompte UNIQUEIDENTIFIER,
-        numcompte NVARCHAR(50),
         libelle NVARCHAR(150),
-        avanceAjustifier INT DEFAULT 1,
-        imputationTiers INT DEFAULT 1,
+        avanceajustifier INT DEFAULT 0,
+        imputationtiers INT DEFAULT 0,
         actif INT DEFAULT 1,
-        demandeDecaissement INT DEFAULT 0,
+        demandedecaissement INT DEFAULT 0,
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
@@ -152,113 +256,94 @@ BEGIN
     );
 END
 
+
 -- ============================================
--- 6️⃣ CentreAnalytique & Sites (dépend de Societe)
+-- 15️⃣ AffectationAnalytique (dépend de Sites, Departement, CentreAnalytique, NatureOperation, Societe)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CentreAnalytique')
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Affectation')
 BEGIN
-    CREATE TABLE CentreAnalytique (
-        idcentreanalytique UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+    CREATE TABLE Affectation (
+        idaffectation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codeaffectation NVARCHAR(50) UNIQUE,
         idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
-        code NVARCHAR(50) UNIQUE,
-        libelle NVARCHAR(150),
-        actif INT DEFAULT 0,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
-    );
-END
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Sites')
-BEGIN
-    CREATE TABLE Sites (
-        idsite UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
-        idcentreanalytique UNIQUEIDENTIFIER,
-        codeanalytique NVARCHAR(50) NULL,
-        codesite NVARCHAR(50) UNIQUE,
-        libelle NVARCHAR(150),
-        email NVARCHAR(30),
-        telephone NVARCHAR(20),
-        adresse NVARCHAR(200),
-        estcentreanalytique INT DEFAULT 0,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
-    );
-END
-
--- ============================================
--- 7️⃣ Utilisateur (FK iddepartement nullable pour éviter cycle)
--- ============================================
-
-
-
--- ============================================
--- 8️⃣ Departement (dépend de Sites, Societe, Utilisateur)
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Departement')
-BEGIN
-    CREATE TABLE Departement (
-        iddepartement UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
         idsite UNIQUEIDENTIFIER,
-        codesite NVARCHAR(50),
-        responsable UNIQUEIDENTIFIER NULL,
-        codedept NVARCHAR(50) UNIQUE,
-        libelle NVARCHAR(150),
-        email NVARCHAR(30),
-        telephone NVARCHAR(20),
-        adresse NVARCHAR(200),
+        iddepartement UNIQUEIDENTIFIER,
+        idcentreanalytique UNIQUEIDENTIFIER NULL,
+        idnature UNIQUEIDENTIFIER NULL,
+        actif INT DEFAULT 1,
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
-        FOREIGN KEY (idsite) REFERENCES Sites(idsite),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
-    );
-END
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Utilisateur')
-BEGIN
-    CREATE TABLE Utilisateur (
-        idutilisateur UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        code NVARCHAR(24) UNIQUE,
-        nom NVARCHAR(100),
-        prenom NVARCHAR(100),
-        adresse NVARCHAR(100),
-        telephone NVARCHAR(50),
-        email NVARCHAR(50),
-        typeentitesite INT DEFAULT 0,
-        typeentitedepartement INT DEFAULT 0,
-        typeentitesociete INT DEFAULT 0,
-        acheteur INT DEFAULT 0,
-        iddepartement UNIQUEIDENTIFIER NULL,
-        codedept NVARCHAR(50),
-        idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
         FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+        FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
+        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature)
     );
 END
 
 
 -- ============================================
--- 9️⃣ Caisse (dépend de Societe, Devise, Sites, Journal, PlanComptable)
+-- 16️⃣ DepartementNature (dépend de Departement, NatureOperation, Societe)
+-- ============================================
+
+-- IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DepartementNature')
+-- BEGIN
+--     CREATE TABLE DepartementNature (
+--         iddepartementnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+--         idsociete UNIQUEIDENTIFIER,
+--         iddepartement UNIQUEIDENTIFIER,
+--         idnature UNIQUEIDENTIFIER,
+--         actif INT DEFAULT 1,
+--         createdat Datetime,
+--         createdby NVARCHAR(50),
+--         updatedat Datetime,
+--         updatedby NVARCHAR(50),
+--         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+--         FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
+--         FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature)
+--     );
+-- END
+
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Tiers')
+BEGIN
+    CREATE TABLE Tiers (
+        idtiers UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codetiers NVARCHAR(24) UNIQUE,
+        idsociete UNIQUEIDENTIFIER,
+        designation NVARCHAR(150),
+        typetiers NVARCHAR(50),
+        actif INT DEFAULT 1,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50)
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+    );
+END
+
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Journal')
+BEGIN
+    CREATE TABLE Journal (
+        idjournal UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codejournal NVARCHAR(24) UNIQUE,
+        idsociete UNIQUEIDENTIFIER,
+        designation NVARCHAR(150),
+        actif INT DEFAULT 1,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50)
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+    );
+END
+
+-- ============================================
+-- Caisse (dépend de Societe, Devise, Sites, Journal, PlanComptable)
 -- ============================================
 
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Caisse')
@@ -268,15 +353,10 @@ BEGIN
         codecaisse NVARCHAR(24) UNIQUE,
         libelle NVARCHAR(100),
         idjournal UNIQUEIDENTIFIER,
-        codejournal NVARCHAR(24),
         iddevise UNIQUEIDENTIFIER,
-        codedevise NVARCHAR(3),
         idsite UNIQUEIDENTIFIER,
-        codesite NVARCHAR(50),
         idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
         idcompte UNIQUEIDENTIFIER,
-        numcompte NVARCHAR(50),
         actif INT DEFAULT 1,
         createdat Datetime,
         createdby NVARCHAR(50),
@@ -284,7 +364,7 @@ BEGIN
         updatedby NVARCHAR(50),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
         FOREIGN KEY (iddevise) REFERENCES Devise(iddevise),
-        FOREIGN KEY (idsite) REFERENCES Sites(idsite),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
         FOREIGN KEY (idjournal) REFERENCES Journal(idjournal),
         FOREIGN KEY (idcompte) REFERENCES PlanComptable(idcompte)
     );
@@ -297,90 +377,21 @@ END
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'UtilisateurCaisse')
 BEGIN
     CREATE TABLE UtilisateurCaisse (
+        idutilisateurcaisse UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idcaisse UNIQUEIDENTIFIER,
-        codecaisse NVARCHAR(24),
         idutilisateur UNIQUEIDENTIFIER,
-        codeutilisateur NVARCHAR(24),
         idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
         actif INT DEFAULT 1,
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
-        CONSTRAINT PK_User_Caisse PRIMARY KEY (idcaisse, idutilisateur),
         FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
         FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );
 END
 
--- ============================================
--- 11️⃣ Budget (dépend de Sites, Societe, Budget parent)
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Budget')
-BEGIN
-    CREATE TABLE Budget (
-        idbudget UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        code NVARCHAR(24) UNIQUE,
-        idbudgetparent UNIQUEIDENTIFIER,
-        typebudget NVARCHAR(50),
-        datedebut DATETIME,
-        datefin DATETIME,
-        actif INT,
-        cloture INT DEFAULT 1,
-        valide INT DEFAULT 1,
-        codecircuit UNIQUEIDENTIFIER,
-        dernierniveau NVARCHAR(1),
-        niveauactuel NVARCHAR(1),
-        validedept NVARCHAR(1),
-        datevalidedept DATETIME,
-        validesite NVARCHAR(1),
-        datevalidesite DATETIME,
-        validesociete NVARCHAR(1),
-        datevalidesociete DATETIME,
-        idsite UNIQUEIDENTIFIER,
-        idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
-        codesite NVARCHAR(50),
-        createdat DATETIME DEFAULT GETDATE(),
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (idsite) REFERENCES Sites(idsite),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idbudgetparent) REFERENCES Budget(idbudget)
-    );
-END
-
--- ============================================
--- 12️⃣ BudgetDepartementNature (dépend de Budget, Departement, NatureOperation)
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'BudgetDepartementNature')
-BEGIN
-    CREATE TABLE BudgetDepartementNature (
-        idbudget UNIQUEIDENTIFIER,
-        codebudget NVARCHAR(24),
-        iddepartement UNIQUEIDENTIFIER,
-        codedept NVARCHAR(50),
-        idnature UNIQUEIDENTIFIER,
-        codenature NVARCHAR(50),
-        montantprevisiondept DECIMAL(10,2),
-        montantprevisionsite DECIMAL(10,2),
-        montantprevisionsociete DECIMAL(10,2),
-        totalconsocloture DECIMAL(10,2),
-        soldecloture DECIMAL(10,2),
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (idbudget) REFERENCES Budget(idbudget),
-        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
-        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature)
-    );
-END
 
 -- ============================================
 -- 13️⃣ CircuitValidation (dépend de Sites, Departement, Societe)
@@ -389,23 +400,21 @@ END
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CircuitValidation')
 BEGIN
     CREATE TABLE CircuitValidation (
-        idcircuit UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        code NVARCHAR(24) UNIQUE,
-        idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
-        idsite UNIQUEIDENTIFIER,
-        codesite NVARCHAR(50),
+        idcircuitvalidation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codecircuitvalidation NVARCHAR(24) UNIQUE,
         typeentite NVARCHAR(100),
         typeaction NVARCHAR(100),
+        idsociete UNIQUEIDENTIFIER,
+        idsite UNIQUEIDENTIFIER,
         iddepartement UNIQUEIDENTIFIER,
-        codedept NVARCHAR(50),
+        nombrevalidateur INT NOT NULL,
         actif INT DEFAULT 1,
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idsite) REFERENCES Sites(idsite),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
         FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement)
     );
 END
@@ -418,69 +427,81 @@ IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CircuitValidateur')
 BEGIN
     CREATE TABLE CircuitValidateur (
         idcircuitvalidateur UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        code NVARCHAR(24) UNIQUE,
+        codecircuitvalidateur NVARCHAR(24) UNIQUE,
         idutilisateur UNIQUEIDENTIFIER,
-        codeutilisateur NVARCHAR(24),
         idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
+        idcircuitvalidation UNIQUEIDENTIFIER,
         rangvalidation INT,
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
         FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation)
     );
 END
 
+
 -- ============================================
--- 15️⃣ AffectationAnalytique (dépend de Sites, Departement, CentreAnalytique, NatureOperation, Societe)
+-- 11️⃣ Budget (dépend de Sites, Societe, Budget parent)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AffectationAnalytique')
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Budget')
 BEGIN
-    CREATE TABLE AffectationAnalytique (
-        idaffectation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
+    CREATE TABLE Budget (
+        idbudget UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codebudget NVARCHAR(24) UNIQUE,
+        idbudgetparent UNIQUEIDENTIFIER NULL,
+        typebudget NVARCHAR(10),
+        datedebut DATETIME,
+        datefin DATETIME,
+        actif INT DEFAULT 0,
+        cloture INT DEFAULT 0,
+        valide INT DEFAULT 0,
+        idcircuitvalidation UNIQUEIDENTIFIER,
+        dernierniveau INT,
+        niveauactuel INT,
+        validedept INT,
+        datevalidedept DATETIME,
+        validesite INT,
+        datevalidesite DATETIME,
+        validesociete INT,
+        datevalidesociete DATETIME,
         idsite UNIQUEIDENTIFIER,
-        codesite NVARCHAR(50),
-        iddepartement UNIQUEIDENTIFIER,
-        codedept NVARCHAR(50),
-        idcentre UNIQUEIDENTIFIER,
-        codecentre NVARCHAR(50),
-        idnature UNIQUEIDENTIFIER,
-        codenature NVARCHAR(50),
-        actif INT DEFAULT 1,
-        createdat Datetime,
+        idsociete UNIQUEIDENTIFIER,
+        createdat DATETIME DEFAULT GETDATE(),
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idsite) REFERENCES Sites(idsite),
-        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
-        FOREIGN KEY (idcentre) REFERENCES CentreAnalytique(idcentreanalytique),
-        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature)
+        FOREIGN KEY (idbudgetparent) REFERENCES Budget(idbudget),
+        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation)
     );
 END
 
 -- ============================================
--- 16️⃣ DepartementNature (dépend de Departement, NatureOperation, Societe)
+-- 12️⃣ BudgetDepartementNature (dépend de Budget, Departement, NatureOperation)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DepartementNature')
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'BudgetDepartementNature')
 BEGIN
-    CREATE TABLE DepartementNature (
-        iddepartementnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        idsociete UNIQUEIDENTIFIER,
+    CREATE TABLE BudgetDepartementNature (
+        idbudgetdepartementnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idbudget UNIQUEIDENTIFIER,
         iddepartement UNIQUEIDENTIFIER,
         idnature UNIQUEIDENTIFIER,
-        actif INT DEFAULT 1,
-        createdat Datetime,
+        montantprevisiondept DECIMAL(22, 9),
+        montantprevisionsite DECIMAL(22, 9),
+        montantprevisionsociete DECIMAL(22, 9),
+        totalconsocloture DECIMAL(22, 9),
+        soldecloture DECIMAL(22, 9),
+        createdat Datetime DEFAULT GETDATE(),
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        FOREIGN KEY (idbudget) REFERENCES Budget(idbudget),
         FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
         FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature)
     );
@@ -496,30 +517,25 @@ BEGIN
         iddemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codedemande NVARCHAR(50) UNIQUE,
         iddemandeur UNIQUEIDENTIFIER,
-        codedemandeur NVARCHAR(24),
         typedemande NVARCHAR(50),
         libelledemande NVARCHAR(200),
         datedemande DATETIME,
-        decaisse INT DEFAULT 1,
-        solde INT DEFAULT 1,
+        decaisse INT DEFAULT 0,
+        solde INT DEFAULT 0,
+        statut NVARCHAR(50),
         idcircuit UNIQUEIDENTIFIER,
-        codecircuit NVARCHAR(24),
         idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
         idsite UNIQUEIDENTIFIER,
-        codesite NVARCHAR(50),
         iddepartement UNIQUEIDENTIFIER,
-        codedept NVARCHAR(50),
         iddevise UNIQUEIDENTIFIER,
-        codedevise NVARCHAR(3),
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
         FOREIGN KEY (iddemandeur) REFERENCES Utilisateur(idutilisateur),
-        FOREIGN KEY (idcircuit) REFERENCES CircuitValidation(idcircuit),
+        FOREIGN KEY (idcircuit) REFERENCES CircuitValidation(idcircuitvalidation),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idsite) REFERENCES Sites(idsite),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
         FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
         FOREIGN KEY (iddevise) REFERENCES Devise(iddevise)
     );
@@ -534,21 +550,15 @@ BEGIN
     CREATE TABLE LigneDemande (
         idlignedemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         iddemande UNIQUEIDENTIFIER,
-        codedemande NVARCHAR(50),
         numligne INT UNIQUE,
         libellelignedemande NVARCHAR(255),
-        montantdemande DECIMAL(13,12),
+        montantdemande DECIMAL(22, 9),
         idnature UNIQUEIDENTIFIER,
-        codenature NVARCHAR(50),
         idbudget UNIQUEIDENTIFIER DEFAULT NULL,
-        codebudget NVARCHAR(24),
         idcentre UNIQUEIDENTIFIER,
-        codecentre NVARCHAR(50),
         idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
         idsite UNIQUEIDENTIFIER,
-        codesite NVARCHAR(50),
-        createdat Datetime,
+        createdat Datetime DEFAULT GETDATE(),
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
@@ -557,7 +567,7 @@ BEGIN
         FOREIGN KEY (idbudget) REFERENCES Budget(idbudget),
         FOREIGN KEY (idcentre) REFERENCES CentreAnalytique(idcentreanalytique),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idsite) REFERENCES Sites(idsite)
+        FOREIGN KEY (idsite) REFERENCES Site(idsite)
     );
 END
 
@@ -570,19 +580,17 @@ BEGIN
     CREATE TABLE DetailsDemande (
         iddetailsdemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         iddemande UNIQUEIDENTIFIER,
-        codedemande NVARCHAR(50),
-        numligne INT,
+        idlignedemande UNIQUEIDENTIFIER,
         idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
         descriptionn NVARCHAR(255),
-        quantite DECIMAL(13,12),
-        montant DECIMAL(13,12),
-        createdat Datetime,
+        quantite DECIMAL(22, 9),
+        montant DECIMAL(22, 9),
+        createdat Datetime DEFAULT GETDATE(),
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
         FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
-        FOREIGN KEY (numligne) REFERENCES LigneDemande(numligne),
+        FOREIGN KEY (idlignedemande) REFERENCES LigneDemande(idlignedemande),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );
 END
@@ -596,10 +604,7 @@ BEGIN
     CREATE TABLE ValidationDemande (
         idvalidationdemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         iddemande UNIQUEIDENTIFIER,
-        codedemande NVARCHAR(50),
-        codeutilisateur NVARCHAR(24),
         idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
         datevalidation DATETIME,
         createdat Datetime,
         createdby NVARCHAR(50),
@@ -620,15 +625,15 @@ BEGIN
         idoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codeoperation NVARCHAR(50) UNIQUE,
         iddemande UNIQUEIDENTIFIER,
-        codedemande NVARCHAR(50),
         idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
+        iddevise UNIQUEIDENTIFIER,
         dateoperation DATETIME,
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
         FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
+        FOREIGN KEY (iddevise) REFERENCES Devise(iddevise),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );
 END
@@ -642,22 +647,15 @@ BEGIN
     CREATE TABLE LigneOperationCaisse (
         idligneoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idoperation UNIQUEIDENTIFIER,
-        codeoperation NVARCHAR(50),
         idnature UNIQUEIDENTIFIER,
-        codenature NVARCHAR(50),
         idcentre UNIQUEIDENTIFIER,
-        codecentre NVARCHAR(50),
         idsociete UNIQUEIDENTIFIER,
-        codesociete NVARCHAR(50),
-        iddevise UNIQUEIDENTIFIER,
-        codedevise NVARCHAR(50),
         libelle NVARCHAR(255),
         montantoperation DECIMAL(13,12),
         comptabilise INT,
         numpiececomptable NVARCHAR(50),
         datecomptabilisation DATETIME,
         idtiers UNIQUEIDENTIFIER,
-        codetiers NVARCHAR(24),
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
@@ -669,3 +667,41 @@ BEGIN
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );
 END
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TypeOperation')
+BEGIN
+    CREATE TABLE TypeOperation (
+		idtypeoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+		codtypeoperation NVARCHAR(50),
+		idoperation UNIQUEIDENTIFIER,
+		idsociete UNIQUEIDENTIFIER,
+		idsite UNIQUEIDENTIFIER,
+		idcaisse UNIQUEIDENTIFIER,
+		montant DECIMAL(21, 9),
+        createdat Datetime,
+		createdby NVARCHAR(50),
+		updatedat Datetime,
+		updatedby NVARCHAR(50),
+        FOREIGN KEY (idoperation) REFERENCES EnteteOperationCaisse(idoperation),
+		FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
+		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+		FOREIGN KEY (idsite) REFERENCES Site(idsite),
+    );
+END
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Compteurs')
+BEGIN
+    CREATE TABLE Compteurs (
+		prefixe NVARCHAR(10) NOT NULL,
+		annee INT NOT NULL,
+		mois INT NOT NULL,
+		jour INT NOT NULL,
+		compteur INT NOT NULL DEFAULT 0,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+		PRIMARY KEY (prefixe, annee, mois, jour)
+	);
+END
+

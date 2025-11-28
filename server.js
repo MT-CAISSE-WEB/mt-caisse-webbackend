@@ -10,6 +10,7 @@ const device = require('express-device')
 const bodyParser = require('body-parser')
 const logger = require('./shared/middlewares/logger')
 const errorHandler = require('./shared/middlewares/error')
+const sequelize = require('./config/database')
 
 // Declaration des routes
 
@@ -17,6 +18,12 @@ const errorHandler = require('./shared/middlewares/error')
 const budget_route = require('./feature/gestion_budget/routes/budget.route')
 // Ligne budgetaire
 const ligne_budgetaire_route = require('./feature/gestion_budget/routes/lignebudget.route')
+// Entete demande
+const entete_demande_route = require('./feature/gestion_demande_decaissement/routes/entetedemande.route')
+// Ligne demande
+const ligne_demande_route = require('./feature/gestion_demande_decaissement/routes/ligendemande.route')
+// Détails demande
+const details_demande_route = require('./feature/gestion_demande_decaissement/routes/detaildemande.route')
 
 //connexion db
 const db = require('./config/db')
@@ -63,11 +70,23 @@ app.set('view engine', 'ejs')
 // Définir le répertoire des vues
 app.set('views', path.join(__dirname, 'views'))
 
+// Test SQL Server connection Sequelize
+sequelize
+  .authenticate()
+  .then(() => console.log('Connexion SQL Server OK sequelize✔️'))
+  .catch((err) => console.log('Erreur SQL Server ❌', err))
+
 //Regrouper toutes les routes
 //Budget
 app.use('/api/budget', budget_route)
 //Ligne budgetaire
 app.use('/api/ligne-budgetaire', ligne_budgetaire_route)
+//Entete demande
+app.use('/api/entete-demande', entete_demande_route)
+//Ligne demande
+app.use('/api/ligne-demande', ligne_demande_route)
+//Details demande
+app.use('/api/details-demande', details_demande_route)
 
 // GESTION DES ERREURS
 app.use(errorHandler)

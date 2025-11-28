@@ -20,7 +20,7 @@ const createDB = async () => {
     const db = await sql.connect({ ...config, database: 'MTCAISSEWEB' })
     // const table = fs.readFileSync('./config/init.sql', 'utf8')
     // await db.request().query(table)
-    // db.close()
+    db.close()
     // console.log(`Tables créees`.yellow.bold)
   } catch (error) {
     console.log(`Erreur de création des tables: ${error}`.red.bold)
