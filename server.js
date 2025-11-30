@@ -13,7 +13,13 @@ const errorHandler = require('./shared/middlewares/error')
 
 // Declaration des routes
 const societesroutes = require("./feature/gestion_organisation/routes/societe.route");
-
+const sitesroutes = require("./feature/gestion_organisation/routes/site.route");
+const departementsroutes = require("./feature/gestion_organisation/routes/departement.route");
+const tiersroutes = require("./feature/gestion_donnee_base/routes/tiers.route");
+const plancomptableroutes = require("./feature/gestion_donnee_base/routes/plancomptable.route");
+const natureoperationroutes = require("./feature/gestion_donnee_base/routes/natureoperation.route");
+const centreanalytiqueroutes = require("./feature/gestion_donnee_base/routes/centreanalytique.route");
+const affectationanalytiqueroutes = require("./feature/gestion_donnee_base/routes/affectationanalytique.route");
 
 //connexion db
 const db = require('./config/db')
@@ -62,6 +68,14 @@ app.set('views', path.join(__dirname, 'views'))
 
 //Regrouper toutes les routes
 app.use("/API/societe", societesroutes);
+app.use("/API/site", sitesroutes);
+app.use("/API/departement", departementsroutes);
+app.use("/API/tiers", tiersroutes);
+app.use("/API/plancomptable", plancomptableroutes);
+app.use("/API/natureoperation", natureoperationroutes);
+app.use("/API/centreanalytique", centreanalytiqueroutes);
+app.use("/API/affectationanalytique", affectationanalytiqueroutes);
+
 
 // GESTION DES ERREURS
 app.use(errorHandler)

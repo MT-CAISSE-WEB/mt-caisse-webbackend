@@ -24,9 +24,11 @@ async function get_all_societes() {
   return societes;
 }
 
+
 async function create_societe(data) {
-  if (!data.code || !data.intitule) {
-    throw new Error("Tous les champs (code, intitule) sont requis.");
+  if (!data.code && !data.raisonsociale && !data.rccm && !data.numNUI && !data.email
+     && !data.telephone && !data.logo && !data.adresse && !data.suivibudgetaire) {
+    throw new Error("Tous les champs sont requis.");
   }
 
   const today = new Date();
@@ -56,9 +58,9 @@ async function create_societe(data) {
 
 async function get_by_idsociete(idsociete) {
   if (!idsociete) {
-    throw new Error("Erreur de donnée");
+    throw new Error("Société non trouvée.");
   }
-
+  
   try {
     const societe_ = await societe.get_onesociete(idsociete);
     return societe_;
@@ -69,12 +71,12 @@ async function get_by_idsociete(idsociete) {
 }
 
 async function update_societe(idsociete, data) {
-  if (!idsociete || !data.code) {
+  if (!idsociete) {
     throw new Error("Erreur de donnée");
   }
 
   try {
-    const societe_ = await societe.update(data.code, data);
+    const societe_ = await societe.update_societe(data.idsociete, data);
     return societe_.recordset;
   } catch (err) {
     console.log(`Erreur de modification: ${err}`.cyan.bold);
