@@ -7,7 +7,8 @@ const ErrorResponse = require("../../../shared/utils/errorResponse");
  */
 module.exports.get_caisses = asyncHandler(async(req, res, next) => {
   try {
-    const caisses = await caisseservice.get_all_caisses();
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const caisses = await caisseservice.get_all_caisses(page);
     res.json({ success: true, data: caisses });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur", error });

@@ -10,32 +10,27 @@ const enteteoperationmodel = require('./enteteoperation.model');
 //const tiersmodel = require('');
 
 const queryInsert = `
-		codesite NVARCHAR(50),
-        INSERT INTO LigneOperationCaisse (idligneoperation, idoperation, codeoperation, idnature, codenature, idcentre, codecentre, idsociete, codesociete, idsite, codesite, iddevise, codedevise, libelle, montantoperation, comptabilise, numpiececomptable, datecomptabilisation, idtiers, codetiers, createdat, createdby, updatedat, updatedby)
+        INSERT INTO LigneOperationCaisse (idligneoperation, idoperation, codeoperation, idnature, codenature, idcentre, codecentre, idsociete, codesociete, idtiers, codetiers, libelle, montantoperation, comptabilise, numpiececomptable, datecomptabilisation, createdat, createdby, updatedat, updatedby)
         OUTPUT INSERTED.*
-        VALUES (@idligneoperation, @idoperation, @codeoperation, @idnature, @codenature, @idcentre, @codecentre, @idsociete, @codesociete, @idsite, @codesite, @iddevise, @codedevise, @libelle, @montantoperation, @comptabilise, @numpiececomptable, @datecomptabilisation, @idtiers, @codetiers, @createdat, @createdby, @updatedat, @updatedby)
+        VALUES (@idligneoperation, @idoperation, @codeoperation, @idnature, @codenature, @idcentre, @codecentre, @idsociete, @codesociete, @idtiers, @codetiers, @libelle, @montantoperation, @comptabilise, @numpiececomptable, @datecomptabilisation, @createdat, @createdby, @updatedat, @updatedby)
         `;
 
-const queryUpdate = `UPDATE ligneoperationCaisse SET idnature = @idnature, codenature = @codenature, idcentre = @idcentre, codecentre = @codecentre, idsociete = @idsociete, codesociete = @codesociete, idsite = @idsite, codesite = @codesite, iddevise = @iddevise, codedevise = @codedevise, libelle = @libelle, montantoperation = @montantoperation, comptabilise = @comptabilise, numpiececomptable = @numpiececomptable, datecomptabilisation = @datecomptabilisation, idtiers = @idtiers, codetiers = @codetiers, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE idligneoperation = @idligneoperation`;
+const queryUpdate = `UPDATE ligneoperationCaisse SET idnature = @idnature, codenature = @codenature, idcentre = @idcentre, codecentre = @codecentre, idsociete = @idsociete, codesociete = @codesociete, idsite = @idsite, codesite = @codesite, libelle = @libelle, montantoperation = @montantoperation, idtiers = @idtiers, codetiers = @codetiers, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE idligneoperation = @idligneoperation`;
 
 class ligneoperationModel {
-    constructor(idligneoperation, idoperation, codeoperation, idnature, codenature, idcentre, codecentre, idsociete, codesociete, idsite, codesite, iddevise, codedevise, libelle, montantoperation, comptabilise, numpiececomptable, datecomptabilisation, idtiers, codetiers, createdat, createdby, updatedat, updatedby)
+    constructor(idligneoperation, idoperation, codeoperation, idsociete, codesociete, idtiers, codetiers, idnature, codenature, idcentre, codecentre, libelle, montantoperation, comptabilise, numpiececomptable, datecomptabilisation, createdat, createdby, updatedat, updatedby)
     {
         this.idligneoperation = idligneoperation;
         this.idoperation = idoperation;
         this.codeoperation = codeoperation;
         this.idsociete = idsociete;
         this.codesociete = codesociete;
-        this.idsite = idsite;
-        this.codesite = codesite;
         this.idtiers = idtiers;
         this.codetiers = codetiers;
         this.idnature = idnature;
         this.codenature = codenature;
         this.idcentre = idcentre;
         this.codecentre = codecentre;
-        this.iddevise = iddevise;
-        this.codedevise = codedevise;
         this.libelle = libelle;
         this.montantoperation = montantoperation;
         this.comptabilise = comptabilise;
@@ -53,18 +48,17 @@ class ligneoperationModel {
             const result = await pool.request()
             .input('idligneoperation', sql.UniqueIdentifier, this.idligneoperation)
             .input('idoperation', sql.UniqueIdentifier, this.idoperation)
-            .input('idnature', sql.UniqueIdentifier, this.idnature)
-            .input('idcentre', sql.UniqueIdentifier, this.idcentre)
-            .input('idsociete', sql.UniqueIdentifier, this.idsociete)
-            .input('idsite', sql.UniqueIdentifier, this.idsite)
-            .input('iddevise', sql.UniqueIdentifier, this.iddevise)
-            .input('idtiers', sql.UniqueIdentifier, this.idtiers)
             .input('codeoperation', sql.NVarChar(24), this.codeoperation)
-            .input('codenature', sql.NVarChar(24), this.codenature)
-            .input('codesite', sql.NVarChar(24), this.codesite)
-            .input('codecentre', sql.NVarChar(24), this.codecentre)
+            .input('idsociete', sql.UniqueIdentifier, this.idsociete)
             .input('codesociete', sql.NVarChar(24), this.codesociete)
+            .input('idsite', sql.UniqueIdentifier, this.idsite)
+            .input('codesite', sql.NVarChar(24), this.codesite)
+            .input('idtiers', sql.UniqueIdentifier, this.idtiers)
             .input('codetiers', sql.NVarChar(24), this.codetiers)
+            .input('idnature', sql.UniqueIdentifier, this.idnature)
+            .input('codenature', sql.NVarChar(24), this.codenature)
+            .input('idcentre', sql.UniqueIdentifier, this.idcentre)
+            .input('codecentre', sql.NVarChar(24), this.codecentre)
             .input('libelle', sql.NVarChar(255), this.libelle)
             .input('montantoperation', sql.Decimal(22,9), this.montantoperation)
             .input('numpiececomptable', sql.NVarChar(20), this.numpiececomptable)

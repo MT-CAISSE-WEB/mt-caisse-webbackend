@@ -195,7 +195,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:5000/API/journal/",
+              "raw": "http://localhost:5000/API/journal/?page=2",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -205,6 +205,12 @@
                 "API",
                 "journal",
                 ""
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "2"
+                }
               ]
             }
           }
@@ -260,7 +266,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:5000/API/journal/C9333F01-44C8-42AC-AFCA-4C265F82FE02",
+              "raw": "http://localhost:5000/API/journal/EFA4C8F1-FBCE-46FB-B243-3483D6FF9177",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -269,7 +275,7 @@
               "path": [
                 "API",
                 "journal",
-                "C9333F01-44C8-42AC-AFCA-4C265F82FE02"
+                "EFA4C8F1-FBCE-46FB-B243-3483D6FF9177"
               ]
             }
           }
@@ -317,7 +323,7 @@
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"idjournal\": \"B1E7C002-20FF-40A8-B576-29A5BF632B47\",\r\n    \"codejournal\": \"J74800\",\r\n    \"designation\": \"Journal principal caisse siege\",\r\n    \"actif\": 1,\r\n    \"createdat\": \"2025-11-26T10:36:08.857Z\",\r\n    \"createdby\": \"\"\r\n}",
+              "raw": "{\r\n    \"idjournal\": \"\",\r\n    \"idsociete\": \"2DE2B871-BFB3-421A-91E4-A4D5A5BFDC3B\",\r\n    \"codejournal\": \"J00Z9\",\r\n    \"designation\": \"Journal principal test\",\r\n    \"actif\": 1,\r\n    \"updatedat\" : null\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -392,7 +398,7 @@
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "{\r\n            \"idoperation\": \"75D5B016-8740-44A7-A546-061A18BDA082\",\r\n            \"codeoperation\": \"\",\r\n            \"iddemande\": null,\r\n            \"codedemande\": null,\r\n            \"idsociete\": null,\r\n            \"codesociete\": null,\r\n            \"dateoperation\": \"2001-03-11\",\r\n            \"createdat\": \"2025-11-26T14:04:25.197Z\",\r\n            \"createdby\": \"System\",\r\n            \"updatedat\": \"2025-11-26T14:04:25.197Z\",\r\n            \"updatedby\": \"System\"\r\n        }",
+              "raw": "{\r\n    \"idsociete\": \"B89B381E-691E-4BA7-979E-1AC4D5B1E018\",\r\n    \"iddevise\": \"3FC45657-E282-4667-AA3A-50121F1CEB18\",\r\n    \"idsite\" : \"8F4AC0B4-4E4D-4D08-ADF6-004838DE09B9\",\r\n    \"dateoperation\": \"2025-03-06\",\r\n    \"createdby\": \"Chado\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -421,7 +427,7 @@
             "method": "PUT",
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"idoperation\": \"75D5B016-8740-44A7-A546-061A18BDA082\",\r\n    \"codeoperation\": \"num-2025-0003\",\r\n    \"iddemande\": null,\r\n    \"codedemande\": null,\r\n    \"idsociete\": null,\r\n    \"codesociete\": null,\r\n    \"dateoperation\": \"2025-01-10\",\r\n    \"createdat\": \"2025-11-26T14:04:25.197Z\",\r\n    \"createdby\": \"System\",\r\n    \"updatedat\": \"2025-11-26T14:04:25.197Z\",\r\n    \"updatedby\": \"System\"\r\n}",
+              "raw": "{\r\n    \"idoperation\": \"822BC4A2-80BA-4CA1-91AE-A96597518ED2\",\r\n    \"codeoperation\": \"\",\r\n    \"iddemande\": null,\r\n    \"idsociete\": \"4AE465D7-7E8C-4212-A949-3168CA6C980B\",\r\n    \"dateoperation\": \"2025-02-01T00:00:00.000Z\",\r\n    \"createdat\": \"2025-11-26T14:04:25.197Z\",\r\n    \"createdby\": \"System\",\r\n    \"updatedat\": null,\r\n    \"updatedby\": null\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -429,7 +435,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:5000/API/entete_operation/update/75D5B016-8740-44A7-A546-061A18BDA082",
+              "raw": "http://localhost:5000/API/entete_operation/update/822BC4A2-80BA-4CA1-91AE-A96597518ED2",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -439,7 +445,7 @@
                 "API",
                 "entete_operation",
                 "update",
-                "75D5B016-8740-44A7-A546-061A18BDA082"
+                "822BC4A2-80BA-4CA1-91AE-A96597518ED2"
               ]
             }
           }
@@ -569,7 +575,7 @@
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"idoperation\": \"75D5B016-8740-44A7-A546-061A18BDA082\",\r\n    \"codeoperation\": null,\r\n    \"idsociete\": \"\",\r\n    \"idsite\": null,\r\n    \"codesite\": null,\r\n    \"iddevise\": null,\r\n    \"idnature\": null,\r\n    \"idtiers\": \"\",\r\n    \"codetiers\": null,\r\n    \"libelle\": null,\r\n    \"montantoperation\": 12000.009389,\r\n    \"numpiececomptable\": \"\"\r\n}",
+              "raw": "{\r\n    \"idoperation\": \"EAFF9DFF-0604-4D09-8FFF-E8EC9461BE47\",\r\n    \"idnature\": \"A5E38801-5BCC-43D2-B695-453C2B78B1D3\",\r\n    \"idcentre\" : \"9C44E756-A27B-42FD-BF3B-F8AE5DCCF818\",\r\n    \"codecentre\" : null,\r\n    \"idtiers\": \"109C2279-649D-4AC9-8701-6861982A5CBB\",\r\n    \"libelle\": null,\r\n    \"montantoperation\": 15500.000000,\r\n    \"numpiececomptable\": null,\r\n    \"comptabilise\" : 0,\r\n    \"createdat\" : \"\",\r\n    \"createdby\" : \"Chado\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -745,6 +751,32 @@
         }
       ],
       "id": "70337b26-2f25-4b18-b15f-337c37f05e40"
+    },
+    {
+      "name": "SOCIETE",
+      "item": [
+        {
+          "name": "GET ALL SOCIETES",
+          "id": "bf7c612f-cbd1-45f1-b39f-1b1ea192c348",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5000/API/budget/Societe",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "API",
+                "budget",
+                "Societe"
+              ]
+            }
+          }
+        }
+      ],
+      "id": "81ecaeb6-0092-4316-be9a-c035fa8a2b76"
     }
   ]
 }

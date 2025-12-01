@@ -10,7 +10,7 @@ DECLARE @Dev4 UNIQUEIDENTIFIER = NEWID();
 DECLARE @Dev5 UNIQUEIDENTIFIER = NEWID();
 DECLARE @Dev6 UNIQUEIDENTIFIER = NEWID();
 
-INSERT INTO Devise (iddevise, code, intitule, codeIso, actif, createdat, createdby)
+INSERT INTO Devise (iddevise, codedevise, intitule, codeiso, actif, createdat, createdby)
 VALUES
 (@Dev1, 'XAF', 'Franc CFA', 'XAF', 1, GETDATE(), 'ADMIN'),
 (@Dev2, 'USD', 'Dollar US', 'USD', 1, GETDATE(), 'ADMIN'),
@@ -49,14 +49,33 @@ DECLARE @Soc4 UNIQUEIDENTIFIER = NEWID();
 DECLARE @Soc5 UNIQUEIDENTIFIER = NEWID();
 DECLARE @Soc6 UNIQUEIDENTIFIER = NEWID();
 
-INSERT INTO Societe (idsociete, codesociete, iddevisereference, codedevisereference, iddevisereporting, codedevisereporting, raisonsociale, sigle, rccm, numNUI, email, telephone, logo, adresse, suivibudgetaire, createdat, createdby)
+INSERT INTO Societe (idsociete, codesociete, iddevisereference, iddevisereporting,raisonsociale, sigle, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire, createdat, createdby)
 VALUES
-(@Soc1, 'SOC001', @Dev1, 'XAF', @Dev2, 'USD', 'Société Alpha', 'ALPHA', 'RCCM001', 'NUI001', 'alpha@societe.com', '1234567890', 'logo1.png', 'Rue 1', 1, GETDATE(), 'ADMIN'),
-(@Soc2, 'SOC002', @Dev2, 'USD', @Dev2, 'USD', 'Société Beta', 'BETA', 'RCCM002', 'NUI002', 'beta@societe.com', '0987654321', 'logo2.png', 'Rue 2', 1, GETDATE(), 'ADMIN'),
-(@Soc3, 'SOC003', @Dev3, 'EUR', @Dev1, 'XAF', 'Société Gamma', 'GAMMA', 'RCCM003', 'NUI003', 'gamma@societe.com', '111222333', 'logo3.png', 'Rue 3', 1, GETDATE(), 'ADMIN'),
-(@Soc4, 'SOC004', @Dev4, 'GBP', @Dev4, 'GBP', 'Société Delta', 'DELTA', 'RCCM004', 'NUI004', 'delta@societe.com', '222333444', 'logo4.png', 'Rue 4', 1, GETDATE(), 'ADMIN'),
-(@Soc5, 'SOC005', @Dev5, 'JPY', @Dev5, 'JPY', 'Société Epsilon', 'EPSI', 'RCCM005', 'NUI005', 'epsilon@societe.com', '333444555', 'logo5.png', 'Rue 5', 1, GETDATE(), 'ADMIN'),
-(@Soc6, 'SOC006', @Dev6, 'CNY', @Dev6, 'CNY', 'Société Zeta', 'ZETA', 'RCCM006', 'NUI006', 'zeta@societe.com', '444555666', 'logo6.png', 'Rue 6', 1, GETDATE(), 'ADMIN');
+(@Soc1, 'SOC001', @Dev1, @Dev2, 'Société Alpha', 'ALPHA', 'RCCM001', 'NUI001', 'alpha@societe.com', '1234567890', 'logo1.png', 'Rue 1', 1, GETDATE(), 'ADMIN'),
+(@Soc2, 'SOC002', @Dev2, @Dev2, 'Société Beta', 'BETA', 'RCCM002', 'NUI002', 'beta@societe.com', '0987654321', 'logo2.png', 'Rue 2', 1, GETDATE(), 'ADMIN'),
+(@Soc3, 'SOC003', @Dev3, @Dev1, 'Société Gamma', 'GAMMA', 'RCCM003', 'NUI003', 'gamma@societe.com', '111222333', 'logo3.png', 'Rue 3', 1, GETDATE(), 'ADMIN'),
+(@Soc4, 'SOC004', @Dev4, @Dev4, 'Société Delta', 'DELTA', 'RCCM004', 'NUI004', 'delta@societe.com', '222333444', 'logo4.png', 'Rue 4', 1, GETDATE(), 'ADMIN'),
+(@Soc5, 'SOC005', @Dev5, @Dev5, 'Société Epsilon', 'EPSI', 'RCCM005', 'NUI005', 'epsilon@societe.com', '333444555', 'logo5.png', 'Rue 5', 1, GETDATE(), 'ADMIN'),
+(@Soc6, 'SOC006', @Dev6, @Dev6, 'Société Zeta', 'ZETA', 'RCCM006', 'NUI006', 'zeta@societe.com', '444555666', 'logo6.png', 'Rue 6', 1, GETDATE(), 'ADMIN');
+
+-- ============================================
+-- 11️⃣ Sites
+-- ============================================
+DECLARE @S1 UNIQUEIDENTIFIER = NEWID();
+DECLARE @S2 UNIQUEIDENTIFIER = NEWID();
+DECLARE @S3 UNIQUEIDENTIFIER = NEWID();
+DECLARE @S4 UNIQUEIDENTIFIER = NEWID();
+DECLARE @S5 UNIQUEIDENTIFIER = NEWID();
+DECLARE @S6 UNIQUEIDENTIFIER = NEWID();
+
+INSERT INTO Site (idsite, idsociete, idcentreanalytique, libelle, email, telephone, adresse, estcentreanalytique, createdat, createdby)
+VALUES
+(@S1, @Soc1, NULL, 'CA001', 'alpha@site.com', '600111222', 'Rue A', 0, GETDATE(), 'ADMIN'),
+(@S2, @Soc1, NULL, 'CA002', 'beta@site.com', '600333444', 'Rue B', 0, GETDATE(), 'ADMIN'),
+(@S3, @Soc2, NULL, 'CA003', 'gamma@site.com', '600555666', 'Rue C', 0, GETDATE(), 'ADMIN'),
+(@S4, @Soc2, NULL, 'CA004', 'delta@site.com', '600777888', 'Rue D', 0, GETDATE(), 'ADMIN'),
+(@S5, @Soc3, NULL, 'CA005', 'epsilon@site.com', '600999000', 'Rue E', 0, GETDATE(), 'ADMIN'),
+(@S6, @Soc3, NULL, 'CA006', 'zeta@site.com', '601111222', 'Rue F', 0, GETDATE(), 'ADMIN');
 
 -- ============================================
 -- 3️⃣ Utilisateur (6 par société)
@@ -68,14 +87,14 @@ DECLARE @U4 UNIQUEIDENTIFIER = NEWID();
 DECLARE @U5 UNIQUEIDENTIFIER = NEWID();
 DECLARE @U6 UNIQUEIDENTIFIER = NEWID();
 
-INSERT INTO Utilisateur (idutilisateur, code, nom, prenom, adresse, telephone, email, idsociete, codesociete, createdat, createdby)
+INSERT INTO Utilisateur (idutilisateur, codeutilisateur, nom, prenom, adresse, telephone, email, idsociete, idsite, login, password, createdat, createdby)
 VALUES
-(@U1, 'U001', 'Dupont', 'Jean', 'Adresse 1', '+242063122312', 'jean.dupont@mail.com', @Soc1, 'SOC001', GETDATE(), 'ADMIN'),
-(@U2, 'U002', 'Martin', 'Anne', 'Adresse 2', '+242069033344', 'anne.martin@mail.com', @Soc1, 'SOC001', GETDATE(), 'ADMIN'),
-(@U3, 'U003', 'Bernard', 'Paul', 'Adresse 3','+242058555666', 'paul.bernard@mail.com', @Soc1, 'SOC001', GETDATE(), 'ADMIN'),
-(@U4, 'U004', 'Leroy', 'Claire', 'Adresse 4','+2420600777888', 'claire.leroy@mail.com', @Soc2, 'SOC002', GETDATE(), 'ADMIN'),
-(@U5, 'U005', 'Moreau', 'Luc', 'Adresse 5', '600999000', 'luc.moreau@mail.com', @Soc2, 'SOC002', GETDATE(), 'ADMIN'),
-(@U6, 'U006', 'Fabre', 'Sophie', 'Adresse 6', '601111222', 'sophie.fabre@mail.com', @Soc2, 'SOC002', GETDATE(), 'ADMIN');
+(@U1, 'U001', 'Dupont', 'Jean', 'Adresse 1', '+242063122312', 'jean.dupont@mail.com', @Soc1, @S1, '', '', GETDATE(), 'ADMIN'),
+(@U2, 'U002', 'Martin', 'Anne', 'Adresse 2', '+242069033344', 'anne.martin@mail.com', @Soc1, @S1, '', '', GETDATE(), 'ADMIN'),
+(@U3, 'U003', 'Bernard', 'Paul', 'Adresse 3','+242058555666', 'paul.bernard@mail.com', @Soc1, @S1, '', '', GETDATE(), 'ADMIN'),
+(@U4, 'U004', 'Leroy', 'Claire', 'Adresse 4','+2420600777888', 'claire.leroy@mail.com', @Soc2, @S2, '', '', GETDATE(), 'ADMIN'),
+(@U5, 'U005', 'Moreau', 'Luc', 'Adresse 5', '600999000', 'luc.moreau@mail.com', @Soc2, @S2, '', '', GETDATE(), 'ADMIN'),
+(@U6, 'U006', 'Fabre', 'Sophie', 'Adresse 6', '601111222', 'sophie.fabre@mail.com', @Soc2, @S2, '', '', GETDATE(), 'ADMIN');
 
 -- ============================================
 -- 4️⃣ PlanComptable
@@ -108,7 +127,7 @@ DECLARE @NO4 UNIQUEIDENTIFIER = NEWID();
 DECLARE @NO5 UNIQUEIDENTIFIER = NEWID();
 DECLARE @NO6 UNIQUEIDENTIFIER = NEWID();
 
-INSERT INTO NatureOperation (idnature, codenature, idsociete, idcompte, libelle, avanceAjustifier, imputationTiers, actif, demandeDecaissement, createdat, createdby)
+INSERT INTO NatureOperation (idnature, codenature, idsociete, idcompte, libelle, avanceajustifier, imputationtiers, actif, demandeDecaissement, createdat, createdby)
 VALUES
 (@NO1, 'NAT001', @Soc1, @PC2, 'Achat eau fontaines', 0, 0, 1, 1, GETDATE(), 'ADMIN'),
 (@NO2, 'NAT002', @Soc1, @PC2, 'Achat service nettoyage', 0, 0, 1, 0, GETDATE(), 'ADMIN'),
@@ -187,37 +206,6 @@ VALUES
 (@C6, 'CA006', @U6, @Soc3, 1, GETDATE(), 'ADMIN');
 
 -- ============================================
--- 🔟 Compteurs (exemple initialisation)
--- ============================================
-INSERT INTO Compteurs (prefixe, annee, mois, jour, compteur, createdat, createdby)
-VALUES
-('OP', 2025, 1, 1, 0, GETDATE(), 'ADMIN'),
-('OP', 2025, 1, 2, 0, GETDATE(), 'ADMIN'),
-('OP', 2025, 1, 3, 0, GETDATE(), 'ADMIN'),
-('OP', 2025, 1, 4, 0, GETDATE(), 'ADMIN'),
-('OP', 2025, 1, 5, 0, GETDATE(), 'ADMIN'),
-('OP', 2025, 1, 6, 0, GETDATE(), 'ADMIN');
-
--- ============================================
--- 11️⃣ Sites
--- ============================================
-DECLARE @S1 UNIQUEIDENTIFIER = NEWID();
-DECLARE @S2 UNIQUEIDENTIFIER = NEWID();
-DECLARE @S3 UNIQUEIDENTIFIER = NEWID();
-DECLARE @S4 UNIQUEIDENTIFIER = NEWID();
-DECLARE @S5 UNIQUEIDENTIFIER = NEWID();
-DECLARE @S6 UNIQUEIDENTIFIER = NEWID();
-
-INSERT INTO Sites (idsite, idsociete, idcentreanalytique, codeanalytique, libelle, email, telephone, adresse, estcentreanalytique, createdat, createdby)
-VALUES
-(@S1, @Soc1, NULL, 'CA001', 'Site Alpha', 'alpha@site.com', '600111222', 'Rue A', 0, GETDATE(), 'ADMIN'),
-(@S2, @Soc1, NULL, 'CA002', 'Site Beta', 'beta@site.com', '600333444', 'Rue B', 0, GETDATE(), 'ADMIN'),
-(@S3, @Soc2, NULL, 'CA003', 'Site Gamma', 'gamma@site.com', '600555666', 'Rue C', 0, GETDATE(), 'ADMIN'),
-(@S4, @Soc2, NULL, 'CA004', 'Site Delta', 'delta@site.com', '600777888', 'Rue D', 0, GETDATE(), 'ADMIN'),
-(@S5, @Soc3, NULL, 'CA005', 'Site Epsilon', 'epsilon@site.com', '600999000', 'Rue E', 0, GETDATE(), 'ADMIN'),
-(@S6, @Soc3, NULL, 'CA006', 'Site Zeta', 'zeta@site.com', '601111222', 'Rue F', 0, GETDATE(), 'ADMIN');
-
--- ============================================
 -- 12️⃣ Departement
 -- ============================================
 DECLARE @D1 UNIQUEIDENTIFIER = NEWID();
@@ -246,7 +234,7 @@ DECLARE @CA4 UNIQUEIDENTIFIER = NEWID();
 DECLARE @CA5 UNIQUEIDENTIFIER = NEWID();
 DECLARE @CA6 UNIQUEIDENTIFIER = NEWID();
 
-INSERT INTO CentreAnalytique (idcentreanalytique, idsociete, code, libelle, actif, createdat, createdby)
+INSERT INTO CentreAnalytique (idcentreanalytique, idsociete, codecentreanalytique, libelle, actif, createdat, createdby)
 VALUES
 (@CA1, @Soc1, 'CA001', 'Agriculture', 1, GETDATE(), 'ADMIN'),
 (@CA2, @Soc1, 'CA002', 'Informatique', 1, GETDATE(), 'ADMIN'),
@@ -265,11 +253,11 @@ DECLARE @AA4 UNIQUEIDENTIFIER = NEWID();
 DECLARE @AA5 UNIQUEIDENTIFIER = NEWID();
 DECLARE @AA6 UNIQUEIDENTIFIER = NEWID();
 
-INSERT INTO AffectationAnalytique (idaffectation, idsociete, idsite, iddepartement, idcentre, idnature, actif, createdat, createdby)
+INSERT INTO Affectation (idaffectation, idsociete, idsite, iddepartement, idcentreanalytique, idnature, actif, createdat, createdby)
 VALUES
-(@AA1, @Soc1, @S1, @Dept1, @CA1, @NO1, 1, GETDATE(), 'ADMIN'),
-(@AA2, @Soc1, @S2, @Dept2, @CA2, @NO2, 1, GETDATE(), 'ADMIN'),
-(@AA3, @Soc2, @S3, @Dept1, @CA3, @NO3, 1, GETDATE(), 'ADMIN'),
-(@AA4, @Soc2, @S4, @Dept2, @CA4, @NO4, 1, GETDATE(), 'ADMIN'),
-(@AA5, @Soc1, @S2, @Dept1, @CA5, @NO5, 1, GETDATE(), 'ADMIN'),
-(@AA6, @Soc2, @S4, @Dept2, @CA6, @NO6, 1, GETDATE(), 'ADMIN');
+(@AA1, @Soc1, @S1, @D1, @CA1, @NO1, 1, GETDATE(), 'ADMIN'),
+(@AA2, @Soc1, @S2, @D2, @CA2, @NO2, 1, GETDATE(), 'ADMIN'),
+(@AA3, @Soc2, @S3, @D1, @CA3, @NO3, 1, GETDATE(), 'ADMIN'),
+(@AA4, @Soc2, @S4, @D2, @CA4, @NO4, 1, GETDATE(), 'ADMIN'),
+(@AA5, @Soc1, @S2, @D1, @CA5, @NO5, 1, GETDATE(), 'ADMIN'),
+(@AA6, @Soc2, @S4, @D2, @CA6, @NO6, 1, GETDATE(), 'ADMIN');

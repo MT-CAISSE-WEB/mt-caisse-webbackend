@@ -1,3 +1,5 @@
+const societeservice = require("../../gestion_organisation/services/societe.service");
+const deviseservice = require("../../gestion_organisation/services/devise.service");
 const enteteoperationmodel = require("../models/enteteoperation.model");
 const { v4: uuidv4 } = require('uuid');
 
@@ -23,29 +25,32 @@ async function get_all_enteteoperations() {
 
 async function create_enteteoperation(data) {
   if (!data.dateoperation) {
-    throw new Error("Tous les champs (dateoperation) sont requis.");
+    throw new Error("Tous les champs (dateoperation) est requis.");
   }
 
   //Récuperer la societe sur l'utilisateur connecté
 
-  //Générer le numero d'operation
-  const annee = String(new Date(data.dateoperation).getFullYear());
-  const prefix = "num";
-  const numerogenere = await enteteoperation.create_numoperation(prefix, annee);
+  //Récuperer la devise
+  let devise = null;
+  if(data.iddevise){
+    devise = await deviseservice.getonedevise(data.iddevise);
+  }
 
+  //Générer le numero d'operation
+  const prefix = "NUM";
+  const numerogenere = await enteteoperation.create_numoperation(prefix, data.dateoperation);
   const today = new Date();
   const newenteteoperation = new enteteoperationmodel(
     uuidv4(),   
     data.codeoperation || numerogenere, 
     data.iddemande, 
-    data.codedemande || null,  
     data.idsociete,
-    data.codesociete || null,  
+    data.idsite,
+    data.iddevise,
+    devise.data.code,
     data.dateoperation,
     data.createdat || today,
-    data.createdby || 'System', 
-    data.updatedat,
-    data.updatedby);
+    data.createdby || 'System');
   const recorded = await newenteteoperation.create_enteteoperationmodel(newenteteoperation);
   // si le modèle renvoie une erreur
   if (!recorded.success) {
@@ -75,7 +80,7 @@ async function update_enteteoperation(identeteoperation, data) {
   }
 
   try {
-    const enteteoperation_ = await enteteoperation.update_enteteoperation(data.codeenteteoperation, data);
+    const enteteoperation_ = await enteteoperation.update_enteteoperation(data.codeoperation, data);
     return enteteoperation_.recordset;
   } catch (err) {
     console.log(`Erreur de modification: ${err}`.cyan.bold);

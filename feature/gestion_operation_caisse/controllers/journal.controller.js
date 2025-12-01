@@ -7,7 +7,9 @@ const ErrorResponse = require("../../../shared/utils/errorResponse");
  */
 module.exports.get_journals = asyncHandler(async(req, res, next) => {
   try {
-    const journals = await journalservice.get_all_journals();
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const limit = req.query.limit ? parseInt(req.query.limit) : 5;
+    const journals = await journalservice.get_all_journals(page, limit);
     res.json({ success: true, data: journals });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur", error });
@@ -59,6 +61,7 @@ module.exports.update_journal = asyncHandler(async(req, res, next) => {
 module.exports.delete_journal = asyncHandler(async(req, res, next) => {
   try {
     const idjournal = req.params.id;
+    console.log(idjournal)
     const journal_ = await journalservice.delete_journal(idjournal);
     res.json({ success: true, message: "journal supprimée" });
   } catch (error) {

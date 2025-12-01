@@ -2,6 +2,7 @@ const { DateTime } = require('mssql');
 const {sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const journalModel = require('./journal.model');
+const { caisseQueries } = require('../queries/queryIndex');
 //const devisemodel = require('');
 const journalmodel = new journalModel();
 //const comptemodel = require('');
@@ -9,35 +10,38 @@ const journalmodel = new journalModel();
 //const comptemodel = require('');
 
 const queryInsert = `
-        INSERT INTO Caisse (idcaisse,codecaisse, libelle, idjournal, codejournal, iddevise, codedevise, idsite, codesite, idsociete, codesociete, idcompte, numcompte, actif, createdat, createdby, updatedat, updatedby)
+        INSERT INTO Caisse (idcaisse,codecaisse, libelle, idjournal, iddevise, idsite, idsociete, idcompte, actif, createdat, createdby, updatedat, updatedby)
         OUTPUT INSERTED.*
-        VALUES (@idcaisse,@codecaisse, @libelle, @idjournal, @codejournal, @iddevise, @codedevise, @idsite, @codesite, @idsociete, @codesociete, @idcompte, @numcompte, @actif, @createdat, @createdby, @updatedat, @updatedby)
+        VALUES (@idcaisse,@codecaisse, @libelle, @idjournal, @iddevise, @idsite, @idsociete, @idcompte, @actif, @createdat, @createdby, @updatedat, @updatedby)
         `;
 
-const queryUpdate = `UPDATE Caisse SET codecaisse = @codecaisse, libelle = @libelle, idjournal = @idjournal, codejournal = @codejournal, iddevise = @iddevise, codedevise = @codedevise, idsite = @idsite, codesite = @codesite, idsociete = @idsociete, codesociete = @codesociete, idcompte = @idcompte, numcompte = @numcompte, actif = @actif, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE codecaisse = @codecaisse`;
+const queryUpdate = `UPDATE Caisse SET codecaisse = @codecaisse, libelle = @libelle, idjournal = @idjournal,  iddevise = @iddevise, idsite = @idsite, idsociete = @idsociete, idcompte = @idcompte, actif = @actif, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE codecaisse = @codecaisse`;
 
 class caisseModel {
-    constructor(idcaisse,codecaisse,libelle,idjournal,codejournal,iddevise,codedevise,idsite,codesite,idsociete,codesociete,idcompte,numcompte,actif,createdat,createdby,updatedat,updatedby)
-    {
-        this.idcaisse = idcaisse;
-        this.codecaisse = codecaisse;
-        this.libelle = libelle;
-        this.idjournal = idjournal;
-        this.codejournal = codejournal;
-        this.iddevise = iddevise;
-        this.codedevise = codedevise;
-        this.idsite = idsite;
-        this.codesite = codesite;
-        this.idsociete = idsociete;
-        this.codesociete = codesociete;
-        this.idcompte = idcompte;
-        this.numcompte = numcompte;
-        this.actif = actif;
-        this.createdat = createdat;
-        this.createdby = createdby;
-        this.updatedat = updatedat;
-        this.updatedby = updatedby;
-    }
+  constructor(idcaisse,codecaisse,libelle, idjournal, iddevise, idsite, idsociete,idcompte,actif,createdat,createdby,updatedat,updatedby, journal = null, devise = null, site = null, societe = null, compte = null) 
+  {
+    this.idcaisse = idcaisse;
+    this.codecaisse = codecaisse;
+    this.libelle = libelle;
+
+    this.idjournal = idjournal;
+    this.iddevise = iddevise;   
+    this.idsite = idsite;     
+    this.idsociete = idsociete;   
+    this.idcompte = idcompte;     
+
+    this.actif = actif;
+    this.createdat = createdat;
+    this.createdby = createdby;
+    this.updatedat = updatedat;
+    this.updatedby = updatedby;
+
+    this.journal = journal;   // peut être null
+    this.devise = devise;     // peut être null
+    this.site = site;         // peut être null
+    this.societe = societe;   // peut être null
+    this.compte = compte;     // peut être null
+  }
 
     async create_caissemodel() {
         const pool = await connectDB();
@@ -50,31 +54,35 @@ class caisseModel {
             .input('idsite', sql.UniqueIdentifier, this.idsite)
             .input('idsociete', sql.UniqueIdentifier, this.idsociete)
             .input('idcompte', sql.UniqueIdentifier, this.idcompte)
-            .input('codejournal', sql.NVarChar(24), this.codejournal)
-            .input('codedevise', sql.NVarChar(24), this.codedevise)
-            .input('codesite', sql.NVarChar(24), this.codesite)
-            .input('codesociete', sql.NVarChar(24), this.codesociete)
-            .input('numcompte', sql.NVarChar(24), this.numcompte)
             .input('libelle', sql.NVarChar(50), this.libelle)
             .input('actif', sql.Int, this.actif)
             .input('createdat', sql.DateTime, this.createdat)
             .input('createdby', sql.NVarChar(100), this.createdby)
             .input('updatedat', sql.DateTime, this.updatedat)
             .input('updatedby', sql.NVarChar(100), this.updatedby)
-            .query(queryInsert);
+            .query(caisseQueries.insert);
             
+            console.log(result);
             return { success: true, data: result.recordset[0] };
         } catch (error) {
             return { success: false, message: error.message };
         }
     }
 
-    async get_allcaisses () {
+    async get_allcaisses (page = 1, limit = 5) {
         const pool = await connectDB();
-        const query = "SELECT * FROM Caisse"
+        const offset = (page - 1) * limit;
         try {
-            const result = await pool.request().query(query);
-            return result;
+            const result = await pool.request()
+            .input('offset', sql.Int, offset)
+            .input('limit', sql.Int, limit)
+            .query(caisseQueries.getAll);
+            
+            const caisses = result.recordsets[0];
+            const total = result.recordsets[1][0].total;
+            const totalPages = Math.ceil(total / limit);
+
+            return {page, limit, total, totalPages, data: caisses};
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         }
@@ -128,16 +136,11 @@ class caisseModel {
                     .input('idsite', sql.UniqueIdentifier, data.idsite)
                     .input('idsociete', sql.UniqueIdentifier, data.idsociete)
                     .input('idcompte', sql.UniqueIdentifier, data.idcompte)
-                    .input('codejournal', sql.NVarChar(24), data.codejournal)
-                    .input('codedevise', sql.NVarChar(24), data.codedevise)
-                    .input('codesite', sql.NVarChar(24), data.codesite)
-                    .input('codesociete', sql.NVarChar(24), data.codesociete)
-                    .input('numcompte', sql.NVarChar(24), data.numcompte)
                     .input('libelle', sql.NVarChar(50), data.libelle)
                     .input('actif', sql.Int, data.actif)
                     .input('updatedAt', sql.DateTime, new Date())
                     .input('updatedBy', sql.NVarChar(100), data.updatedby || 'System')
-                    .query(queryUpdate);
+                    .query(caisseQueries.update);
                 return result;
             } else {
                 // 3️ Sinon → INSERT
@@ -149,18 +152,13 @@ class caisseModel {
                     .input('idsite', sql.UniqueIdentifier, data.idsite)
                     .input('idsociete', sql.UniqueIdentifier, data.idsociete)
                     .input('idcompte', sql.UniqueIdentifier, data.idcompte)
-                    .input('codejournal', sql.NVarChar(24), data.codejournal)
-                    .input('codedevise', sql.NVarChar(24), data.codedevise)
-                    .input('codesite', sql.NVarChar(24), data.codesite)
-                    .input('codesociete', sql.NVarChar(24), data.codesociete)
-                    .input('numcompte', sql.NVarChar(24), data.numcompte)
                     .input('libelle', sql.NVarChar(50), data.libelle)
                     .input('actif', sql.Int, data.actif)
                     .input('createdat', sql.DateTime, new Date())
                     .input('createdby', sql.NVarChar(100), data.createdby || 'System')
                     .input('updatedat', sql.DateTime, new Date())
                     .input('updatedby', sql.NVarChar(100), data.updatedby || 'System')
-                    .query(queryInsert);
+                    .query(caisseQueries.insert);
                 return result;
             }
         } catch (error) {

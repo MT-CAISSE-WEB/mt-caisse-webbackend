@@ -5,21 +5,22 @@ const societemodel = require('../../gestion_organisation/models/societe.model');
 //const demandemodel = require('');
 
 const queryInsert = `
-        INSERT INTO EnteteOperationCaisse (idoperation, codeoperation, iddemande, codedemande, idsociete, codesociete, dateoperation, createdat, createdby, updatedat, updatedby)
+        INSERT INTO EnteteOperationCaisse (idoperation, codeoperation, iddemande, idsociete, idsite, iddevise, codedevise, dateoperation, createdat, createdby, updatedat, updatedby)
         OUTPUT INSERTED.*
-        VALUES (@idoperation,@codeoperation, @iddemande, @codedemande, @idsociete, @codesociete, @dateoperation, @createdat, @createdby, @updatedat, @updatedby)
+        VALUES (@idoperation,@codeoperation, @iddemande, @idsociete, @idsite, @iddevise, @codedevise, @dateoperation, @createdat, @createdby, @updatedat, @updatedby)
         `;
-const queryUpdate = `UPDATE EnteteOperationCaisse SET codeoperation = @codeoperation, iddemande = @iddemande, codedemande = @codedemande, idsociete = @idsociete, codesociete = @codesociete, dateoperation = @dateoperation, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE codeoperation = @codeoperation`;
+const queryUpdate = `UPDATE EnteteOperationCaisse SET iddemande = @iddemande, idsociete = @idsociete, idsite = @idsite, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE codeoperation = @codeoperation`;
 const querySequence = `SELECT NEXT VALUE FOR SeqNumeroOperation AS seq;`;
 class enteteOperationModel {
-    constructor(idoperation, codeoperation, iddemande, codedemande, idsociete, codesociete, dateoperation,createdat,createdby,updatedat,updatedby)
+    constructor(idoperation, codeoperation, iddemande, idsociete, idsite, iddevise, codedevise, dateoperation,createdat,createdby,updatedat,updatedby)
     {
         this.idoperation = idoperation;
         this.codeoperation = codeoperation;
         this.iddemande = iddemande;
-        this.codedemande = codedemande;
         this.idsociete = idsociete;
-        this.codesociete = codesociete;
+        this.idsite = idsite;
+        this.iddevise = iddevise;
+        this.codedevise = codedevise;
         this.dateoperation = dateoperation;
         this.createdat = createdat;
         this.createdby = createdby;
@@ -34,9 +35,10 @@ class enteteOperationModel {
             .input('idoperation', sql.UniqueIdentifier, this.idoperation)
             .input('codeoperation', sql.NVarChar(24), this.codeoperation)
             .input('iddemande', sql.UniqueIdentifier, this.iddemande)
-            .input('codedemande', sql.NVarChar(24), this.codedemande)
             .input('idsociete', sql.UniqueIdentifier, this.idsociete)
-            .input('codesociete', sql.NVarChar(24), this.codesociete)
+            .input('idsite', sql.UniqueIdentifier, this.idsite)
+            .input('iddevise', sql.UniqueIdentifier, this.iddevise)
+            .input('codedevise', sql.NVarChar(50), this.codedevise)
             .input('dateoperation', sql.DateTime, this.dateoperation)
             .input('createdat', sql.DateTime, this.createdat)
             .input('createdby', sql.NVarChar(100), this.createdby)
@@ -50,12 +52,17 @@ class enteteOperationModel {
         }
     }
 
-
-    async create_numoperation(prefixe, annee){
+    async create_numoperation(prefixe, dte){
+        const date = new Date(dte);
+        const annee = String(date.getFullYear());
+        const mois = String(date.getMonth() + 1).padStart(2, '0'); // +1 car les mois commencent à 0
+        const jour = String(date.getDate()).padStart(2, '0');
         const pool = await connectDB();
         const result = await pool.request()
             .input('prefixe', sql.NVarChar, prefixe)
             .input('annee', sql.NVarChar, annee)
+            .input('mois', sql.NVarChar, mois)
+            .input('jour', sql.NVarChar, jour)
             .output('numero', sql.NVarChar(50))
             .execute('GenererNumeroOperation');
 
@@ -108,7 +115,6 @@ class enteteOperationModel {
                     .input('iddemande', sql.UniqueIdentifier, data.iddemande)
                     .input('codedemande', sql.NVarChar(24), data.codedemande)
                     .input('idsociete', sql.UniqueIdentifier, data.idsociete)
-                    .input('codesociete', sql.NVarChar(24), data.codesociete)
                     .input('updatedat', sql.DateTime, new Date())
                     .input('updatedby', sql.NVarChar(100), data.updatedby || 'System')
                     .query(queryUpdate);
@@ -116,17 +122,16 @@ class enteteOperationModel {
             } else {
                 // 3️ Sinon → INSERT
                 //Générer le numero d'operation
-                const annee = String(new Date(data.dateoperation).getFullYear());
                 const prefix = "num";
-                const numerogenere = await this.create_numoperation(prefix, annee);
+                const numerogenere = await this.create_numoperation(prefix, data.dateoperation);
 
                 const result = await pool.request()
                     .input('idoperation', sql.UniqueIdentifier, uuidv4())
                     .input('codeoperation', sql.NVarChar(24), numerogenere)
                     .input('iddemande', sql.UniqueIdentifier, data.iddemande)
-                    .input('codedemande', sql.NVarChar(24), data.codedemande || 'System')
                     .input('idsociete', sql.UniqueIdentifier, data.idsociete)
-                    .input('codesociete', sql.NVarChar(24), data.codesociete)
+                    .input('iddevise', sql.UniqueIdentifier, data.iddevise)
+                    .input('codedevise', sql.NVarChar(25), data.codedevise)
                     .input('dateoperation', sql.DateTime, data.dateoperation)
                     .input('createdat', sql.DateTime, new Date())
                     .input('createdby', sql.NVarChar(100), data.createdBy || 'System')

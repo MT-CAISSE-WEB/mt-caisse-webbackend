@@ -1,12 +1,14 @@
 const journalmodel = require("../models/journal.model");
+const societemodel = require("../../gestion_organisation/models/societe.model")
 const { v4: uuidv4 } = require('uuid');
+const PaginationModel = require("../../../shared/utils/model");
 
 let journal = new journalmodel();
 let journals = [];
 
-async function get_all_journals() {
-  const result = await journal.get_alljournals();
-  journals = result.recordset.map(item => new journalmodel(
+async function get_all_journals(page = 1, limit = 5) {
+  const result = await journal.get_alljournals(page, limit);
+  journals = result.data.map(item => new journalmodel(
     item.idjournal,
     item.codejournal,
     item.idsociete, 
@@ -15,8 +17,9 @@ async function get_all_journals() {
     item.createdat, 
     item.createdby, 
     item.updatedat,  
-    item.updatedby));
-  return journals;
+    item.updatedby,
+  ));
+  return new PaginationModel(result.page, result.limit, result.total, journals);
 }
 
 async function create_journal(data) {
@@ -27,13 +30,15 @@ async function create_journal(data) {
   const today = new Date();
   const newjournal = new journalmodel(
     uuidv4(), 
-    data.codejournal, 
+    data.codejournal,
+    data.idsociete, 
     data.designation,  
     data.actif,  
     data.createdat || today, 
-    data.createdby || 'System', 
-    data.updatedat, 
-    data.updatedby);
+    data.createdby || 'System',
+    data.updatedat,
+    data.updatedby || null,
+  );
   const recorded = await newjournal.create_journalmodel(newjournal);
   // si le modèle renvoie une erreur
   if (!recorded.success) {
@@ -62,6 +67,7 @@ async function update_journal(idjournal, data) {
     throw new Error("Erreur de donnée");
   }
 
+  console.log("ok")
   try {
     const journal_ = await journal.update_journal(data.codejournal, data);
     return journal_.recordset;

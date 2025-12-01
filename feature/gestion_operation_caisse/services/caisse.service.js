@@ -1,33 +1,57 @@
 const caissemodel = require("../models/caisse.model");
 const journalmodel = require("../models/journal.model");
+const devisemodel = require("../../gestion_organisation/models/devise.model");
+const societemodel = require("../../gestion_organisation/models/societe.model");
+const sitemodel = require("../../gestion_organisation/models/site.model");
 const { v4: uuidv4 } = require('uuid');
+const PaginationModel = require("../../../shared/utils/model");
 
 let caisse = new caissemodel();
 let journal= new journalmodel();
 let caisses = [];
 
-async function get_all_caisses() {
-  const result = await caisse.get_allcaisses();
-  caisses = result.recordset.map(item => new caissemodel(
-    item.idcaisse,
-    item.codecaisse, 
-    item.libelle, 
-    item.idjournal, 
-    item.codejournal, 
-    item.iddevise, 
-    item.codedevise, 
-    item.idsite, 
-    item.codesite, 
-    item.idsociete, 
-    item.codesociete, 
-    item.idcompte, 
-    item.numcompte,
-    item.actif, 
-    item.createdat, 
-    item.createdby, 
-    item.updatedat,  
-    item.updatedby));
-  return caisses;
+async function get_all_caisses(page = 1, limit = 5) {
+  const result = await caisse.get_allcaisses(page, limit);
+
+  try {
+    caisses = result.data.map(item => new caissemodel(
+      item.idcaisse,
+      item.codecaisse,
+      item.libelle,
+      item.idjournal,
+      item.iddevise,
+      item.idsite,
+      item.idsociete,
+      item.idcompte,
+      item.actif,
+      item.createdat,
+      item.createdby,
+      item.updatedat,
+      item.updatedby,
+      item.idjournal ? new journalmodel(
+        item.journal_idjournal, item.journal_codejournal, item.journal_idsociete,  item.journal_designation,  item.journal_actif, item.journal_createdat, item.journal_createdby, item.journal_updatedat, item.journal_updatedby) : null,
+      // Devise
+      item.iddevise ? new devisemodel(
+        item.devise_iddevise, item.devise_codedevise, item.devise_intitule, item.devise_codeiso, item.devise_actif, item.devise_createdat, item.devise_createdby, item.devise_updatedat, item.devise_updatedby) : null,
+      // Site
+      item.idsite ? new sitemodel(
+        item.site_idsite, item.site_idsociete, null, item.site_idcentreanalytique, item.site_libelle, item.site_email, item.site_telephone, item.site_adresse, item.site_estcentreanalytique,
+        item.site_createdat, item.site_updatedat, item.site_createdby, item.site_updatedby ) : null,
+
+      item.idsociete ? new societemodel(
+        item.societe_idsociete, item.societe_codesociete, item.societe_raisonsociale, item.societe_rccm, item.societe_numnui, item.societe_email, item.societe_telephone, item.societe_logo, item.societe_adresse, item.societe_suivibudgetaire, item.societe_createdat, item.societe_updatedat, item.societe_createdby, item.societe_updatedby
+      ) : null,
+
+      // Compte comptable
+      item.idcompte ? {
+        "idcompte" : item.compte_idcompte, "idsociete" : item.compte_idsociete, "numcompte" : item.compte_numcompte, "libelle" : item.compte_libelle, "ventillable" : item.compte_ventillable, "auxiliaire" : item.compte_auxiliaire, "actif" : item.compte_actif, "suivibudgetaire" : item.compte_suivibudgetaire, "suivibudgetairemensuel" : item.compte_suivibudgetairemensuel,
+        "createdat" : item.compte_createdat, "createdby" : item.compte_createdby, "updatedat" : item.compte_updatedat, "updatedby" : item.compte_updatedby
+      } : null
+    ));
+  } catch (error) {
+    console.log(error);
+  }
+  return new PaginationModel(result.page, result.limit, result.total, caisses);
 }
 
 async function create_caisse(data) {
@@ -52,16 +76,11 @@ async function create_caisse(data) {
     uuidv4(), 
     data.codecaisse, 
     data.libelle, 
-    data.idjournal, 
-    journaldata.codejournal || null, 
-    data.iddevise, 
-    data.codedevise || null, 
-    data.idsite, 
-    data.codesite || null,
-    data.idsociete, 
-    data.codesociete || null, 
-    data.idcompte, 
-    data.numcompte || null, 
+    data.journal, 
+    data.devise,  
+    data.site, 
+    data.societe, 
+    data.compte, 
     data.actif,  
     data.createdat || today, 
     data.createdby || 'System', 

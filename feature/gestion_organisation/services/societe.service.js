@@ -32,7 +32,7 @@ const { v4: uuidv4 } = require('uuid');
             END
         `;
 
-        const pool = await db.poolPromise;
+        const pool = await db.connectDB();
         const result = await pool.request()
             .input("idsociete", db.sql.UniqueIdentifier, idsociete)
             .input("codesociete", db.sql.NVarChar, codesociete)
@@ -69,7 +69,7 @@ const { v4: uuidv4 } = require('uuid');
  // Get all
 async function getallsociete(){
     try {
-        const pool = await db.poolPromise;
+        const pool = await db.connectDB();
         const query = "SELECT * FROM Societe";
         const result = await pool.request().query(query);
         return {
@@ -85,18 +85,15 @@ async function getallsociete(){
  //Get one
     async function getonesociete(idsociete){
         try {
-            const pool = await db.poolPromise;
+            const pool = await db.connectDB();
             const query = "SELECT * FROM Societe where idsociete = @idsociete";
             const result = await pool.request()
-            .input('idsociete',db.sql.UniqueIdentifier,iddevise)
+            .input('idsociete',db.sql.UniqueIdentifier,idsociete)
             .query(query);
 
             if(!result){
                 return {success:false,status:404,message:"Société non trouvée"};
             }
-
-            console.log(result.recordset[0]);
-
             return {
                 success:true,
                 status:200,
@@ -112,7 +109,7 @@ async function getallsociete(){
   {
       
       try {
-          const pool = await db.poolPromise;
+          const pool = await db.connectDB();
           const query = "DELETE FROM Societe where idsociete = @idsociete";
           const result = await pool.request()
           .input('idsociete',db.sql.UniqueIdentifier,idsociete)

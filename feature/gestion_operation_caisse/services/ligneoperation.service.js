@@ -1,3 +1,5 @@
+const societeservice = require("../../gestion_organisation/services/societe.service");
+const siteservice =  require("../../gestion_organisation/services/site.service");
 const enteteOperationModel = require("../models/enteteoperation.model");
 const ligneoperationmodel = require("../models/ligneoperation.model");
 const { v4: uuidv4 } = require('uuid');
@@ -47,37 +49,37 @@ async function create_ligneoperation(data) {
   // Récuperer le code societe, le code site, le code devise
 
   let enteteoperation = null;
+  let societe = null;
+  //let site = null;
   if(data.idoperation){
     enteteoperation = await operation.get_oneenteteoperation(data.idoperation);
-    console.log(enteteoperation);
+    societe = await societeservice.getonesociete(enteteoperation.idsociete);
+    // site = await siteservice.getonesite(enteteoperation.idsite);
   }
 
   const today = new Date();
   const newligneoperation = new ligneoperationmodel(
     uuidv4(),   
     data.idoperation, 
-    enteteoperation.codeoperation || null, 
-    data.idsociete,
-    data.codesociete || null, 
-    data.idsite,
-    data.codesite || null,
+    enteteoperation.codeoperation || null,
+    enteteoperation.idsociete || null,
+    societe.data.codesociete || null,  
     data.idtiers,
     data.codetiers || null, 
-    data.idnature || null, 
+    data.idnature, 
     data.codenature || null,
     data.idcentre, 
     data.codecentre || null,
-    data.iddevise,
-    data.codedevise || null,
     data.libelle, 
-    data.montantoperation, 
-    data.comptabilise,
-    data.numpiececomptable, 
-    data.datecomptabilisation,
+    data.montantoperation || null, 
+    data.comptabilise || null,
+    data.numpiececomptable || null, 
+    data.datecomptabilisation || null,
     data.createdat || today,
-    data.createdby || 'System', 
-    data.updatedat || today, 
-    data.updatedby || 'System');
+    data.createdby || 'System',
+    data.updatedat,
+    data.updatedby
+  );
   const recorded = await newligneoperation.create_ligneoperationmodel(newligneoperation);
   // si le modèle renvoie une erreur
   if (!recorded.success) {

@@ -13,8 +13,6 @@ const errorHandler = require('./shared/middlewares/error')
 
 
 //DECLARATION DES ROUTES
-// Societes routes
-const societesroutes = require("./feature/gestion_organisation/routes/societe.route");
 // Journal routes
 const journalRoutes = require("./feature/gestion_operation_caisse/routes/journal.route");
 // Caisse routes
@@ -90,8 +88,6 @@ app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, 'views'))
 
 //Regrouper toutes les routes
-app.use("/API/societe", societesroutes);
-
 //GESTION OPERATION CAISSE ROUTES
 app.use("/API/journal", journalRoutes);
 app.use("/API/caisse", caisseRoutes);

@@ -1,14 +1,25 @@
 const { DateTime } = require('mssql');
 const {sql, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
+const societe = require("../../gestion_organisation/models/departement.model"); 
 
 const queryInsert = `
         INSERT INTO Journal (idjournal, idsociete, codejournal, designation, actif, createdat, createdby, updatedat, updatedby)
         OUTPUT INSERTED.*
-        VALUES (@idjournal,@codejournal, @designation, @actif, @createdat, @createdby, @updatedat, @updatedby)
+        VALUES (@idjournal, @idsociete, @codejournal, @designation, @actif, @createdat, @createdby, @updatedat, @updatedby)
         `;
 
 const queryUpdate = `UPDATE Journal SET codejournal = @codejournal, designation = @designation, actif = @actif, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE codejournal = @codejournal`;
+
+const query = `
+        SELECT *
+        FROM Journal
+        ORDER BY createdat DESC
+        OFFSET @offset ROWS
+        FETCH NEXT @limit ROWS ONLY;
+
+        SELECT COUNT(*) AS total FROM Journal;
+    `;
 
 class journalModel {
     constructor(idjournal,codejournal, idsociete, designation,actif,createdat,createdby,updatedat,updatedby)
@@ -41,16 +52,26 @@ class journalModel {
             
             return { success: true, data: result.recordset[0] };
         } catch (error) {
+            console.log(error);
             return { success: false, message: error.message };
         }
     }
 
-    async get_alljournals () {
+    async get_alljournals (page = 1, limit = 50) {
         const pool = await connectDB();
-        const query = "SELECT *, s FROM Journal"
+        const offset = (page - 1) * limit;
         try {
-            const result = await pool.request().query(query);
-            return result;
+            //const result = await pool.request().query(query);
+            const result = await pool.request()
+            .input('offset', sql.Int, offset)
+            .input('limit', sql.Int, limit)
+            .query(query);
+
+            const journals = result.recordsets[0];
+            const total = result.recordsets[1][0].total;
+            const totalPages = Math.ceil(total / limit);
+
+            return {page, limit, total, totalPages, data: journals};
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         }

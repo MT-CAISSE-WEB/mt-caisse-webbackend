@@ -33,7 +33,6 @@ module.exports.get_oneligneoperation = asyncHandler(async(req, res, next) => {
 module.exports.create_ligneoperation = asyncHandler(async(req, res, next) => {
   try {
     const data = req.body;
-    console.log(data);
     const new_ligneoperation = await ligneoperationservice.create_ligneoperation(data);
     res.status(201).json({ success: true, data: new_ligneoperation });
   } catch (error) {
