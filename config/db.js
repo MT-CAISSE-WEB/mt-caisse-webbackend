@@ -3,6 +3,7 @@ dotenv.config({path: './config/.env'});
 const sql = require("mssql");
 const fs = require('fs');
 
+
 const config = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -10,8 +11,8 @@ const config = {
   database: process.env.DB_NAME,
   options: {
     encrypt: process.env.DB_ENCRYPT === 'true', // true si Azure
-    trustServerCertificate: false,
-    //instanceName: process.env.DB_INSTANCE || undefined, // Nom de l'instance SQL Server, si applicable
+    trustServerCertificate: true,
+    // instanceName: process.env.DB_INSTANCE || undefined, // Nom de l'instance SQL Server, si applicable
   },
 };
 
@@ -21,7 +22,7 @@ const createDB = async () =>{
     const table = fs.readFileSync("./config/test.sql", "utf8");
     await db.request().query(table);
     db.close();
-    console.log(`Tables créees`.yellow.bold);
+    // console.log(`Tables créees`.yellow.bold);
   } catch (error) {
     console.log(`Erreur de création des tables: ${error}`.red.bold);
   }
@@ -30,7 +31,7 @@ const createDB = async () =>{
 const connectDB = async () => {
   try {
     const db = await sql.connect({...config , database : 'MTCAISSEWEB'});
-    console.log(`Connecté à la base de données`.cyan.bold);
+    // console.log(`Connecté à la base de données`.cyan.bold);
     return db;
   } catch (error) {
     console.log(`${error}`.red.bold);
@@ -52,6 +53,7 @@ const connectInstance = async () => {
     console.log(`${err}`.cyan.bold);
   }
 }
+
 
 //un pool spécifique pour les opérations de la base de données
 // const poolPromise = new sql.ConnectionPool(config)
