@@ -5,6 +5,7 @@ const caissemodel = require('./caisse.model');
 //const societemodel = require('');
 //const sitemodel = require('');
 const operationmodel = require('./operation.model');
+const { operationQueries } = require('../queries/queryIndex');
 
 const queryInsert = `
         INSERT INTO TypeOperation (idtypeoperation, codetypeoperation, idoperation, codeoperation, idsociete, codesociete, idsite, codesite, idcaisse, codecaisse, montant, createdat, createdby, updatedat, updatedby)
@@ -61,12 +62,21 @@ class typeoperationModel {
         }
     }
 
-    async get_alltypeoperations () {
+    async get_alltypeoperations (page = 1, limit = 5) {
         const pool = await connectDB();
-        const query = "SELECT * FROM TypeOperation"
+        const offset = (page - 1) * limit;
+        //const query = "SELECT * FROM TypeOperation"
         try {
-            const result = await pool.request().query(query);
-            return result;
+            const result = await pool.request()
+            .input('offset', sql.Int, offset)
+            .input('limit', sql.Int, limit)
+            .query(operationQueries.getAll);
+
+            const operations = result.recordsets[0];
+            const total = result.recordsets[1][0].total;
+            const totalPages = Math.ceil(total / limit);
+            
+            return {page, limit, total, totalPages, data: operations};
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         }

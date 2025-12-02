@@ -32,8 +32,8 @@ async function create_enteteoperation(data) {
 
   //Récuperer la devise
   let devise = null;
-  if(data.iddevise){
-    devise = await deviseservice.getonedevise(data.iddevise);
+  if(data.devise){
+    devise = await deviseservice.getonedevise(data.devise);
   }
 
   //Générer le numero d'operation
@@ -43,12 +43,13 @@ async function create_enteteoperation(data) {
   const newenteteoperation = new enteteoperationmodel(
     uuidv4(),   
     data.codeoperation || numerogenere, 
-    data.iddemande, 
-    data.idsociete,
-    data.idsite,
-    data.iddevise,
+    data.iddemande ? data.iddemande : null, 
+    data.societe,
+    data.site,
+    data.devise,
     devise.data.code,
     data.dateoperation,
+    data.montant,
     data.createdat || today,
     data.createdby || 'System');
   const recorded = await newenteteoperation.create_enteteoperationmodel(newenteteoperation);

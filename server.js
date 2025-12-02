@@ -94,7 +94,7 @@ app.use("/API/caisse", caisseRoutes);
 app.use("/API/utilisateur_caisse", utilisateurcaisseRoutes);
 app.use("/API/entete_operation", enteteoperationRoutes);
 app.use("/API/ligne_operation", ligneoperationRoutes);
-app.use("/API/type_operation", typeoperationRoutes);
+app.use("/API/operation", typeoperationRoutes);
 //Budget
 app.use('/API/budget', budget_route)
 //Ligne budgetaire

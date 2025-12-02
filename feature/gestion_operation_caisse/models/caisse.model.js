@@ -3,10 +3,10 @@ const {sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const journalModel = require('./journal.model');
 const { caisseQueries } = require('../queries/queryIndex');
-//const devisemodel = require('');
+const deviseservice = require('../../gestion_organisation/services/devise.service');
 const journalmodel = new journalModel();
-//const comptemodel = require('');
-//const societemodel = require('');
+const siteservice = require('../../gestion_organisation/services/site.service');
+const societeservice = require('../../gestion_organisation/services/societe.service');
 //const comptemodel = require('');
 
 const queryInsert = `
@@ -101,15 +101,15 @@ class caisseModel {
             if (caisse.idjournal) {
                 journal = await journalmodel.get_onejournal(caisse.idjournal);
             }
-            // if (caisse.iddevise) {
-            //     devise = await devisemodel.get_onedevise(caisse.iddevise);
-            // }
-            // if (caisse.idsite) {
-            //     site = await sitemodel.get_onesite(caisse.idsite);
-            // }
-            // if (caisse.idsociete) {
-            //     devisereporting = await societemodel.get_onesociete(caisse.idsociete);
-            // }
+            if (caisse.iddevise) {
+                devise = await deviseservice.getonedevise(caisse.iddevise);
+            }
+            if (caisse.idsite) {
+                site = await siteservice.getonesite(caisse.idsite);
+            }
+            if (caisse.idsociete) {
+                devisereporting = await societeservice.getonesociete(caisse.idsociete);
+            }
             // if (caisse.idcompte) {
             //     compte = await comptemodel.get_onecompte(caisse.idcompte);
             // }

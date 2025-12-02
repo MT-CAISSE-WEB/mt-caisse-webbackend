@@ -7,7 +7,8 @@ const ErrorResponse = require("../../../shared/utils/errorResponse");
  */
 module.exports.get_typeoperations = asyncHandler(async(req, res, next) => {
   try {
-    const typeoperations = await typeoperationservice.get_all_typeoperations();
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const typeoperations = await typeoperationservice.get_all_typeoperations(page);
     res.json({ success: true, data: typeoperations });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur", error });

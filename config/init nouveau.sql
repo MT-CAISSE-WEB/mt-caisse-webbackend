@@ -626,14 +626,17 @@ BEGIN
         codeoperation NVARCHAR(50) UNIQUE,
         iddemande UNIQUEIDENTIFIER,
         idsociete UNIQUEIDENTIFIER,
+        idsite UNIQUEIDENTIFIER,
         iddevise UNIQUEIDENTIFIER,
         dateoperation DATETIME,
+        montant DECIMAL(22,9),
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
         FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
         FOREIGN KEY (iddevise) REFERENCES Devise(iddevise),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );
 END
