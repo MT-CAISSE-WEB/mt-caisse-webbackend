@@ -39,6 +39,16 @@ const societeroute = require('./feature/gestion_organisation/routes/societe.rout
 const siteroute = require('./feature/gestion_organisation/routes/site.route');
 // Département routes
 const departementroute = require('./feature/gestion_organisation/routes/departement.route');
+// Tiers routes
+const tiersroutes = require("./feature/gestion_donnee_base/routes/tiers.route");
+// Plan comptable routes
+const plancomptableroutes = require("./feature/gestion_donnee_base/routes/plancomptable.route");
+// Nature opérations routes
+const natureoperationroutes = require("./feature/gestion_donnee_base/routes/natureoperation.route");
+// Centre analytiques routes
+const centreanalytiqueroutes = require("./feature/gestion_donnee_base/routes/centreanalytique.route");
+// Affectation analytiques routes
+const affectationanalytiqueroutes = require("./feature/gestion_donnee_base/routes/affectationanalytique.route");
 
 
 //connexion db
@@ -105,6 +115,12 @@ app.use('/API',tauxdeviseroute);
 app.use('/API',societeroute);
 app.use('/API',siteroute);
 app.use('/API',departementroute);
+// Gestion donnee de base
+app.use("/API/tiers", tiersroutes);
+app.use("/API/plancomptable", plancomptableroutes);
+app.use("/API/natureoperation", natureoperationroutes);
+app.use("/API/centreanalytique", centreanalytiqueroutes);
+app.use("/API/affectationanalytique", affectationanalytiqueroutes);
 
 // GESTION DES ERREURS
 app.use(errorHandler)

@@ -3,15 +3,13 @@ const {sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const centreModel = require('./centreanalytique.model');
 const natureModel = require('./natureoperation.model');
-const societeModel = require('../../gestion_organisation/models/societe.model');
 const siteModel = require('../../gestion_organisation/models/site.model');
 const departementModel = require('../../gestion_organisation/models/departement.model');
-
-const centremodel = new centreModel()
-const naturemodel = new natureModel()
-const societemodel = new societeModel()
-const sitemodel = new siteModel()
-const departementmodel = new departementModel()
+const centremodel = new centreModel();
+const naturemodel = new natureModel();
+const sitemodel = new siteModel();
+const departementmodel = new departementModel();
+const societeservice = require("../../gestion_organisation/services/societe.service");
 
 
 
@@ -104,7 +102,7 @@ class AffectationAnalytiqueModel {
             if (affectation.idsociete || affectation.idsite || affectation.iddepartement 
                 || affectation.idcentreanalytique || affectation.idnature) 
                 {
-                societe = await societemodel.get_onesociete(affectation.idsociete);
+                societe = await societeservice.getonesociete(affectation.idsociete);
                 site = await sitemodel.get_onesite(affectation.idsite);
                 departement = await departementmodel.get_onedepartement(affectation.iddepartement);
                 centre = await centremodel.get_onecentre(affectation.idcentreanalytique);

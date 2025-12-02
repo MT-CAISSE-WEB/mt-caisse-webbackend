@@ -15,6 +15,7 @@
            this.updatedat = updatedat;
            this.updatedby = updatedby;
     }
-
  }
+
+ module.exports = departementmodel;
  
