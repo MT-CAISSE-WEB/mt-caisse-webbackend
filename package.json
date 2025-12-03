@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "nodemon node server",
-    "dev": "nodemon server",
+    "dev": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "MT Informatique",
@@ -27,6 +27,9 @@
     "mssql": "^12.1.0",
     "node-fetch": "^3.3.2",
     "path": "^0.12.7",
+
+    "sequelize": "^6.37.7",
+    "tedious": "^19.1.3",
     "uuid": "^13.0.0"
   }
 }

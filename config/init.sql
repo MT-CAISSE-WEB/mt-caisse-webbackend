@@ -400,7 +400,7 @@ END
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CircuitValidation')
 BEGIN
     CREATE TABLE CircuitValidation (
-        idcircuit UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idcircuitvalidation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codecircuitvalidation NVARCHAR(24) UNIQUE,
         typeentite NVARCHAR(100),
         typeaction NVARCHAR(100),
@@ -414,7 +414,7 @@ BEGIN
         updatedat Datetime,
         updatedby NVARCHAR(50),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idsite) REFERENCES Sites(idsite),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
         FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement)
     );
 END
@@ -438,7 +438,7 @@ BEGIN
         updatedby NVARCHAR(50),
         FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuit)
+        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation)
     );
 END
 
@@ -474,10 +474,10 @@ BEGIN
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
-        FOREIGN KEY (idsite) REFERENCES Sites(idsite),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
         FOREIGN KEY (idbudgetparent) REFERENCES Budget(idbudget),
-        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuit)
+        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation)
     );
 END
 
@@ -533,9 +533,9 @@ BEGIN
         updatedat Datetime,
         updatedby NVARCHAR(50),
         FOREIGN KEY (iddemandeur) REFERENCES Utilisateur(idutilisateur),
-        FOREIGN KEY (idcircuit) REFERENCES CircuitValidation(idcircuit),
+        FOREIGN KEY (idcircuit) REFERENCES CircuitValidation(idcircuitvalidation),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idsite) REFERENCES Sites(idsite),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
         FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
         FOREIGN KEY (iddevise) REFERENCES Devise(iddevise)
     );
@@ -685,7 +685,7 @@ BEGIN
         FOREIGN KEY (idoperation) REFERENCES EnteteOperationCaisse(idoperation),
 		FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
 		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-		FOREIGN KEY (idsite) REFERENCES Sites(idsite),
+		FOREIGN KEY (idsite) REFERENCES Site(idsite),
     );
 END
 
