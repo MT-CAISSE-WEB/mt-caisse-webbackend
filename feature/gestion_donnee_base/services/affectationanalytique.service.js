@@ -1,14 +1,14 @@
 const affectationanalytiquemodel = require("../models/affectationanalytique.model");
-
+const PaginationModel = require("../../../shared/utils/model");
 const { v4: uuidv4 } = require('uuid');
 
 let affectation = new affectationanalytiquemodel();
 
 let affectations = []; 
 
-async function get_all_affectations() {
-    const result = await affectation.get_allaffectations();
-    affectations = result.recordset.map(item => new affectationanalytiquemodel(
+async function get_all_affectations(page = 1, limit = 5) {
+    const result = await affectation.get_allaffectations(page, limit);
+    affectations = result.data.map(item => new affectationanalytiquemodel(
     item.idaffectation,
     item.codeaffectation,
     item.actif,
@@ -21,7 +21,9 @@ async function get_all_affectations() {
     item.updatedat, 
     item.createdby, 
     item.updatedby));
-  return affectations;
+
+  return new PaginationModel(result.page, result.limit, result.total, affectations);
+
 }
 
 
@@ -53,7 +55,7 @@ async function create_affectation(data) {
   if (!recorded.success) {
     throw new Error(recorded.message);
   }
-  return recorded;
+  return recorded.data;
 }
 
 

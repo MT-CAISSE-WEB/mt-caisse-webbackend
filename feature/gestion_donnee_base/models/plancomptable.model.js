@@ -1,5 +1,5 @@
 const { DateTime } = require('mssql');
-const {sql, connectInstance, connectDB} = require('../../../config/db');
+const {sql, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 
 const societeModel = require('../../gestion_organisation/models/societe.model');
@@ -20,6 +20,16 @@ ventillable = @ventillable, auxiliaire = @auxiliaire, actif = @actif,
 suivibudgetaire = @suivibudgetaire, suivibudgetairemensuel = @suivibudgetairemensuel, 
 idsociete = @idsociete, updatedat = @updatedat, updatedby = @updatedby 
 OUTPUT INSERTED.* WHERE idcompte = @idcompte`;
+
+const query = `
+        SELECT *
+        FROM PlanComptable
+        ORDER BY numcompte
+        OFFSET @offset ROWS
+        FETCH NEXT @limit ROWS ONLY;
+
+        SELECT COUNT(*) AS total FROM PlanComptable;
+    `;
 
 // Model plancomptable
 class PlanComptableModel {
@@ -62,6 +72,7 @@ class PlanComptableModel {
             .input('createdby', sql.NVarChar(50), this.createdby)
             .input('updatedby', sql.NVarChar(50), this.updatedby)
             .query(queryInsert);
+
             return { success: true, data: result.recordset[0] };
         } catch (error) {
             return { success: false, message: error.message };
@@ -70,12 +81,23 @@ class PlanComptableModel {
 
 
     // Rechercher tous les comptes OK
-    async get_allcomptes () {
+    async get_allcomptes (page = 1, limit = 50) {
         const pool = await connectDB();
-        const query = "SELECT * FROM PlanComptable"
+        const offset = (page - 1) * limit;
+
         try {
-            const result = await pool.request().query(query);
-            return result;
+            const result = await pool.request()
+            .input('offset', sql.Int, offset)
+            .input('limit', sql.Int, limit)
+            .query(query);
+
+            const comptes = result.recordsets[0];
+            const total = result.recordsets[1][0].total;
+            const totalPages = Math.ceil(total / limit);
+
+            // console.log(comptes)
+
+            return {page, limit, total, totalPages, data: comptes};
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         }

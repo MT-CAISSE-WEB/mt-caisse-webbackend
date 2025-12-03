@@ -1,5 +1,5 @@
 const { DateTime } = require('mssql');
-const {sql, connectInstance, connectDB} = require('../../../config/db');
+const {sql, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const societeModel = require('../../gestion_organisation/models/societe.model');
 const societemodel = new societeModel()
@@ -16,6 +16,17 @@ const queryInsert = `
 const queryUpdate = `UPDATE CentreAnalytique SET libelle = @libelle, actif = @actif,
         idsociete = @idsociete, updatedat = @updatedat, updatedby = @updatedby 
         OUTPUT INSERTED.* WHERE idcentreanalytique = @idcentreanalytique`;
+
+
+const query = `
+        SELECT *
+        FROM CentreAnalytique
+        ORDER BY codecentreanalytique
+        OFFSET @offset ROWS
+        FETCH NEXT @limit ROWS ONLY;
+
+        SELECT COUNT(*) AS total FROM CentreAnalytique;
+    `;
 
 // Model centreanalytique
 class CentreAnalytiqueModel {
@@ -57,12 +68,23 @@ class CentreAnalytiqueModel {
 
 
     // Rechercher tous les centres OK
-    async get_allcentres () {
+    async get_allcentres (page = 1, limit = 50) {
         const pool = await connectDB();
-        const query = "SELECT * FROM CentreAnalytique"
+        const offset = (page - 1) * limit;
+            
         try {
-            const result = await pool.request().query(query);
-            return result;
+            const result = await pool.request()
+            .input('offset', sql.Int, offset)
+            .input('limit', sql.Int, limit)
+            .query(query);
+
+            const centres = result.recordsets[0];
+            const total = result.recordsets[1][0].total;
+            const totalPages = Math.ceil(total / limit);
+
+            // console.log(centres)
+
+            return {page, limit, total, totalPages, data: centres};
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         }

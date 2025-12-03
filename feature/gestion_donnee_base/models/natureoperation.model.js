@@ -25,6 +25,17 @@ const queryUpdate = `UPDATE NatureOperation SET libelle = @libelle,
   updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE idnature = @idnature`;
 
 
+const query = `
+        SELECT *
+        FROM NatureOperation
+        ORDER BY codenature
+        OFFSET @offset ROWS
+        FETCH NEXT @limit ROWS ONLY;
+
+        SELECT COUNT(*) AS total FROM NatureOperation;
+    `;
+
+
 // Model natureoperation
 class NatureOperationModel {
     constructor(idnature, codenature, libelle, avanceajustifier, imputationtiers, 
@@ -74,12 +85,23 @@ class NatureOperationModel {
 
 
     // Rechercher toutes les natures d'opération
-    async get_allnatures () {
+    async get_allnatures (page = 1, limit = 50) {
         const pool = await connectDB();
-        const query = "SELECT * FROM NatureOperation"
+        const offset = (page - 1) * limit;
+    
         try {
-            const result = await pool.request().query(query);
-            return result;
+            const result = await pool.request()
+            .input('offset', sql.Int, offset)
+            .input('limit', sql.Int, limit)
+            .query(query);
+
+            const natures = result.recordsets[0];
+            const total = result.recordsets[1][0].total;
+            const totalPages = Math.ceil(total / limit);
+
+            // console.log(natures)
+
+            return {page, limit, total, totalPages, data: natures};
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         }

@@ -1,14 +1,15 @@
 const natureoperationmodel = require("../models/natureoperation.model");
-
 const { v4: uuidv4 } = require('uuid');
+const PaginationModel = require("../../../shared/utils/model");
+
 
 let nature = new natureoperationmodel();
 
 let natures = []; 
 
-async function get_all_natures() {
-    const result = await nature.get_allnatures();
-    natures = result.recordset.map(item => new natureoperationmodel(
+async function get_all_natures(page = 1, limit = 5) {
+    const result = await nature.get_allnatures(page, limit);
+    natures = result.data.map(item => new natureoperationmodel(
     item.idnature,
     item.codenature,
     item.libelle,
@@ -22,19 +23,19 @@ async function get_all_natures() {
     item.updatedat, 
     item.createdby, 
     item.updatedby));
-  return natures;
+
+  return new PaginationModel(result.page, result.limit, result.total, natures);
+
 }
 
 
 // OK
 async function create_nature(data) {
-  if (!data.codenature || !data.libelle || !data.avanceajustifier || !data.imputationtiers || 
-    !data.actif || !data.demandedecaissement || !data.idsociete || !data.idcompte) {
-    throw new Error("Tous les champs sont requis.");
+  if (!data.codenature || !data.libelle || !data.idsociete || !data.idcompte) {
+    return new Error("Tous les champs sont requis.");
   }
 
   const today = new Date();
-
   const newnature = new natureoperationmodel(
     uuidv4(), 
     data.codenature, 
@@ -55,7 +56,7 @@ async function create_nature(data) {
   if (!recorded.success) {
     throw new Error(recorded.message);
   }
-  return recorded;
+  return recorded.data;
 }
 
 

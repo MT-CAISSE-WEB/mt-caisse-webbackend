@@ -400,7 +400,7 @@ END
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CircuitValidation')
 BEGIN
     CREATE TABLE CircuitValidation (
-        idcircuitvalidation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idcircuit UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codecircuitvalidation NVARCHAR(24) UNIQUE,
         typeentite NVARCHAR(100),
         typeaction NVARCHAR(100),
@@ -438,7 +438,7 @@ BEGIN
         updatedby NVARCHAR(50),
         FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation)
+        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuit)
     );
 END
 
@@ -477,7 +477,7 @@ BEGIN
         FOREIGN KEY (idsite) REFERENCES Sites(idsite),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
         FOREIGN KEY (idbudgetparent) REFERENCES Budget(idbudget),
-        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation)
+        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuit)
     );
 END
 
@@ -533,7 +533,7 @@ BEGIN
         updatedat Datetime,
         updatedby NVARCHAR(50),
         FOREIGN KEY (iddemandeur) REFERENCES Utilisateur(idutilisateur),
-        FOREIGN KEY (idcircuit) REFERENCES CircuitValidation(idcircuitvalidation),
+        FOREIGN KEY (idcircuit) REFERENCES CircuitValidation(idcircuit),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
         FOREIGN KEY (idsite) REFERENCES Sites(idsite),
         FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),

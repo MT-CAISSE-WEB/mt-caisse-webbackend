@@ -1,5 +1,5 @@
 const { DateTime } = require('mssql');
-const {sql, connectInstance, connectDB} = require('../../../config/db');
+const {sql, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 
 const societeModel = require('../../gestion_organisation/models/societe.model');
@@ -16,6 +16,17 @@ const queryInsert = `
 const queryUpdate = `UPDATE Tiers SET designation = @designation, typetiers = @typetiers, 
         actif = @actif, idsociete = @idsociete, updatedat = @updatedat, updatedby = @updatedby 
         OUTPUT INSERTED.* WHERE idtiers = @idtiers`;
+
+const query = `
+        SELECT *
+        FROM Tiers
+        ORDER BY codetiers
+        OFFSET @offset ROWS
+        FETCH NEXT @limit ROWS ONLY;
+
+        SELECT COUNT(*) AS total FROM Tiers;
+    `;
+
 
 // Model Tiers
 class TiersModel {
@@ -60,12 +71,21 @@ class TiersModel {
 
 
     // Rechercher tous les tiers OK
-    async get_alltiers () {
+    async get_alltiers (page = 1, limit = 50) {
         const pool = await connectDB();
-        const query = "SELECT * FROM Tiers"
+        const offset = (page - 1) * limit;
+
         try {
-            const result = await pool.request().query(query);
-            return result;
+            const result = await pool.request()
+            .input('offset', sql.Int, offset)
+            .input('limit', sql.Int, limit)
+            .query(query);
+
+            const tiers = result.recordsets[0];
+            const total = result.recordsets[1][0].total;
+            const totalPages = Math.ceil(total / limit);
+
+            return {page, limit, total, totalPages, data: tiers};
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         }

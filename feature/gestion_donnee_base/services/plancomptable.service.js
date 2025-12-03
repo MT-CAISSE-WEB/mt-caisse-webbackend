@@ -1,14 +1,15 @@
 const plancomptablemodel = require("../models/plancomptable.model");
-
 const { v4: uuidv4 } = require('uuid');
+const PaginationModel = require("../../../shared/utils/model");
+
 
 let compte = new plancomptablemodel();
 
 let comptes = []; 
 
-async function get_all_comptes() {
-    const result = await compte.get_allcomptes();
-    comptes = result.recordset.map(item => new plancomptablemodel(
+async function get_all_comptes(page = 1, limit = 5) {
+    const result = await compte.get_allcomptes(page, limit);
+    comptes = result.data.map(item => new plancomptablemodel(
     item.idcompte,
     item.numcompte,
     item.libelle,
@@ -22,9 +23,11 @@ async function get_all_comptes() {
     item.updatedat, 
     item.createdby, 
     item.updatedby));
-  return comptes;
-}
 
+    // console.log(comptes)
+    
+  return new PaginationModel(result.page, result.limit, result.total, comptes);
+}
 
 // OK
 async function create_compte(data) {
@@ -55,7 +58,7 @@ async function create_compte(data) {
   if (!recorded.success) {
     throw new Error(recorded.message);
   }
-  return recorded;
+  return recorded.data;
 }
 
 

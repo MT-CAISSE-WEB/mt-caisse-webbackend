@@ -31,6 +31,17 @@ const queryUpdate = `UPDATE AffectationAnalytique SET actif = @actif,
         updatedat = @updatedat, updatedby = @updatedby 
         OUTPUT INSERTED.* WHERE idaffectation = @idaffectation`;
 
+
+const query = `
+        SELECT *
+        FROM AffectationAnalytique
+        ORDER BY codeaffectation
+        OFFSET @offset ROWS
+        FETCH NEXT @limit ROWS ONLY;
+
+        SELECT COUNT(*) AS total FROM AffectationAnalytique;
+    `;
+
 // Model AffectationAnalytique
 class AffectationAnalytiqueModel {
     constructor(idaffectation, codeaffectation, actif, idsociete,  idsite, iddepartement, idcentreanalytique, idnature,
@@ -77,12 +88,23 @@ class AffectationAnalytiqueModel {
 
 
     // Rechercher tous les comptes
-    async get_allaffectations () {
+    async get_allaffectations (page = 1, limit = 50) {
         const pool = await connectDB();
-        const query = "SELECT * FROM AffectationAnalytique"
+        const offset = (page - 1) * limit;
+                    
         try {
-            const result = await pool.request().query(query);
-            return result;
+            const result = await pool.request()
+            .input('offset', sql.Int, offset)
+            .input('limit', sql.Int, limit)
+            .query(query);
+
+            const affectations = result.recordsets[0];
+            const total = result.recordsets[1][0].total;
+            const totalPages = Math.ceil(total / limit);
+
+            // console.log(affectations)
+
+            return {page, limit, total, totalPages, data: affectations};
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         }

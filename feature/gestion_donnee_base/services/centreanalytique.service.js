@@ -1,14 +1,14 @@
 const centreanalytiquemodel = require("../models/centreanalytique.model");
-
+const PaginationModel = require("../../../shared/utils/model");
 const { v4: uuidv4 } = require('uuid');
 
 let centre = new centreanalytiquemodel();
 
 let centres = []; 
 
-async function get_allcentres() {
-    const result = await centre.get_allcentres();
-    centres = result.recordset.map(item => new centreanalytiquemodel(
+async function get_allcentres(page = 1, limit = 5) {
+    const result = await centre.get_allcentres(page, limit);
+    centres = result.data.map(item => new centreanalytiquemodel(
     item.idcentreanalytique,
     item.codecentreanalytique,
     item.libelle,
@@ -18,14 +18,14 @@ async function get_allcentres() {
     item.updatedat, 
     item.createdby, 
     item.updatedby));
-  return centres;
+    
+  return new PaginationModel(result.page, result.limit, result.total, centres);
 }
 
 
 // OK
 async function create_centre(data) {
-  if (!data.codecentreanalytique || !data.libelle || 
-    !data.actif || !data.idsociete ) {
+  if (!data.codecentreanalytique || !data.libelle || !data.actif || !data.idsociete ) {
     throw new Error("Tous les champs sont requis.");
   }
 
@@ -33,8 +33,8 @@ async function create_centre(data) {
 
   const newcentre = new centreanalytiquemodel(
     uuidv4(), 
-    data.codecentreanalytique, 
-    data.libelle, 
+    data.codecentreanalytique,
+    data.libelle,
     data.actif, 
     data.idsociete,
     data.createdat || today, 
@@ -47,7 +47,7 @@ async function create_centre(data) {
   if (!recorded.success) {
     throw new Error(recorded.message);
   }
-  return recorded;
+  return recorded.data;
 }
 
 
