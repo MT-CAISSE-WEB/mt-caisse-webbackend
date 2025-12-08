@@ -5,9 +5,9 @@ const societemodel = require('../../gestion_organisation/models/societe.model');
 //const demandemodel = require('');
 
 const queryInsert = `
-        INSERT INTO EnteteOperationCaisse (idoperation, codeoperation, iddemande, idsociete, idsite, iddevise, codedevise, dateoperation, montant, createdat, createdby, updatedat, updatedby)
+        INSERT INTO EnteteOperationCaisse (idoperation, codeoperation, iddemande, idsociete, idsite, iddevise, dateoperation, montant, createdat, createdby, updatedat, updatedby)
         OUTPUT INSERTED.*
-        VALUES (@idoperation,@codeoperation, @iddemande, @idsociete, @idsite, @iddevise, @codedevise, @dateoperation, @montant, @createdat, @createdby, @updatedat, @updatedby)
+        VALUES (@idoperation,@codeoperation, @iddemande, @idsociete, @idsite, @iddevise, @dateoperation, @montant, @createdat, @createdby, @updatedat, @updatedby)
         `;
 const queryUpdate = `UPDATE EnteteOperationCaisse SET iddemande = @iddemande, idsociete = @idsociete, idsite = @idsite, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE codeoperation = @codeoperation`;
 const querySequence = `SELECT NEXT VALUE FOR SeqNumeroOperation AS seq;`;
@@ -39,7 +39,6 @@ class enteteOperationModel {
             .input('idsociete', sql.UniqueIdentifier, this.idsociete)
             .input('idsite', sql.UniqueIdentifier, this.idsite)
             .input('iddevise', sql.UniqueIdentifier, this.iddevise)
-            .input('codedevise', sql.NVarChar(50), this.codedevise)
             .input('dateoperation', sql.DateTime, this.dateoperation)
             .input('montant', sql.Decimal(21,9), this.montant)
             .input('createdat', sql.DateTime, this.createdat)

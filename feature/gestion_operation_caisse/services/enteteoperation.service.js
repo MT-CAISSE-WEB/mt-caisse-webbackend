@@ -36,10 +36,16 @@ async function create_enteteoperation(data) {
     devise = await deviseservice.getonedevise(data.devise);
   }
 
+  const datePeriode = new Date(data.dateoperation);
+  
+  const today = new Date();
+  if (datePeriode > today) {
+    throw new Error("La date operation ne peut pas être supérieure à la date du jour");
+  }
+
   //Générer le numero d'operation
   const prefix = "NUM";
-  const numerogenere = await enteteoperation.create_numoperation(prefix, data.dateoperation);
-  const today = new Date();
+  const numerogenere = await enteteoperation.create_numoperation(prefix, datePeriode);
   const newenteteoperation = new enteteoperationmodel(
     uuidv4(),   
     data.codeoperation || numerogenere, 
@@ -47,8 +53,8 @@ async function create_enteteoperation(data) {
     data.societe,
     data.site,
     data.devise,
-    devise.data.code,
-    data.dateoperation,
+    devise.data.codedevise,
+    datePeriode,
     data.montant,
     data.createdat || today,
     data.createdby || 'System');

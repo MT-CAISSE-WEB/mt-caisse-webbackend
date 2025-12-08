@@ -77,11 +77,11 @@ module.exports = {
     insert: `
         INSERT INTO Caisse(
             idcaisse, codecaisse, libelle, idjournal, iddevise, idsite,
-            idsociete, idcompte, actif, createdat, createdby
+            idsociete, idcompte, dateinitialisation, soldeinitialisation, seuilmnimal, actif, createdat, createdby
         ) OUTPUT INSERTED.*
         VALUES(
             @idcaisse, @codecaisse, @libelle, @idjournal, @iddevise, @idsite,
-            @idsociete, @idcompte, @actif, @createdat, @createdby
+            @idsociete, @idcompte, @dateinitialisation, @soldeinitialisation, @seuilmnimal, @actif, @createdat, @createdby
         )
     `,
 
@@ -94,6 +94,9 @@ module.exports = {
             idsite = @idsite,
             idsociete = @idsociete,
             idcompte = @idcompte,
+            dateinitialisation = @dateinitialisation,
+            soldeinitialisation = @soldeinitialisation,
+            seuilmnimal = @seuilmnimal,
             actif = @actif,
             updatedat = @updatedat,
             updatedby = @updatedby

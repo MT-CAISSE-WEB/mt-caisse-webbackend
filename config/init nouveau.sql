@@ -243,6 +243,7 @@ BEGIN
         idsociete UNIQUEIDENTIFIER,
         idcompte UNIQUEIDENTIFIER,
         libelle NVARCHAR(150),
+        typeoperation NVARCHAR(15),
         avanceajustifier INT DEFAULT 0,
         imputationtiers INT DEFAULT 0,
         actif INT DEFAULT 1,
@@ -357,6 +358,9 @@ BEGIN
         idsite UNIQUEIDENTIFIER,
         idsociete UNIQUEIDENTIFIER,
         idcompte UNIQUEIDENTIFIER,
+        dateinitialisation Datetime,
+        soldeinitialisation Decimal(22,9),
+        seuilmnimal Decimal(22,9),
         actif INT DEFAULT 1,
         createdat Datetime,
         createdby NVARCHAR(50),
@@ -654,7 +658,7 @@ BEGIN
         idcentre UNIQUEIDENTIFIER,
         idsociete UNIQUEIDENTIFIER,
         libelle NVARCHAR(255),
-        montantoperation DECIMAL(13,12),
+        montantoperation DECIMAL(22,9),
         comptabilise INT,
         numpiececomptable NVARCHAR(50),
         datecomptabilisation DATETIME,
@@ -663,11 +667,36 @@ BEGIN
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
-        FOREIGN KEY (idoperation) REFERENCES EnteteOperationCaisse(idoperation),
+        FOREIGN KEY (idoperation) REFERENCES EnteteOperationCaisse(idoperation) ON DELETE CASCADE,
         FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
         FOREIGN KEY (idcentre) REFERENCES CentreAnalytique(idcentreanalytique),
         FOREIGN KEY (idtiers) REFERENCES Tiers(idtiers),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+    );
+END
+
+-- ============================================
+-- 62️ CaissePeriode (dépend de EnteteOperationCaisse, Caisse)
+-- ============================================
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CaissePeriode')
+BEGIN
+    CREATE TABLE CaissePeriode (
+        idperiode UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idcaisse UNIQUEIDENTIFIER,
+        dateperiode DATETIME,
+        soldeouverture DECIMAL(22,9),
+        soldefermeture DECIMAL(22,9),
+        montantphysique DECIMAL(22,9),   -- comptage manuel
+        ecart DECIMAL(22,9),
+        statut NVARCHAR(20) DEFAULT 'non ouverte',            -- OUVERT / FERME / VALIDE
+        validatedat DATETIME,
+        validatedby NVARCHAR(50),
+        createdat Datetime,
+		createdby NVARCHAR(50),
+		updatedat Datetime,
+		updatedby NVARCHAR(50),
+        FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
     );
 END
 
@@ -677,18 +706,22 @@ BEGIN
 		idtypeoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
 		codtypeoperation NVARCHAR(50),
 		idoperation UNIQUEIDENTIFIER,
+        idperiode UNIQUEIDENTIFIER,
 		idsociete UNIQUEIDENTIFIER,
 		idsite UNIQUEIDENTIFIER,
 		idcaisse UNIQUEIDENTIFIER,
-		montant DECIMAL(21, 9),
+		montant DECIMAL(21,9),
+        taux DECIMAL(18,13),
+        montantref DECIMAL(21,9),
         createdat Datetime,
 		createdby NVARCHAR(50),
 		updatedat Datetime,
 		updatedby NVARCHAR(50),
-        FOREIGN KEY (idoperation) REFERENCES EnteteOperationCaisse(idoperation),
+        FOREIGN KEY (idoperation) REFERENCES EnteteOperationCaisse(idoperation) ON DELETE CASCADE,
 		FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
 		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
 		FOREIGN KEY (idsite) REFERENCES Sites(idsite),
+        FOREIGN KEY (idperiode) REFERENCES CaissePeriode(idperiode),
     );
 END
 

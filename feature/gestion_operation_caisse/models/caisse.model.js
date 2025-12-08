@@ -7,7 +7,8 @@ const deviseservice = require('../../gestion_organisation/services/devise.servic
 const journalmodel = new journalModel();
 const siteservice = require('../../gestion_organisation/services/site.service');
 const societeservice = require('../../gestion_organisation/services/societe.service');
-//const comptemodel = require('');
+const plancomptableModel = require('../../gestion_donnee_base/models/plancomptable.model');
+const comptemodel = new plancomptableModel();
 
 const queryInsert = `
         INSERT INTO Caisse (idcaisse,codecaisse, libelle, idjournal, iddevise, idsite, idsociete, idcompte, actif, createdat, createdby, updatedat, updatedby)
@@ -18,7 +19,7 @@ const queryInsert = `
 const queryUpdate = `UPDATE Caisse SET codecaisse = @codecaisse, libelle = @libelle, idjournal = @idjournal,  iddevise = @iddevise, idsite = @idsite, idsociete = @idsociete, idcompte = @idcompte, actif = @actif, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE codecaisse = @codecaisse`;
 
 class caisseModel {
-  constructor(idcaisse,codecaisse,libelle, idjournal, iddevise, idsite, idsociete,idcompte,actif,createdat,createdby,updatedat,updatedby, journal = null, devise = null, site = null, societe = null, compte = null) 
+  constructor(idcaisse,codecaisse,libelle, idjournal, iddevise, idsite, idsociete,idcompte, dateinitialisation, soldeinitialisation, seuilminimal, actif, createdat,createdby,updatedat,updatedby, journal = null, devise = null, site = null, societe = null, compte = null) 
   {
     this.idcaisse = idcaisse;
     this.codecaisse = codecaisse;
@@ -30,7 +31,11 @@ class caisseModel {
     this.idsociete = idsociete;   
     this.idcompte = idcompte;     
 
+    this.dateinitialisation = dateinitialisation;
+    this.soldeinitialisation = soldeinitialisation;
+    this.seuilminimal = seuilminimal;
     this.actif = actif;
+    
     this.createdat = createdat;
     this.createdby = createdby;
     this.updatedat = updatedat;
@@ -55,6 +60,9 @@ class caisseModel {
             .input('idsociete', sql.UniqueIdentifier, this.idsociete)
             .input('idcompte', sql.UniqueIdentifier, this.idcompte)
             .input('libelle', sql.NVarChar(50), this.libelle)
+            .input('dateinitialisation', sql.DateTime, this.dateinitialisation)
+            .input('soldeinitialisation', sql.Decimal(22,9), this.soldeinitialisation)
+            .input('seuilmnimal', sql.Decimal(22,9), this.seuilminimal)
             .input('actif', sql.Int, this.actif)
             .input('createdat', sql.DateTime, this.createdat)
             .input('createdby', sql.NVarChar(100), this.createdby)
@@ -62,7 +70,6 @@ class caisseModel {
             .input('updatedby', sql.NVarChar(100), this.updatedby)
             .query(caisseQueries.insert);
             
-            console.log(result);
             return { success: true, data: result.recordset[0] };
         } catch (error) {
             return { success: false, message: error.message };
@@ -108,13 +115,13 @@ class caisseModel {
                 site = await siteservice.getonesite(caisse.idsite);
             }
             if (caisse.idsociete) {
-                devisereporting = await societeservice.getonesociete(caisse.idsociete);
+                societe = await societeservice.getonesociete(caisse.idsociete);
             }
-            // if (caisse.idcompte) {
-            //     compte = await comptemodel.get_onecompte(caisse.idcompte);
-            // }
+            if (caisse.idcompte) {
+                compte = await comptemodel.get_onecompte(caisse.idcompte);
+            }
             
-            return {...caisse, societe : societe, site : site , journal : journal, compte : compte, devise : devise};
+            return {...caisse, societe : societe.data, site : site?.data ? site.data : null, journal : journal, compte : compte, devise : devise.data};
         } catch (error) {
             return { success: false, message: error.message };
         }
@@ -137,6 +144,9 @@ class caisseModel {
                     .input('idsociete', sql.UniqueIdentifier, data.idsociete)
                     .input('idcompte', sql.UniqueIdentifier, data.idcompte)
                     .input('libelle', sql.NVarChar(50), data.libelle)
+                    .input('dateinitialisation', sql.DateTime, data.dateinitialisation)
+                    .input('soldeinitialisation', sql.Decimal(22,9), data.soldeinitialisation)
+                    .input('seuilmnimal', sql.Decimal(22,9), data.seuilminimal)
                     .input('actif', sql.Int, data.actif)
                     .input('updatedAt', sql.DateTime, new Date())
                     .input('updatedBy', sql.NVarChar(100), data.updatedby || 'System')

@@ -10,9 +10,9 @@ const enteteoperationmodel = require('./enteteoperation.model');
 //const tiersmodel = require('');
 
 const queryInsert = `
-        INSERT INTO LigneOperationCaisse (idligneoperation, idoperation, codeoperation, idnature, codenature, idcentre, codecentre, idsociete, codesociete, idtiers, codetiers, libelle, montantoperation, comptabilise, numpiececomptable, datecomptabilisation, createdat, createdby, updatedat, updatedby)
+        INSERT INTO LigneOperationCaisse (idligneoperation, idoperation, idnature, idcentre, idsociete, idtiers, libelle, montantoperation, comptabilise, numpiececomptable, datecomptabilisation, createdat, createdby, updatedat, updatedby)
         OUTPUT INSERTED.*
-        VALUES (@idligneoperation, @idoperation, @codeoperation, @idnature, @codenature, @idcentre, @codecentre, @idsociete, @codesociete, @idtiers, @codetiers, @libelle, @montantoperation, @comptabilise, @numpiececomptable, @datecomptabilisation, @createdat, @createdby, @updatedat, @updatedby)
+        VALUES (@idligneoperation, @idoperation, @idnature, @idcentre, @idsociete, @idtiers, @libelle, @montantoperation, @comptabilise, @numpiececomptable, @datecomptabilisation, @createdat, @createdby, @updatedat, @updatedby)
         `;
 
 const queryUpdate = `UPDATE ligneoperationCaisse SET idnature = @idnature, codenature = @codenature, idcentre = @idcentre, codecentre = @codecentre, idsociete = @idsociete, codesociete = @codesociete, idsite = @idsite, codesite = @codesite, libelle = @libelle, montantoperation = @montantoperation, idtiers = @idtiers, codetiers = @codetiers, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE idligneoperation = @idligneoperation`;
@@ -48,17 +48,11 @@ class ligneoperationModel {
             const result = await pool.request()
             .input('idligneoperation', sql.UniqueIdentifier, this.idligneoperation)
             .input('idoperation', sql.UniqueIdentifier, this.idoperation)
-            .input('codeoperation', sql.NVarChar(24), this.codeoperation)
             .input('idsociete', sql.UniqueIdentifier, this.idsociete)
-            .input('codesociete', sql.NVarChar(24), this.codesociete)
             .input('idsite', sql.UniqueIdentifier, this.idsite)
-            .input('codesite', sql.NVarChar(24), this.codesite)
             .input('idtiers', sql.UniqueIdentifier, this.idtiers)
-            .input('codetiers', sql.NVarChar(24), this.codetiers)
             .input('idnature', sql.UniqueIdentifier, this.idnature)
-            .input('codenature', sql.NVarChar(24), this.codenature)
             .input('idcentre', sql.UniqueIdentifier, this.idcentre)
-            .input('codecentre', sql.NVarChar(24), this.codecentre)
             .input('libelle', sql.NVarChar(255), this.libelle)
             .input('montantoperation', sql.Decimal(22,9), this.montantoperation)
             .input('numpiececomptable', sql.NVarChar(20), this.numpiececomptable)
@@ -130,64 +124,23 @@ class ligneoperationModel {
     async update_ligneoperation (idligneoperation, data) {
         const pool = await connectDB();
         try {
-            const check = await pool.request()
-            .input('idligneoperation', sql.NVarChar(50), idligneoperation)
-            .query(`SELECT COUNT(*) AS count FROM ligneoperationCaisse WHERE idligneoperation = @idligneoperation`);
-
-            // S'il existe update
-            if (check.recordset[0].count > 0) {
-                const result = await pool.request()
-                    .input('idoperation', sql.UniqueIdentifier, data.idoperation)
-                    .input('idnature', sql.UniqueIdentifier, data.idnature)
-                    .input('idcentre', sql.UniqueIdentifier, data.idcentre)
-                    .input('idsociete', sql.UniqueIdentifier, data.idsociete)
-                    .input('idsite', sql.UniqueIdentifier, data.idsite)
-                    .input('iddevise', sql.UniqueIdentifier, data.iddevise)
-                    .input('idtiers', sql.UniqueIdentifier, data.idtiers)
-                    .input('codeoperation', sql.NVarChar(24), data.codeoperation)
-                    .input('codenature', sql.NVarChar(24), data.codenature)
-                    .input('codesite', sql.NVarChar(24), data.codesite)
-                    .input('codecentre', sql.NVarChar(24), data.codecentre)
-                    .input('codesociete', sql.NVarChar(24), data.codesociete)
-                    .input('codetiers', sql.NVarChar(24), data.codetiers)
-                    .input('libelle', sql.NVarChar(255), data.libelle)
-                    .input('montantoperation', sql.Decimal(22,9), data.montantoperation)
-                    .input('numpiececomptable', sql.NVarChar(20), data.numpiececomptable)
-                    .input('comptabilise', sql.Int, data.comptabilise)
-                    .input('datecomptabilisation', sql.DateTime, data.datecomptabilisation)
-                    .input('updatedAt', sql.DateTime, new Date())
-                    .input('updatedBy', sql.NVarChar(100), data.updatedBy)
-                    .query(queryUpdate);
-                return result;
-            } else {
-                // 3️ Sinon → INSERT
-                const result = await pool.request()
-                    .input('idligneoperation', sql.UniqueIdentifier, uuidv4())
-                    .input('idoperation', sql.UniqueIdentifier, data.idoperation)
-                    .input('idnature', sql.UniqueIdentifier, data.idnature)
-                    .input('idcentre', sql.UniqueIdentifier, data.idcentre)
-                    .input('idsociete', sql.UniqueIdentifier, data.idsociete)
-                    .input('idsite', sql.UniqueIdentifier, data.idsite)
-                    .input('iddevise', sql.UniqueIdentifier, data.iddevise)
-                    .input('idtiers', sql.UniqueIdentifier, data.idtiers)
-                    .input('codeoperation', sql.NVarChar(24), data.codeoperation)
-                    .input('codenature', sql.NVarChar(24), data.codenature)
-                    .input('codesite', sql.NVarChar(24), data.codesite)
-                    .input('codecentre', sql.NVarChar(24), data.codecentre)
-                    .input('codesociete', sql.NVarChar(24), data.codesociete)
-                    .input('codetiers', sql.NVarChar(24), data.codetiers)
-                    .input('libelle', sql.NVarChar(255), data.libelle)
-                    .input('montantoperation', sql.Decimal(22,9), data.montantoperation)
-                    .input('numpiececomptable', sql.NVarChar(20), data.numpiececomptable)
-                    .input('comptabilise', sql.Int, data.comptabilise)
-                    .input('datecomptabilisation', sql.DateTime, data.datecomptabilisation)
-                    .input('createdat', sql.DateTime, new Date())
-                    .input('createdby', sql.NVarChar(100), data.createdby || 'System')
-                    .input('updatedat', sql.DateTime, new Date())
-                    .input('updatedby', sql.NVarChar(100), data.updatedby || 'System')
-                    .query(queryInsert);
-                return result;
-            }
+            const result = await pool.request()
+                .input('idligneoperation', sql.UniqueIdentifier, idligneoperation)
+                .input('idoperation', sql.UniqueIdentifier, data.idoperation)
+                .input('idsociete', sql.UniqueIdentifier, data.idsociete)
+                .input('idsite', sql.UniqueIdentifier, data.idsite)
+                .input('idtiers', sql.UniqueIdentifier, data.idtiers)
+                .input('idnature', sql.UniqueIdentifier, data.idnature)
+                .input('idcentre', sql.UniqueIdentifier, data.idcentre)
+                .input('libelle', sql.NVarChar(255), data.libelle)
+                .input('montantoperation', sql.Decimal(22,9), data.montantoperation)
+                .input('numpiececomptable', sql.NVarChar(20), data.numpiececomptable)
+                .input('comptabilise', sql.Int, data.comptabilise)
+                .input('datecomptabilisation', sql.DateTime, data.datecomptabilisation)
+                .input('updatedat', sql.DateTime, new Date())
+                .input('updatedby', sql.NVarChar(100), data.updatedby || 'System')
+                .query(queryUpdate);
+            return result;
         } catch (error) {
             console.log(`Erreur de modification: ${error}`.cyan.bold);
         }

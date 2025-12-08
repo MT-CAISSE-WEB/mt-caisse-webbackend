@@ -3,6 +3,8 @@ const journalmodel = require("../models/journal.model");
 const devisemodel = require("../../gestion_organisation/models/devise.model");
 const societemodel = require("../../gestion_organisation/models/societe.model");
 const sitemodel = require("../../gestion_organisation/models/site.model");
+const periode = require("../models/caisseperiode.model");
+const periodeservice = require("../services/caisseperiode.service");
 const { v4: uuidv4 } = require('uuid');
 const PaginationModel = require("../../../shared/utils/model");
 
@@ -23,6 +25,9 @@ async function get_all_caisses(page = 1, limit = 5) {
       item.idsite,
       item.idsociete,
       item.idcompte,
+      item.dateinitialisation,
+      item.soldeinitialisation,
+      item.seuilmnimal,
       item.actif,
       item.createdat,
       item.createdby,
@@ -73,23 +78,25 @@ async function create_caisse(data) {
 
   const today = new Date();
   const newcaisse = new caissemodel(
-    uuidv4(), 
-    data.codecaisse, 
-    data.libelle, 
-    data.journal, 
-    data.devise,  
-    data.site, 
-    data.societe, 
-    data.compte, 
-    data.actif,  
-    data.createdat || today, 
-    data.createdby || 'System', 
-    data.updatedat,
-    data.updatedby);
+    uuidv4(), data.codecaisse, data.libelle, data.journal, data.devise,  
+    data.site, data.societe, data.compte, data.dateinitialisation, data.soldeinitialisation,
+    data.seuilminimal, data.actif, data.createdat || today, data.createdby || 'System', data.updatedat, data.updatedby);
   const recorded = await newcaisse.create_caissemodel(newcaisse);
+
   // si le modèle renvoie une erreur
   if (!recorded.success) {
     throw new Error(recorded.message);
+  }
+
+  if(data.dateinitialisation){
+    const periodecaisse = new periode(uuidv4(), recorded.data.idcaisse, data.dateinitialisation, data.soldeinitialisation, 0, 0, 0, 'non ouverte',
+     null, null, data.createdat, data.createdby, data.updatedat, data.updatedby);
+
+     const rec = await periodeservice.create_caisseperiode(periodecaisse);
+
+     if(!rec.success){
+      throw new Error("Erreur de création de la période");
+     }
   }
 
   return recorded.data;
@@ -125,6 +132,17 @@ async function update_caisse(idcaisse, data) {
   if(data.idjournal){
     journaldata = await journal.get_onejournal(data.idjournal);
     data.codejournal = journaldata.codejournal || data.codejournal;
+  }
+
+  if(data.dateinitialisation){
+    const periodecaisse = new periode(uuidv4(), idcaisse, data.dateinitialisation, data.soldeinitialisation, 0, 0, 0, 'non ouverte',
+     null, null, data.createdat, data.createdby, data.updatedat, data.updatedby);
+
+     try {
+       const rec = await periodecaisse.create_caisseperiode(periodecaisse);
+     } catch (error) {
+       throw new Error("Erreur de création de la période");
+     }
   }
 
   try {

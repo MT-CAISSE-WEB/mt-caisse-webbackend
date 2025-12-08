@@ -35,7 +35,7 @@ async function get_all_typeoperations(page = 1, limit = 5) {
               updatedat: row.updatedat,
               updatedby: row.updatedby,
               lignes: [],
-              types: [],
+              caisses: [],
               // Devise
               devise : row.iddevise ? new devisemodel(
                 row.devise_iddevise, row.devise_codedevise, row.devise_intitule, row.devise_codeiso, row.devise_actif, row.devise_createdat, row.devise_createdby, row.devise_updatedat, row.devise_updatedby) : null,
@@ -71,7 +71,8 @@ async function get_all_typeoperations(page = 1, limit = 5) {
                       idnature: row.nature_idnature,
                       codenature: row.nature_codenature,
                       libelle: row.nature_libelle,
-                      idcompte: row.nature_idcompte
+                      idcompte: row.nature_idcompte,
+                      typeoperation: row.nature_typeoperation
                   } : null,
                   // Centre inclus
                   centre: row.centre_idcentreanalytique ? {
@@ -93,13 +94,15 @@ async function get_all_typeoperations(page = 1, limit = 5) {
       // Construction des types
       // ---------------------------
       if (row.type_idtypeoperation) {
-          const exists = op.types.find(t => t.idtypeoperation === row.type_idtypeoperation);
+          const exists = op.caisses.find(t => t.idtypeoperation === row.type_idtypeoperation);
           if (!exists) {
-              op.types.push({
+              op.caisses.push({
                   idtypeoperation: row.type_idtypeoperation,
                   codtypeoperation: row.type_codtypeoperation,
                   montant: row.type_montant,
-                  idcaisse: row.type_idcaisse
+                  idcaisse: row.type_idcaisse,
+                  taux : row.type_taux,
+                  montantref: row.type_montantref
               });
           }
       }
@@ -110,33 +113,14 @@ async function get_all_typeoperations(page = 1, limit = 5) {
     console.log(error);
   }
 
-  // typeoperations = result.recordset.map(item => new typeoperationmodel(
-  //   item.idtypeoperation,
-  //   item.idoperation, 
-  //   item.codeoperation, 
-  //   item.idsociete,
-  //   item.codesociete, 
-  //   item.idsite,
-  //   item.codesite,
-  //   item.idcaisse,
-  //   item.codecaisse, 
-  //   item.montant, 
-  //   item.createdat, 
-  //   item.createdby, 
-  //   item.updatedat,  
-  //   item.updatedby));
   return new PaginationModel(result.page, result.limit, result.total, typeoperations);;
 }
 
 async function create_typeoperation(data) {
   const today = new Date();
 
-  if (!data.caisseprincipale) {
-    throw new Error("Le champ caisse principale est requis.");
-  }
-
-  if(data.typepaiement == 'bidevise' && !data.caissesecondaire){
-    throw new Error("Le champ caisse secondaire est requis.");
+  if (!Array.isArray(data.caisses) || data.caisses.length === 0) {
+    throw new Error("Aucune caisse fournie.");
   }
 
   //Récuperer la societe
@@ -144,7 +128,7 @@ async function create_typeoperation(data) {
   if(data.societe){
     societe = await societeservice.getonesociete(data.societe);
   }
-
+  
   //Récuperer le site
   let site = null;
   if(data.site){
@@ -153,7 +137,6 @@ async function create_typeoperation(data) {
 
   let enteteoperation = null;
   enteteoperation = await enteteoperationservice.create_enteteoperation(data);
-
   if (!enteteoperation?.idoperation) {
     throw new Error("Échec de création de l'entête d'opération (idoperation manquant).");
   }
@@ -163,7 +146,7 @@ async function create_typeoperation(data) {
   }
 
   for (const ligne of data.lignes){
-    const dataligne = {idoperation : enteteoperation.idoperation, idnature: ligne.natureop, idcentre: ligne.centre, idtiers: ligne.tiers, montantoperation: ligne.montantligne, created: ligne.created};
+    const dataligne = {idoperation : enteteoperation.idoperation, idnature: ligne.natureop, idcentre: ligne.centre, idtiers: ligne.tiers, montantoperation: Number(ligne.montantligne), createdby: ligne.created};
     try {
       const ligneoperation = await ligneoperationservice.create_ligneoperation(dataligne);
     } catch (error) {
@@ -171,44 +154,28 @@ async function create_typeoperation(data) {
     }
   }
 
-  let caisse = null;
-  if(data.caissesecondaire && data.typepaiement == 'bidevise'){
-    caisse = await caisseservice.get_by_idcaisse(data.caissesecondaire);
-    const newtypeoperation1 = new typeoperationmodel(
-    uuidv4(),enteteoperation.idoperation, enteteoperation.codeoperation, societe.idsociete, societe.codesociete ? societe.codesociete : null, 
-    site.idsite ? site.idsite : null, site.codesite, caisse.idcaisse ? caisse.idcaisse : null, caisse.codecaisse ? caisse.codecaisse : null, 
-    data.montantsecondaire, data.createdat || today, data.createdby || today, data.updatedat || 'System', data.updatedby || 'System');
-    
-    let recorded1 = null;
-    try {
-      recorded1 = await newtypeoperation1.create_typeoperationmodel(newtypeoperation1);
-    } catch (error) {
-      console.log(error);
+  for (const caisse of data.caisses){
+    if(caisse.montantcaisse && Number(caisse.montantcaisse) != 0){
+      let caisse1 = null;
+      try {
+        caisse1 = await caisseservice.get_by_idcaisse(caisse.idcaisse);
+      } catch (error) {
+        console.log(error);
+      }
+      const newtypeoperation1 = new typeoperationmodel( uuidv4(), data.typepaiement, enteteoperation.idoperation, caisse.idperiode, societe.data.idsociete ? societe.data.idsociete : null, site.data.idsite ? site.data.idsite : null, caisse1.idcaisse ? caisse1.idcaisse : null, 
+      Number(caisse.montantcaisse), caisse.taux, caisse.montantref, data.createdat || today, data.createdby || 'System', data.updatedat, data.updatedby);
+      let recorded1 = null;
+      try {
+        recorded1 = await newtypeoperation1.create_typeoperationmodel(newtypeoperation1);
+      } catch (error) {
+        console.log(error);
+      }
+      
+      // si le modèle renvoie une erreur
+      if (!recorded1.success) {
+        throw new Error(recorded1.message);
+      }
     }
-    
-    // si le modèle renvoie une erreur
-    if (!recorded1.success) {
-      throw new Error(recorded1.message);
-    }
-  }
-
-  caisse = await caisseservice.get_by_idcaisse(data.caisseprincipale);
-  const newtypeoperation = new typeoperationmodel(
-    uuidv4(),enteteoperation.idoperation, enteteoperation.codeoperation, societe.idsociete, societe.codesociete ? societe.codesociete : null, 
-    site.idsite ? site.idsite : null, site.codesite, caisse.idcaisse ? caisse.idcaisse : null, caisse.codecaisse ? caisse.codecaisse : null, 
-    data.montantprincipale, data.createdat || today, data.createdby || today, data.updatedat || 'System', data.updatedby || 'System');
-  
-  let recorded2 = null ;
-  try {
-    recorded2 = await newtypeoperation.create_typeoperationmodel(newtypeoperation);
-    console.log(recorded2);
-  } catch (error) {
-    console.log(error);
-  }
-  
-  // si le modèle renvoie une erreur
-  if (!recorded2.success) {
-    throw new Error(recorded2.message);
   }
 
   return enteteoperation;
