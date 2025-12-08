@@ -88,8 +88,6 @@ class TiersModel {
             const total = result.recordsets[1][0].total;
             const totalPages = Math.ceil(total / limit);
 
-            console.log(tiers);
-
             return {page, limit, total, totalPages, data: tiers};
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
