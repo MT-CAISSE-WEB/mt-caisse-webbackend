@@ -2,8 +2,9 @@ const { DateTime } = require('mssql');
 const {sql, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 
-const societeModel = require('../../gestion_organisation/models/societe.model');
-const societemodel = new societeModel()
+const societeservice = require('../../gestion_organisation/services/societe.service');
+
+const lasociete = societeservice;
 
 const queryInsert = `
         INSERT INTO Tiers (idtiers, codetiers, designation, typetiers, actif, idsociete,
@@ -63,6 +64,8 @@ class TiersModel {
             .input('updatedby', sql.NVarChar(50), this.updatedby)
             .query(queryInsert);
 
+            // console.log(result);
+
             return { success: true, data: result.recordset[0] };
         } catch (error) {
             return { success: false, message: error.message };
@@ -84,6 +87,8 @@ class TiersModel {
             const tiers = result.recordsets[0];
             const total = result.recordsets[1][0].total;
             const totalPages = Math.ceil(total / limit);
+
+            console.log(tiers);
 
             return {page, limit, total, totalPages, data: tiers};
         } catch (error) {
@@ -109,7 +114,7 @@ class TiersModel {
             else
                 { 
                     if (tiers.idsociete) {
-                        societe = await societemodel.get_onesociete(tiers.idsociete); }
+                        societe = await lasociete.getonesociete(tiers.idsociete); }
 
                     return { ...tiers, societe : societe };}
                     // return {success: true, data: result.recordset[0]}; }

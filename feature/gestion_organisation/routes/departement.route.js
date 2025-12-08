@@ -1,16 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const departement_controller = require("../controllers/departement.controller");
-//const auth = require("../shared/middlewares/auth");
+const departementcontroller = require("../controllers/departement.controller");
 
-// Toutes les routes protégées par authentification
-// router.use(auth.authMiddleware);
-
-// CRUD nature operation
-router.get("/", departement_controller.get_departements);
-router.get("/:id", departement_controller.get_onedepartement);
-router.post("/create/", departement_controller.create_departement);
-router.put("/update/:id", departement_controller.update_departement);
-router.delete("/delete/:id", departement_controller.delete_departement);
+router.get("/Departement", departementcontroller.getalldepartement);
+router.get("/Departement/:id", departementcontroller.getonedepartement);
+router.post("/Departement",departementcontroller.upsertdepartement);
+router.delete("/Departement/:id", departementcontroller.deletedepartement);
 
 module.exports = router;

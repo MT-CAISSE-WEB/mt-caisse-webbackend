@@ -15,9 +15,9 @@ const sequelize = require('./config/database')
 
 
 // Declaration des routes
-const societesroutes = require("./feature/gestion_organisation/routes/societe.route");
-const sitesroutes = require("./feature/gestion_organisation/routes/site.route");
-const departementsroutes = require("./feature/gestion_organisation/routes/departement.route");
+// const societesroutes = require("./feature/gestion_organisation/routes/societe.route");
+// const sitesroutes = require("./feature/gestion_organisation/routes/site.route");
+// const departementsroutes = require("./feature/gestion_organisation/routes/departement.route");
 const tiersroutes = require("./feature/gestion_donnee_base/routes/tiers.route");
 const plancomptableroutes = require("./feature/gestion_donnee_base/routes/plancomptable.route");
 const natureoperationroutes = require("./feature/gestion_donnee_base/routes/natureoperation.route");
@@ -26,7 +26,7 @@ const affectationanalytiqueroutes = require("./feature/gestion_donnee_base/route
 
 // Declaration des routes
 
-// Budget
+// Budget FERREOL
 const budget_route = require('./feature/gestion_budget/routes/budget.route')
 // Ligne budgetaire
 const ligne_budgetaire_route = require('./feature/gestion_budget/routes/lignebudget.route')
@@ -36,6 +36,13 @@ const entete_demande_route = require('./feature/gestion_demande_decaissement/rou
 const ligne_demande_route = require('./feature/gestion_demande_decaissement/routes/ligendemande.route')
 // Détails demande
 const details_demande_route = require('./feature/gestion_demande_decaissement/routes/detaildemande.route')
+
+// JUNIOR
+const deviseroute = require('./feature/gestion_organisation/routes/devise.route');
+const tauxdeviseroute = require('./feature/gestion_organisation/routes/tauxdevise.route');
+const societeroute = require('./feature/gestion_organisation/routes/societe.route');
+const siteroute = require('./feature/gestion_organisation/routes/site.route');
+const departementroute = require('./feature/gestion_organisation/routes/departement.route');
 
 //connexion db
 const db = require('./config/db')
@@ -83,9 +90,9 @@ app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, 'views'))
 
 //Regrouper toutes les routes
-app.use("/API/societe", societesroutes);
-app.use("/API/site", sitesroutes);
-app.use("/API/departement", departementsroutes);
+// app.use("/API/societe", societesroutes);
+// app.use("/API/site", sitesroutes);
+// app.use("/API/departement", departementsroutes);
 app.use("/API/tiers", tiersroutes);
 app.use("/API/plancomptable", plancomptableroutes);
 app.use("/API/natureoperation", natureoperationroutes);
@@ -109,6 +116,14 @@ app.use('/api/entete-demande', entete_demande_route)
 app.use('/api/ligne-demande', ligne_demande_route)
 //Details demande
 app.use('/api/details-demande', details_demande_route)
+
+
+//API
+app.use('/API',deviseroute);
+app.use('/API',tauxdeviseroute);
+app.use('/API',societeroute);
+app.use('/API',siteroute);
+app.use('/API',departementroute);
 
 // GESTION DES ERREURS
 app.use(errorHandler)

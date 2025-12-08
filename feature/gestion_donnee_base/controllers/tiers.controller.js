@@ -40,6 +40,7 @@ module.exports.create_tiers = asyncHandler(async(req, res, next) => {
     const new_tiers = await tiersservice.create_tiers(data);
     res.status(201).json({ success: true, data: new_tiers });
   } catch (error) {
+    console.log(error);
     res.status(400).json({ success: false, message: error.message });
   }
 });

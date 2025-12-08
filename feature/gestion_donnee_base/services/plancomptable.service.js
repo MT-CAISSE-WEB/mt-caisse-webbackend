@@ -31,10 +31,10 @@ async function get_all_comptes(page = 1, limit = 5) {
 
 // OK
 async function create_compte(data) {
-  if (!data.numcompte || !data.libelle || !data.ventillable || !data.auxiliaire || 
-    !data.actif || !data.suivibudgetaire || !data.suivibudgetairemensuel || !data.idsociete) {
-    throw new Error("Tous les champs sont requis.");
-  }
+  // if (!data.numcompte || !data.libelle || !data.ventillable || !data.auxiliaire || 
+  //   !data.actif || !data.suivibudgetaire || !data.suivibudgetairemensuel || !data.idsociete) {
+  //   throw new Error("Tous les champs sont requis.");
+  // }
 
   const today = new Date();
 

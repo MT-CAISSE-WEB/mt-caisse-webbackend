@@ -1,8 +1,11 @@
 const { DateTime } = require('mssql');
 const {sql, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
-const societeModel = require('../../gestion_organisation/models/societe.model');
-const societemodel = new societeModel()
+// const societeModel = require('../../gestion_organisation/models/societe.model');
+// const societemodel = new societeModel()
+
+const societeservice = require('../../gestion_organisation/services/societe.service');
+const lasociete = societeservice;
 
 
 const queryInsert = `
@@ -100,7 +103,7 @@ class CentreAnalytiqueModel {
             const centre = result.recordset[0];
             let societe = null;
             if (centre.idsociete) {
-                societe = await societemodel.get_onesociete(centre.idsociete);
+                societe = await lasociete.getonesociete(centre.idsociete);
             }
             return {...centre, societe : societe};
         } catch (error) {

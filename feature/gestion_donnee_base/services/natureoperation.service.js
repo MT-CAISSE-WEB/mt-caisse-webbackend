@@ -13,13 +13,14 @@ async function get_all_natures(page = 1, limit = 5) {
     item.idnature,
     item.codenature,
     item.libelle,
-    item.avanceajustifier,
+    item.typeoperation,
+    item.decajustifier,
     item.imputationtiers,
     item.actif,
     item.demandedecaissement,
     item.idsociete,
     item.idcompte,
-    item.createdat, 
+    item.createdat,
     item.updatedat, 
     item.createdby, 
     item.updatedby));
@@ -31,16 +32,17 @@ async function get_all_natures(page = 1, limit = 5) {
 
 // OK
 async function create_nature(data) {
-  if (!data.codenature || !data.libelle || !data.idsociete || !data.idcompte) {
-    return new Error("Tous les champs sont requis.");
-  }
+  // if (!data.codenature || !data.libelle || !data.typeoperation || !data.libelle || !data.idsociete || !data.idcompte) {
+  //   return new Error("Tous les champs sont requis.");
+  // }
 
   const today = new Date();
   const newnature = new natureoperationmodel(
     uuidv4(), 
     data.codenature, 
-    data.libelle, 
-    data.avanceajustifier, 
+    data.libelle,
+    data.typeoperation,
+    data.decajustifier, 
     data.imputationtiers, 
     data.actif, 
     data.demandedecaissement,

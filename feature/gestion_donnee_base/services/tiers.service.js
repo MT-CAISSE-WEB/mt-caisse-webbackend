@@ -26,9 +26,10 @@ async function get_all_tiers(page = 1, limit = 5) {
 
 // OK
 async function create_tiers(data) {
-  if (!data.codetiers || !data.designation || !data.typetiers || !data.actif || !data.idsociete) {
-    throw new Error("Tous les champs sont requis.");
-  }
+  // if (!data.codetiers || !data.designation || !data.typetiers || !data.actif || !data.idsociete) {
+  //   console.log(data);
+  //   throw new Error("Tous les champs sont requis.");
+  // }
 
   const today = new Date();
 

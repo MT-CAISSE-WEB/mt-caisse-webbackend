@@ -1,68 +1,43 @@
-const departementservice = require("../services/departement.service");
-const asyncHandler = require("../../../shared/middlewares/async");
-const ErrorResponse = require("../../../shared/utils/errorResponse");
+const asyncHandler =require('../../../shared/middlewares/async')
+const ErrorResponse = require('../../../shared/utils/errorResponse');
+const departementservice = require ("../services/departement.service");
 
-/**
- * Liste toutes les departements
- */
-module.exports.get_departements = asyncHandler(async(req, res, next) => {
-  try {
-    const departements = await departementservice.get_all_departements();
-    res.json({ data: departements });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Erreur serveur", error });
-  }
+module.exports.getalldepartement = asyncHandler (async(req,res, next)=>{
+    try {
+        const departements = await departementservice.getalldepartement();
+        res.status(departements.status).json({success:departements.success,message:departements.message,data:departements.data});
+    } catch (error) {
+        res.status(500).json({success:false, message:"Erreur serveur", error});
+    }
 });
 
-
-/**
- * Une departement existant par son id
- */
-module.exports.get_onedepartement = asyncHandler(async(req, res, next) => {
-  try {
-    const iddepartement  = req.params.id;
-    const departement_ = await departementservice.get_onedepartement(iddepartement);
-    res.json({ data: departement_ });
-  } catch (error) {
-    res.status(404).json({ success: false, message: error.message });
-  }
+module.exports.getonedepartement = asyncHandler (async(req,res, next)=>{
+    try {
+        const iddepartement = req.params.id
+        const departement = await departementservice.getonedepartement(iddepartement);
+         res.status(departement.status).json({success:departement.success,message:departement.message,data:departement.data});
+        
+    } catch (error) {
+         res.status(500).json({success:false, message:"Erreur serveur", error});
+    }
 });
 
-/**
- * Crée une nouvelle departement
- */
-module.exports.create_departement = asyncHandler(async(req, res, next) => {
-  try {
-    const data = req.body;
-    const new_departement = await departementservice.create_departement(data);
-    res.status(201).json({ data: new_departement });
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
-  }
+module.exports.upsertdepartement = asyncHandler (async(req,res, next)=>{
+    try {
+        const {idsociete,idsite,responsable,codedept,libelle,email,telephone,adresse,createdby,updatedby} = req.body;
+        const upsertdepartement = await departementservice.upsertdepartement({idsociete,idsite,responsable,codedept,libelle,email,telephone,adresse,createdby,updatedby})
+        res.status(upsertdepartement.status).json({success: upsertdepartement.success,message:upsertdepartement.message, data: upsertdepartement.data});
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erreur serveur", error });
+    }
 });
 
-/**
- * Met à jour une departement existante
- */
-module.exports.update_departement = asyncHandler(async(req, res, next) => {
-  try {
-    const iddepartement  = req.params.id;
-    const departement_ = await departementservice.update_departement(iddepartement, req.body);
-    res.json({ data: departement_ });
-  } catch (error) {
-    res.status(404).json({ success: false, message: error.message });
-  }
-});
-
-/**
- * Supprime une departement
- */
-module.exports.delete_departement = asyncHandler(async(req, res, next) => {
-  try {
-    const iddepartement = req.params.id;
-    const departement_ = await departementservice.delete_departement(iddepartement);
-    res.json({ message: "departement supprimée" });
-  } catch (error) {
-    res.status(404).json({ success: false, message: error.message });
-  }
+module.exports.deletedepartement = asyncHandler (async(req,res, next)=>{
+    try {
+        const iddepartement = req.params.id;   
+        const deletedept = await departementservice.deletedepartement(iddepartement);
+        res.status(deletedept.status).json({ success:deletedept.success,message:deletedept.message});
+    } catch (error) {       
+        res.status(500).json({ success: false, message: "Erreur serveur", error });
+    }           
 });

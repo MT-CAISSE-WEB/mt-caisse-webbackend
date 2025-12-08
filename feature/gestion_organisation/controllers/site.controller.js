@@ -1,68 +1,43 @@
-const siteservice = require("../services/site.service");
-const asyncHandler = require("../../../shared/middlewares/async");
-const ErrorResponse = require("../../../shared/utils/errorResponse");
+const asyncHandler =require('../../../shared/middlewares/async')
+const ErrorResponse = require('../../../shared/utils/errorResponse');
+const siteservice = require ("../services/site.service");
 
-/**
- * Liste toutes les sites
- */
-module.exports.get_sites = asyncHandler(async(req, res, next) => {
-  try {
-    const sites = await siteservice.get_all_sites();
-    res.json({ data: sites });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Erreur serveur", error });
-  }
+module.exports.getallsites = asyncHandler (async(req,res, next)=>{
+    try {
+        const sites = await siteservice.getallsite();
+        res.status(sites.status).json({success:sites.success,message:sites.message,data:sites.data});
+    } catch (error) {
+        res.status(500).json({success:false, message:"Erreur serveur", error});
+    }
 });
 
-
-/**
- * Une site existant par son id
- */
-module.exports.get_onesite = asyncHandler(async(req, res, next) => {
-  try {
-    const idsite  = req.params.id;
-    const site_ = await siteservice.get_onesite(idsite);
-    res.json({ data: site_ });
-  } catch (error) {
-    res.status(404).json({ success: false, message: error.message });
-  }
+module.exports.getonesite = asyncHandler (async(req,res, next)=>{
+    try {
+        const idsite = req.params.id
+        const site = await siteservice.getonesite(idsite);
+         res.status(site.status).json({success:site.success,message:site.message,data:site.data});
+        
+    } catch (error) {
+         res.status(500).json({success:false, message:"Erreur serveur", error});
+    }
 });
 
-/**
- * Crée une nouvelle site
- */
-module.exports.create_site = asyncHandler(async(req, res, next) => {
-  try {
-    const data = req.body;
-    const new_site = await siteservice.create_site(data);
-    res.status(201).json({ data: new_site });
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
-  }
+module.exports.upsertsite = asyncHandler (async(req,res, next)=>{
+    try {
+        const {idsociete,codesite,codeanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdby, updatedby } = req.body;
+        const upsertsite = await siteservice.upsertsite({idsociete,codesite,codeanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdby, updatedby })
+        res.status(upsertsite.status).json({success: upsertsite.success,message:upsertsite.message, data: upsertsite.data});
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erreur serveur", error });
+    }
 });
 
-/**
- * Met à jour une site existante
- */
-module.exports.update_site = asyncHandler(async(req, res, next) => {
-  try {
-    const idsite  = req.params.id;
-    const site_ = await siteservice.update_site(idsite, req.body);
-    res.json({ data: site_ });
-  } catch (error) {
-    res.status(404).json({ success: false, message: error.message });
-  }
-});
-
-/**
- * Supprime une site
- */
-module.exports.delete_site = asyncHandler(async(req, res, next) => {
-  try {
-    const idsite = req.params.id;
-    const site_ = await siteservice.delete_site(idsite);
-    res.json({ message: "site supprimée" });
-  } catch (error) {
-    res.status(404).json({ success: false, message: error.message });
-  }
+module.exports.deletesite = asyncHandler (async(req,res, next)=>{
+    try {
+        const idsite = req.params.id;   
+        const deletesite = await siteservice.deletesite(idsite);
+        res.status(deletesite.status).json({ success:deletesite.success,message:deletesite.message});
+    } catch (error) {       
+        res.status(500).json({ success: false, message: "Erreur serveur", error });
+    }           
 });

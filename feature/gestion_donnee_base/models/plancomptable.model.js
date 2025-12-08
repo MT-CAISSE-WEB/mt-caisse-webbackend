@@ -2,8 +2,11 @@ const { DateTime } = require('mssql');
 const {sql, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 
-const societeModel = require('../../gestion_organisation/models/societe.model');
-const societemodel = new societeModel()
+
+const societeservice = require('../../gestion_organisation/services/societe.service');
+
+const lasociete = societeservice;
+
 
 const queryInsert = `
         INSERT INTO PlanComptable (idcompte, numcompte, libelle, ventillable,
@@ -116,7 +119,7 @@ class PlanComptableModel {
         let societe = null;
 
         if (compte.idsociete) {
-            societe = await societemodel.get_onesociete(compte.idsociete);
+            societe = await lasociete.getonesociete(compte.idsociete);
         }
 
         return { ...compte, societe : societe };

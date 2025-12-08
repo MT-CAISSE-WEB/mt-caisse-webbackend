@@ -57,7 +57,6 @@ const connectInstance = async () => {
   }
 }
 
-
 //un pool spécifique pour les opérations de la base de données
 const poolPromise = new sql.ConnectionPool(config)
   .connect()
