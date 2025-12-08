@@ -1,7 +1,7 @@
 const { DateTime } = require('mssql');
 const {sql, connectInstance, connectionDb} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
-const devise = require('');
+//const devise = require('');
 
 const queryInsert = `
         INSERT INTO Societe (idsociete,codedevisereference, codedevisereporting, code, raisonsociale, rccm, numNUI, email, telephone, logo, adresse, suivibudgetaire, createdAt, updatedAt, createdBy, updatedBy)
@@ -79,12 +79,12 @@ class societeModel {
             const societe = result.recordset[0];
             let devisereference = null;
             let devisereporting = null;
-            if (societe.codedevisereference) {
-                devisereference = await devise.get_onedevise(societe.codedevisereference);
-            }
-            if (societe.codedevisereporting) {
-                devisereporting = await devise.get_onedevise(societe.codedevisereporting);
-            }
+            // if (societe.codedevisereference) {
+            //     devisereference = await devise.get_onedevise(societe.codedevisereference);
+            // }
+            // if (societe.codedevisereporting) {
+            //     devisereporting = await devise.get_onedevise(societe.codedevisereporting);
+            // }
             
             return {...societe, devisereference : devisereference, devisereporting : devisereporting};
         } catch (error) {

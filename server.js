@@ -12,13 +12,15 @@ const logger = require('./shared/middlewares/logger')
 const errorHandler = require('./shared/middlewares/error')
 
 // Declaration des routes
-const societesroutes = require("./feature/gestion_organisation/routes/societe.route");
-
+//const societesroutes = require("./feature/gestion_workflow/routes/circuitvalidateur.route");
+const circuitvalidateurroute = require("./feature/gestion_workflow/routes/circuitvalidateur.route");
+const circuitvalidationroute = require("./feature/gestion_workflow/routes/circuitvalidation.route");
+const validationdemanderoute = require("./feature/gestion_workflow/routes/validationdemande.route");
 
 //connexion db
 const db = require('./config/db')
 
-dotenv.config({ path: './config/config.env' })
+dotenv.config({ path: './config/.env' })
 // INIT EXPRESS
 const app = express()
 // ANALYSEUR DE CORPS DE REQ AU FORMAT JSON
@@ -61,7 +63,10 @@ app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, 'views'))
 
 //Regrouper toutes les routes
-app.use("/API/societe", societesroutes);
+app.use("/API/circuitvalidateur", circuitvalidateurroute);
+app.use("/API/circuitvalidation", circuitvalidationroute);
+app.use("/API/validationdemande", validationdemanderoute);
+
 
 // GESTION DES ERREURS
 app.use(errorHandler)
