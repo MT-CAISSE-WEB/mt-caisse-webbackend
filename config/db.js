@@ -1,8 +1,7 @@
 const dotenv = require('dotenv');
-dotenv.config({path: './config/config.env'});
+dotenv.config({path: './config/.env'});
 const sql = require("mssql");
 const fs = require('fs');
-
 
 
 const config = {
@@ -35,7 +34,7 @@ const connectDB = async () => {
     // console.log(`Connecté à la base de données`.cyan.bold);
     return db;
   } catch (error) {
-    console.log(`Erreur de connexion: ${error}`.red.bold);
+    console.log(`${error}`.red.bold);
     throw error;
   }
 }
@@ -50,14 +49,14 @@ const connectInstance = async () => {
       await pool.request().query(dbPool);
       createDB();
     }catch (err){
-      console.log(`Erreur de création de la base de donnée: ${err}`.cyan.bold);
+      console.log(`${err}`.cyan.bold);
     }
   } catch (err) {
-    console.log(`Erreur de connexion: ${err}`.cyan.bold);
+    console.log(`${err}`.cyan.bold);
   }
 }
 
-//un pool spécifique pour les opérations de la base de données
+// un pool spécifique pour les opérations de la base de données
 const poolPromise = new sql.ConnectionPool(config)
   .connect()
   .then(pool => {
@@ -66,7 +65,7 @@ const poolPromise = new sql.ConnectionPool(config)
   })
   .catch(err => {
     console.log('Erreur de connexion SQL Server', err);
-    throw err;
+    throw err;
   });
 
 module.exports =  {connectInstance, connectDB, poolPromise, sql};

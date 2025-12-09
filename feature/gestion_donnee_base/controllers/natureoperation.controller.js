@@ -39,7 +39,6 @@ module.exports.get_onenature = asyncHandler(async(req, res, next) => {
 module.exports.create_nature = asyncHandler(async(req, res, next) => {
   try {
     const data = req.body;
-    console.log(data);
     const new_nature = await natureoperationservice.create_nature(data);
     res.status(201).json({ success: true, data: new_nature });
   } catch (error) {

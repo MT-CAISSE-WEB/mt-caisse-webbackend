@@ -29,8 +29,16 @@ const queryUpdate = `UPDATE NatureOperation SET libelle = @libelle, typeoperatio
 
 
 const query = `
-        SELECT *
-        FROM NatureOperation
+        SELECT n.*,
+        c.numcompte AS compte_numcompte,
+        c.libelle AS compte_libelle,
+        c.ventillable AS compte_ventillable,
+        c.auxiliaire AS compte_auxiliaire,
+        c.actif AS compte_actif,
+        c.suivibudgetaire AS compte_suivibudgetaire,
+        c.suivibudgetairemensuel AS compte_suivibudgetairemensuel
+        FROM NatureOperation AS n
+        LEFT JOIN PlanComptable c ON n.idcompte = c.idcompte
         ORDER BY codenature
         OFFSET @offset ROWS
         FETCH NEXT @limit ROWS ONLY;
@@ -43,7 +51,7 @@ const query = `
 class NatureOperationModel {
     constructor(idnature, codenature, libelle, typeoperation, decajustifier, imputationtiers, 
         actif, demandedecaissement, idsociete, idcompte,
-        createdat, updatedat, createdby, updatedby)
+        createdat, updatedat, createdby, updatedby, compte = null)
     {
         this.idnature = idnature;
         this.codenature = codenature;
@@ -59,6 +67,8 @@ class NatureOperationModel {
         this.updatedat = updatedat;
         this.createdby = createdby;
         this.updatedby = updatedby;
+
+        this.compte = compte;
     }
 
 
@@ -103,8 +113,6 @@ class NatureOperationModel {
             const natures = result.recordsets[0];
             const total = result.recordsets[1][0].total;
             const totalPages = Math.ceil(total / limit);
-
-            // console.log(natures)
 
             return {page, limit, total, totalPages, data: natures};
         } catch (error) {

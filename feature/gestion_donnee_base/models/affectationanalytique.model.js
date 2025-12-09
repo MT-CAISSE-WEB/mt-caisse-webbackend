@@ -1,24 +1,16 @@
 const { DateTime } = require('mssql');
 const {sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
+
 const centreModel = require('./centreanalytique.model');
 const natureModel = require('./natureoperation.model');
-// const societeModel = require('../../gestion_organisation/models/societe.model');
-const siteModel = require('../../gestion_organisation/models/site.model');
-const departementModel = require('../../gestion_organisation/models/departement.model');
-
 const centremodel = new centreModel()
 const naturemodel = new natureModel()
-// const societemodel = new societeModel()
-const sitemodel = new siteModel()
-const departementmodel = new departementModel()
 
 const societeservice = require('../../gestion_organisation/services/societe.service');
 const siteservice = require('../../gestion_organisation/services/site.service');
 const departementservice = require('../../gestion_organisation/services/departement.service');
-const lasociete = societeservice;
-const lesite = siteservice;
-const ledepartement = departementservice;
+
 
 
 
@@ -40,9 +32,24 @@ const queryUpdate = `UPDATE Affectation SET actif = @actif,
 
 
 const query = `
-        SELECT *
-        FROM Affectation
-        ORDER BY codeaffectation
+        SELECT A.*,
+        so.codesociete AS societe_codesociete, 
+        so.raisonsociale AS societe_raisonsociale,
+        si.codesite AS site_codesite, 
+        si.libelle AS site_libellesite,
+        de.codedept AS departement_codedept, 
+        de.libelle AS departement_libelledept,
+        ca.codecentreanalytique AS centreanalytique_codecentre, 
+        ca.libelle AS centreanalytique_libellecentre,
+        na.codenature AS natureoperation_codenature, 
+        na.libelle AS natureoperation_libellenature 
+        FROM Affectation A
+        LEFT JOIN Societe so ON A.idsociete = so.idsociete
+        LEFT JOIN Site si ON A.idsite = si.idsite
+        LEFT JOIN Departement de ON A.iddepartement = de.iddepartement
+        LEFT JOIN CentreAnalytique ca ON A.idcentreanalytique = ca.idcentreanalytique
+        LEFT JOIN NatureOperation na ON A.idnature = na.idnature
+        ORDER BY A.codeaffectation
         OFFSET @offset ROWS
         FETCH NEXT @limit ROWS ONLY;
 
@@ -51,8 +58,11 @@ const query = `
 
 // Model AffectationAnalytique
 class AffectationAnalytiqueModel {
-    constructor(idaffectation, codeaffectation, actif, idsociete,  idsite, iddepartement, idcentreanalytique, idnature,
-        createdat, updatedat, createdby, updatedby)
+    constructor(idaffectation, codeaffectation, actif, idsociete, 
+         idsite, iddepartement, idcentreanalytique, idnature,
+        createdat, updatedat, createdby, updatedby, 
+        societe = null, site = null, departement = null, 
+        centre = null, nature = null,)
     {
         this.idaffectation = idaffectation;
         this.codeaffectation = codeaffectation;
@@ -66,6 +76,12 @@ class AffectationAnalytiqueModel {
         this.updatedat = updatedat;
         this.createdby = createdby;
         this.updatedby = updatedby;
+
+        this.societe = societe;
+        this.site = site;
+        this.departement = departement;
+        this.centre = centre;
+        this.nature = nature;
     }
 
 
@@ -109,8 +125,6 @@ class AffectationAnalytiqueModel {
             const total = result.recordsets[1][0].total;
             const totalPages = Math.ceil(total / limit);
 
-            // console.log(affectations)
-
             return {page, limit, total, totalPages, data: affectations};
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
@@ -133,9 +147,9 @@ class AffectationAnalytiqueModel {
             if (affectation.idsociete || affectation.idsite || affectation.iddepartement 
                 || affectation.idcentreanalytique || affectation.idnature) 
                 {
-                societe = await lasociete.getonesociete(affectation.idsociete);
-                site = await lesite.getonesite(affectation.idsite);
-                departement = await ledepartement.getonedepartement(affectation.iddepartement);
+                societe = await societeservice.getonesociete(affectation.idsociete);
+                site = await siteservice.getonesite(affectation.idsite);
+                departement = await departementservice.getonedepartement(affectation.iddepartement);
                 centre = await centremodel.get_onecentre(affectation.idcentreanalytique);
                 nature = await naturemodel.get_onenature(affectation.idnature);
             }

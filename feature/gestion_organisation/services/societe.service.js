@@ -32,7 +32,7 @@ const { v4: uuidv4 } = require('uuid');
             END
         `;
 
-        const pool = await db.poolPromise;
+        const pool = await db.connectDB();
         const result = await pool.request()
             .input("idsociete", db.sql.UniqueIdentifier, idsociete)
             .input("codesociete", db.sql.NVarChar, codesociete)
@@ -70,7 +70,7 @@ const { v4: uuidv4 } = require('uuid');
  // Get all
 async function getallsociete(){
     try {
-        const pool = await db.poolPromise;
+        const pool = await db.connectDB();
         const query = "SELECT * FROM Societe";
         const result = await pool.request().query(query);
         return {
@@ -109,26 +109,26 @@ async function getonesociete(idsociete){
 }
 
      //Delete Societe
-async function deletesociete(idsociete)
-{
-    
-    try {
-        const pool = await db.poolPromise;
-        const query = "DELETE FROM Societe where idsociete = @idsociete";
-        const result = await pool.request()
-        .input('idsociete',db.sql.UniqueIdentifier,idsociete)
-        .query(query);
-        return {success:true,status:200,message:"Suppression effectuée avec succès!"}
-    } catch (error) {
-        return {success:false,status:500,message:`Erreur lors de la suppression : ${error}`.cyan.bold}; 
-    }
-}
+  async function deletesociete(idsociete)
+  {
+      
+      try {
+          const pool = await db.connectDB();
+          const query = "DELETE FROM Societe where idsociete = @idsociete";
+          const result = await pool.request()
+          .input('idsociete',db.sql.UniqueIdentifier,idsociete)
+          .query(query);
+          return {success:true,status:200,message:"Suppression effectuée avec succès!"}
+      } catch (error) {
+          return {success:false,status:500,message:`Erreur lors de la suppression : ${error}`.cyan.bold}; 
+      }
+  }
 
-module.exports = {
-upsertsociete,
-getallsociete,
-getonesociete,
-deletesociete
-}
+  module.exports = {
+    upsertsociete,
+    getallsociete,
+    getonesociete,
+    deletesociete
+  }
 
 

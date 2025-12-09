@@ -4,8 +4,6 @@ const { v4: uuidv4 } = require('uuid');
 
 const societeservice = require('../../gestion_organisation/services/societe.service');
 
-const lasociete = societeservice;
-
 const queryInsert = `
         INSERT INTO Tiers (idtiers, codetiers, designation, typetiers, actif, idsociete,
         createdat, updatedat, createdby, updatedby)
@@ -19,9 +17,18 @@ const queryUpdate = `UPDATE Tiers SET designation = @designation, typetiers = @t
         OUTPUT INSERTED.* WHERE idtiers = @idtiers`;
 
 const query = `
-        SELECT *
-        FROM Tiers
-        ORDER BY codetiers
+        SELECT t.*,
+            so.idsociete AS societe_idsociete,
+            so.codesociete AS societe_codesociete,
+            so.raisonsociale AS societe_raisonsociale,
+            so.email AS societe_email,
+            so.telephone AS societe_telephone,
+            so.adresse AS societe_adresse,
+            so.createdat AS societe_createdat,
+            so.updatedat AS societe_updatedat
+        FROM Tiers t
+        LEFT JOIN Societe so ON t.idsociete = so.idsociete
+        ORDER BY t.codetiers
         OFFSET @offset ROWS
         FETCH NEXT @limit ROWS ONLY;
 
@@ -32,7 +39,8 @@ const query = `
 // Model Tiers
 class TiersModel {
     constructor(idtiers, codetiers, designation, typetiers, actif, idsociete,
-        createdat, updatedat, createdby, updatedby)
+        createdat, updatedat, createdby, updatedby, 
+        societe = null)
     {
         this.idtiers = idtiers;
         this.codetiers = codetiers;
@@ -44,6 +52,8 @@ class TiersModel {
         this.updatedat = updatedat;
         this.createdby = createdby;
         this.updatedby = updatedby;
+        
+        this.societe = societe;
     }
 
 
@@ -112,7 +122,7 @@ class TiersModel {
             else
                 { 
                     if (tiers.idsociete) {
-                        societe = await lasociete.getonesociete(tiers.idsociete); }
+                        societe = await societeservice.getonesociete(tiers.idsociete); }
 
                     return { ...tiers, societe : societe };}
                     // return {success: true, data: result.recordset[0]}; }

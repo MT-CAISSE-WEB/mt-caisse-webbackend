@@ -1,8 +1,7 @@
  class departementmodel {
-    constructor(iddepartement,idsociete,codesociete,idsite,responsable,codedept,libelle,email,telephone,adresse,createdat,createdby,updatedat,updatedby){
+    constructor(iddepartement,idsociete,idsite,responsable,codedept,libelle,email,telephone,adresse,createdat,createdby,updatedat,updatedby){
            this.iddepartement = iddepartement;
            this.idsociete = idsociete;
-           this.codesociete = codesociete;
            this.idsite = idsite;
            this.responsable = responsable;
            this.codedept = codedept;
@@ -15,7 +14,7 @@
            this.updatedat = updatedat;
            this.updatedby = updatedby;
     }
-
  }
+
  
 module.exports = departementmodel;

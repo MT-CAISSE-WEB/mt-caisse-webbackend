@@ -1,7 +1,8 @@
 const natureoperationmodel = require("../models/natureoperation.model");
-const { v4: uuidv4 } = require('uuid');
 const PaginationModel = require("../../../shared/utils/model");
+const { v4: uuidv4 } = require('uuid');
 
+const plancomptablemodel = require("../models/plancomptable.model");
 
 let nature = new natureoperationmodel();
 
@@ -23,7 +24,12 @@ async function get_all_natures(page = 1, limit = 5) {
     item.createdat,
     item.updatedat, 
     item.createdby, 
-    item.updatedby));
+    item.updatedby,
+    item.idcompte ? new plancomptablemodel(
+      item.compte_idcompte, item.compte_numcompte, item.compte_libelle, item.compte_ventillable, 
+      item.compte_auxiliaire, item.compte_actif, item.compte_suivibudgetaire, 
+      item.compte_suivibudgetairemensuel) : null,
+  ));
 
   return new PaginationModel(result.page, result.limit, result.total, natures);
 

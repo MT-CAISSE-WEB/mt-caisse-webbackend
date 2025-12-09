@@ -1,6 +1,8 @@
 const plancomptablemodel = require("../models/plancomptable.model");
 const { v4: uuidv4 } = require('uuid');
 const PaginationModel = require("../../../shared/utils/model");
+const societemodel = require("../../gestion_organisation/models/societe.model");
+
 
 
 let compte = new plancomptablemodel();
@@ -22,10 +24,16 @@ async function get_all_comptes(page = 1, limit = 5) {
     item.createdat, 
     item.updatedat, 
     item.createdby, 
-    item.updatedby));
+    item.updatedby,
+    item.idsociete ? new societemodel(
+        item.societe_idsociete, item.societe_codesociete, item.societe_raisonsociale, 
+        item.societe_rccm, item.societe_numnui, item.societe_email, item.societe_telephone, 
+        item.societe_logo, item.societe_adresse, item.societe_suivibudgetaire, 
+        item.societe_createdat, item.societe_updatedat, 
+        item.societe_createdby, item.societe_updatedby
+      ) : null,
+  ));
 
-    // console.log(comptes)
-    
   return new PaginationModel(result.page, result.limit, result.total, comptes);
 }
 

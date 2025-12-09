@@ -25,6 +25,22 @@ idsociete = @idsociete, updatedat = @updatedat, updatedby = @updatedby
 OUTPUT INSERTED.* WHERE idcompte = @idcompte`;
 
 const query = `
+
+        SELECT c.*,
+            so.idsociete AS societe_idsociete,
+            so.codesociete AS societe_codesociete,
+            so.raisonsociale AS societe_raisonsociale,
+            so.email AS societe_email,
+            so.telephone AS societe_telephone,
+            so.adresse AS societe_adresse,
+            so.createdat AS societe_createdat,
+            so.updatedat AS societe_updatedat
+        FROM PlanComptable c
+        LEFT JOIN Societe so ON c.idsociete = so.idsociete
+        ORDER BY c.numcompte
+        OFFSET @offset ROWS
+        FETCH NEXT @limit ROWS ONLY;
+
         SELECT *
         FROM PlanComptable
         ORDER BY numcompte

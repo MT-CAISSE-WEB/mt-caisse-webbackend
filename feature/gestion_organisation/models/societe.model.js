@@ -1,11 +1,11 @@
 class societemodel {
-    constructor(idsociete, code, 
+    constructor(idsociete, codesociete, 
         iddevisereference, iddevisereporting,
         raisonsociale, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire, 
         createdat, updatedat, createdby, updatedby)
     {
         this.idsociete = idsociete;
-        this.code = code;
+        this.codesociete = codesociete;
         this.iddevisereference = iddevisereference;
         this.iddevisereporting = iddevisereporting;
         this.raisonsociale = raisonsociale;
