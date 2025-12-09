@@ -15,6 +15,18 @@ const config = {
   },
 };
 
+const initconfig = {
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_SERVER, // ou l’adresse IP du serveur
+  database: process.env.DB_NAME,
+  options: {
+    encrypt: process.env.DB_ENCRYPT === 'true', // true si Azure
+    trustServerCertificate: false,
+    //instanceName: process.env.DB_INSTANCE || undefined, // Nom de l'instance SQL Server, si applicable
+  },
+};
+
 const createDB = async () =>{
   try {
     const db = await sql.connect({...config , database : 'DEVCAISSE'});
@@ -56,6 +68,8 @@ const connectInstance = async () => {
   }
 }
 
+
+
 //un pool spécifique pour les opérations de la base de données
 const poolPromise = new sql.ConnectionPool(config)
   .connect()
@@ -68,4 +82,31 @@ const poolPromise = new sql.ConnectionPool(config)
     throw err;
   });
 
-module.exports =  {connectInstance,connectDB,poolPromise,sql};
+
+
+  const initdatabase = async () => {
+      try {
+         const masterpool = await sql.connect(initconfig);
+
+          await masterpool.request().query(`
+          IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = 'DEVCAISSE')
+          BEGIN
+            CREATE DATABASE DEVCAISSE;
+          END
+        `);
+
+         console.log("Base DEVCAISSE vérifiée/créée");
+
+         const dbPool = await sql.connect({ ...config, database: "DEVCAISSE" });
+         const tablesScript = fs.readFileSync("./config/init.sql", "utf8");
+         await dbPool.request().batch(tablesScript);
+
+          console.log("Tables initialisées");
+          await sql.close();
+      } catch (error) {
+         console.error("Erreur initDatabase :", error);
+         await sql.close();
+      }
+  }
+
+module.exports =  {connectInstance,connectDB,initdatabase,poolPromise,sql};

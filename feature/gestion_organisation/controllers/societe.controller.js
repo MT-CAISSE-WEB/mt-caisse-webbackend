@@ -3,10 +3,19 @@ const ErrorResponse = require('../../../shared/utils/errorResponse');
 const societeservice = require ("../services/societe.service");
 
 
-
 module.exports.getallsocietes = asyncHandler (async(req,res, next)=>{
     try {
         const societes = await societeservice.getallsociete();
+        res.status(societes.status).json({success:societes.success,message:societes.message,data:societes.data});
+    } catch (error) {
+        res.status(500).json({success:false, message:"Erreur serveur", error});
+    }
+});
+
+
+module.exports.getalldevises = asyncHandler (async(req,res, next)=>{
+    try {
+        const societes = await societeservice.getalldevisesactif();
         res.status(societes.status).json({success:societes.success,message:societes.message,data:societes.data});
     } catch (error) {
         res.status(500).json({success:false, message:"Erreur serveur", error});
@@ -27,8 +36,14 @@ module.exports.getonesociete = asyncHandler (async(req,res, next)=>{
 
 module.exports.upsertsociete = asyncHandler (async(req,res, next)=>{
     try {
-        const {codesociete, raisonsociale, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby, updatedby } = req.body;
-        const updatedsociete = await societeservice.upsertsociete({codesociete, raisonsociale, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby, updatedby })
+        const {codesociete,iddevisereference,iddevisereporting, raisonsociale,sigle, rccm, numnui, email, telephone, adresse, suivibudgetaire,createdby, updatedby } = req.body;
+        
+        let logoPath = null;
+        if (req.file) {
+            logoPath = `/uploads/logo/${req.file.filename}`;
+        }
+        
+        const updatedsociete = await societeservice.upsertsociete({codesociete,iddevisereference,iddevisereporting, raisonsociale,sigle, rccm, numnui, email, telephone, logo: logoPath, adresse, suivibudgetaire,createdby, updatedby })
         res.status(updatedsociete.status).json({success: updatedsociete.success,message:updatedsociete.message, data: updatedsociete.data});
     } catch (error) {
         res.status(500).json({ success: false, message: "Erreur serveur", error });

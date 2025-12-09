@@ -72,9 +72,32 @@ async function upserttauxdevise({iddeviseorigine,iddevisedestination,codetauxdev
 async function getalltauxdevises(){
     try {
         const pool = await db.poolPromise;
-        const query = "SELECT * FROM tauxdevise";
+        const query =`
+    SELECT 
+        t.*, 
+        d1.codeiso AS devise_origine,
+        d2.codeiso AS devise_destination
+    FROM Tauxdevise t
+    JOIN Devise d1 ON t.iddeviseorigine = d1.iddevise
+    JOIN Devise d2 ON t.iddevisedestination = d2.iddevise
+`;
         const result = await pool.request().query(query);
         return {
+            success :true,
+            status:200, 
+            data : result.recordsets[0],
+            message : "Eléments trouvés avec succès!"}
+    } catch (error) {
+        return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
+    }
+}
+
+async function getalldevisesactif(){
+    try {
+          const pool = await db.poolPromise;
+          const query = "SELECT * FROM devise where actif=1"; 
+          const result = await pool.request().query(query);
+         return {
             success :true,
             status:200, 
             data : result.recordsets[0],
@@ -128,5 +151,6 @@ module.exports = {
     upserttauxdevise,
     getalltauxdevises,
     getonetauxdevise,
-    deletetauxdevise
+    deletetauxdevise,
+    getalldevisesactif
 }

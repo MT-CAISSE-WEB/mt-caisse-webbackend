@@ -4,7 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 
 
 const queryinsert = `
-        INSERT INTO Devise (iddevise,code,intitule,codeiso,actif,createdby,createdat)
+        INSERT INTO Devise (iddevise,codedevise,intitule,codeiso,actif,createdby,createdat)
         OUTPUT INSERTED.*
         VALUES (@iddevise, @code, @intitule, @codeiso, @actif, @createdby, @createdat)
         `;
@@ -42,12 +42,12 @@ async function createdevise(data){
     }
 
     //upsert devise
-   async function upsertdevise({ code, intitule, codeiso, actif, createdby,updatedby }) {
+   async function upsertdevise({ codedevise, intitule, codeiso, actif, createdby,updatedby }) {
     try {
         const iddevise = uuidv4();
 
         const query = `
-            IF EXISTS (SELECT 1 FROM devise WHERE code = @code)
+            IF EXISTS (SELECT 1 FROM devise WHERE codedevise = @codedevise)
             BEGIN
                 UPDATE devise
                 SET intitule = @intitule,
@@ -56,20 +56,20 @@ async function createdevise(data){
                     updatedby = @updatedby,
                     updatedat = GETDATE()
                 OUTPUT INSERTED.*
-                WHERE code = @code
+                WHERE codedevise = @codedevise
             END
             ELSE
             BEGIN
-                INSERT INTO devise (iddevise, code, intitule, codeiso, actif, createdby, createdat)
+                INSERT INTO devise (iddevise, codedevise, intitule, codeiso, actif, createdby, createdat)
                 OUTPUT INSERTED.*
-                VALUES (@iddevise, @code, @intitule, @codeiso, @actif, @createdby, GETDATE())
+                VALUES (@iddevise, @codedevise, @intitule, @codeiso, @actif, @createdby, GETDATE())
             END
         `;
 
         const pool = await db.poolPromise;
         const result = await pool.request()
             .input("iddevise", db.sql.UniqueIdentifier, iddevise)
-            .input("code", db.sql.NVarChar, code)
+            .input("codedevise", db.sql.NVarChar, codedevise)
             .input("intitule", db.sql.NVarChar, intitule)
             .input("codeiso", db.sql.NVarChar, codeiso)
             .input("actif", db.sql.Int, actif)

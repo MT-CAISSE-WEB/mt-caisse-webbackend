@@ -11,11 +11,13 @@ const bodyParser = require('body-parser');
 const logger = require('./shared/middlewares/logger');
 const errorHandler = require('./shared/middlewares/error');
 
+
 const deviseroute = require('./feature/gestion_organisation/routes/devise.route');
 const tauxdeviseroute = require('./feature/gestion_organisation/routes/tauxdevise.route');
 const societeroute = require('./feature/gestion_organisation/routes/societe.route');
 const siteroute = require('./feature/gestion_organisation/routes/site.route');
 const departementroute = require('./feature/gestion_organisation/routes/departement.route');
+const userroute = require('./feature/gestion_users/routes/users.route');
 
 const db = require('./config/db');
 
@@ -38,7 +40,10 @@ if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 }
 
-db.connectInstance();
+db.initdatabase();
+//db.connectInstance();
+
+
 
 // JOURNALISATION PERSONNALISEE
 app.use(logger);
@@ -80,6 +85,7 @@ app.use('/API',tauxdeviseroute);
 app.use('/API',societeroute);
 app.use('/API',siteroute);
 app.use('/API',departementroute);
+app.use('/API',userroute);
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
     console.log(`Error: ${err.message}`.red);
