@@ -10,6 +10,7 @@ const device = require('express-device')
 const bodyParser = require('body-parser')
 const logger = require('./shared/middlewares/logger')
 const errorHandler = require('./shared/middlewares/error')
+const sequelize = require('./config/database')
 
 
 //DECLARATION DES ROUTES

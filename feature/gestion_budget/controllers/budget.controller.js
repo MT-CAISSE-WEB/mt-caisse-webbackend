@@ -153,39 +153,6 @@ exports.create = async (req, res) => {
   }
 }
 
-<<<<<<< HEAD
-/**
- * Suppression d'un budget
- */
-module.exports.delete_budget = asyncHandler(async (req, res, next) => {
-  try {
-    const { id } = req.params
-    await budget_service.delete_budget(id)
-    res.json({ success: true, message: 'Budget supprimé avec succès.' })
-  } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: `Erreur serveur: ${error.message}` })
-  }
-})
-
-/**
- * Dupliquer un budget
- */
-
-module.exports.duplicate_budget = asyncHandler(async (req, res, next) => {
-  try {
-    const { id } = req.params
-    const { code, createdby } = req.body
-    const budget = await budget_service.duplicate_budget(id, code, createdby)
-    res.json({ success: true, data: budget })
-  } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: `Erreur serveur: ${error.message}` })
-  }
-})
-=======
 // ========== GET ALL ==========
 exports.getAll = async (req, res) => {
   try {
@@ -366,4 +333,3 @@ exports.duplicate = async (req, res) => {
     })
   }
 }
->>>>>>> origin/ferreol
