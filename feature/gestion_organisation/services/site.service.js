@@ -11,7 +11,8 @@ const { v4: uuidv4 } = require('uuid');
             IF EXISTS (SELECT 1 FROM sites WHERE codesite = @codesite)
             BEGIN
                 UPDATE site
-                SET intitule = @intitule,
+                SET 
+                    idsociete = @idsociete,
                     codeanalytique = @codeanalytique,
                     libelle = @libelle,
                     email   = @email,
@@ -67,8 +68,8 @@ const { v4: uuidv4 } = require('uuid');
 // Get all
 async function getallsite(){
     try {
-        const pool = await db.connectDB();
-        const query = "SELECT * FROM Sites";
+        const pool = await db.poolPromise;
+        const query = "SELECT s.*,so.raisonsociale FROM Site s LEFT JOIN Societe so ON s.idsociete = so.idsociete";
         const result = await pool.request().query(query);
         return {
             success :true,

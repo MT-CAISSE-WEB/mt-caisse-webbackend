@@ -3,7 +3,7 @@ const db = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 
  //upsert Societe
-   async function upsertsociete({codesociete, raisonsociale, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby, updatedby }) {
+   async function upsertsociete({codesociete,iddevisereference,iddevisereporting,raisonsociale,sigle, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby, updatedby }) {
     try {
         const idsociete = uuidv4();
 
@@ -12,6 +12,9 @@ const { v4: uuidv4 } = require('uuid');
             BEGIN
                 UPDATE societe
                 SET raisonsociale = @raisonsociale,
+                     sigle = @sigle,
+                     iddevisereference = @iddevisereference,
+                     iddevisereporting = @iddevisereporting,
                      rccm = @rccm,
                      numnui = @numnui,
                      email = @email,
@@ -21,14 +24,14 @@ const { v4: uuidv4 } = require('uuid');
                      suivibudgetaire = @suivibudgetaire,
                      updatedby = @updatedby,
                      updatedat = GETDATE()
-                OUTPUT INSERTED.*
+                OUTPUT 'update' AS action, INSERTED.*
                 WHERE codesociete = @codesociete
             END
             ELSE
             BEGIN
-                INSERT INTO societe (idsociete,codesociete, raisonsociale, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby,createdat)
-                OUTPUT INSERTED.*
-                VALUES (@idsociete, @codesociete, @raisonsociale, @rccm, @numnui, @email,@telephone,@logo,@adresse,@suivibudgetaire,@createdby,GETDATE())
+                INSERT INTO societe (idsociete,iddevisereference,iddevisereporting,codesociete, raisonsociale,sigle, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby,createdat)
+                OUTPUT 'insert' AS action, INSERTED.*
+                VALUES (@idsociete,@iddevisereference,@iddevisereporting,@codesociete, @raisonsociale,@sigle, @rccm, @numnui, @email,@telephone,@logo,@adresse,@suivibudgetaire,@createdby,GETDATE())
             END
         `;
 
@@ -36,7 +39,10 @@ const { v4: uuidv4 } = require('uuid');
         const result = await pool.request()
             .input("idsociete", db.sql.UniqueIdentifier, idsociete)
             .input("codesociete", db.sql.NVarChar, codesociete)
+            .input("iddevisereference", db.sql.NVarChar, iddevisereference)
+            .input("iddevisereporting", db.sql.NVarChar, iddevisereporting)
             .input("raisonsociale", db.sql.NVarChar, raisonsociale)
+            .input("sigle", db.sql.NVarChar,sigle)
             .input("rccm", db.sql.NVarChar, rccm)
             .input("numnui", db.sql.NVarChar, numnui)
             .input("email", db.sql.NVarChar, email)
@@ -51,13 +57,14 @@ const { v4: uuidv4 } = require('uuid');
         return {
             success: true,
             status: 200,
-            message: result.rowsAffected[0] === 1
+            message:  result.recordset[0].action === "update"
                 ? "Société mise à jour avec succès !"
                 : "Société créée avec succès !",
             data: result.recordset[0]
         };
 
     } catch (error) {
+        console.log(error);
         return {
             success: false,
             status: 500,
@@ -69,9 +76,31 @@ const { v4: uuidv4 } = require('uuid');
  // Get all
 async function getallsociete(){
     try {
-        const pool = await db.connectDB();
-        const query = "SELECT * FROM Societe";
+        const pool = await db.poolPromise;
+        const query = `SELECT s.*,
+        d1.codeiso AS devise_reference,
+        d2.codeiso AS devise_reporting FROM Societe s
+        left join devise d1 on s.iddevisereference = d1.iddevise
+        left join devise d2 on s.iddevisereporting = d2.iddevise`;
         const result = await pool.request().query(query);
+
+        return {
+            success :true,
+            status:200, 
+            data : result.recordsets[0],
+            message : "Eléments trouvés avec succès!"}
+    } catch (error) {
+        return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
+    }
+}
+
+ // Get all
+async function getalldevisesactif(){
+    try {
+        const pool = await db.poolPromise;
+        const query = `SELECT * FROM DEVISE WHERE ACTIF=1`;
+        const result = await pool.request().query(query);
+
         return {
             success :true,
             status:200, 
@@ -124,7 +153,8 @@ async function getallsociete(){
     upsertsociete,
     getallsociete,
     getonesociete,
-    deletesociete
+    deletesociete,
+    getalldevisesactif
   }
 
 

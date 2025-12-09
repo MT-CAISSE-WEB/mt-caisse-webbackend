@@ -56,6 +56,8 @@ const natureoperationroutes = require("./feature/gestion_donnee_base/routes/natu
 const centreanalytiqueroutes = require("./feature/gestion_donnee_base/routes/centreanalytique.route");
 // Affectation analytiques routes
 const affectationanalytiqueroutes = require("./feature/gestion_donnee_base/routes/affectationanalytique.route");
+// Routes users
+const userroute = require('./feature/gestion_users/routes/users.route');
 
 
 //connexion db
@@ -146,6 +148,8 @@ app.use("/API/plancomptable", plancomptableroutes);
 app.use("/API/natureoperation", natureoperationroutes);
 app.use("/API/centreanalytique", centreanalytiqueroutes);
 app.use("/API/affectationanalytique", affectationanalytiqueroutes);
+// Gestion des users
+app.use('/API',userroute);
 
 
 // GESTION DES ERREURS

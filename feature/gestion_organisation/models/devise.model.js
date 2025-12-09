@@ -1,7 +1,6 @@
 
 class devisemodel {
-    constructor(iddevise, codedevise, intitule, codeiso, actif, createdat, createdby, updatedat, updatedby) {
-        this.iddevise = iddevise;
+    constructor(codedevise, intitule, codeiso, actif, createdby, updatedby) {
         this.codedevise = codedevise;
         this.intitule = intitule;
         this.codeiso = codeiso;
