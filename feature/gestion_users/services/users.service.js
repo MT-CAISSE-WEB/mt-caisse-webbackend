@@ -2,7 +2,7 @@ const db = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const dotenv = require('dotenv');
 dotenv.config({path: '../../../config/config.env'});
-const argon2 = require("argon2");
+const argon2 = require('argon2');
 const jwt = require("jsonwebtoken");
 
 async function upsertuser(params){

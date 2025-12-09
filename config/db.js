@@ -27,6 +27,18 @@ const initconfig = {
   },
 };
 
+const initconfig = {
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_SERVER, // ou l’adresse IP du serveur
+  database: process.env.DB_NAME,
+  options: {
+    encrypt: process.env.DB_ENCRYPT === 'true', // true si Azure
+    trustServerCertificate: false,
+    //instanceName: process.env.DB_INSTANCE || undefined, // Nom de l'instance SQL Server, si applicable
+  },
+};
+
 const createDB = async () =>{
   try {
     const db = await sql.connect({...config , database : 'MTCAISSEWEB'});

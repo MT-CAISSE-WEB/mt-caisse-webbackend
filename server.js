@@ -18,6 +18,17 @@ const tauxdeviseroute = require('./feature/gestion_organisation/routes/tauxdevis
 const societeroute = require('./feature/gestion_organisation/routes/societe.route');
 const siteroute = require('./feature/gestion_organisation/routes/site.route');
 const departementroute = require('./feature/gestion_organisation/routes/departement.route');
+// Tiers routes
+const tiersroutes = require("./feature/gestion_donnee_base/routes/tiers.route");
+// Plan comptable routes
+const plancomptableroutes = require("./feature/gestion_donnee_base/routes/plancomptable.route");
+// Nature opérations routes
+const natureoperationroutes = require("./feature/gestion_donnee_base/routes/natureoperation.route");
+// Centre analytiques routes
+const centreanalytiqueroutes = require("./feature/gestion_donnee_base/routes/centreanalytique.route");
+// Affectation analytiques routes
+const affectationanalytiqueroutes = require("./feature/gestion_donnee_base/routes/affectationanalytique.route");
+// Routes users
 const userroute = require('./feature/gestion_users/routes/users.route');
 
 const db = require('./config/db');
@@ -68,7 +79,44 @@ app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, 'views'))
 
 //Regrouper toutes les routes
-app.use("/API/societe", societesroutes);
+//Budget
+app.use('/api/budget', budget_route)
+//Ligne budgetaire
+app.use('/api/ligne-budgetaire', ligne_budgetaire_route)
+//Entete demande
+app.use('/api/entete-demande', entete_demande_route)
+//Ligne demande
+app.use('/api/ligne-demande', ligne_demande_route)
+//Details demande
+app.use('/api/details-demande', details_demande_route)
+
+//Regrouper toutes les routes
+//GESTION OPERATION CAISSE ROUTES
+app.use("/API/journal", journalRoutes);
+app.use("/API/caisse", caisseRoutes);
+app.use("/API/utilisateur_caisse", utilisateurcaisseRoutes);
+app.use("/API/entete_operation", enteteoperationRoutes);
+app.use("/API/ligne_operation", ligneoperationRoutes);
+app.use("/API/operation", typeoperationRoutes);
+//Budget
+app.use('/API/budget', budget_route)
+//Ligne budgetaire
+app.use('/API/ligne-budgetaire', ligne_budgetaire_route)
+//API
+app.use('/API',deviseroute);
+app.use('/API',tauxdeviseroute);
+app.use('/API',societeroute);
+app.use('/API',siteroute);
+app.use('/API',departementroute);
+// Gestion donnee de base
+app.use("/API/tiers", tiersroutes);
+app.use("/API/plancomptable", plancomptableroutes);
+app.use("/API/natureoperation", natureoperationroutes);
+app.use("/API/centreanalytique", centreanalytiqueroutes);
+app.use("/API/affectationanalytique", affectationanalytiqueroutes);
+// Gestion des users
+app.use('/API',userroute);
+
 
 // GESTION DES ERREURS
 app.use(errorHandler)

@@ -120,11 +120,25 @@ BEGIN
 		typeentitedepartement INT DEFAULT 0,
 		typeentitesociete INT DEFAULT 0,
 		acheteur INT DEFAULT 0,
+<<<<<<< HEAD
+=======
+		iddepartement UNIQUEIDENTIFIER NULL,
+		idsociete UNIQUEIDENTIFIER,
+        idsite UNIQUEIDENTIFIER NULL,
+        login NVARCHAR(50) UNIQUE,
+        password NVARCHAR(50),
+>>>>>>> 17bbfaa (front end chado fusion junior)
         createdat Datetime,
 		createdby NVARCHAR(50),
 		updatedat Datetime,
 		updatedby NVARCHAR(50),
+<<<<<<< HEAD
 		foreign key (idsociete) references Societe(idsociete)
+=======
+		-- FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+		FOREIGN KEY (idsite) REFERENCES Site(idsite),
+>>>>>>> 17bbfaa (front end chado fusion junior)
     );
 END
 
@@ -143,6 +157,7 @@ IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Departement')
 BEGIN
     CREATE TABLE Departement (
         iddepartement UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+<<<<<<< HEAD
 		idsociete UNIQUEIDENTIFIER,
 		idsite UNIQUEIDENTIFIER,
 		responsable UNIQUEIDENTIFIER,
@@ -161,10 +176,52 @@ BEGIN
 END
 
 -- OK
+=======
+        idsociete UNIQUEIDENTIFIER,
+        idsite UNIQUEIDENTIFIER,
+        responsable UNIQUEIDENTIFIER NULL,
+        codedept NVARCHAR(50) UNIQUE,
+        libelle NVARCHAR(150),
+        email NVARCHAR(30),
+        telephone NVARCHAR(20),
+        adresse NVARCHAR(200),
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
+        FOREIGN KEY (responsable) REFERENCES Utilisateur(idutilisateur),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+    );
+END
+
+IF OBJECT_ID('dbo.Utilisateur', 'U') IS NOT NULL
+AND OBJECT_ID('dbo.Departement', 'U') IS NOT NULL
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM sys.foreign_keys 
+        WHERE name = 'FK_Utilisateur_Departement'
+    )
+    BEGIN
+        ALTER TABLE Utilisateur
+        ADD CONSTRAINT FK_Utilisateur_Departement
+        FOREIGN KEY (iddepartement) 
+        REFERENCES Departement(iddepartement);
+    END
+END
+
+
+-- ============================================
+-- 4️⃣ PlanComptable (dépend de Societe)
+-- ============================================
+
+>>>>>>> 17bbfaa (front end chado fusion junior)
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PlanComptable')
 BEGIN
     CREATE TABLE PlanComptable (
         idcompte UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+<<<<<<< HEAD
 		idsociete UNIQUEIDENTIFIER,
 		codesociete NVARCHAR(50),
 		numcompte NVARCHAR(50) UNIQUE,
@@ -183,10 +240,33 @@ BEGIN
 END
 
 -- OK
+=======
+        idsociete UNIQUEIDENTIFIER,
+        numcompte NVARCHAR(50) UNIQUE,
+        libelle NVARCHAR(150),
+        ventillable INT DEFAULT 1,
+        auxiliaire INT DEFAULT 1,
+        actif INT DEFAULT 1,
+        suivibudgetaire INT DEFAULT 0,
+        suivibudgetairemensuel INT DEFAULT 0,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+    );
+END
+
+-- ============================================
+-- 5️⃣ NatureOperation (dépend de PlanComptable et Societe)
+-- ============================================
+
+>>>>>>> 17bbfaa (front end chado fusion junior)
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'NatureOperation')
 BEGIN
     CREATE TABLE NatureOperation (
         idnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+<<<<<<< HEAD
 		codenature NVARCHAR(50) UNIQUE,
 		idsociete UNIQUEIDENTIFIER,
 		codesociete NVARCHAR(50),
@@ -235,10 +315,62 @@ BEGIN
     );
 END
 
+=======
+        codenature NVARCHAR(50) UNIQUE,
+        idsociete UNIQUEIDENTIFIER,
+        idcompte UNIQUEIDENTIFIER,
+        libelle NVARCHAR(150),
+        avanceajustifier INT DEFAULT 0,
+        imputationtiers INT DEFAULT 0,
+        actif INT DEFAULT 1,
+        demandedecaissement INT DEFAULT 0,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        FOREIGN KEY (idcompte) REFERENCES PlanComptable(idcompte)
+    );
+END
+
+
+-- ============================================
+-- 15️⃣ AffectationAnalytique (dépend de Sites, Departement, CentreAnalytique, NatureOperation, Societe)
+-- ============================================
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Affectation')
+BEGIN
+    CREATE TABLE Affectation (
+        idaffectation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idsociete UNIQUEIDENTIFIER,
+        idsite UNIQUEIDENTIFIER,
+        iddepartement UNIQUEIDENTIFIER,
+        idcentreanalytique UNIQUEIDENTIFIER NULL,
+        idnature UNIQUEIDENTIFIER NULL,
+        actif INT DEFAULT 1,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
+        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
+        FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
+        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature)
+    );
+END
+
+
+-- ============================================
+-- 16️⃣ DepartementNature (dépend de Departement, NatureOperation, Societe)
+-- ============================================
+
+>>>>>>> 17bbfaa (front end chado fusion junior)
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DepartementNature')
 BEGIN
     CREATE TABLE DepartementNature (
         iddepartementnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+<<<<<<< HEAD
 		idsociete UNIQUEIDENTIFIER,
 		iddepartement UNIQUEIDENTIFIER,
 		idnature UNIQUEIDENTIFIER,
@@ -299,6 +431,23 @@ BEGIN
 END
 
 -- OK
+=======
+        idsociete UNIQUEIDENTIFIER,
+        iddepartement UNIQUEIDENTIFIER,
+        idnature UNIQUEIDENTIFIER,
+        actif INT DEFAULT 1,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
+        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature)
+    );
+END
+
+
+>>>>>>> 17bbfaa (front end chado fusion junior)
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Tiers')
 BEGIN
     CREATE TABLE Tiers (
@@ -365,6 +514,7 @@ IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'UtilisateurCaisse')
 BEGIN
     CREATE TABLE UtilisateurCaisse (
         idcaisse UNIQUEIDENTIFIER,
+<<<<<<< HEAD
 		codecaisse NVARCHAR(24),
 		idutilisateur UNIQUEIDENTIFIER,
 		codeutilisateur NVARCHAR(24),
@@ -415,6 +565,108 @@ BEGIN
 		updatedby NVARCHAR(50),
 		FOREIGN KEY (idsite) REFERENCES Site(idsite),
 		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+=======
+        codecaisse NVARCHAR(24),
+        idutilisateur UNIQUEIDENTIFIER,
+        idsociete UNIQUEIDENTIFIER,
+        actif INT DEFAULT 1,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        CONSTRAINT PK_User_Caisse PRIMARY KEY (idcaisse, idutilisateur),
+        FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
+        FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+    );
+END
+
+
+-- ============================================
+-- 13️⃣ CircuitValidation (dépend de Sites, Departement, Societe)
+-- ============================================
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CircuitValidation')
+BEGIN
+    CREATE TABLE CircuitValidation (
+        idcircuitvalidation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codecircuitvalidation NVARCHAR(24) UNIQUE,
+        idsociete UNIQUEIDENTIFIER,
+        idsite UNIQUEIDENTIFIER,
+        typeentite NVARCHAR(100),
+        typeaction NVARCHAR(100),
+        iddepartement UNIQUEIDENTIFIER,
+        actif INT DEFAULT 1,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
+        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement)
+    );
+END
+
+-- ============================================
+-- 14️⃣ CircuitValidateur (dépend de Utilisateur, Societe)
+-- ============================================
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CircuitValidateur')
+BEGIN
+    CREATE TABLE CircuitValidateur (
+        idcircuitvalidateur UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codecircuitvalidateur NVARCHAR(24) UNIQUE,
+        idutilisateur UNIQUEIDENTIFIER,
+        idsociete UNIQUEIDENTIFIER,
+        idcircuit UNIQUEIDENTIFIER,
+        rangvalidation INT,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        FOREIGN KEY (idcircuit) REFERENCES CircuitValidation(idcircuitvalidation)
+    );
+END
+
+
+-- ============================================
+-- 11️⃣ Budget (dépend de Sites, Societe, Budget parent)
+-- ============================================
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Budget')
+BEGIN
+    CREATE TABLE Budget (
+        idbudget UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codebudget NVARCHAR(24) UNIQUE,
+        idbudgetparent UNIQUEIDENTIFIER NULL,
+        typebudget NVARCHAR(10),
+        datedebut DATETIME,
+        datefin DATETIME,
+        actif INT,
+        cloture INT DEFAULT 1,
+        valide INT DEFAULT 1,
+        idcircuitvalidation UNIQUEIDENTIFIER NULL,
+        dernierniveau NVARCHAR(1),
+        niveauactuel NVARCHAR(1),
+        validedept NVARCHAR(1),
+        datevalidedept DATETIME,
+        validesite NVARCHAR(1),
+        datevalidesite DATETIME,
+        validesociete NVARCHAR(1),
+        datevalidesociete DATETIME,
+        idsite UNIQUEIDENTIFIER,
+        idsociete UNIQUEIDENTIFIER,
+        createdat DATETIME DEFAULT GETDATE(),
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        FOREIGN KEY (idbudgetparent) REFERENCES Budget(idbudget),
+        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation)
+>>>>>>> 17bbfaa (front end chado fusion junior)
     );
 END
 
@@ -470,6 +722,7 @@ BEGIN
 		iddevise UNIQUEIDENTIFIER,
 		codedevise NVARCHAR(3),
         createdat Datetime,
+<<<<<<< HEAD
 		createdby NVARCHAR(50),
 		updatedat Datetime,
 		updatedby NVARCHAR(50),
@@ -479,6 +732,17 @@ BEGIN
 		FOREIGN KEY (idsite) REFERENCES Site(idsite),
 		FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
 		FOREIGN KEY (iddevise) REFERENCES Devise(iddevise),
+=======
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (iddemandeur) REFERENCES Utilisateur(idutilisateur),
+        FOREIGN KEY (idcircuit) REFERENCES CircuitValidation(idcircuitvalidation),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        FOREIGN KEY (idsite) REFERENCES Sites(idsite),
+        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
+        FOREIGN KEY (iddevise) REFERENCES Devise(iddevise)
+>>>>>>> 17bbfaa (front end chado fusion junior)
     );
 END
 
@@ -594,6 +858,7 @@ BEGIN
 		idcentre UNIQUEIDENTIFIER,
 		codecentre NVARCHAR(50),
 		idsociete UNIQUEIDENTIFIER,
+<<<<<<< HEAD
 		codesociete NVARCHAR(50),
 		iddevise UNIQUEIDENTIFIER,
 		codedevise NVARCHAR(50),
@@ -604,6 +869,11 @@ BEGIN
 		datecomptabilisation DATETIME,
 		idtiers UNIQUEIDENTIFIER,
 		codetiers NVARCHAR(24),
+=======
+		idsite UNIQUEIDENTIFIER,
+		idcaisse UNIQUEIDENTIFIER,
+		montant DECIMAL(21, 9),
+>>>>>>> 17bbfaa (front end chado fusion junior)
         createdat Datetime,
 		createdby NVARCHAR(50),
 		updatedat Datetime,
@@ -613,5 +883,27 @@ BEGIN
 		FOREIGN KEY (idcentre) REFERENCES CentreAnalytique(idcentreanalytique),
 		FOREIGN KEY (idtiers) REFERENCES Tiers(idtiers),
 		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+<<<<<<< HEAD
     );
 END
+=======
+		FOREIGN KEY (idsite) REFERENCES Sites(idsite),
+    );
+END
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Compteurs')
+BEGIN
+    CREATE TABLE Compteurs (
+		prefixe NVARCHAR(10) NOT NULL,
+		annee INT NOT NULL,
+		mois INT NOT NULL,
+		jour INT NOT NULL,
+		compteur INT NOT NULL DEFAULT 0,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+		PRIMARY KEY (prefixe, annee, mois, jour)
+	);
+END
+>>>>>>> 17bbfaa (front end chado fusion junior)
