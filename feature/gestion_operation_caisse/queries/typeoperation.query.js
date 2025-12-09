@@ -15,13 +15,12 @@ module.exports = {
 
     update: `
         UPDATE TypeOperation 
-        SET codetypeoperation = @codetypeoperation, 
+        SET codtypeoperation = @codtypeoperation, 
         idoperation = @idoperation, 
-        idperiode = @idperiode, 
-        idsociete = @idsociete, 
-        idsite = @idsite, 
         idcaisse = @idcaisse, 
         montant = @montant, 
+        taux = @taux,
+        montantref = @montantref,
         updatedat = @updatedat, 
         updatedby = @updatedby 
         OUTPUT INSERTED.* 
@@ -30,5 +29,17 @@ module.exports = {
 
     delete: `
         DELETE FROM TypeOperation WHERE idtypeoperation = @idtypeoperation
+    `,
+    solde_calcul: `
+        SELECT 
+            idcaisse,
+            SUM(
+                CASE 
+                    WHEN codtypeoperation = 'encaissement' THEN montant
+                    ELSE -montant
+                END
+            ) AS solde
+        FROM TypeOperation
+        GROUP BY idcaisse;
     `
 };

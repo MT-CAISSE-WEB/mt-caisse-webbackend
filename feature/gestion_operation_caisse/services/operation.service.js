@@ -14,8 +14,10 @@ const caisseservice = require("../services/caisse.service");
 let typeoperation = new typeoperationmodel();
 let typeoperations = [];
 
-async function get_all_typeoperations(page = 1, limit = 5) {
-  const result = await typeoperation.get_alltypeoperations(page, limit);
+async function get_all_typeoperations({ page, search, date, status }) {
+  let soldes = 0;
+  soldes = await typeoperation.get_soldecaisse();
+  const result = await typeoperation.get_alltypeoperations({ page, search, date, status });
   try {
     const operations = {};
     result.data.forEach(row => {
@@ -96,13 +98,16 @@ async function get_all_typeoperations(page = 1, limit = 5) {
       if (row.type_idtypeoperation) {
           const exists = op.caisses.find(t => t.idtypeoperation === row.type_idtypeoperation);
           if (!exists) {
+            const soldeItem = soldes.find(s => s.idcaisse === row.type_idcaisse);
+            const solde = soldeItem ? soldeItem.solde : 0;
               op.caisses.push({
                   idtypeoperation: row.type_idtypeoperation,
                   codtypeoperation: row.type_codtypeoperation,
                   montant: row.type_montant,
                   idcaisse: row.type_idcaisse,
                   taux : row.type_taux,
-                  montantref: row.type_montantref
+                  montantref: row.type_montantref,
+                  solde : solde
               });
           }
       }
@@ -196,13 +201,71 @@ async function get_by_idtypeoperation(idtypeoperation) {
 }
 
 async function update_typeoperation(idtypeoperation, data) {
-  if (!idtypeoperation || !data.idsite) {
+  if (!idtypeoperation || !data.codeoperation) {
     throw new Error("Erreur de donnée");
   }
 
+  if (!Array.isArray(data.caisses) || data.caisses.length === 0) {
+    throw new Error("Aucune caisse fournie.");
+  }
+
+  //Récuperer la societe
+  let societe = null;
+  if(data.societe){
+    try {
+      societe = await societeservice.getonesociete(data.societe);
+    } catch (error) {
+      throw new Error("Erreur societe fournie.");
+    }
+  }
+  
+  //Récuperer le site
+  let site = null;
+  if(data.site){
+    try {
+      site = await siteservice.getonesite(data.site);
+    } catch (error) {
+      throw new Error("Erreur site fournie.");
+    }
+  }
+
+  if (!Array.isArray(data.lignes) || data.lignes.length === 0) {
+    throw new Error("Aucune ligne fournie.");
+  }
+
+  for (const ligne of data.lignes){
+    const dataligne = {idoperation : data.idoperation, idnature: ligne.natureop, idcentre: ligne.centre, idtiers: ligne.tiers, montantoperation: Number(ligne.montantligne), updatedby: ligne.updatedby};
+    try {
+      const ligneoperation = await ligneoperationservice.update_ligneoperation(ligne.idligne, dataligne);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  for (const caisse of data.caisses){
+    if(caisse.montantcaisse && Number(caisse.montantcaisse) != 0){
+      let caisse1 = null;
+      try {
+        caisse1 = await caisseservice.get_by_idcaisse(caisse.idcaisse);
+      } catch (error) {
+        console.log(error);
+      }
+      const newtypeoperation1 = new typeoperationmodel(caisse.idtypeoperation, data.typepaiement, data.idoperation, caisse.idperiode, data.idsociete, data.idsite, caisse1.idcaisse ? caisse1.idcaisse : null, 
+      Number(caisse.montantcaisse), caisse.taux, caisse.montantref, data.createdat, data.createdby, data.updatedat, data.updatedby || null);
+      let recorded1 = null;
+      try {
+        recorded1 = await newtypeoperation1.update_typeoperation(caisse.idtypeoperation, newtypeoperation1);
+      } catch (error) {
+        console.log(error);
+      }
+      
+    }
+  }
+
   try {
-    const typeoperation_ = await typeoperation.update(data.codetypeoperation, data);
-    return typeoperation_.recordset;
+    let enteteoperation = null;
+    enteteoperation = await enteteoperationservice.get_by_identeteoperation(data.idoperation);
+    return enteteoperation;
   } catch (err) {
     console.log(`Erreur de modification: ${err}`.cyan.bold);
     throw err;

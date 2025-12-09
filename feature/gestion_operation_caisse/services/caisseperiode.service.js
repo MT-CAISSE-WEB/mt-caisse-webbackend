@@ -1,9 +1,11 @@
 const caisseModel = require("../models/caisse.model");
+const typeoperationmodel = require("../models/operation.model");
 const periodeModel = require("../models/caisseperiode.model");
 const { v4: uuidv4 } = require('uuid');
 const PaginationModel = require("../../../shared/utils/model");
 const caissemodel = new caisseModel();
 let periodemodel = new periodeModel();
+let typeoperation = new typeoperationmodel();
 let caisseperiodes = [];
 
 async function get_all_caisseperiodes(page = 1, limit = 5) {
@@ -136,8 +138,47 @@ async function fermeture_periode(idperiode, data) {
     throw new Error("Periode doit être ouverte");
   }
 
+  let soldes = 0;
+  soldes = await typeoperation.get_soldecaisse();
+  const soldeItem = soldes.find(s => s.idcaisse === check_periode.idcaisse);
+  const solde = soldeItem ? soldeItem.solde : 0;
+
+  if(check_periode.statut == 'ouverte'){
+    data.statut = "cloturee";
+  }
+
+  if(!check_periode.soldefermeture || check_periode.soldefermeture == 0){
+    data.soldefermeture = Number(check_periode.soldeouverture + solde);
+  }else{
+    data.soldefermeture = check_periode.soldefermeture;
+  }
+
+  const datePeriode = new Date(data.dateperiode);
+  const today = new Date();
+
+  // On met à 00:00 pour éviter les problèmes d'heures
+  today.setHours(0, 0, 0, 0);
+  datePeriode.setHours(0, 0, 0, 0);
+
+  if (datePeriode > today) {
+    throw new Error("La date de la journée ne peut pas être supérieure à la date du jour");
+  }
+
   try {
     const periode = await periodemodel.fermetureorclose_caisseperiode(idperiode, data);
+    // Incrémente la date d'une journée
+    const date = new Date(data.dateperiode);
+    date.setDate(date.getDate() + 1);
+    const dateincrementee = date.toISOString().split("T")[0];
+    const newDate = new Date(dateincrementee);
+
+    if(periode){
+      const newperiode = new periodeModel(uuidv4(), data.idcaisse, newDate, data.soldefermeture, 0, 0, 0, 
+      "non ouverte", data.validatedat, data.validatedby || null, data.createdat || today, data.createdby || 'System', data.updatedat || null, data.updatedby || null);
+      const periodeNext = await newperiode.create_caisseperiode();
+      console.log(periodeNext);
+    }
+
     return periode.recordset;
   } catch (err) {
     console.log(`Erreur de modification: ${err}`.cyan.bold);
@@ -152,9 +193,9 @@ async function open_periode(idperiode, data) {
   }
 
   const check_periode = await periodemodel.get_onecaisseperiode(idperiode);
-  if(check_periode.statut == 'ouverte'){
-    throw new Error("Caisse déja ouverte");
-  }
+  // if(check_periode.statut == 'ouverte'){
+  //   throw new Error("Caisse déja ouverte");
+  // }
 
   const datePeriode = new Date(data.dateperiode);
   const today = new Date();
