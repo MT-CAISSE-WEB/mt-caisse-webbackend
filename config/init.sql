@@ -130,6 +130,7 @@ BEGIN
 		acheteur INT DEFAULT 0,
 		iddepartement UNIQUEIDENTIFIER NULL,
 		idsociete UNIQUEIDENTIFIER,
+<<<<<<< HEAD
                 idsite UNIQUEIDENTIFIER NULL,
                 login NVARCHAR(50) UNIQUE,
                 password NVARCHAR(50),
@@ -138,6 +139,15 @@ BEGIN
 		updatedat Datetime,
 		updatedby NVARCHAR(50),
 		-- FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
+=======
+        idsite UNIQUEIDENTIFIER NULL,
+        login NVARCHAR(50) UNIQUE,
+        password NVARCHAR(50),
+        createdat Datetime,
+		createdby NVARCHAR(50),
+		updatedat Datetime,
+		updatedby NVARCHAR(50),
+>>>>>>> origin/ferreol
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
 		FOREIGN KEY (idsite) REFERENCES Site(idsite),
     );
@@ -164,6 +174,10 @@ BEGIN
         updatedat Datetime,
         updatedby NVARCHAR(50),
         FOREIGN KEY (idsite) REFERENCES Site(idsite),
+<<<<<<< HEAD
+=======
+        FOREIGN KEY (responsable) REFERENCES Utilisateur(idutilisateur),
+>>>>>>> origin/ferreol
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );
 END
@@ -185,6 +199,31 @@ BEGIN
 END
 
 
+<<<<<<< HEAD
+=======
+
+-- En ce qui concerne la gestion des demandes
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AffectationUserDepartement')
+BEGIN
+    CREATE TABLE AffectationUserDepartement (
+		iduserdepartement UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+		idutilisateur UNIQUEIDENTIFIER,
+		iddepartement UNIQUEIDENTIFIER,
+		idsociete UNIQUEIDENTIFIER,
+		debutactivite Datetime,
+		finactivite Datetime,
+		createdat Datetime,
+		createdby NVARCHAR(50),
+		updatedat Datetime,
+		updatedby NVARCHAR(50),
+		FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
+		FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
+		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+    );
+END
+
+
+>>>>>>> origin/ferreol
 -- ============================================
 -- 4️⃣ PlanComptable (dépend de Societe)
 -- ============================================
@@ -243,6 +282,10 @@ IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Affectation')
 BEGIN
     CREATE TABLE Affectation (
         idaffectation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+<<<<<<< HEAD
+=======
+        codeaffectation NVARCHAR(50) UNIQUE,
+>>>>>>> origin/ferreol
         idsociete UNIQUEIDENTIFIER,
         idsite UNIQUEIDENTIFIER,
         iddepartement UNIQUEIDENTIFIER,
@@ -266,6 +309,7 @@ END
 -- 16️⃣ DepartementNature (dépend de Departement, NatureOperation, Societe)
 -- ============================================
 
+<<<<<<< HEAD
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DepartementNature')
 BEGIN
     CREATE TABLE DepartementNature (
@@ -283,6 +327,25 @@ BEGIN
         FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature)
     );
 END
+=======
+-- IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DepartementNature')
+-- BEGIN
+--     CREATE TABLE DepartementNature (
+--         iddepartementnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+--         idsociete UNIQUEIDENTIFIER,
+--         iddepartement UNIQUEIDENTIFIER,
+--         idnature UNIQUEIDENTIFIER,
+--         actif INT DEFAULT 1,
+--         createdat Datetime,
+--         createdby NVARCHAR(50),
+--         updatedat Datetime,
+--         updatedby NVARCHAR(50),
+--         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+--         FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
+--         FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature)
+--     );
+-- END
+>>>>>>> origin/ferreol
 
 
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Tiers')
@@ -354,8 +417,13 @@ END
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'UtilisateurCaisse')
 BEGIN
     CREATE TABLE UtilisateurCaisse (
+<<<<<<< HEAD
         idcaisse UNIQUEIDENTIFIER,
         codecaisse NVARCHAR(24),
+=======
+        idutilisateurcaisse UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idcaisse UNIQUEIDENTIFIER,
+>>>>>>> origin/ferreol
         idutilisateur UNIQUEIDENTIFIER,
         idsociete UNIQUEIDENTIFIER,
         actif INT DEFAULT 1,
@@ -363,7 +431,10 @@ BEGIN
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
+<<<<<<< HEAD
         CONSTRAINT PK_User_Caisse PRIMARY KEY (idcaisse, idutilisateur),
+=======
+>>>>>>> origin/ferreol
         FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
         FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
@@ -380,11 +451,20 @@ BEGIN
     CREATE TABLE CircuitValidation (
         idcircuitvalidation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codecircuitvalidation NVARCHAR(24) UNIQUE,
+<<<<<<< HEAD
         idsociete UNIQUEIDENTIFIER,
         idsite UNIQUEIDENTIFIER,
         typeentite NVARCHAR(100),
         typeaction NVARCHAR(100),
         iddepartement UNIQUEIDENTIFIER,
+=======
+        typeentite NVARCHAR(100),
+        typeaction NVARCHAR(100),
+        idsociete UNIQUEIDENTIFIER,
+        idsite UNIQUEIDENTIFIER,
+        iddepartement UNIQUEIDENTIFIER,
+        nombrevalidateur INT NOT NULL,
+>>>>>>> origin/ferreol
         actif INT DEFAULT 1,
         createdat Datetime,
         createdby NVARCHAR(50),
@@ -407,7 +487,11 @@ BEGIN
         codecircuitvalidateur NVARCHAR(24) UNIQUE,
         idutilisateur UNIQUEIDENTIFIER,
         idsociete UNIQUEIDENTIFIER,
+<<<<<<< HEAD
         idcircuit UNIQUEIDENTIFIER,
+=======
+        idcircuitvalidation UNIQUEIDENTIFIER,
+>>>>>>> origin/ferreol
         rangvalidation INT,
         createdat Datetime,
         createdby NVARCHAR(50),
@@ -415,7 +499,11 @@ BEGIN
         updatedby NVARCHAR(50),
         FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+<<<<<<< HEAD
         FOREIGN KEY (idcircuit) REFERENCES CircuitValidation(idcircuitvalidation)
+=======
+        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation)
+>>>>>>> origin/ferreol
     );
 END
 
@@ -433,6 +521,7 @@ BEGIN
         typebudget NVARCHAR(10),
         datedebut DATETIME,
         datefin DATETIME,
+<<<<<<< HEAD
         actif INT,
         cloture INT DEFAULT 1,
         valide INT DEFAULT 1,
@@ -444,6 +533,19 @@ BEGIN
         validesite NVARCHAR(1),
         datevalidesite DATETIME,
         validesociete NVARCHAR(1),
+=======
+        actif INT DEFAULT 0,
+        cloture INT DEFAULT 0,
+        valide INT DEFAULT 0,
+        idcircuitvalidation UNIQUEIDENTIFIER,
+        dernierniveau INT,
+        niveauactuel INT,
+        validedept INT,
+        datevalidedept DATETIME,
+        validesite INT,
+        datevalidesite DATETIME,
+        validesociete INT,
+>>>>>>> origin/ferreol
         datevalidesociete DATETIME,
         idsite UNIQUEIDENTIFIER,
         idsociete UNIQUEIDENTIFIER,
@@ -512,7 +614,11 @@ BEGIN
         FOREIGN KEY (iddemandeur) REFERENCES Utilisateur(idutilisateur),
         FOREIGN KEY (idcircuit) REFERENCES CircuitValidation(idcircuitvalidation),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+<<<<<<< HEAD
         FOREIGN KEY (idsite) REFERENCES Sites(idsite),
+=======
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
+>>>>>>> origin/ferreol
         FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
         FOREIGN KEY (iddevise) REFERENCES Devise(iddevise)
     );
@@ -655,6 +761,7 @@ BEGIN
 		idsite UNIQUEIDENTIFIER,
 		idcaisse UNIQUEIDENTIFIER,
 		montant DECIMAL(21, 9),
+<<<<<<< HEAD
                 createdat Datetime,
 		createdby NVARCHAR(50),
 		updatedat Datetime,
@@ -663,6 +770,16 @@ BEGIN
 		FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
 		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
 		FOREIGN KEY (idsite) REFERENCES Sites(idsite),
+=======
+        createdat Datetime,
+		createdby NVARCHAR(50),
+		updatedat Datetime,
+		updatedby NVARCHAR(50),
+        FOREIGN KEY (idoperation) REFERENCES EnteteOperationCaisse(idoperation),
+		FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
+		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+		FOREIGN KEY (idsite) REFERENCES Site(idsite),
+>>>>>>> origin/ferreol
     );
 END
 
@@ -674,6 +791,7 @@ BEGIN
 		mois INT NOT NULL,
 		jour INT NOT NULL,
 		compteur INT NOT NULL DEFAULT 0,
+<<<<<<< HEAD
                 createdat Datetime,
                 createdby NVARCHAR(50),
                 updatedat Datetime,
@@ -681,3 +799,13 @@ BEGIN
 		PRIMARY KEY (prefixe, annee, mois, jour)
 	);
 END
+=======
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+		PRIMARY KEY (prefixe, annee, mois, jour)
+	);
+END
+
+>>>>>>> origin/ferreol

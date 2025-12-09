@@ -1,114 +1,311 @@
-const ligne_budgetaire_service = require('../services/lignebudget.service')
-const asyncHandler = require('../../../shared/middlewares/async')
+const Budget = require('../models/budget.model')
+const {
+  Departement,
+  NatureOperation,
+} = require('../../gestion_demande_decaissement/models/foreign_models')
 
-/**
- * Crée une nouvelle ligne budgetaire
- */
-module.exports.create_ligne_budgetaire = asyncHandler(
-  async (req, res, next) => {
-    try {
-      const data = req.body
-      const new_ligne_budget =
-        await ligne_budgetaire_service.create_lignebudget(data)
-      res.status(201).json({ success: true, data: new_ligne_budget })
-    } catch (error) {
-      res.status(400).json({ success: false, message: error.message })
-    }
-  }
-)
+const BudgetDepartementNature = require('../models/lignebudget.model')
 
-/**
- * Liste toutes les lignes budgétaires
- */
+// Clés étrangères pour inclusion
+const foreignIncludes = [
+  {
+    model: Budget,
+    as: 'budget',
+    attributes: [
+      'idbudget',
+      'codebudget',
+      'idbudgetparent',
+      'typebudget',
+      'datedebut',
+      'datefin',
+      'actif',
+      'cloture',
+      'valide',
+      'idcircuitvalidation',
+      'dernierniveau',
+      'niveauactuel',
+      'validedept',
+      'datevalidedept',
+      'validesite',
+      'datevalidesite',
+      'validesociete',
+      'datevalidesociete',
+      'idsite',
+      'idsociete',
+      'createdat',
+      'createdby',
+      'updatedat',
+      'updatedby',
+    ],
+  },
+  {
+    model: Departement,
+    as: 'departement',
+    attributes: [
+      'iddepartement',
+      'idsociete',
+      'idsite',
+      'responsable',
+      'codedept',
+      'libelle',
+      'email',
+      'telephone',
+      'adresse',
+      'createdat',
+      'createdby',
+      'updatedat',
+      'updatedby',
+    ],
+  },
+  {
+    model: NatureOperation,
+    as: 'nature_operation',
+    attributes: [
+      'idnature',
+      'codenature',
+      'idsociete',
+      'idcompte',
+      'libelle',
+      'avanceajustifier',
+      'imputationtiers',
+      'actif',
+      'demandedecaissement',
+      'createdat',
+      'createdby',
+      'updatedat',
+      'updatedby',
+    ],
+  },
+]
 
-module.exports.get_all_lignes_budgetaire = asyncHandler(
-  async (req, res, next) => {
-    try {
-      const { page = 1, limit = 10 } = req.query
-      const lignes_budgetaire =
-        await ligne_budgetaire_service.get_all_lignes_budgetaires(page, limit)
-      res.json({ success: true, data: lignes_budgetaire })
-    } catch (error) {
-      res
-        .status(500)
-        .json({ success: false, message: `Erreur serveur: ${error.message}` })
-    }
-  }
-)
-
-/**
- * Récupération d'une ligne budgétaire par son ID
- */
-module.exports.get_ligne_budgetaire_by_id = asyncHandler(
-  async (req, res, next) => {
-    try {
-      const { id } = req.params
-      const ligne_budgetaire =
-        await ligne_budgetaire_service.get_ligne_budgetaire_by_id(id)
-      res.json({ success: true, data: ligne_budgetaire })
-    } catch (error) {
-      res
-        .status(500)
-        .json({ success: false, message: `Erreur serveur: ${error.message}` })
-    }
-  }
-)
-
-/**
- * Mise à jour d'une ligne budgétaire
- */
-
-module.exports.update_ligne_budgetaire = async (req, res) => {
+// ========== CREATE ==========
+exports.create = async (req, res) => {
   try {
-    const { id } = req.params
-    const data = req.body
+    const {
+      montantprevisiondept,
+      montantprevisionsite,
+      montantprevisionsociete,
+      totalconsocloture,
+      soldecloture,
+      createdby,
+    } = req.body
 
-    await ligne_budgetaire_service.update_ligne_budgetaire(id, data)
-    res.status(200).json({ message: 'Mise à jour réussie avec succès.' })
+    // Vérification de tous les champs obligatoires
+    const requiredFields = {
+      montantprevisiondept,
+      montantprevisionsite,
+      montantprevisionsociete,
+      totalconsocloture,
+      soldecloture,
+      createdby,
+    }
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(
+        ([key, value]) => value === undefined || value === null || value === ''
+      )
+      .map(([key]) => key)
+
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Les champs suivants sont obligatoires : ${missingFields.join(
+          ', '
+        )}`,
+      })
+    }
+
+    // Ajout automatique des dates
+    const newData = {
+      ...req.body,
+      createdat: new Date(),
+    }
+
+    const item = await BudgetDepartementNature.create(newData)
+
+    // Recharger avec les relations pour la réponse
+    const itemWithRelations = await BudgetDepartementNature.findByPk(
+      item.idbudgetdepartementnature,
+      {
+        include: foreignIncludes,
+      }
+    )
+
+    res.status(201).json({
+      success: true,
+      data: itemWithRelations,
+    })
   } catch (error) {
     console.error(error)
     res.status(500).json({
-      message: `Erreur lors de la mise à jour: ${error.message}`,
+      success: false,
+      error: `Erreur lors de la création de la ligne budgétaire: ${error}`,
     })
   }
 }
 
-/**
- * Suppression d'une ligne budgétaire
- */
-module.exports.delete_ligne_budgetaire = asyncHandler(
-  async (req, res, next) => {
-    try {
-      const { id } = req.params
-      await ligne_budgetaire_service.delete_ligne_budgetaire(id)
-      res.json({
-        success: true,
-        message: 'Ligne budgétaire supprimée avec succès.',
+// ========== GET ALL ==========
+exports.getAll = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1
+    const limit = parseInt(req.query.limit) || 10
+    const offset = (page - 1) * limit
+
+    const items = await BudgetDepartementNature.findAndCountAll({
+      limit,
+      offset,
+      include: foreignIncludes,
+    })
+
+    res.json({
+      success: true,
+      total: items.count,
+      page,
+      totalPages: Math.ceil(items.count / limit),
+      data: items.rows,
+    })
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, error: 'Erreur lors de la récupération' })
+  }
+}
+
+// ========== GET BY ID ==========
+exports.getById = async (req, res) => {
+  try {
+    const item = await BudgetDepartementNature.findByPk(req.params.id, {
+      include: foreignIncludes,
+    })
+    if (!item)
+      return res
+        .status(404)
+        .json({ success: false, error: 'Élément non trouvé.' })
+    res.json({ success: true, data: item })
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, error: 'Erreur lors de la récupération par ID' })
+  }
+}
+
+// ========== UPDATE (PATCH) ==========
+exports.update = async (req, res) => {
+  try {
+    const { updatedby, ...restBody } = req.body
+
+    if (!updatedby || updatedby === '') {
+      return res.status(400).json({
+        success: false,
+        error: 'Le champ updatedby est obligatoire pour la mise à jour.',
       })
-    } catch (error) {
-      res
-        .status(500)
-        .json({ success: false, message: `Erreur serveur: ${error.message}` })
     }
-  }
-)
 
-/**
- * Dupliquer une ligne budgétaire
- */
-
-module.exports.duplicate_ligne_budgetaire = asyncHandler(
-  async (req, res, next) => {
-    try {
-      const { id } = req.params
-      const { createdby } = req.body
-      const ligne_budgetaire_duplicated =
-        await ligne_budgetaire_service.duplicate_ligne_budgetaire(id, createdby)
-      res.json({ success: true, data: ligne_budgetaire_duplicated })
-    } catch (error) {
-      res
-        .status(500)
-        .json({ success: false, message: `Erreur serveur: ${error.message}` })
+    // 1️⃣ Charger l'élément existant
+    const item = await BudgetDepartementNature.findByPk(req.params.id)
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        error: 'Élément non trouvé.',
+      })
     }
+
+    // 2️⃣ Construire les nouvelles valeurs
+    const newData = {
+      ...restBody,
+      updatedby,
+      updatedat: new Date(),
+    }
+
+    // 3 Mise à jour
+    await item.update(newData)
+
+    // 4 Recharger avec include pour renvoyer l'objet complet
+    await item.reload({ include: foreignIncludes })
+
+    res.json({
+      success: true,
+      data: item,
+      message: 'Mise à jour effectuée avec succès.',
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({
+      success: false,
+      error: `Erreur lors de la mise à jour: ${error.message}`,
+    })
   }
-)
+}
+
+// ========== DELETE ==========
+exports.delete = async (req, res) => {
+  try {
+    const item = await BudgetDepartementNature.findByPk(req.params.id)
+
+    if (!item) {
+      return res
+        .status(404)
+        .json({ success: false, error: 'Élément non trouvé' })
+    }
+
+    await item.destroy()
+    res.json({ sucess: true, message: 'Supprimé avec succès.' })
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, error: 'Erreur lors de la suppression' })
+  }
+}
+
+// ========== DUPLICATE ==========
+exports.duplicate = async (req, res) => {
+  try {
+    const id = req.params.id
+    const { createdby } = req.body
+
+    // Vérification des champs obligatoires
+    if (!createdby) {
+      return res.status(400).json({
+        error: "Le champ 'createdby' est obligatoire pour la duplication.",
+      })
+    }
+
+    // 1️⃣ Récupérer l'élément original
+    const original = await BudgetDepartementNature.findByPk(id)
+    if (!original) {
+      return res
+        .status(404)
+        .json({ success: false, error: 'Élément à dupliquer non trouvé' })
+    }
+
+    // 2️⃣ Convertir en objet simple et supprimer les champs à ne pas dupliquer
+    const data = { ...original.get() }
+    delete data.idbudgetdepartementnature // Clé primaire
+    delete data.createdat // Champ créé automatiquement
+    delete data.updatedat // Champ mis à jour
+    delete data.updatedby // Champ mis à jour
+
+    // 3️⃣ Ajouter les champs obligatoires et la date actuelle
+    data.createdby = createdby
+    data.createdat = new Date()
+
+    // 4️⃣ Créer la copie
+    const duplicateItem = await BudgetDepartementNature.create(data)
+
+    // Recharger avec les relations pour la réponse
+    const itemWithRelations = await BudgetDepartementNature.findByPk(
+      duplicateItem.idbudgetdepartementnature,
+      {
+        include: foreignIncludes,
+      }
+    )
+
+    res.status(201).json({ success: true, data: itemWithRelations })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({
+      success: false,
+      error: `Erreur lors de la duplication: ${error}`,
+    })
+  }
+}

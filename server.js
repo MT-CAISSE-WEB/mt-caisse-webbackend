@@ -29,6 +29,12 @@ const typeoperationRoutes = require("./feature/gestion_operation_caisse/routes/o
 const budget_route = require('./feature/gestion_budget/routes/budget.route')
 // Ligne budgetaire
 const ligne_budgetaire_route = require('./feature/gestion_budget/routes/lignebudget.route')
+// Entete demande
+const entete_demande_route = require('./feature/gestion_demande_decaissement/routes/entetedemande.route')
+// Ligne demande
+const ligne_demande_route = require('./feature/gestion_demande_decaissement/routes/ligendemande.route')
+// Detail demande
+const details_demande_route = require('./feature/gestion_demande_decaissement/routes/detaildemande.route')
 // Devise routes
 const deviseroute = require('./feature/gestion_organisation/routes/devise.route');
 // Taux de devise routes
@@ -97,6 +103,24 @@ app.set('view engine', 'ejs')
 // Définir le répertoire des vues
 app.set('views', path.join(__dirname, 'views'))
 
+// Test SQL Server connection Sequelize
+sequelize
+  .authenticate()
+  .then(() => console.log('Connexion SQL Server OK sequelize✔️'))
+  .catch((err) => console.log('Erreur SQL Server ❌', err))
+
+//Regrouper toutes les routes
+//Budget
+app.use('/api/budget', budget_route)
+//Ligne budgetaire
+app.use('/api/ligne-budgetaire', ligne_budgetaire_route)
+//Entete demande
+app.use('/api/entete-demande', entete_demande_route)
+//Ligne demande
+app.use('/api/ligne-demande', ligne_demande_route)
+//Details demande
+app.use('/api/details-demande', details_demande_route)
+
 //Regrouper toutes les routes
 //GESTION OPERATION CAISSE ROUTES
 app.use("/API/journal", journalRoutes);
@@ -121,6 +145,7 @@ app.use("/API/plancomptable", plancomptableroutes);
 app.use("/API/natureoperation", natureoperationroutes);
 app.use("/API/centreanalytique", centreanalytiqueroutes);
 app.use("/API/affectationanalytique", affectationanalytiqueroutes);
+
 
 // GESTION DES ERREURS
 app.use(errorHandler)

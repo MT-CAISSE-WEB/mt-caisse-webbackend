@@ -1,29 +1,12 @@
 const express = require('express')
 const router = express.Router()
-const ligne_budgetaire_controller = require('../controllers/lignebudget.controller')
+const controller = require('../controllers/lignebudget.controller')
 
-// Création d'une ligne budgetaire
-router.post('/create', ligne_budgetaire_controller.create_ligne_budgetaire)
-
-// Récupération de toutes les banques
-router.get('/', ligne_budgetaire_controller.get_all_lignes_budgetaire)
-
-// Récupération d'une banque par son ID
-router.get('/:id', ligne_budgetaire_controller.get_ligne_budgetaire_by_id)
-
-// Mise à jour d'une banque
-router.patch('/update/:id', ligne_budgetaire_controller.update_ligne_budgetaire)
-
-// Suppression d'une banque
-router.delete(
-  '/delete/:id',
-  ligne_budgetaire_controller.delete_ligne_budgetaire
-)
-
-// Duplication d'une banque
-router.post(
-  '/duplicate/:id',
-  ligne_budgetaire_controller.duplicate_ligne_budgetaire
-)
+router.post('/create', controller.create) // CREATE
+router.get('/', controller.getAll) // READ ALL
+router.get('/:id', controller.getById) // READ ONE BY ID
+router.patch('/update/:id', controller.update) // UPDATE
+router.delete('/delete/:id', controller.delete) // DELETE
+router.post('/duplicate/:id', controller.duplicate) // DUPLICATE
 
 module.exports = router
