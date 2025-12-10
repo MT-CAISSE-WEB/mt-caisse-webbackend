@@ -29,7 +29,7 @@
     "sequelize": "^6.37.7",
     "sql": "^0.78.0",
     "tedious": "^19.0.0",
-    "uuid": "^13.0.0"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@types/uuid": "^10.0.0",

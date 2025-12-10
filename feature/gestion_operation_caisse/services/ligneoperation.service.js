@@ -104,20 +104,12 @@ async function get_by_idligneoperation(idligneoperation) {
 }
 
 async function update_ligneoperation(idligneoperation, data) {
-<<<<<<< HEAD
   if (!idligneoperation || !data.idnature) {
-=======
-  if (!idligneoperation || !data.idnature || !data.idsite) {
->>>>>>> origin/richard
     throw new Error("Erreur de donnée");
   }
 
   try {
-<<<<<<< HEAD
     const ligneoperation_ = await ligneoperation.update_ligneoperation(idligneoperation, data);
-=======
-    const ligneoperation_ = await ligneoperation.update_ligneoperation(data.codeligneoperation, data);
->>>>>>> origin/richard
     return ligneoperation_.recordset;
   } catch (err) {
     console.log(`Erreur de modification: ${err}`.cyan.bold);

@@ -1,17 +1,11 @@
 const caisseModel = require("../models/caisse.model");
-<<<<<<< HEAD
 const typeoperationmodel = require("../models/operation.model");
-=======
->>>>>>> origin/richard
 const periodeModel = require("../models/caisseperiode.model");
 const { v4: uuidv4 } = require('uuid');
 const PaginationModel = require("../../../shared/utils/model");
 const caissemodel = new caisseModel();
 let periodemodel = new periodeModel();
-<<<<<<< HEAD
 let typeoperation = new typeoperationmodel();
-=======
->>>>>>> origin/richard
 let caisseperiodes = [];
 
 async function get_all_caisseperiodes(page = 1, limit = 5) {
@@ -144,7 +138,6 @@ async function fermeture_periode(idperiode, data) {
     throw new Error("Periode doit être ouverte");
   }
 
-<<<<<<< HEAD
   let soldes = 0;
   soldes = await typeoperation.get_soldecaisse();
   const soldeItem = soldes.find(s => s.idcaisse === check_periode.idcaisse);
@@ -186,10 +179,6 @@ async function fermeture_periode(idperiode, data) {
       console.log(periodeNext);
     }
 
-=======
-  try {
-    const periode = await periodemodel.fermetureorclose_caisseperiode(idperiode, data);
->>>>>>> origin/richard
     return periode.recordset;
   } catch (err) {
     console.log(`Erreur de modification: ${err}`.cyan.bold);
@@ -204,15 +193,9 @@ async function open_periode(idperiode, data) {
   }
 
   const check_periode = await periodemodel.get_onecaisseperiode(idperiode);
-<<<<<<< HEAD
-  // if(check_periode.statut == 'ouverte'){
-  //   throw new Error("Caisse déja ouverte");
-  // }
-=======
   if(check_periode.statut == 'ouverte'){
     throw new Error("Caisse déja ouverte");
   }
->>>>>>> origin/richard
 
   const datePeriode = new Date(data.dateperiode);
   const today = new Date();

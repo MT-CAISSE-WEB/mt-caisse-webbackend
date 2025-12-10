@@ -8,15 +8,11 @@ const ErrorResponse = require("../../../shared/utils/errorResponse");
 module.exports.get_typeoperations = asyncHandler(async(req, res, next) => {
   try {
     const page = req.query.page ? parseInt(req.query.page) : 1;
-<<<<<<< HEAD
     const search = req.query.search || null;
     const date = req.query.date || null;
     const status = req.query.status || null;      // Comptabilisé / Non comptabilisé / Tous
 
     const typeoperations = await typeoperationservice.get_all_typeoperations({page,search,date,status});
-=======
-    const typeoperations = await typeoperationservice.get_all_typeoperations(page);
->>>>>>> origin/richard
     res.json({ success: true, data: typeoperations });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur", error });

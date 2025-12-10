@@ -12,11 +12,6 @@ const siteservice = require('../../gestion_organisation/services/site.service');
 const departementservice = require('../../gestion_organisation/services/departement.service');
 
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> origin/richard
 const queryInsert = `
         INSERT INTO Affectation (idaffectation, codeaffectation, actif, 
         idsociete, idsite, iddepartement, idcentreanalytique, idnature,
@@ -234,8 +229,4 @@ class AffectationAnalytiqueModel {
     }
 }
 
-<<<<<<< HEAD
 module.exports = AffectationAnalytiqueModel;
-=======
-module.exports = AffectationAnalytiqueModel;
->>>>>>> origin/richard
