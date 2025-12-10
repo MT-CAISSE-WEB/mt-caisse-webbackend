@@ -25,10 +25,17 @@ module.exports = {
         SELECT * FROM CaissePeriode WHERE idperiode = @idperiode
     `,
     INSERT : `
+<<<<<<< HEAD
         INSERT INTO CaissePeriode(idperiode, idcaisse, dateperiode, soldeouverture, soldefermeture,
             montantphysique, ecart, statut, createdat, createdby) OUTPUT INSERTED.*
         VALUES(@idperiode, @idcaisse, @dateperiode, @soldeouverture, @soldefermeture, @montantphysique,
          @ecart, @statut, @createdat, @createdby)
+=======
+        INSERT INTO CaissePeriode( idperiode, idcaisse, dateperiode, soldeouverture, soldefermeture,
+            montantphysique, ecart, statut, createdat, createdby) OUTPUT INSERTED.*
+        VALUES( @idperiode, @idcaisse, @dateperiode, @soldeouverture, @soldefermeture, @montantphysique,
+         @ecart, @statut, @createdat, @createdby )
+>>>>>>> origin/richard
     `,
     UPDATE : `
     UPDATE CaissePeriode SET 
@@ -48,7 +55,11 @@ module.exports = {
         SET 
             soldefermeture = @soldefermeture,
             statut = @statut
+<<<<<<< HEAD
         OUTPUT INSERTED.* WHERE idperiode = @idperiode
+=======
+        WHERE idperiode = @idperiode
+>>>>>>> origin/richard
     `,
     DELETE : `
         DELETE FROM CaissePeriode WHERE idperiode = @idperiode

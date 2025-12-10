@@ -15,7 +15,11 @@ const queryInsert = `
         VALUES (@idligneoperation, @idoperation, @idnature, @idcentre, @idsociete, @idtiers, @libelle, @montantoperation, @comptabilise, @numpiececomptable, @datecomptabilisation, @createdat, @createdby, @updatedat, @updatedby)
         `;
 
+<<<<<<< HEAD
 const queryUpdate = `UPDATE ligneoperationCaisse SET idnature = @idnature, idcentre = @idcentre, libelle = @libelle, montantoperation = @montantoperation, idtiers = @idtiers, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE idligneoperation = @idligneoperation`;
+=======
+const queryUpdate = `UPDATE ligneoperationCaisse SET idnature = @idnature, codenature = @codenature, idcentre = @idcentre, codecentre = @codecentre, idsociete = @idsociete, codesociete = @codesociete, idsite = @idsite, codesite = @codesite, libelle = @libelle, montantoperation = @montantoperation, idtiers = @idtiers, codetiers = @codetiers, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE idligneoperation = @idligneoperation`;
+>>>>>>> origin/richard
 
 class ligneoperationModel {
     constructor(idligneoperation, idoperation, codeoperation, idsociete, codesociete, idtiers, codetiers, idnature, codenature, idcentre, codecentre, libelle, montantoperation, comptabilise, numpiececomptable, datecomptabilisation, createdat, createdby, updatedat, updatedby)
@@ -127,6 +131,11 @@ class ligneoperationModel {
             const result = await pool.request()
                 .input('idligneoperation', sql.UniqueIdentifier, idligneoperation)
                 .input('idoperation', sql.UniqueIdentifier, data.idoperation)
+<<<<<<< HEAD
+=======
+                .input('idsociete', sql.UniqueIdentifier, data.idsociete)
+                .input('idsite', sql.UniqueIdentifier, data.idsite)
+>>>>>>> origin/richard
                 .input('idtiers', sql.UniqueIdentifier, data.idtiers)
                 .input('idnature', sql.UniqueIdentifier, data.idnature)
                 .input('idcentre', sql.UniqueIdentifier, data.idcentre)
@@ -158,4 +167,8 @@ class ligneoperationModel {
 }
 
 
+<<<<<<< HEAD
 module.exports = ligneoperationModel;
+=======
+module.exports = ligneoperationModel;
+>>>>>>> origin/richard

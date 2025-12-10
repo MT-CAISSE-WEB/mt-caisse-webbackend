@@ -3,7 +3,11 @@ const db = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 
  //upsert Societe
+<<<<<<< HEAD
    async function upsertsociete({codesociete,iddevisereference,iddevisereporting,raisonsociale,sigle, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby, updatedby }) {
+=======
+   async function upsertsociete({codesociete, iddevisereference, iddevisereporting, raisonsociale, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby, updatedby }) {
+>>>>>>> origin/richard
     try {
         const idsociete = uuidv4();
 
@@ -35,12 +39,16 @@ const { v4: uuidv4 } = require('uuid');
             END
         `;
 
-        const pool = await db.poolPromise;
+        const pool = await db.connectDB();
         const result = await pool.request()
             .input("idsociete", db.sql.UniqueIdentifier, idsociete)
             .input("codesociete", db.sql.NVarChar, codesociete)
+<<<<<<< HEAD
             .input("iddevisereference", db.sql.NVarChar, iddevisereference)
             .input("iddevisereporting", db.sql.NVarChar, iddevisereporting)
+=======
+
+>>>>>>> origin/richard
             .input("raisonsociale", db.sql.NVarChar, raisonsociale)
             .input("sigle", db.sql.NVarChar,sigle)
             .input("rccm", db.sql.NVarChar, rccm)
@@ -76,12 +84,17 @@ const { v4: uuidv4 } = require('uuid');
  // Get all
 async function getallsociete(){
     try {
+<<<<<<< HEAD
         const pool = await db.poolPromise;
         const query = `SELECT s.*,
         d1.codeiso AS devise_reference,
         d2.codeiso AS devise_reporting FROM Societe s
         left join devise d1 on s.iddevisereference = d1.iddevise
         left join devise d2 on s.iddevisereporting = d2.iddevise`;
+=======
+        const pool = await db.connectDB();
+        const query = "SELECT * FROM Societe";
+>>>>>>> origin/richard
         const result = await pool.request().query(query);
 
         return {
@@ -112,36 +125,36 @@ async function getalldevisesactif(){
 }
 
  //Get one
-    async function getonesociete(idsociete){
-        try {
-            const pool = await db.poolPromise;
-            const query = "SELECT * FROM Societe where idsociete = @idsociete";
-            const result = await pool.request()
-            .input('idsociete',db.sql.UniqueIdentifier,iddevise)
-            .query(query);
+async function getonesociete(idsociete){
+    try {
+        const pool = await db.poolPromise;
+        const query = "SELECT * FROM Societe where idsociete = @idsociete";
+        const result = await pool.request()
+        .input('idsociete',db.sql.UniqueIdentifier,idsociete)
+        .query(query);
 
-            if(!result){
-                return {success:false,status:404,message:"Société non trouvée"};
-            }
-
-            console.log(result.recordset[0]);
-
-            return {
-                success:true,
-                status:200,
-                data:result.recordset[0],
-                message : "Element trouvé avec succès!"}
-        } catch (error) {
-            return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
+        if(!result){
+            return {success:false,status:404,message:"Société non trouvée"};
         }
+
+        console.log(result.recordset[0]);
+
+        return {
+            success:true,
+            status:200,
+            data:result.recordset[0],
+            message : "Element trouvé avec succès!"}
+    } catch (error) {
+        return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
     }
+}
 
      //Delete Societe
   async function deletesociete(idsociete)
   {
       
       try {
-          const pool = await db.poolPromise;
+          const pool = await db.connectDB();
           const query = "DELETE FROM Societe where idsociete = @idsociete";
           const result = await pool.request()
           .input('idsociete',db.sql.UniqueIdentifier,idsociete)

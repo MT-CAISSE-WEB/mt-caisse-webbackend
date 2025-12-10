@@ -52,6 +52,7 @@ class typeoperationModel {
         }
     }
 
+<<<<<<< HEAD
     async get_alltypeoperations ({ page = 1, limit = 5, search = null, date = null}) {
         page = parseInt(page) || 1;
         limit = parseInt(limit) || 5;
@@ -66,6 +67,17 @@ class typeoperationModel {
                 .input('search', sql.NVarChar, search ? `%${search}%` : null)
                 .input('date', sql.Date, date || null)
                 .query(operationQueries.getOperations);
+=======
+    async get_alltypeoperations (page = 1, limit = 5) {
+        const pool = await connectDB();
+        const offset = (page - 1) * limit;
+        //const query = "SELECT * FROM TypeOperation"
+        try {
+            const result = await pool.request()
+            .input('offset', sql.Int, offset)
+            .input('limit', sql.Int, limit)
+            .query(operationQueries.getAll);
+>>>>>>> origin/richard
 
             const operations = result.recordsets[0];
             const total = result.recordsets[1][0].total;
@@ -110,12 +122,26 @@ class typeoperationModel {
         try {
             const result = await pool.request()
                 .input('idtypeoperation', sql.UniqueIdentifier, idtypeoperation)
+<<<<<<< HEAD
                 .input('codtypeoperation', sql.NVarChar(24), data.codetypeoperation)
                 .input('idoperation', sql.UniqueIdentifier, data.idoperation)
+=======
+                .input('codetypeoperation', sql.NVarChar(24), data.codetypeoperation)
+                .input('codetypeoperation', sql.NVarChar(24), data.codetypeoperation)
+                .input('idoperation', sql.UniqueIdentifier, data.idoperation)
+                .input('idperiode', sql.UniqueIdentifier, data.idperiode)
+                .input('idsociete', sql.UniqueIdentifier, data.idsociete)
+                .input('idsite', sql.UniqueIdentifier, data.idsite)
+>>>>>>> origin/richard
                 .input('idcaisse', sql.UniqueIdentifier, data.idcaisse)
                 .input('montant', sql.Decimal(21,9), data.montant)
                 .input('taux', sql.Decimal(21,9), data.taux)
                 .input('montantref', sql.Decimal(21,9), data.montantref)
+<<<<<<< HEAD
+=======
+                .input('createdat', sql.DateTime, new Date())
+                .input('createdby', sql.NVarChar(100), data.createdby)
+>>>>>>> origin/richard
                 .input('updatedat', sql.DateTime, new Date())
                 .input('updatedby', sql.NVarChar(100), data.updatedby)
                 .query(typeoperationQueries.update);
@@ -136,6 +162,7 @@ class typeoperationModel {
             console.log(`Erreur de suppression: ${error}`.cyan.bold);
         }
     }
+<<<<<<< HEAD
 
     async get_soldecaisse(){
         const pool = await connectDB();
@@ -146,8 +173,14 @@ class typeoperationModel {
             console.log(`Erreur de suppression: ${error}`.cyan.bold);
         }
     }
+=======
+>>>>>>> origin/richard
 }
 
 
 
+<<<<<<< HEAD
 module.exports = typeoperationModel;
+=======
+module.exports = typeoperationModel;
+>>>>>>> origin/richard

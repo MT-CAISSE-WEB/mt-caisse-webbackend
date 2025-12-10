@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 const societeservice = require("../services/societe.service");
 const asyncHandler = require("../../../shared/middlewares/async");
 const ErrorResponse = require("../../../shared/utils/errorResponse");
@@ -66,6 +67,8 @@ module.exports.delete_societe = asyncHandler(async(req, res, next) => {
     res.status(404).json({ success: false, message: error.message });
   }
 =======
+=======
+>>>>>>> origin/richard
 const asyncHandler =require('../../../shared/middlewares/async')
 const ErrorResponse = require('../../../shared/utils/errorResponse');
 const societeservice = require ("../services/societe.service");
@@ -126,5 +129,8 @@ module.exports.deletesociete = asyncHandler (async(req,res, next)=>{
     } catch (error) {       
         res.status(500).json({ success: false, message: "Erreur serveur", error });
     }           
+<<<<<<< HEAD
 >>>>>>> origin/junior
+=======
+>>>>>>> origin/richard
 });

@@ -11,6 +11,8 @@ const bodyParser = require('body-parser')
 const logger = require('./shared/middlewares/logger')
 const errorHandler = require('./shared/middlewares/error')
 
+const sequelize = require('./config/database')
+
 //DECLARATION DES ROUTES
 // Journal routes
 const journalRoutes = require("./feature/gestion_operation_caisse/routes/journal.route");
@@ -44,7 +46,7 @@ const societeroute = require('./feature/gestion_organisation/routes/societe.rout
 const siteroute = require('./feature/gestion_organisation/routes/site.route');
 // Département routes
 const departementroute = require('./feature/gestion_organisation/routes/departement.route');
-// Tiers routes
+// Declaration des routes
 const tiersroutes = require("./feature/gestion_donnee_base/routes/tiers.route");
 const plancomptableroutes = require("./feature/gestion_donnee_base/routes/plancomptable.route");
 const natureoperationroutes = require("./feature/gestion_donnee_base/routes/natureoperation.route");
@@ -54,7 +56,7 @@ const affectationanalytiqueroutes = require("./feature/gestion_donnee_base/route
 const userroute = require('./feature/gestion_users/routes/users.route');
 
 //connexion db
-const db = require('./config/db')
+const {connectInstance} = require('./config/db')
 
 dotenv.config({ path: './config/config.env' })
 // INIT EXPRESS
@@ -75,7 +77,8 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'))
 }
 
-db.connectInstance()
+//LANCEMENT DE LA BASE DE DONNEES
+connectInstance()
 
 // JOURNALISATION PERSONNALISEE
 app.use(logger)
@@ -109,8 +112,6 @@ app.use('/api/entete-demande', entete_demande_route)
 app.use('/api/ligne-demande', ligne_demande_route)
 //Details demande
 app.use('/api/details-demande', details_demande_route)
-
-//Regrouper toutes les routes
 //GESTION OPERATION CAISSE ROUTES
 app.use("/API/journal", journalRoutes);
 app.use("/API/caisse", caisseRoutes);
@@ -118,10 +119,6 @@ app.use("/API/utilisateur_caisse", utilisateurcaisseRoutes);
 app.use("/API/entete_operation", enteteoperationRoutes);
 app.use("/API/ligne_operation", ligneoperationRoutes);
 app.use("/API/operation", typeoperationRoutes);
-//Budget
-app.use('/API/budget', budget_route)
-//Ligne budgetaire
-app.use('/API/ligne-budgetaire', ligne_budgetaire_route)
 //API
 app.use('/API',deviseroute);
 app.use('/API',tauxdeviseroute);

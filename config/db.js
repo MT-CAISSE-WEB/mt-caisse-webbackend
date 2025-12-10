@@ -1,7 +1,8 @@
 const dotenv = require('dotenv');
-dotenv.config({path: './config/config.env'});
+dotenv.config({path: './config/.env'});
 const sql = require("mssql");
 const fs = require('fs');
+
 
 const config = {
   user: process.env.DB_USER,
@@ -10,8 +11,8 @@ const config = {
   database: process.env.DB_NAME,
   options: {
     encrypt: process.env.DB_ENCRYPT === 'true', // true si Azure
-    trustServerCertificate: false,
-    //instanceName: process.env.DB_INSTANCE || undefined, // Nom de l'instance SQL Server, si applicable
+    trustServerCertificate: true,
+    // instanceName: process.env.DB_INSTANCE || undefined, // Nom de l'instance SQL Server, si applicable
   },
 };
 
@@ -54,10 +55,14 @@ const initconfig = {
 const createDB = async () =>{
   try {
     const db = await sql.connect({...config , database : 'MTCAISSEWEB'});
+<<<<<<< HEAD
     const table = fs.readFileSync("./config/test.sql", "utf8");
+=======
+    const table = fs.readFileSync("./config/init.sql", "utf8");
+>>>>>>> origin/richard
     await db.request().query(table);
     db.close();
-    console.log(`Tables créees`.yellow.bold);
+    // console.log(`Tables créees`.yellow.bold);
   } catch (error) {
     console.log(`Erreur de création des tables: ${error}`.red.bold);
   }
@@ -66,31 +71,39 @@ const createDB = async () =>{
 const connectDB = async () => {
   try {
     const db = await sql.connect({...config , database : 'MTCAISSEWEB'});
+<<<<<<< HEAD
     console.log(`Connecté à la base de données`.cyan.bold);
+=======
+    // console.log(`Connecté à la base de données`.cyan.bold);
+>>>>>>> origin/richard
     return db;
   } catch (error) {
-    console.log(`Erreur de connexion: ${error}`.red.bold);
+    console.log(`${error}`.red.bold);
     throw error;
   }
 }
 
 const connectInstance = async () => {
   try {
+<<<<<<< HEAD
+=======
+    console.log(config)
+>>>>>>> origin/richard
     const pool = await sql.connect(config);
-    console.log(`Connecté à SQL Server`.cyan.bold);
+    // console.log(`Connecté à SQL Server`.cyan.bold);
     const dbPool = fs.readFileSync("./config/db.sql", "utf8");
     try{
       await pool.request().query(dbPool);
       createDB();
     }catch (err){
-      console.log(`Erreur de création de la base de donnée: ${err}`.cyan.bold);
+      console.log(`${err}`.cyan.bold);
     }
   } catch (err) {
-    console.log(`Erreur de connexion: ${err}`.cyan.bold);
+    console.log(`${err}`.cyan.bold);
   }
 }
 
-//un pool spécifique pour les opérations de la base de données
+// un pool spécifique pour les opérations de la base de données
 const poolPromise = new sql.ConnectionPool(config)
   .connect()
   .then(pool => {
@@ -99,9 +112,10 @@ const poolPromise = new sql.ConnectionPool(config)
   })
   .catch(err => {
     console.log('Erreur de connexion SQL Server', err);
-    throw err;
+    throw err;
   });
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   const initdatabase = async () => {
       try {
@@ -144,3 +158,6 @@ module.exports =  {connectInstance,connectDB,initdatabase,poolPromise,sql};
 
 module.exports =  {connectInstance,connectDB, sql};
 >>>>>>> d9dd71a (front end chado fusion v1)
+=======
+module.exports =  {connectInstance, connectDB, poolPromise, sql};
+>>>>>>> origin/richard

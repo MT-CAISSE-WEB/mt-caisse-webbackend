@@ -14,7 +14,11 @@ router.delete("/delete/:id", caisse_controller.delete_caisse);
 // Periode caisse
 router.get("/periode/:id", periodecaisse_controller.get_recentperiode);
 router.put("/open/:id", periodecaisse_controller.open_caisse);
+<<<<<<< HEAD
 router.put("/close/:id", periodecaisse_controller.fermeture_caisse);
+=======
+router.post("/close/:id", periodecaisse_controller.fermeture_caisse);
+>>>>>>> origin/richard
 router.post("/validate/:id", periodecaisse_controller.validate_caisse);
 
 module.exports = router;

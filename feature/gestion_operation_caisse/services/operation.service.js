@@ -14,10 +14,15 @@ const caisseservice = require("../services/caisse.service");
 let typeoperation = new typeoperationmodel();
 let typeoperations = [];
 
+<<<<<<< HEAD
 async function get_all_typeoperations({ page, search, date, status }) {
   let soldes = 0;
   soldes = await typeoperation.get_soldecaisse();
   const result = await typeoperation.get_alltypeoperations({ page, search, date, status });
+=======
+async function get_all_typeoperations(page = 1, limit = 5) {
+  const result = await typeoperation.get_alltypeoperations(page, limit);
+>>>>>>> origin/richard
   try {
     const operations = {};
     result.data.forEach(row => {
@@ -98,16 +103,23 @@ async function get_all_typeoperations({ page, search, date, status }) {
       if (row.type_idtypeoperation) {
           const exists = op.caisses.find(t => t.idtypeoperation === row.type_idtypeoperation);
           if (!exists) {
+<<<<<<< HEAD
             const soldeItem = soldes.find(s => s.idcaisse === row.type_idcaisse);
             const solde = soldeItem ? soldeItem.solde : 0;
+=======
+>>>>>>> origin/richard
               op.caisses.push({
                   idtypeoperation: row.type_idtypeoperation,
                   codtypeoperation: row.type_codtypeoperation,
                   montant: row.type_montant,
                   idcaisse: row.type_idcaisse,
                   taux : row.type_taux,
+<<<<<<< HEAD
                   montantref: row.type_montantref,
                   solde : solde
+=======
+                  montantref: row.type_montantref
+>>>>>>> origin/richard
               });
           }
       }
@@ -201,6 +213,7 @@ async function get_by_idtypeoperation(idtypeoperation) {
 }
 
 async function update_typeoperation(idtypeoperation, data) {
+<<<<<<< HEAD
   if (!idtypeoperation || !data.codeoperation) {
     throw new Error("Erreur de donnée");
   }
@@ -266,6 +279,15 @@ async function update_typeoperation(idtypeoperation, data) {
     let enteteoperation = null;
     enteteoperation = await enteteoperationservice.get_by_identeteoperation(data.idoperation);
     return enteteoperation;
+=======
+  if (!idtypeoperation || !data.idsite) {
+    throw new Error("Erreur de donnée");
+  }
+
+  try {
+    const typeoperation_ = await typeoperation.update(data.codetypeoperation, data);
+    return typeoperation_.recordset;
+>>>>>>> origin/richard
   } catch (err) {
     console.log(`Erreur de modification: ${err}`.cyan.bold);
     throw err;

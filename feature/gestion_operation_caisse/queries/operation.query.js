@@ -1,4 +1,5 @@
 module.exports = {
+<<<<<<< HEAD
     getOperations : `
     WITH Ops AS (
         SELECT 
@@ -161,6 +162,8 @@ module.exports = {
                 )
                 AND (@date IS NULL OR CONVERT(date, e.dateoperation) = @date);
     `,
+=======
+>>>>>>> origin/richard
     getAll: `
         WITH Ops AS (
             SELECT 
