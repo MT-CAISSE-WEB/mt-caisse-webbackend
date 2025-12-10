@@ -102,10 +102,10 @@ app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, 'views'))
 
 // Test SQL Server connection Sequelize
-sequelize
-  .authenticate()
-  .then(() => console.log('Connexion SQL Server OK sequelize'))
-  .catch((err) => console.log('Erreur SQL Server ', err))
+// sequelize
+//   .authenticate()
+//   .then(() => console.log('Connexion SQL Server OK sequelize'))
+//   .catch((err) => console.log('Erreur SQL Server ', err))
 
 //Regrouper toutes les routes
 //Budget
