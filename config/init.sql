@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+USE MTCAISSEWEB
+>>>>>>> d9dd71a (front end chado fusion v1)
 -- OK
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Devise')
 BEGIN
@@ -127,7 +131,10 @@ BEGIN
         idsite UNIQUEIDENTIFIER NULL,
         login NVARCHAR(50) UNIQUE,
         password NVARCHAR(50),
+<<<<<<< HEAD
 >>>>>>> 17bbfaa (front end chado fusion junior)
+=======
+>>>>>>> d9dd71a (front end chado fusion v1)
         createdat Datetime,
 		createdby NVARCHAR(50),
 		updatedat Datetime,
@@ -873,11 +880,15 @@ BEGIN
 		idsite UNIQUEIDENTIFIER,
 		idcaisse UNIQUEIDENTIFIER,
 		montant DECIMAL(21, 9),
+<<<<<<< HEAD
 >>>>>>> 17bbfaa (front end chado fusion junior)
+=======
+>>>>>>> d9dd71a (front end chado fusion v1)
         createdat Datetime,
 		createdby NVARCHAR(50),
 		updatedat Datetime,
 		updatedby NVARCHAR(50),
+<<<<<<< HEAD
 		FOREIGN KEY (idoperation) REFERENCES EnteteOperationCaisse(idoperation),
 		FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
 		FOREIGN KEY (idcentre) REFERENCES CentreAnalytique(idcentreanalytique),
@@ -887,6 +898,11 @@ BEGIN
     );
 END
 =======
+=======
+        FOREIGN KEY (idoperation) REFERENCES EnteteOperationCaisse(idoperation),
+		FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
+		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+>>>>>>> d9dd71a (front end chado fusion v1)
 		FOREIGN KEY (idsite) REFERENCES Sites(idsite),
     );
 END
@@ -903,7 +919,10 @@ BEGIN
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
+<<<<<<< HEAD
 		PRIMARY KEY (prefixe, annee, mois, jour)
+=======
+>>>>>>> d9dd71a (front end chado fusion v1)
 	);
 END
 >>>>>>> 17bbfaa (front end chado fusion junior)

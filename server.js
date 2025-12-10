@@ -11,27 +11,47 @@ const bodyParser = require('body-parser')
 const logger = require('./shared/middlewares/logger')
 const errorHandler = require('./shared/middlewares/error')
 
-// Declaration des routes
-const societesroutes = require("./feature/gestion_organisation/routes/societe.route");
+//DECLARATION DES ROUTES
+// Journal routes
+const journalRoutes = require("./feature/gestion_operation_caisse/routes/journal.route");
+// Caisse routes
+const caisseRoutes = require("./feature/gestion_operation_caisse/routes/caisse.route");
+// Utilisateur caisse routes
+const utilisateurcaisseRoutes = require("./feature/gestion_operation_caisse/routes/utilisateurcaisse.route");
+// Entete operation routes
+const enteteoperationRoutes = require("./feature/gestion_operation_caisse/routes/enteteoperation.route");
+// Ligne operation routes
+const ligneoperationRoutes = require("./feature/gestion_operation_caisse/routes/ligneoperation.route");
+// Type operation routes
+const typeoperationRoutes = require("./feature/gestion_operation_caisse/routes/operation.route");
+// Budget
+const budget_route = require('./feature/gestion_budget/routes/budget.route')
+// Ligne budgetaire
+const ligne_budgetaire_route = require('./feature/gestion_budget/routes/lignebudget.route')
+// Entete demande
+const entete_demande_route = require('./feature/gestion_demande_decaissement/routes/entetedemande.route')
+// Ligne demande
+const ligne_demande_route = require('./feature/gestion_demande_decaissement/routes/ligendemande.route')
+// Detail demande
+const details_demande_route = require('./feature/gestion_demande_decaissement/routes/detaildemande.route')
+// Devise routes
 const deviseroute = require('./feature/gestion_organisation/routes/devise.route');
+// Taux de devise routes
 const tauxdeviseroute = require('./feature/gestion_organisation/routes/tauxdevise.route');
+// Societe routes
 const societeroute = require('./feature/gestion_organisation/routes/societe.route');
+// Site routes
 const siteroute = require('./feature/gestion_organisation/routes/site.route');
+// Département routes
 const departementroute = require('./feature/gestion_organisation/routes/departement.route');
 // Tiers routes
 const tiersroutes = require("./feature/gestion_donnee_base/routes/tiers.route");
-// Plan comptable routes
 const plancomptableroutes = require("./feature/gestion_donnee_base/routes/plancomptable.route");
-// Nature opérations routes
 const natureoperationroutes = require("./feature/gestion_donnee_base/routes/natureoperation.route");
-// Centre analytiques routes
 const centreanalytiqueroutes = require("./feature/gestion_donnee_base/routes/centreanalytique.route");
-// Affectation analytiques routes
 const affectationanalytiqueroutes = require("./feature/gestion_donnee_base/routes/affectationanalytique.route");
 // Routes users
 const userroute = require('./feature/gestion_users/routes/users.route');
-
-const db = require('./config/db');
 
 //connexion db
 const db = require('./config/db')
@@ -137,3 +157,5 @@ process.on('unhandledRejection', (err, promise) => {
   // Close server & exit process
   server.close(() => process.exit(1))
 })
+
+

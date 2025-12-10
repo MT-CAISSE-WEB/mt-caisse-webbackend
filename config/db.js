@@ -39,6 +39,18 @@ const initconfig = {
   },
 };
 
+const initconfig = {
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_SERVER, // ou l’adresse IP du serveur
+  database: process.env.DB_NAME,
+  options: {
+    encrypt: process.env.DB_ENCRYPT === 'true', // true si Azure
+    trustServerCertificate: false,
+    //instanceName: process.env.DB_INSTANCE || undefined, // Nom de l'instance SQL Server, si applicable
+  },
+};
+
 const createDB = async () =>{
   try {
     const db = await sql.connect({...config , database : 'MTCAISSEWEB'});
@@ -64,7 +76,6 @@ const connectDB = async () => {
 
 const connectInstance = async () => {
   try {
-    console.log(config)
     const pool = await sql.connect(config);
     console.log(`Connecté à SQL Server`.cyan.bold);
     const dbPool = fs.readFileSync("./config/db.sql", "utf8");
@@ -91,6 +102,7 @@ const poolPromise = new sql.ConnectionPool(config)
     throw err;
   });
 
+<<<<<<< HEAD
   const initdatabase = async () => {
       try {
          const masterpool = await sql.connect(initconfig);
@@ -117,3 +129,18 @@ const poolPromise = new sql.ConnectionPool(config)
   }
 
 module.exports =  {connectInstance,connectDB,initdatabase,poolPromise,sql};
+=======
+//un pool spécifique pour les opérations de la base de données
+// const poolPromise = new sql.ConnectionPool(config)
+//   .connect()
+//   .then(pool => {
+//     console.log('Connecté à SQL Server');
+//     return pool;
+//   })
+//   .catch(err => {
+//     console.log('Erreur de connexion SQL Server', err);
+//     throw err;
+//   });
+
+module.exports =  {connectInstance,connectDB, sql};
+>>>>>>> d9dd71a (front end chado fusion v1)
