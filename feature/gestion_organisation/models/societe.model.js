@@ -1,7 +1,7 @@
 const { DateTime } = require('mssql');
 const {sql, connectInstance, connectionDb} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
-const devise = require('');
+//const devise = require('');
 
 const queryInsert = `
         INSERT INTO Societe (idsociete,codedevisereference, codedevisereporting, code, raisonsociale, rccm, numNUI, email, telephone, logo, adresse, suivibudgetaire, createdAt, updatedAt, createdBy, updatedBy)
