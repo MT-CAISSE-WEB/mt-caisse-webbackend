@@ -18,7 +18,7 @@ WHERE code = @code`;
 async function createdevise(data){
         
         try {
-            const pool = await db.poolPromise;
+            const pool = await connectDB()
             const iddevise = uuidv4();
             const result = await pool.request()
             .input('iddevise',db.sql.UniqueIdentifier,iddevise)
@@ -66,7 +66,7 @@ async function createdevise(data){
             END
         `;
 
-        const pool = await db.poolPromise;
+        const pool = await connectDB()
         const result = await pool.request()
             .input("iddevise", db.sql.UniqueIdentifier, iddevise)
             .input("codedevise", db.sql.NVarChar, codedevise)
@@ -140,7 +140,7 @@ async function createdevise(data){
     {
         
         try {
-            const pool = await db.poolPromise;
+            const pool = await connectDB()
             const query = "DELETE FROM Devise where iddevise = @iddevise";
             const result = await pool.request()
             .input('iddevise',db.sql.UniqueIdentifier,iddevise)

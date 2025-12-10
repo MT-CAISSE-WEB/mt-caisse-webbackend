@@ -1,4 +1,4 @@
-const db = require('../../../config/db');
+const {sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const dotenv = require('dotenv');
 dotenv.config({path: '../../../config/config.env'});
@@ -51,7 +51,7 @@ async function upsertuser(params){
                  @typeentitesociete, @acheteur, @createdby, GETDATE())
         END`;
 
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
 
         const result = await pool.request()
             .input("idutilisateur", db.sql.UniqueIdentifier, idutilisateur)
@@ -104,7 +104,7 @@ async function upsertuser(params){
 
 async function getalluser(){
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const query = `SELECT u.*,
        s.raisonsociale as societe
        from utilisateur u
@@ -124,7 +124,7 @@ async function getalluser(){
 //Get one
     async function getoneuser(iduser){
         try {
-            const pool = await db.poolPromise;
+            const pool = await connectDB();
             const query = "SELECT * FROM utilisateur where idutilisateur = @idutilisateur";
             const result = await pool.request()
             .input('idutilisateur',db.sql.UniqueIdentifier,iduser)
@@ -148,7 +148,7 @@ async function deleteuser(iduser)
 {
           
           try {
-              const pool = await db.poolPromise;
+              const pool = await connectDB();
               const query = "DELETE FROM utilisateur where idutilisateur = @idutilisateur";
               const result = await pool.request()
               .input('idutilisateur',db.sql.UniqueIdentifier,iduser)
@@ -165,7 +165,7 @@ async function deleteuser(iduser)
 // LOGIN
 async function login(login, password) {
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
 
         // Vérifier utilisateur
         const result = await pool.request()
@@ -247,7 +247,7 @@ async function refreshtoken (refreshToken){
         try {
               const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET_REFRESH);
 
-            const pool = await db.poolPromise;
+            const pool = await connectDB();
 
             // Récupération liste
             const result = await pool.request().query("SELECT * FROM REFRESH_TOKEN");
@@ -282,7 +282,7 @@ async function logout(refreshToken){
         }
 
         try {
-            const pool = await db.poolPromise;
+            const pool = await connectDB();
 
             // Supprimer le refresh token lié à l'utilisateur
             await pool.request()

@@ -68,7 +68,7 @@ const { v4: uuidv4 } = require('uuid');
 // Get all
 async function getallsite(){
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const query = "SELECT s.*,so.raisonsociale FROM Site s LEFT JOIN Societe so ON s.idsociete = so.idsociete";
         const result = await pool.request().query(query);
         return {

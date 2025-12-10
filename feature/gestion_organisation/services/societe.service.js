@@ -76,7 +76,7 @@ const { v4: uuidv4 } = require('uuid');
  // Get all
 async function getallsociete(){
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const query = `SELECT s.*,
         d1.codeiso AS devise_reference,
         d2.codeiso AS devise_reporting FROM Societe s
@@ -97,7 +97,7 @@ async function getallsociete(){
  // Get all
 async function getalldevisesactif(){
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const query = `SELECT * FROM DEVISE WHERE ACTIF=1`;
         const result = await pool.request().query(query);
 
@@ -114,7 +114,7 @@ async function getalldevisesactif(){
  //Get one
 async function getonesociete(idsociete){
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const query = "SELECT * FROM Societe where idsociete = @idsociete";
         const result = await pool.request()
         .input('idsociete',db.sql.UniqueIdentifier,idsociete)

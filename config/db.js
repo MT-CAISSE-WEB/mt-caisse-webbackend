@@ -65,16 +65,16 @@ const connectInstance = async () => {
 }
 
   // un pool spécifique pour les opérations de la base de données
-const poolPromise = new sql.ConnectionPool(config)
-  .connect()
-  .then(pool => {
-    console.log('Connecté à SQL Server');
-    return pool;
-  })
-  .catch(err => {
-    console.log('Erreur de connexion SQL Server', err);
-    throw err;
-  });
+// const poolPromise = new sql.ConnectionPool(config)
+//   .connect()
+//   .then(pool => {
+//     console.log('Connecté à SQL Server');
+//     return pool;
+//   })
+//   .catch(err => {
+//     console.log('Erreur de connexion SQL Server', err);
+//     throw err;
+//   });
 
   const initdatabase = async () => {
       try {
@@ -101,4 +101,4 @@ const poolPromise = new sql.ConnectionPool(config)
       }
   }
 
-module.exports =  {connectInstance,connectDB,initdatabase,poolPromise,sql};
+module.exports =  {connectInstance, connectDB, initdatabase, sql};
