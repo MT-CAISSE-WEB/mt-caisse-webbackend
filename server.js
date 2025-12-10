@@ -13,7 +13,14 @@ const errorHandler = require('./shared/middlewares/error')
 
 // Declaration des routes
 const societesroutes = require("./feature/gestion_organisation/routes/societe.route");
+const deviseroute = require('./feature/gestion_organisation/routes/devise.route');
+const tauxdeviseroute = require('./feature/gestion_organisation/routes/tauxdevise.route');
+const societeroute = require('./feature/gestion_organisation/routes/societe.route');
+const siteroute = require('./feature/gestion_organisation/routes/site.route');
+const departementroute = require('./feature/gestion_organisation/routes/departement.route');
+const userroute = require('./feature/gestion_users/routes/users.route');
 
+const db = require('./config/db');
 
 //connexion db
 const db = require('./config/db')
