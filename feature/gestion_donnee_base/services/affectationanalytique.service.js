@@ -1,14 +1,20 @@
 const affectationanalytiquemodel = require("../models/affectationanalytique.model");
-
+const PaginationModel = require("../../../shared/utils/model");
 const { v4: uuidv4 } = require('uuid');
+
+const societemodel = require("../../gestion_organisation/models/societe.model");
+const sitemodel = require("../../gestion_organisation/models/site.model");
+const departementmodel = require("../../gestion_organisation/models/departement.model");
+const centreanalytiquemodel = require("../models/centreanalytique.model");
+const natureoperationmodel = require("../models/natureoperation.model");
 
 let affectation = new affectationanalytiquemodel();
 
 let affectations = []; 
 
-async function get_all_affectations() {
-    const result = await affectation.get_allaffectations();
-    affectations = result.recordset.map(item => new affectationanalytiquemodel(
+async function get_all_affectations(page = 1, limit = 5) {
+    const result = await affectation.get_allaffectations(page, limit);
+    affectations = result.data.map(item => new affectationanalytiquemodel(
     item.idaffectation,
     item.codeaffectation,
     item.actif,
@@ -20,8 +26,32 @@ async function get_all_affectations() {
     item.createdat, 
     item.updatedat, 
     item.createdby, 
-    item.updatedby));
-  return affectations;
+    item.updatedby,
+
+    item.idsociete ? new societemodel(
+      item.societe_idsociete, item.societe_codesociete, 
+      item.iddevisereference, item.iddevisereporting, 
+      item.societe_raisonsociale) : null,
+
+    item.idsite ? new sitemodel(
+      item.site_idsite, item.site_idsociete, item.site_codesite, item.site_idcentreanalytique,
+      item.site_libellesite) : null,
+
+    item.iddepartement ? new departementmodel(
+      item.departement_iddepartement, item.departement_idsociete, 
+      item.departement_idsite, item.departement_responsable, 
+      item.departement_codedept, item.departement_libelledept) : null,
+
+    item.idcentreanalytique ? new centreanalytiquemodel(
+      item.centreanalytique_idcentreanalytique, item.centreanalytique_codecentre, 
+      item.centreanalytique_libellecentre) : null,
+
+    item.idnature ? new natureoperationmodel(
+      item.nature_idnature, item.natureoperation_codenature, item.natureoperation_libellenature) : null
+  ));
+
+  return new PaginationModel(result.page, result.limit, result.total, affectations);
+
 }
 
 
@@ -53,7 +83,7 @@ async function create_affectation(data) {
   if (!recorded.success) {
     throw new Error(recorded.message);
   }
-  return recorded;
+  return recorded.data;
 }
 
 
@@ -80,7 +110,6 @@ async function update_affectation(idaffectation, data) {
 
   try {
     const affectation_ = await affectation.update_affectation(idaffectation, data);
-    console.log(affectation_.recordset)
     return affectation_.recordset;
   } catch (err) {
     console.log(`Erreur de modification: ${err}`.cyan.bold);

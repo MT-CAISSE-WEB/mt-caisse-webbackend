@@ -1,14 +1,17 @@
 const plancomptablemodel = require("../models/plancomptable.model");
-
 const { v4: uuidv4 } = require('uuid');
+const PaginationModel = require("../../../shared/utils/model");
+const societemodel = require("../../gestion_organisation/models/societe.model");
+
+
 
 let compte = new plancomptablemodel();
 
 let comptes = []; 
 
-async function get_all_comptes() {
-    const result = await compte.get_allcomptes();
-    comptes = result.recordset.map(item => new plancomptablemodel(
+async function get_all_comptes(page = 1, limit = 5) {
+    const result = await compte.get_allcomptes(page, limit);
+    comptes = result.data.map(item => new plancomptablemodel(
     item.idcompte,
     item.numcompte,
     item.libelle,
@@ -21,17 +24,25 @@ async function get_all_comptes() {
     item.createdat, 
     item.updatedat, 
     item.createdby, 
-    item.updatedby));
-  return comptes;
-}
+    item.updatedby,
+    item.idsociete ? new societemodel(
+        item.societe_idsociete, item.societe_codesociete, item.societe_raisonsociale, 
+        item.societe_rccm, item.societe_numnui, item.societe_email, item.societe_telephone, 
+        item.societe_logo, item.societe_adresse, item.societe_suivibudgetaire, 
+        item.societe_createdat, item.societe_updatedat, 
+        item.societe_createdby, item.societe_updatedby
+      ) : null,
+  ));
 
+  return new PaginationModel(result.page, result.limit, result.total, comptes);
+}
 
 // OK
 async function create_compte(data) {
-  if (!data.numcompte || !data.libelle || !data.ventillable || !data.auxiliaire || 
-    !data.actif || !data.suivibudgetaire || !data.suivibudgetairemensuel || !data.idsociete) {
-    throw new Error("Tous les champs sont requis.");
-  }
+  // if (!data.numcompte || !data.libelle || !data.ventillable || !data.auxiliaire || 
+  //   !data.actif || !data.suivibudgetaire || !data.suivibudgetairemensuel || !data.idsociete) {
+  //   throw new Error("Tous les champs sont requis.");
+  // }
 
   const today = new Date();
 
@@ -55,7 +66,7 @@ async function create_compte(data) {
   if (!recorded.success) {
     throw new Error(recorded.message);
   }
-  return recorded;
+  return recorded.data;
 }
 
 

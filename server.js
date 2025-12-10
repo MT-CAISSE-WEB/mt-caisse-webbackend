@@ -48,17 +48,12 @@ const siteroute = require('./feature/gestion_organisation/routes/site.route');
 const departementroute = require('./feature/gestion_organisation/routes/departement.route');
 // Tiers routes
 const tiersroutes = require("./feature/gestion_donnee_base/routes/tiers.route");
-// Plan comptable routes
 const plancomptableroutes = require("./feature/gestion_donnee_base/routes/plancomptable.route");
-// Nature opérations routes
 const natureoperationroutes = require("./feature/gestion_donnee_base/routes/natureoperation.route");
-// Centre analytiques routes
 const centreanalytiqueroutes = require("./feature/gestion_donnee_base/routes/centreanalytique.route");
-// Affectation analytiques routes
 const affectationanalytiqueroutes = require("./feature/gestion_donnee_base/routes/affectationanalytique.route");
 // Routes users
 const userroute = require('./feature/gestion_users/routes/users.route');
-
 
 //connexion db
 const {connectInstance} = require('./config/db')
@@ -109,8 +104,8 @@ app.set('views', path.join(__dirname, 'views'))
 // Test SQL Server connection Sequelize
 sequelize
   .authenticate()
-  .then(() => console.log('Connexion SQL Server OK sequelize✔️'))
-  .catch((err) => console.log('Erreur SQL Server ❌', err))
+  .then(() => console.log('Connexion SQL Server OK sequelize'))
+  .catch((err) => console.log('Erreur SQL Server ', err))
 
 //Regrouper toutes les routes
 //Budget

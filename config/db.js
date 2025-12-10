@@ -31,7 +31,7 @@ const initconfig = {
 const createDB = async () =>{
   try {
     const db = await sql.connect({...config , database : 'MTCAISSEWEB'});
-    const table = fs.readFileSync("./config/test.sql", "utf8");
+    const table = fs.readFileSync("./config/init.sql", "utf8");
     await db.request().query(table);
     db.close();
     // console.log(`Tables créees`.yellow.bold);
@@ -54,6 +54,7 @@ const connectDB = async () => {
 const connectInstance = async () => {
   try {
     const pool = await sql.connect(config);
+    // console.log(`Connecté à SQL Server`.cyan.bold);
     const dbPool = fs.readFileSync("./config/db.sql", "utf8");
     try{
       await pool.request().query(dbPool);
@@ -66,6 +67,17 @@ const connectInstance = async () => {
   }
 }
 
+// un pool spécifique pour les opérations de la base de données
+const poolPromise = new sql.ConnectionPool(config)
+  .connect()
+  .then(pool => {
+    console.log('Connecté à SQL Server');
+    return pool;
+  })
+  .catch(err => {
+    console.log('Erreur de connexion SQL Server', err);
+    throw err;
+  });
 
 //un pool spécifique pour les opérations de la base de données
 // const poolPromise = new sql.ConnectionPool(config)

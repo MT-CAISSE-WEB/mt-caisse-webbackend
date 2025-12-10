@@ -1,20 +1,19 @@
 const { DateTime } = require('mssql');
 const {sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
+
 const centreModel = require('./centreanalytique.model');
 const natureModel = require('./natureoperation.model');
-const siteModel = require('../../gestion_organisation/models/site.model');
-const departementModel = require('../../gestion_organisation/models/departement.model');
-const centremodel = new centreModel();
-const naturemodel = new natureModel();
-const sitemodel = new siteModel();
-const departementmodel = new departementModel();
-const societeservice = require("../../gestion_organisation/services/societe.service");
+const centremodel = new centreModel()
+const naturemodel = new natureModel()
 
+const societeservice = require('../../gestion_organisation/services/societe.service');
+const siteservice = require('../../gestion_organisation/services/site.service');
+const departementservice = require('../../gestion_organisation/services/departement.service');
 
 
 const queryInsert = `
-        INSERT INTO AffectationAnalytique (idaffectation, codeaffectation, actif, 
+        INSERT INTO Affectation (idaffectation, codeaffectation, actif, 
         idsociete, idsite, iddepartement, idcentreanalytique, idnature,
         createdat, updatedat, createdby, updatedby)
         OUTPUT INSERTED.*
@@ -23,16 +22,45 @@ const queryInsert = `
         @createdat, @updatedat, @createdby, @updatedby)
         `;
 
-const queryUpdate = `UPDATE AffectationAnalytique SET actif = @actif,
+const queryUpdate = `UPDATE Affectation SET actif = @actif,
         idsociete = @idsociete, idsite = @idsite, iddepartement = @iddepartement,
         idcentreanalytique = @idcentreanalytique, idnature = @idnature,
         updatedat = @updatedat, updatedby = @updatedby 
         OUTPUT INSERTED.* WHERE idaffectation = @idaffectation`;
 
+
+const query = `
+        SELECT A.*,
+        so.codesociete AS societe_codesociete, 
+        so.raisonsociale AS societe_raisonsociale,
+        si.codesite AS site_codesite, 
+        si.libelle AS site_libellesite,
+        de.codedept AS departement_codedept, 
+        de.libelle AS departement_libelledept,
+        ca.codecentreanalytique AS centreanalytique_codecentre, 
+        ca.libelle AS centreanalytique_libellecentre,
+        na.codenature AS natureoperation_codenature, 
+        na.libelle AS natureoperation_libellenature 
+        FROM Affectation A
+        LEFT JOIN Societe so ON A.idsociete = so.idsociete
+        LEFT JOIN Site si ON A.idsite = si.idsite
+        LEFT JOIN Departement de ON A.iddepartement = de.iddepartement
+        LEFT JOIN CentreAnalytique ca ON A.idcentreanalytique = ca.idcentreanalytique
+        LEFT JOIN NatureOperation na ON A.idnature = na.idnature
+        ORDER BY A.codeaffectation
+        OFFSET @offset ROWS
+        FETCH NEXT @limit ROWS ONLY;
+
+        SELECT COUNT(*) AS total FROM Affectation;
+    `;
+
 // Model AffectationAnalytique
 class AffectationAnalytiqueModel {
-    constructor(idaffectation, codeaffectation, actif, idsociete,  idsite, iddepartement, idcentreanalytique, idnature,
-        createdat, updatedat, createdby, updatedby)
+    constructor(idaffectation, codeaffectation, actif, idsociete, 
+         idsite, iddepartement, idcentreanalytique, idnature,
+        createdat, updatedat, createdby, updatedby, 
+        societe = null, site = null, departement = null, 
+        centre = null, nature = null,)
     {
         this.idaffectation = idaffectation;
         this.codeaffectation = codeaffectation;
@@ -46,6 +74,12 @@ class AffectationAnalytiqueModel {
         this.updatedat = updatedat;
         this.createdby = createdby;
         this.updatedby = updatedby;
+
+        this.societe = societe;
+        this.site = site;
+        this.departement = departement;
+        this.centre = centre;
+        this.nature = nature;
     }
 
 
@@ -75,12 +109,21 @@ class AffectationAnalytiqueModel {
 
 
     // Rechercher tous les comptes
-    async get_allaffectations () {
+    async get_allaffectations (page = 1, limit = 50) {
         const pool = await connectDB();
-        const query = "SELECT * FROM AffectationAnalytique"
+        const offset = (page - 1) * limit;
+                    
         try {
-            const result = await pool.request().query(query);
-            return result;
+            const result = await pool.request()
+            .input('offset', sql.Int, offset)
+            .input('limit', sql.Int, limit)
+            .query(query);
+
+            const affectations = result.recordsets[0];
+            const total = result.recordsets[1][0].total;
+            const totalPages = Math.ceil(total / limit);
+
+            return {page, limit, total, totalPages, data: affectations};
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         }
@@ -92,7 +135,7 @@ class AffectationAnalytiqueModel {
         const pool = await connectDB();
         try {
             const result = await pool.request().input("idaffectation", idaffectation)
-            .query("SELECT * FROM AffectationAnalytique WHERE idaffectation = @idaffectation");
+            .query("SELECT * FROM Affectation WHERE idaffectation = @idaffectation");
             const affectation = result.recordset[0];
             let societe = null;
             let site = null;
@@ -103,8 +146,8 @@ class AffectationAnalytiqueModel {
                 || affectation.idcentreanalytique || affectation.idnature) 
                 {
                 societe = await societeservice.getonesociete(affectation.idsociete);
-                site = await sitemodel.get_onesite(affectation.idsite);
-                departement = await departementmodel.get_onedepartement(affectation.iddepartement);
+                site = await siteservice.getonesite(affectation.idsite);
+                departement = await departementservice.getonedepartement(affectation.iddepartement);
                 centre = await centremodel.get_onecentre(affectation.idcentreanalytique);
                 nature = await naturemodel.get_onenature(affectation.idnature);
             }
@@ -120,7 +163,7 @@ class AffectationAnalytiqueModel {
         try {
             const check = await pool.request()
             .input('codeaffectation', data.codeaffectation)
-            .query(`SELECT COUNT(*) AS count FROM AffectationAnalytique WHERE codeaffectation = @codeaffectation`);
+            .query(`SELECT COUNT(*) AS count FROM Affectation WHERE codeaffectation = @codeaffectation`);
 
             // S'il existe aumoins une ligne, update
             if (check.recordset[0].count > 0) {
@@ -167,7 +210,7 @@ class AffectationAnalytiqueModel {
         // 1. Vérifier si le centre existe
         const check = await pool.request()
             .input("idaffectation", sql.UniqueIdentifier, idaffectation)
-            .query("SELECT idaffectation FROM AffectationAnalytique WHERE idaffectation = @idaffectation");
+            .query("SELECT idaffectation FROM Affectation WHERE idaffectation = @idaffectation");
 
         if (check.recordset.length === 0) {
             return { message: "Affectation analytique inexistante." };
@@ -177,7 +220,7 @@ class AffectationAnalytiqueModel {
         try {
             await pool.request()
                 .input("idaffectation", sql.UniqueIdentifier, idaffectation)
-                .query("DELETE FROM AffectationAnalytique WHERE idaffectation = @idaffectation");
+                .query("DELETE FROM Affectation WHERE idaffectation = @idaffectation");
             return { success: true, message: "Affectation analytique supprimée avec succès." };
         } catch (error) {
             console.log(`Erreur de suppression: ${error}`.cyan.bold);

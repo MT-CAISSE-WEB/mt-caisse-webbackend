@@ -19,7 +19,12 @@ const queryInsert = `
 const queryUpdate = `UPDATE Caisse SET codecaisse = @codecaisse, libelle = @libelle, idjournal = @idjournal,  iddevise = @iddevise, idsite = @idsite, idsociete = @idsociete, idcompte = @idcompte, actif = @actif, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE codecaisse = @codecaisse`;
 
 class caisseModel {
-  constructor(idcaisse,codecaisse,libelle, idjournal, iddevise, idsite, idsociete,idcompte, dateinitialisation, soldeinitialisation, seuilminimal, actif, createdat,createdby,updatedat,updatedby, journal = null, devise = null, site = null, societe = null, compte = null) 
+  constructor(idcaisse,codecaisse,libelle, idjournal, 
+    iddevise, idsite, idsociete,
+    idcompte, dateinitialisation, 
+    soldeinitialisation, seuilminimal, actif, 
+    createdat,createdby,updatedat,updatedby, 
+    journal = null, devise = null, site = null, societe = null, compte = null) 
   {
     this.idcaisse = idcaisse;
     this.codecaisse = codecaisse;

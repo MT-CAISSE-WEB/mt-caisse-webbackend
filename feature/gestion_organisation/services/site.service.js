@@ -3,12 +3,12 @@ const db = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 
  //upsert Site
-   async function upsertsite({idsociete,codesite,codeanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdby, updatedby }) {
+   async function upsertsite({idsociete,codesite,idcentreanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdby, updatedby }) {
     try {
         const idsite = uuidv4();
 
         const query = `
-            IF EXISTS (SELECT 1 FROM sites WHERE codesite = @codesite)
+            IF EXISTS (SELECT 1 FROM Site WHERE codesite = @codesite)
             BEGIN
                 UPDATE site
                 SET 
@@ -26,9 +26,9 @@ const { v4: uuidv4 } = require('uuid');
             END
             ELSE
             BEGIN
-                INSERT INTO site (idsite,idsociete,codesite,codeanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdby,createdat)
+                INSERT INTO Site (idsite,idsociete,codesite,idcentreanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdby,createdat)
                 OUTPUT INSERTED.*
-                VALUES (@idsite,@idsociete,@codesite,@codeanalytique,@libelle ,@email,@telephone,@adresse,@estcentreanalytique,@createdby,GETDATE())
+                VALUES (@idsite,@idsociete,@codesite,@idcentreanalytique,@libelle ,@email,@telephone,@adresse,@estcentreanalytique,@createdby,GETDATE())
             END
         `;
 
@@ -37,7 +37,7 @@ const { v4: uuidv4 } = require('uuid');
             .input("idsite", db.sql.UniqueIdentifier, idsite)
             .input("idsociete", db.sql.UniqueIdentifier,idsociete)
             .input("codesite", db.sql.NVarChar, codesite)
-            .input("codeanalytique", db.sql.UniqueIdentifier,codeanalytique)
+            .input("idcentreanalytique", db.sql.UniqueIdentifier,idcentreanalytique)
             .input("libelle", db.sql.NVarChar,libelle)
             .input("email", db.sql.NVarChar,email)
             .input("telephone", db.sql.NVarChar,telephone)

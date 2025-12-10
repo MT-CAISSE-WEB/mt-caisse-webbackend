@@ -222,10 +222,11 @@ BEGIN
         idsociete UNIQUEIDENTIFIER,
         idcompte UNIQUEIDENTIFIER,
         libelle NVARCHAR(150),
-        avanceajustifier INT DEFAULT 0,
+        decajustifier INT DEFAULT 0,
         imputationtiers INT DEFAULT 0,
         actif INT DEFAULT 1,
         demandedecaissement INT DEFAULT 0,
+        typeoperation NVARCHAR(50),
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
@@ -679,6 +680,5 @@ BEGIN
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
-		PRIMARY KEY (prefixe, annee, mois, jour)
 	);
 END

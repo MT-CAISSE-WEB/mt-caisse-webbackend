@@ -1,4 +1,3 @@
-
 class devisemodel {
     constructor(codedevise, intitule, codeiso, actif, createdby, updatedby) {
         this.codedevise = codedevise;

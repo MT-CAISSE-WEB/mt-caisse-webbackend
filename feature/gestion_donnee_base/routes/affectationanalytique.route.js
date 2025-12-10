@@ -10,7 +10,7 @@ const affectation_controller = require("../controllers/affectationanalytique.con
 router.get("/", affectation_controller.get_allaffectations); // OK
 router.get("/:idaffectation", affectation_controller.get_oneaffectation); // OK
 router.post("/create/", affectation_controller.create_affectation); // OK
-router.put("/update/:idaffectation", affectation_controller.update_affectation);
-router.delete("/delete/:idaffectation", affectation_controller.delete_affectation);
+router.put("/update/:idaffectation", affectation_controller.update_affectation); // OK
+router.delete("/delete/:idaffectation", affectation_controller.delete_affectation); // OK
 
 module.exports = router;

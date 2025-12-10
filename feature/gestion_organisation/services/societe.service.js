@@ -112,26 +112,29 @@ async function getalldevisesactif(){
 }
 
  //Get one
-    async function getonesociete(idsociete){
-        try {
-            const pool = await db.connectDB();
-            const query = "SELECT * FROM Societe where idsociete = @idsociete";
-            const result = await pool.request()
-            .input('idsociete',db.sql.UniqueIdentifier,idsociete)
-            .query(query);
+async function getonesociete(idsociete){
+    try {
+        const pool = await db.poolPromise;
+        const query = "SELECT * FROM Societe where idsociete = @idsociete";
+        const result = await pool.request()
+        .input('idsociete',db.sql.UniqueIdentifier,idsociete)
+        .query(query);
 
-            if(!result){
-                return {success:false,status:404,message:"Société non trouvée"};
-            }
-            return {
-                success:true,
-                status:200,
-                data:result.recordset[0],
-                message : "Element trouvé avec succès!"}
-        } catch (error) {
-            return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
+        if(!result){
+            return {success:false,status:404,message:"Société non trouvée"};
         }
+
+        console.log(result.recordset[0]);
+
+        return {
+            success:true,
+            status:200,
+            data:result.recordset[0],
+            message : "Element trouvé avec succès!"}
+    } catch (error) {
+        return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
     }
+}
 
      //Delete Societe
   async function deletesociete(idsociete)

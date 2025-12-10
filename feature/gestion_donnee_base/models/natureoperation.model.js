@@ -1,40 +1,63 @@
 const { DateTime } = require('mssql');
 const {sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
-const societeModel = require('../../gestion_organisation/models/societe.model');
+// const societeModel = require('../../gestion_organisation/models/societe.model');
+// const societemodel = new societeModel()
 const plancomptableModel = require('./plancomptable.model');
-const societemodel = new societeModel()
 const plancomptablemodel = new plancomptableModel();
 
 
+const societeservice = require('../../gestion_organisation/services/societe.service');
+const lasociete = societeservice;
+
 
 const queryInsert = `
-        INSERT INTO NatureOperation (idnature, codenature, libelle, avanceajustifier, 
+        INSERT INTO NatureOperation (idnature, codenature, libelle, typeoperation, decajustifier, 
         imputationtiers, actif, demandedecaissement, idsociete, idcompte,
         createdat, updatedat, createdby, updatedby)
         OUTPUT INSERTED.*
-        VALUES (@idnature, @codenature, @libelle, @avanceajustifier, @imputationtiers,
+        VALUES (@idnature, @codenature, @libelle, @typeoperation, @decajustifier, @imputationtiers,
         @actif, @demandedecaissement, @idsociete, @idcompte,
         @createdat, @updatedat, @createdby, @updatedby)
         `;
 
-const queryUpdate = `UPDATE NatureOperation SET libelle = @libelle,
- avanceajustifier = @avanceajustifier, imputationtiers = @imputationtiers,
+const queryUpdate = `UPDATE NatureOperation SET libelle = @libelle, typeoperation = @typeoperation,
+ decajustifier = @decajustifier, imputationtiers = @imputationtiers,
   actif = @actif, demandedecaissement = @demandedecaissement, 
   idsociete = @idsociete, idcompte = @idcompte, 
   updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE idnature = @idnature`;
 
 
+const query = `
+        SELECT n.*,
+        c.numcompte AS compte_numcompte,
+        c.libelle AS compte_libelle,
+        c.ventillable AS compte_ventillable,
+        c.auxiliaire AS compte_auxiliaire,
+        c.actif AS compte_actif,
+        c.suivibudgetaire AS compte_suivibudgetaire,
+        c.suivibudgetairemensuel AS compte_suivibudgetairemensuel
+        FROM NatureOperation AS n
+        LEFT JOIN PlanComptable c ON n.idcompte = c.idcompte
+        ORDER BY codenature
+        OFFSET @offset ROWS
+        FETCH NEXT @limit ROWS ONLY;
+
+        SELECT COUNT(*) AS total FROM NatureOperation;
+    `;
+
+
 // Model natureoperation
 class NatureOperationModel {
-    constructor(idnature, codenature, libelle, avanceajustifier, imputationtiers, 
+    constructor(idnature, codenature, libelle, typeoperation, decajustifier, imputationtiers, 
         actif, demandedecaissement, idsociete, idcompte,
-        createdat, updatedat, createdby, updatedby)
+        createdat, updatedat, createdby, updatedby, compte = null)
     {
         this.idnature = idnature;
         this.codenature = codenature;
         this.libelle = libelle;
-        this.avanceajustifier = avanceajustifier;
+        this.typeoperation = typeoperation;
+        this.decajustifier = decajustifier;
         this.imputationtiers = imputationtiers;
         this.actif = actif;
         this.demandedecaissement = demandedecaissement;
@@ -44,6 +67,8 @@ class NatureOperationModel {
         this.updatedat = updatedat;
         this.createdby = createdby;
         this.updatedby = updatedby;
+
+        this.compte = compte;
     }
 
 
@@ -55,7 +80,8 @@ class NatureOperationModel {
             .input('idnature', sql.UniqueIdentifier, this.idnature)
             .input('codenature', sql.NVarChar(50), this.codenature)
             .input('libelle', sql.NVarChar(150), this.libelle)
-            .input('avanceajustifier', sql.Int, this.avanceajustifier)
+            .input('typeoperation', sql.Int, this.typeoperation)
+            .input('decajustifier', sql.Int, this.decajustifier)
             .input('imputationtiers', sql.Int, this.imputationtiers)
             .input('actif', sql.Int, this.actif)
             .input('demandedecaissement', sql.Int, this.demandedecaissement)
@@ -74,12 +100,21 @@ class NatureOperationModel {
 
 
     // Rechercher toutes les natures d'opération
-    async get_allnatures () {
+    async get_allnatures (page = 1, limit = 50) {
         const pool = await connectDB();
-        const query = "SELECT * FROM NatureOperation"
+        const offset = (page - 1) * limit;
+    
         try {
-            const result = await pool.request().query(query);
-            return result;
+            const result = await pool.request()
+            .input('offset', sql.Int, offset)
+            .input('limit', sql.Int, limit)
+            .query(query);
+
+            const natures = result.recordsets[0];
+            const total = result.recordsets[1][0].total;
+            const totalPages = Math.ceil(total / limit);
+
+            return {page, limit, total, totalPages, data: natures};
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         }
@@ -95,7 +130,7 @@ class NatureOperationModel {
             let societe = null;
             let compte = null;
             if (nature.idsociete && nature.idcompte) {
-                societe = await societemodel.get_onesociete(nature.idsociete);
+                societe = await lasociete.getonesociete(nature.idsociete);
                 compte = await plancomptablemodel.get_onecompte(nature.idcompte);
             }
             return {...nature, societe : societe, compte : compte};
@@ -117,7 +152,8 @@ class NatureOperationModel {
                     .input('idnature', idnature)
                     .input('codenature', sql.NVarChar(50), data.codenature)
                     .input('libelle', sql.NVarChar(150), data.libelle)
-                    .input('avanceajustifier', sql.Int, data.avanceajustifier)
+                    .input('typeoperation', sql.NVarChar(150), data.typeoperation)
+                    .input('decajustifier', sql.Int, data.decajustifier)
                     .input('imputationtiers', sql.Int, data.imputationtiers)
                     .input('actif', sql.Int, data.actif)
                     .input('demandedecaissement', sql.Int, data.demandedecaissement)
@@ -133,7 +169,8 @@ class NatureOperationModel {
                     .input('idnature', sql.UniqueIdentifier, uuidv4())
                     .input('codenature', sql.NVarChar(50), data.codenature)
                     .input('libelle', sql.NVarChar(150), data.libelle)
-                    .input('avanceajustifier', sql.Int, data.avanceajustifier)
+                    .input('typeoperation', sql.NVarChar(150), data.typeoperation)
+                    .input('decajustifier', sql.Int, data.decajustifier)
                     .input('imputationtiers', sql.Int, data.imputationtiers)
                     .input('actif', sql.Int, data.actif)
                     .input('demandedecaissement', sql.Int, data.demandedecaissement)
