@@ -39,6 +39,18 @@ const ligneoperationRoutes = require("./feature/gestion_operation_caisse/routes/
 const typeoperationRoutes = require("./feature/gestion_operation_caisse/routes/operation.route");
 
 
+// FERREOL
+// Budget
+// const budget_route = require('./feature/gestion_budget/routes/budget.route')
+// // Ligne budgetaire
+// const ligne_budgetaire_route = require('./feature/gestion_budget/routes/lignebudget.route')
+// // Entete demande
+// const entete_demande_route = require('./feature/gestion_demande_decaissement/routes/entetedemande.route')
+// // Ligne demande
+// const ligne_demande_route = require('./feature/gestion_demande_decaissement/routes/ligendemande.route')
+// // Détails demande
+// const details_demande_route = require('./feature/gestion_demande_decaissement/routes/detaildemande.route')
+
 
 //connexion db
 const {connectInstance} = require('./config/db')
@@ -112,6 +124,17 @@ app.use("/API/utilisateur_caisse", utilisateurcaisseRoutes);
 app.use("/API/entete_operation", enteteoperationRoutes);
 app.use("/API/ligne_operation", ligneoperationRoutes);
 app.use("/API/operation", typeoperationRoutes);
+
+//Budget
+// app.use('/api/budget', budget_route)
+// //Ligne budgetaire
+// app.use('/api/ligne-budgetaire', ligne_budgetaire_route)
+// //Entete demande
+// app.use('/api/entete-demande', entete_demande_route)
+// //Ligne demande
+// app.use('/api/ligne-demande', ligne_demande_route)
+// //Details demande 
+// app.use('/api/details-demande', details_demande_route)
 
 
 
