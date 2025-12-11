@@ -12,8 +12,6 @@ const siteservice = require('../../gestion_organisation/services/site.service');
 const departementservice = require('../../gestion_organisation/services/departement.service');
 
 
-
-
 const queryInsert = `
         INSERT INTO Affectation (idaffectation, codeaffectation, actif, 
         idsociete, idsite, iddepartement, idcentreanalytique, idnature,

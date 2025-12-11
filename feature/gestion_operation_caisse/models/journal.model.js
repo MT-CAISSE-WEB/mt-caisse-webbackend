@@ -61,7 +61,6 @@ class journalModel {
         const pool = await connectDB();
         const offset = (page - 1) * limit;
         try {
-            //const result = await pool.request().query(query);
             const result = await pool.request()
             .input('offset', sql.Int, offset)
             .input('limit', sql.Int, limit)

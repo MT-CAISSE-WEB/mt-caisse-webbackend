@@ -1,4 +1,4 @@
-USE MTCAISSEWEB;
+USE MTCAISSEWEB
 -- OK
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Devise')
 BEGIN
@@ -130,10 +130,10 @@ BEGIN
 		acheteur INT DEFAULT 0,
 		iddepartement UNIQUEIDENTIFIER NULL,
 		idsociete UNIQUEIDENTIFIER,
-                idsite UNIQUEIDENTIFIER NULL,
-                login NVARCHAR(50) UNIQUE,
-                password NVARCHAR(50),
-                createdat Datetime,
+        idsite UNIQUEIDENTIFIER NULL,
+        login NVARCHAR(50) UNIQUE,
+        password NVARCHAR(50),
+        createdat Datetime,
 		createdby NVARCHAR(50),
 		updatedat Datetime,
 		updatedby NVARCHAR(50),
@@ -164,6 +164,7 @@ BEGIN
         updatedat Datetime,
         updatedby NVARCHAR(50),
         FOREIGN KEY (idsite) REFERENCES Site(idsite),
+        FOREIGN KEY (responsable) REFERENCES Utilisateur(idutilisateur),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );
 END
@@ -513,7 +514,7 @@ BEGIN
         FOREIGN KEY (iddemandeur) REFERENCES Utilisateur(idutilisateur),
         FOREIGN KEY (idcircuit) REFERENCES CircuitValidation(idcircuitvalidation),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idsite) REFERENCES Site(idsite),
+        FOREIGN KEY (idsite) REFERENCES Sites(idsite),
         FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
         FOREIGN KEY (iddevise) REFERENCES Devise(iddevise)
     );
@@ -656,14 +657,14 @@ BEGIN
 		idsite UNIQUEIDENTIFIER,
 		idcaisse UNIQUEIDENTIFIER,
 		montant DECIMAL(21, 9),
-                createdat Datetime,
+        createdat Datetime,
 		createdby NVARCHAR(50),
 		updatedat Datetime,
 		updatedby NVARCHAR(50),
-                FOREIGN KEY (idoperation) REFERENCES EnteteOperationCaisse(idoperation),
+        FOREIGN KEY (idoperation) REFERENCES EnteteOperationCaisse(idoperation),
 		FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
 		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-		FOREIGN KEY (idsite) REFERENCES Site(idsite),
+		FOREIGN KEY (idsite) REFERENCES Sites(idsite),
     );
 END
 
@@ -675,10 +676,9 @@ BEGIN
 		mois INT NOT NULL,
 		jour INT NOT NULL,
 		compteur INT NOT NULL DEFAULT 0,
-                createdat Datetime,
-                createdby NVARCHAR(50),
-                updatedat Datetime,
-                updatedby NVARCHAR(50),
-		PRIMARY KEY (prefixe, annee, mois, jour)
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
 	);
 END

@@ -11,6 +11,17 @@ module.exports.getalltauxdevises = asyncHandler (async(req,res, next)=>{
     }
 });
 
+module.exports.getalldevisesactif = asyncHandler (async(req,res, next)=>{
+    try {
+        const actifdevises = await tauxdeviseservice.getalldevisesactif();
+        res.status(actifdevises.status).json({success:actifdevises.success,message:actifdevises.message,data:actifdevises.data});
+    } catch (error) {
+        res.status(500).json({success:false, message:"Erreur serveur", error});
+    }
+});
+
+
+
 module.exports.getonetauxdevise = asyncHandler (async(req,res, next)=>{
     try {
         const idtauxdevise = req.params.id
