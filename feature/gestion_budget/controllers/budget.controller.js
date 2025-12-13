@@ -78,8 +78,6 @@ exports.create = async (req, res) => {
       datedebut,
       typebudget,
       datefin,
-      dernierniveau,
-      niveauactuel,
       createdby,
       idbudgetparent,
     } = req.body
@@ -90,8 +88,6 @@ exports.create = async (req, res) => {
       datedebut,
       typebudget,
       datefin,
-      dernierniveau,
-      niveauactuel,
       createdby,
     }
 
@@ -133,6 +129,8 @@ exports.create = async (req, res) => {
       createdat: new Date(),
     }
 
+    console.log('Data created:', newData)
+
     const item = await Budget.create(newData)
 
     // Recharger avec les relations pour la réponse
@@ -145,7 +143,7 @@ exports.create = async (req, res) => {
       data: itemWithRelations,
     })
   } catch (error) {
-    console.error(error)
+    console.error('Erreur serveur:', error.message)
     res.status(500).json({
       success: false,
       error: `Erreur lors de la création du budget: ${error}`,
@@ -164,6 +162,7 @@ exports.getAll = async (req, res) => {
       limit,
       offset,
       include: foreignIncludes,
+      order: [['createdat', 'DESC']],
     })
 
     res.json({
@@ -201,6 +200,7 @@ exports.getById = async (req, res) => {
 // ========== UPDATE (PATCH) ==========
 exports.update = async (req, res) => {
   try {
+    console.log('Updated data:', req.body)
     const { updatedby, ...restBody } = req.body
 
     if (!updatedby || updatedby === '') {
@@ -274,7 +274,7 @@ exports.delete = async (req, res) => {
     }
 
     await item.destroy()
-    res.json({ sucess: true, message: 'Supprimé avec succès.' })
+    res.json({ success: true, message: 'Supprimé avec succès.' })
   } catch (error) {
     res
       .status(500)

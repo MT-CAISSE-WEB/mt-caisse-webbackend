@@ -137,7 +137,7 @@ exports.create = async (req, res) => {
     console.error(error)
     res.status(500).json({
       success: false,
-      error: `Erreur lors de la création de la ligne: ${error}`,
+      error: `Erreur lors de la création du détail de la demande: ${error}`,
     })
   }
 }
@@ -153,6 +153,7 @@ exports.getAll = async (req, res) => {
       limit,
       offset,
       include: foreignIncludes,
+      order: [['createdat', 'ASC']],
     })
 
     res.json({
@@ -248,7 +249,7 @@ exports.delete = async (req, res) => {
     }
 
     await item.destroy()
-    res.json({ sucess: true, message: 'Supprimé avec succès.' })
+    res.json({ success: true, message: 'Supprimé avec succès.' })
   } catch (error) {
     res
       .status(500)
