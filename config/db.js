@@ -17,7 +17,7 @@ const config = {
 
 const createDB = async () =>{
   try {
-    const db = await sql.connect({...config , database : 'MTICAISSEWEB'});
+    const db = await sql.connect({...config , database : config.database});
     const table = fs.readFileSync("./config/init.sql", "utf8");
     await db.request().query(table);
     db.close();
@@ -29,7 +29,7 @@ const createDB = async () =>{
 
 const connectDB = async () => {
   try {
-    const db = await sql.connect({...config , database : 'MTICAISSEWEB'});
+    const db = await sql.connect({...config , database : config.database});
     console.log(`Connecté à la base de données`.cyan.bold);
     return db;
   } catch (error) {
@@ -66,4 +66,33 @@ const poolPromise = new sql.ConnectionPool(config)
     throw err;
   });
 
-module.exports =  {connectInstance,connectDB,poolPromise,sql};
+
+  const initdatabase = async () => {
+    
+      try {
+
+         const masterpool = await sql.connect(config);
+
+
+          await masterpool.request().query(`
+          IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '${config.database}')
+          BEGIN
+            CREATE DATABASE ${config.database} ;
+          END
+        `);
+
+         console.log("Base  vérifiée/créée");
+
+         const dbPool = await sql.connect({ ...config, database: config.database });
+         const tablesScript = fs.readFileSync("./config/init.sql", "utf8");
+         await dbPool.request().batch(tablesScript);
+
+          console.log("Tables initialisées");
+          await sql.close();
+      } catch (error) {
+         console.error("Erreur initDatabase :", error);
+         await sql.close();
+      }
+  }
+
+module.exports =  {connectInstance,connectDB, initdatabase,poolPromise,sql};

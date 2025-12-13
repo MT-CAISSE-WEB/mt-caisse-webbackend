@@ -24,7 +24,7 @@ const rolepermissionroute = require('./feature/gestion_users/routes/role_permiss
 
 const db = require('./config/db');
 
-dotenv.config({path: './config/config.env'});
+dotenv.config({path: './config/.env'});
 // INIT EXPRESS
 const app = express();
 // ANALYSEUR DE CORPS DE REQ AU FORMAT JSON
