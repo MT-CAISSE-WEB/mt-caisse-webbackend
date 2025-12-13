@@ -181,10 +181,18 @@ exports.create = async (req, res) => {
     })
   } catch (error) {
     console.error(error)
-    res.status(500).json({
-      success: false,
-      error: `Erreur lors de la création de la demande de décaisse: ${error}`,
-    })
+
+    if (`${error}`.includes('SequelizeUniqueConstraintError')) {
+      res.status(500).json({
+        success: false,
+        error: `Erreur: Le code de la demande est unique`,
+      })
+    } else {
+      res.status(500).json({
+        success: false,
+        error: `Erreur lors de la création de la demande de décaisse: ${error}`,
+      })
+    }
   }
 }
 
@@ -199,6 +207,7 @@ exports.getAll = async (req, res) => {
       limit,
       offset,
       include: foreignIncludes,
+      order: [['createdat', 'DESC']],
     })
 
     res.json({
@@ -274,10 +283,17 @@ exports.update = async (req, res) => {
     })
   } catch (error) {
     console.error(error)
-    res.status(500).json({
-      success: false,
-      error: `Erreur lors de la mise à jour: ${error.message}`,
-    })
+    if (`${error}`.includes('SequelizeUniqueConstraintError')) {
+      res.status(500).json({
+        success: false,
+        error: `Erreur: Le code de la demande est unique`,
+      })
+    } else {
+      res.status(500).json({
+        success: false,
+        error: `Erreur lors de la mise à jour: ${error.message}`,
+      })
+    }
   }
 }
 
@@ -293,11 +309,10 @@ exports.delete = async (req, res) => {
     }
 
     await item.destroy()
-    res.json({ sucess: true, message: 'Supprimé avec succès.' })
+    res.json({ success: true, message: 'Supprimé avec succès.' })
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, error: 'Erreur lors de la suppression' })
+    let errorMessage = 'Erreur lors de la suppression ' + error.message
+    res.status(500).json({ success: false, error: errorMessage })
   }
 }
 

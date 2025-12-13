@@ -199,10 +199,17 @@ exports.create = async (req, res) => {
     })
   } catch (error) {
     console.error(error)
-    res.status(500).json({
-      success: false,
-      error: `Erreur lors de la création de la ligne: ${error}`,
-    })
+    if (`${error}`.includes('SequelizeUniqueConstraintError')) {
+      res.status(500).json({
+        success: false,
+        error: `Erreur: Le numéro de la ligne est unique`,
+      })
+    } else {
+      res.status(500).json({
+        success: false,
+        error: `Erreur lors de la création de la ligne: ${error}`,
+      })
+    }
   }
 }
 
@@ -217,6 +224,7 @@ exports.getAll = async (req, res) => {
       limit,
       offset,
       include: foreignIncludes,
+      order: [['createdat', 'ASC']],
     })
 
     res.json({
@@ -312,11 +320,18 @@ exports.delete = async (req, res) => {
     }
 
     await item.destroy()
-    res.json({ sucess: true, message: 'Supprimé avec succès.' })
+    res.json({ success: true, message: 'Supprimé avec succès.' })
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, error: 'Erreur lors de la suppression' })
+    if (`${error}`.includes('SequelizeUniqueConstraintError')) {
+      res.status(500).json({
+        success: false,
+        error: `Erreur: Le numéro de la ligne est unique`,
+      })
+    } else {
+      res
+        .status(500)
+        .json({ success: false, error: 'Erreur lors de la suppression' })
+    }
   }
 }
 
