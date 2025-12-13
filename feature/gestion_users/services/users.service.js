@@ -18,7 +18,7 @@ async function upsertuser(params){
         const hashpassword = await argon2.hash(password);
 
         const query = `
-        IF EXISTS (SELECT 1 FROM utilisateur WHERE codeutilisateur = @codeutilisateur)
+        IF EXISTS (SELECT 1 FROM Utilisateur WHERE codeutilisateur = @codeutilisateur)
         BEGIN
             UPDATE Utilisateur SET 
                 idsociete = @idsociete,
@@ -40,7 +40,7 @@ async function upsertuser(params){
         END 
         ELSE
         BEGIN
-            INSERT INTO UTILISATEUR 
+            INSERT INTO Utilisateur 
                 (idutilisateur, codeutilisateur, idsociete, nom, prenom, adresse, telephone, email, 
                  login, password, typeentitesite, typeentitedepartement, typeentitesociete, 
                  acheteur, createdby, createdat)
@@ -107,8 +107,8 @@ async function getalluser(){
         const pool = await db.poolPromise;
         const query = `SELECT u.*,
        s.raisonsociale as societe
-       from utilisateur u
-       left join societe s on u.idsociete = s.idsociete`;
+       from Utilisateur u
+       left join Societe s on u.idsociete = s.idsociete`;
         const result = await pool.request().query(query);
 
         return {
@@ -164,15 +164,16 @@ async function deleteuser(iduser)
 //login
 // LOGIN
 async function login(login, password) {
+
     try {
         const pool = await db.poolPromise;
-
+        
         // Vérifier utilisateur
         const result = await pool.request()
             .input("login", db.sql.NVarChar, login)
-            .query("SELECT * FROM Utilisateur WHERE LOGIN=@login");
+            .query("SELECT * FROM Utilisateur WHERE login=@login");
 
-            console.log(result.recordset);
+            // console.log(result.recordset);
 
         if (result.recordset.length === 0) {
             return {status:404, success: false, message: "Utilisateur introuvable" };
@@ -203,8 +204,6 @@ async function login(login, password) {
             process.env.JWT_SECRET,
             { expiresIn: "1d" }
         );
-
-      
 
         // Refresh Token : long
         const refreshToken = jwt.sign(

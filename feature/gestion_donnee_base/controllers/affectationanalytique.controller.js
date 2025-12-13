@@ -40,6 +40,7 @@ module.exports.create_affectation = asyncHandler(async(req, res, next) => {
     const data = req.body;
     const new_affectation = await affectationanalytiqueservice.create_affectation(data);
     res.status(201).json({ success: true, data: new_affectation });
+    // console.log(new_affectation);
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }

@@ -61,7 +61,7 @@ module.exports = {
         LEFT JOIN Devise d ON c.iddevise = d.iddevise
         LEFT JOIN Site s ON c.idsite = s.idsite
         LEFT JOIN Societe so ON c.idsociete = so.idsociete
-        LEFT JOIN PlanComptable pc ON c.idcompte = pc.idcompte
+        LEFT JOIN PlanComptable pc ON c.idcompte = pc.idcompte 
 
         ORDER BY createdat DESC
         OFFSET @offset ROWS

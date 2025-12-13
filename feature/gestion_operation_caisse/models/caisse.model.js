@@ -74,9 +74,12 @@ class caisseModel {
             .input('updatedat', sql.DateTime, this.updatedat)
             .input('updatedby', sql.NVarChar(100), this.updatedby)
             .query(caisseQueries.insert);
+
+            console.log(result);
             
             return { success: true, data: result.recordset[0] };
         } catch (error) {
+            console.log(`Erreur de creation: ${error}`.cyan.bold);
             return { success: false, message: error.message };
         }
     }

@@ -27,7 +27,11 @@ module.exports.getoneuser = asyncHandler (async(req,res, next)=>{
 
 module.exports.upsertuser = asyncHandler (async(req,res, next)=>{
     try {
-        const {codeutilisateur,idsociete,nom,prenom,adresse,telephone,email,login,password,typeentitesite,typeentitedepartement,typeentitesociete,acheteur,createdby,updatedby} = req.body;
+        const {codeutilisateur,idsociete,nom,prenom,adresse,
+            telephone,email,login,password,typeentitesite,
+            typeentitedepartement,typeentitesociete,acheteur,
+            createdby,updatedby} = req.body;
+
         const updateduser = await userservice.upsertuser({codeutilisateur,idsociete,nom,prenom,adresse,telephone,email,login,password,typeentitesite,typeentitedepartement,typeentitesociete,acheteur,createdby,updatedby})
         res.status(updateduser.status).json({success: updateduser.success,message:updateduser.message, data: updateduser.data});
     } catch (error) {
@@ -48,14 +52,16 @@ module.exports.deleteuser = asyncHandler (async(req,res, next)=>{
 module.exports.login = asyncHandler (async(req,res, next)=>{
     try {
             const {login,password} = req.body;
-        
+
             const result = await userservice.login(login,password);
+
             res.status(result.status).json({success:result.success,message:result.message,data:result.data,token:result.token,refresh:result.refreshToken});
     }
     catch(error){
         res.status(500).json({ success: false, message: "Erreur serveur", error });
     }
 });
+
 
 module.exports.refresh = asyncHandler (async(req,res, next)=>{
     try {

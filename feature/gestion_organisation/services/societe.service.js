@@ -8,9 +8,9 @@ const { v4: uuidv4 } = require('uuid');
         const idsociete = uuidv4();
 
         const query = `
-            IF EXISTS (SELECT 1 FROM societe WHERE codesociete = @codesociete)
+            IF EXISTS (SELECT 1 FROM Societe WHERE codesociete = @codesociete)
             BEGIN
-                UPDATE societe
+                UPDATE Societe
                 SET raisonsociale = @raisonsociale,
                      sigle = @sigle,
                      iddevisereference = @iddevisereference,
@@ -29,7 +29,7 @@ const { v4: uuidv4 } = require('uuid');
             END
             ELSE
             BEGIN
-                INSERT INTO societe (idsociete,iddevisereference,iddevisereporting,codesociete, raisonsociale,sigle, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby,createdat)
+                INSERT INTO Societe (idsociete,iddevisereference,iddevisereporting,codesociete, raisonsociale,sigle, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby,createdat)
                 OUTPUT 'insert' AS action, INSERTED.*
                 VALUES (@idsociete,@iddevisereference,@iddevisereporting,@codesociete, @raisonsociale,@sigle, @rccm, @numnui, @email,@telephone,@logo,@adresse,@suivibudgetaire,@createdby,GETDATE())
             END
@@ -80,8 +80,8 @@ async function getallsociete(){
         const query = `SELECT s.*,
         d1.codeiso AS devise_reference,
         d2.codeiso AS devise_reporting FROM Societe s
-        left join devise d1 on s.iddevisereference = d1.iddevise
-        left join devise d2 on s.iddevisereporting = d2.iddevise`;
+        left join Devise d1 on s.iddevisereference = d1.iddevise
+        left join Devise d2 on s.iddevisereporting = d2.iddevise`;
         const result = await pool.request().query(query);
 
         return {
