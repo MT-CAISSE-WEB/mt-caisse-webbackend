@@ -10,15 +10,9 @@ const device = require('express-device')
 const bodyParser = require('body-parser')
 const logger = require('./shared/middlewares/logger')
 const errorHandler = require('./shared/middlewares/error')
-<<<<<<< HEAD
 const sequelize = require('./config/database')
 
 
-=======
-
-const sequelize = require('./config/database')
-
->>>>>>> main
 //DECLARATION DES ROUTES
 // Journal routes
 const journalRoutes = require("./feature/gestion_operation_caisse/routes/journal.route");
@@ -52,11 +46,7 @@ const societeroute = require('./feature/gestion_organisation/routes/societe.rout
 const siteroute = require('./feature/gestion_organisation/routes/site.route');
 // Département routes
 const departementroute = require('./feature/gestion_organisation/routes/departement.route');
-<<<<<<< HEAD
 // Tiers routes
-=======
-// Declaration des routes
->>>>>>> main
 const tiersroutes = require("./feature/gestion_donnee_base/routes/tiers.route");
 const plancomptableroutes = require("./feature/gestion_donnee_base/routes/plancomptable.route");
 const natureoperationroutes = require("./feature/gestion_donnee_base/routes/natureoperation.route");
