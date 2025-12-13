@@ -172,8 +172,6 @@ async function login(login, password) {
             .input("login", db.sql.NVarChar, login)
             .query("SELECT * FROM Utilisateur WHERE LOGIN=@login");
 
-            console.log(result.recordset);
-
         if (result.recordset.length === 0) {
             return {status:404, success: false, message: "Utilisateur introuvable" };
         }

@@ -18,6 +18,9 @@ const societeroute = require('./feature/gestion_organisation/routes/societe.rout
 const siteroute = require('./feature/gestion_organisation/routes/site.route');
 const departementroute = require('./feature/gestion_organisation/routes/departement.route');
 const userroute = require('./feature/gestion_users/routes/users.route');
+const roleroute = require('./feature/gestion_users/routes/role.route');
+const permissionroute = require('./feature/gestion_users/routes/permission.route');
+const rolepermissionroute = require('./feature/gestion_users/routes/role_permission.route');
 
 const db = require('./config/db');
 
@@ -86,6 +89,10 @@ app.use('/API',societeroute);
 app.use('/API',siteroute);
 app.use('/API',departementroute);
 app.use('/API',userroute);
+app.use('/API',roleroute);
+app.use('/API',permissionroute);
+app.use('/API',rolepermissionroute);
+
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
     console.log(`Error: ${err.message}`.red);

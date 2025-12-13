@@ -43,8 +43,8 @@ async function upserttauxdevise({iddeviseorigine,iddevisedestination,codetauxdev
             .input("intitule", db.sql.NVarChar, intitule)
             .input("typecours", db.sql.NVarChar, typecours)
             .input("datecours", db.sql.DateTime,new Date(datecours))
-            .input("coefficient", db.sql.Decimal(18,6), coefficient)
-            .input("coefficientinverse", db.sql.Decimal(18,6), coefficientinverse)
+            .input("coefficient", db.sql.Decimal(18,9), coefficient)
+            .input("coefficientinverse", db.sql.Decimal(18,9), coefficientinverse)
             .input("createdby", db.sql.NVarChar, createdby)
             .input("updatedby",db.sql.NVarChar,updatedby)
             .query(query);
