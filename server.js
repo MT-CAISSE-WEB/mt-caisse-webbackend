@@ -11,8 +11,6 @@ const bodyParser = require('body-parser')
 const logger = require('./shared/middlewares/logger')
 const errorHandler = require('./shared/middlewares/error')
 const sequelize = require('./config/database')
-
-
 //DECLARATION DES ROUTES
 // Journal routes
 const journalRoutes = require("./feature/gestion_operation_caisse/routes/journal.route");
