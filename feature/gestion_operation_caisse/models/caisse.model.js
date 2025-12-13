@@ -89,11 +89,9 @@ class caisseModel {
             .input('offset', sql.Int, offset)
             .input('limit', sql.Int, limit)
             .query(caisseQueries.getAll);
-            
             const caisses = result.recordsets[0];
             const total = result.recordsets[1][0].total;
             const totalPages = Math.ceil(total / limit);
-
             return {page, limit, total, totalPages, data: caisses};
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
