@@ -8,8 +8,10 @@ const ErrorResponse = require("../../../shared/utils/errorResponse");
 module.exports.get_journals = asyncHandler(async(req, res, next) => {
   try {
     const page = req.query.page ? parseInt(req.query.page) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit) : 5;
-    const journals = await journalservice.get_all_journals(page, limit);
+    const search = req.query.search || null;
+    const limit = req.query.limit || null;
+    const actif = req.query.actif || null; 
+    const journals = await journalservice.get_all_journals({page, limit , search, actif});
     res.json({ success: true, data: journals });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur", error });

@@ -2,6 +2,7 @@ const { DateTime } = require('mssql');
 const {sql, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const societe = require("../../gestion_organisation/models/departement.model"); 
+const { journalQueries } = require('../queries/queryIndex');
 
 const queryInsert = `
         INSERT INTO Journal (idjournal, idsociete, codejournal, designation, actif, createdat, createdby, updatedat, updatedby)
@@ -13,7 +14,20 @@ const queryUpdate = `UPDATE Journal SET codejournal = @codejournal, designation 
 
 const query = `
         SELECT *
-        FROM Journal
+        FROM Journal 
+        WHERE 1 = 1
+            --Search : codecaisse, devise, journal
+            AND (
+                @search IS NULL OR 
+                c.idcaisse LIKE @search OR 
+                EXISTS (
+                    SELECT 1 FROM Devise dev
+                    WHERE dev.iddevise = c.iddevise AND dev.codedevise = @search
+                ) OR EXISTS (
+                    SELECT 1 FROM Journal jou
+                    WHERE jou.idjournal = c.idjournal AND jou.codejournal = @search
+                )
+            ) AND (@actif IS NULL OR actif = @actif)
         ORDER BY createdat DESC
         OFFSET @offset ROWS
         FETCH NEXT @limit ROWS ONLY;
@@ -57,15 +71,19 @@ class journalModel {
         }
     }
 
-    async get_alljournals (page = 1, limit = 50) {
+    async get_alljournals ({ page = 1, limit = 10, search = null, actif = null}) {
+        page = parseInt(page) || 1;
+        limit = parseInt(limit) || 5;
+        
         const pool = await connectDB();
         const offset = (page - 1) * limit;
         try {
-            //const result = await pool.request().query(query);
             const result = await pool.request()
-            .input('offset', sql.Int, offset)
-            .input('limit', sql.Int, limit)
-            .query(query);
+                .input('offset', sql.Int, offset)
+                .input('limit', sql.Int, limit)
+                .input('search', sql.NVarChar, search ? `%${search}%` : null)
+                .input('actif', sql.Int, actif || null)
+            .query(journalQueries.getAll);
 
             const journals = result.recordsets[0];
             const total = result.recordsets[1][0].total;

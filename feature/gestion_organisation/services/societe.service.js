@@ -1,5 +1,5 @@
 const { DateTime, UniqueIdentifier } = require('mssql');
-const db = require('../../../config/db');
+const {db, sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 
  //upsert Societe
@@ -35,23 +35,23 @@ const { v4: uuidv4 } = require('uuid');
             END
         `;
 
-        const pool = await db.connectDB();
+        const pool = await connectDB();
         const result = await pool.request()
-            .input("idsociete", db.sql.UniqueIdentifier, idsociete)
-            .input("codesociete", db.sql.NVarChar, codesociete)
-            .input("iddevisereference", db.sql.NVarChar, iddevisereference)
-            .input("iddevisereporting", db.sql.NVarChar, iddevisereporting)
-            .input("raisonsociale", db.sql.NVarChar, raisonsociale)
-            .input("sigle", db.sql.NVarChar,sigle)
-            .input("rccm", db.sql.NVarChar, rccm)
-            .input("numnui", db.sql.NVarChar, numnui)
-            .input("email", db.sql.NVarChar, email)
-            .input("telephone", db.sql.NVarChar, telephone)
-            .input("logo", db.sql.NVarChar,logo)
-            .input("adresse", db.sql.NVarChar,adresse)
-            .input("suivibudgetaire", db.sql.Int,suivibudgetaire)
-            .input("createdby", db.sql.NVarChar, createdby)
-            .input("updatedby", db.sql.NVarChar, updatedby)
+            .input("idsociete", sql.UniqueIdentifier, idsociete)
+            .input("codesociete", sql.NVarChar, codesociete)
+            .input("iddevisereference", sql.NVarChar, iddevisereference)
+            .input("iddevisereporting", sql.NVarChar, iddevisereporting)
+            .input("raisonsociale", sql.NVarChar, raisonsociale)
+            .input("sigle", sql.NVarChar,sigle)
+            .input("rccm", sql.NVarChar, rccm)
+            .input("numnui", sql.NVarChar, numnui)
+            .input("email", sql.NVarChar, email)
+            .input("telephone", sql.NVarChar, telephone)
+            .input("logo", sql.NVarChar,logo)
+            .input("adresse", sql.NVarChar,adresse)
+            .input("suivibudgetaire", sql.Int,suivibudgetaire)
+            .input("createdby", sql.NVarChar, createdby)
+            .input("updatedby", sql.NVarChar, updatedby)
             .query(query);
 
         return {
@@ -117,7 +117,7 @@ async function getonesociete(idsociete){
         const pool = await connectDB();
         const query = "SELECT * FROM Societe where idsociete = @idsociete";
         const result = await pool.request()
-        .input('idsociete',db.sql.UniqueIdentifier,idsociete)
+        .input('idsociete', sql.UniqueIdentifier,idsociete)
         .query(query);
 
         if(!result){
@@ -141,10 +141,10 @@ async function getonesociete(idsociete){
   {
       
       try {
-          const pool = await db.connectDB();
+          const pool = await connectDB();
           const query = "DELETE FROM Societe where idsociete = @idsociete";
           const result = await pool.request()
-          .input('idsociete',db.sql.UniqueIdentifier,idsociete)
+          .input('idsociete', sql.UniqueIdentifier,idsociete)
           .query(query);
           return {success:true,status:200,message:"Suppression effectuée avec succès!"}
       } catch (error) {

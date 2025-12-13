@@ -1,5 +1,5 @@
 const { DateTime, UniqueIdentifier } = require('mssql');
-const db = require('../../../config/db');
+const {db, sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 
  //upsert Site
@@ -32,19 +32,19 @@ const { v4: uuidv4 } = require('uuid');
             END
         `;
 
-        const pool = await db.connectDB();
+        const pool = await connectDB();
         const result = await pool.request()
-            .input("idsite", db.sql.UniqueIdentifier, idsite)
-            .input("idsociete", db.sql.UniqueIdentifier,idsociete)
-            .input("codesite", db.sql.NVarChar, codesite)
-            .input("idcentreanalytique", db.sql.UniqueIdentifier,idcentreanalytique)
-            .input("libelle", db.sql.NVarChar,libelle)
-            .input("email", db.sql.NVarChar,email)
-            .input("telephone", db.sql.NVarChar,telephone)
-            .input("adresse", db.sql.NVarChar,adresse)
-            .input("estcentreanalytique", db.sql.Int, estcentreanalytique)
-            .input("createdby", db.sql.NVarChar, createdby)
-            .input("updatedby", db.sql.NVarChar, updatedby)
+            .input("idsite", sql.UniqueIdentifier, idsite)
+            .input("idsociete", sql.UniqueIdentifier,idsociete)
+            .input("codesite", sql.NVarChar, codesite)
+            .input("idcentreanalytique", sql.UniqueIdentifier,idcentreanalytique)
+            .input("libelle", sql.NVarChar,libelle)
+            .input("email", sql.NVarChar,email)
+            .input("telephone", sql.NVarChar,telephone)
+            .input("adresse", sql.NVarChar,adresse)
+            .input("estcentreanalytique", sql.Int, estcentreanalytique)
+            .input("createdby", sql.NVarChar, createdby)
+            .input("updatedby", sql.NVarChar, updatedby)
             .query(query);
 
         return {
@@ -84,10 +84,10 @@ async function getallsite(){
 //Get one
 async function getonesite(idsite){
     try {
-        const pool = await db.connectDB();
+        const pool = await connectDB();
         const query = "SELECT * FROM Site where idsite = @idsite";
         const result = await pool.request()
-        .input('idsite',db.sql.UniqueIdentifier,idsite)
+        .input('idsite', sql.UniqueIdentifier,idsite)
         .query(query);
 
         if(!result){

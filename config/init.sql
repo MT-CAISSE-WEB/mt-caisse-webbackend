@@ -124,10 +124,7 @@ BEGIN
 		typeentitesociete INT DEFAULT 0,
 		acheteur INT DEFAULT 0,
 		iddepartement UNIQUEIDENTIFIER NULL,
-		idsociete UNIQUEIDENTIFIER,
         idsite UNIQUEIDENTIFIER NULL,
-        login NVARCHAR(50) UNIQUE,
-        password NVARCHAR(50),
         createdat Datetime,
 		createdby NVARCHAR(50),
 		updatedat Datetime,
@@ -376,16 +373,16 @@ END
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'UtilisateurCaisse')
 BEGIN
     CREATE TABLE UtilisateurCaisse (
+        idutilisateurcaisse UNIQUEIDENTIFIER PRIMARY KEY,
         idcaisse UNIQUEIDENTIFIER,
-        codecaisse NVARCHAR(24),
         idutilisateur UNIQUEIDENTIFIER,
         idsociete UNIQUEIDENTIFIER,
         actif INT DEFAULT 1,
-        createdat Datetime,
+        createdat DATETIME,
         createdby NVARCHAR(50),
-        updatedat Datetime,
+        updatedat DATETIME,
         updatedby NVARCHAR(50),
-        CONSTRAINT PK_User_Caisse PRIMARY KEY (idcaisse, idutilisateur),
+        CONSTRAINT UQ_UtilisateurCaisse_idcaisse_idutilisateur UNIQUE (idcaisse, idutilisateur),
         FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
         FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)

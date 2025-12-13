@@ -81,14 +81,19 @@ class caisseModel {
         }
     }
 
-    async get_allcaisses (page = 1, limit = 5) {
+    async get_allcaisses ({ page = 1, limit = 5, search = null, actif = null}) {
+        page = parseInt(page) || 1;
+        limit = parseInt(limit) || 5;
+
         const pool = await connectDB();
         const offset = (page - 1) * limit;
         try {
             const result = await pool.request()
-            .input('offset', sql.Int, offset)
-            .input('limit', sql.Int, limit)
-            .query(caisseQueries.getAll);
+                .input('offset', sql.Int, offset)
+                .input('limit', sql.Int, limit)
+                .input('search', sql.NVarChar, search ? `%${search}%` : null)
+                .input('actif', sql.Int, actif)
+                .query(caisseQueries.getAll);
             
             const caisses = result.recordsets[0];
             const total = result.recordsets[1][0].total;

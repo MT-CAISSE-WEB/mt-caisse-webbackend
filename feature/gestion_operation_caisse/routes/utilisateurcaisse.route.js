@@ -6,6 +6,7 @@ const utilisateurcaisse_controller = require("../controllers/utilisateurcaisse.c
 // CRUD UTILISATEUR CAISSE
 router.get("/", utilisateurcaisse_controller.get_utilisateurcaisses);
 router.get("/:id", utilisateurcaisse_controller.get_oneutilisateurcaisse);
+router.get("/user/:id", utilisateurcaisse_controller.get_caisseByUser);
 router.post("/create/", utilisateurcaisse_controller.create_utilisateurcaisse);
 router.put("/update/:id", utilisateurcaisse_controller.update_utilisateurcaisse);
 router.delete("/delete/:id", utilisateurcaisse_controller.delete_utilisateurcaisse);

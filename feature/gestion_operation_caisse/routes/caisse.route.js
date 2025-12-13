@@ -6,6 +6,7 @@ const periodecaisse_controller = require("../controllers/caisseperiode.controlle
 
 // CRUD CAISSE
 router.get("/", caisse_controller.get_caisses);
+router.get("/actif", caisse_controller.get_caisses);
 router.get("/:id", caisse_controller.get_onecaisse);
 router.post("/create/", caisse_controller.create_caisse);
 router.put("/update/:id", caisse_controller.update_caisse);

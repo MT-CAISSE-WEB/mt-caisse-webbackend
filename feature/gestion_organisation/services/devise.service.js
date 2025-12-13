@@ -1,5 +1,5 @@
 const { DateTime, UniqueIdentifier } = require('mssql');
-const db = require('../../../config/db');
+const {db, sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 
 
@@ -21,13 +21,13 @@ async function createdevise(data){
             const pool = await connectDB()
             const iddevise = uuidv4();
             const result = await pool.request()
-            .input('iddevise',db.sql.UniqueIdentifier,iddevise)
-            .input ('code',db.sql.NVarChar(50),data.code)
-            .input ('codeiso',db.sql.NVarChar(50),data.codeiso)
-            .input ('intitule',db.sql.NVarChar(50),data.intitule)
-            .input ('actif',db.sql.Int,data.actif)
-            .input ('createdat',db.sql.DateTime,today)
-            .input ('createdby',db.sql.NVarChar(50),data.createdby)
+            .input('iddevise', sql.UniqueIdentifier,iddevise)
+            .input ('code', sql.NVarChar(50),data.code)
+            .input ('codeiso', sql.NVarChar(50),data.codeiso)
+            .input ('intitule', sql.NVarChar(50),data.intitule)
+            .input ('actif', sql.Int,data.actif)
+            .input ('createdat', sql.DateTime,today)
+            .input ('createdby', sql.NVarChar(50),data.createdby)
             .query(queryinsert);
 
             return {
@@ -68,13 +68,13 @@ async function createdevise(data){
 
         const pool = await connectDB()
         const result = await pool.request()
-            .input("iddevise", db.sql.UniqueIdentifier, iddevise)
-            .input("codedevise", db.sql.NVarChar, codedevise)
-            .input("intitule", db.sql.NVarChar, intitule)
-            .input("codeiso", db.sql.NVarChar, codeiso)
-            .input("actif", db.sql.Int, actif)
-            .input("createdby", db.sql.NVarChar, createdby)
-            .input("updatedby", db.sql.NVarChar, updatedby )
+            .input("iddevise", sql.UniqueIdentifier, iddevise)
+            .input("codedevise", sql.NVarChar, codedevise)
+            .input("intitule", sql.NVarChar, intitule)
+            .input("codeiso", sql.NVarChar, codeiso)
+            .input("actif", sql.Int, actif)
+            .input("createdby", sql.NVarChar, createdby)
+            .input("updatedby", sql.NVarChar, updatedby )
             .query(query);
 
         return {
@@ -99,7 +99,7 @@ async function createdevise(data){
      // Get all
     async function getalldevises(){
         try {
-            const pool = await db.connectDB();
+            const pool = await connectDB();
             const query = "SELECT * FROM Devise";
             const result = await pool.request().query(query);
             return {
@@ -116,10 +116,10 @@ async function createdevise(data){
     //Get one
     async function getonedevise(iddevise){
         try {
-            const pool = await db.connectDB();
+            const pool = await connectDB();
             const query = "SELECT * FROM Devise where iddevise = @iddevise";
             const result = await pool.request()
-            .input('iddevise',db.sql.UniqueIdentifier,iddevise)
+            .input('iddevise', sql.UniqueIdentifier,iddevise)
             .query(query);
 
             if(!result){
@@ -143,7 +143,7 @@ async function createdevise(data){
             const pool = await connectDB()
             const query = "DELETE FROM Devise where iddevise = @iddevise";
             const result = await pool.request()
-            .input('iddevise',db.sql.UniqueIdentifier,iddevise)
+            .input('iddevise', sql.UniqueIdentifier,iddevise)
             .query(query);
             return {success:true,status:200,message:"Suppression effectuée avec succès!"}
         } catch (error) {

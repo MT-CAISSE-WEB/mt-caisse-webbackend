@@ -13,33 +13,21 @@ module.exports = {
         VALUES (@idtypeoperation, @codtypeoperation, @idoperation, @idperiode, @idsociete, @idsite, @idcaisse, @montant, @taux, @montantref, @createdat, @createdby, @updatedat, @updatedby)
     `,
 
-    update: `
-        UPDATE TypeOperation 
-<<<<<<< HEAD
-        SET codtypeoperation = @codtypeoperation, 
-        idoperation = @idoperation, 
-        idcaisse = @idcaisse, 
-        montant = @montant, 
-        taux = @taux,
-        montantref = @montantref,
-=======
-        SET codetypeoperation = @codetypeoperation, 
+    update: ` UPDATE TypeOperation
+    SET codetypeoperation = @codetypeoperation, 
         idoperation = @idoperation, 
         idperiode = @idperiode, 
         idsociete = @idsociete, 
         idsite = @idsite, 
         idcaisse = @idcaisse, 
         montant = @montant, 
->>>>>>> origin/richard
         updatedat = @updatedat, 
         updatedby = @updatedby 
         OUTPUT INSERTED.* 
-        WHERE idtypeoperation = @idtypeoperation`
-    ,
+        WHERE idtypeoperation = @idtypeoperation`,
 
     delete: `
         DELETE FROM TypeOperation WHERE idtypeoperation = @idtypeoperation
-<<<<<<< HEAD
     `,
     solde_calcul: `
         SELECT 
@@ -52,7 +40,5 @@ module.exports = {
             ) AS solde
         FROM TypeOperation
         GROUP BY idcaisse;
-=======
->>>>>>> origin/richard
     `
 };

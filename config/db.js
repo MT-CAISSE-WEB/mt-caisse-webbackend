@@ -41,7 +41,7 @@ const createDB = async () =>{
 const connectDB = async () => {
   try {
     const db = await sql.connect({...config , database : 'MTCAISSEWEB'});
-    console.log(`Connecté à la base de données`.cyan.bold);
+    //console.log(`Connecté à la base de données`.cyan.bold);
     return db;
   } catch (error) {
     console.log(`${error}`.red.bold);
