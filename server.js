@@ -10,6 +10,7 @@ const device = require('express-device');
 const bodyParser = require('body-parser');
 const logger = require('./shared/middlewares/logger');
 const errorHandler = require('./shared/middlewares/error');
+const sequelize = require('./config/database')
 
 
 const deviseroute = require('./feature/gestion_organisation/routes/devise.route');
@@ -29,6 +30,18 @@ const plancomptableroutes = require("./feature/gestion_donnee_base/routes/planco
 const natureoperationroutes = require("./feature/gestion_donnee_base/routes/natureoperation.route");
 const centreanalytiqueroutes = require("./feature/gestion_donnee_base/routes/centreanalytique.route");
 const affectationanalytiqueroutes = require("./feature/gestion_donnee_base/routes/affectationanalytique.route");
+
+
+// Budget
+const budget_route = require('./feature/gestion_budget/routes/budget.route')
+// Ligne budgetaire
+const ligne_budgetaire_route = require('./feature/gestion_budget/routes/lignebudget.route')
+// Entete demande
+const entete_demande_route = require('./feature/gestion_demande_decaissement/routes/entetedemande.route')
+// Ligne demande
+const ligne_demande_route = require('./feature/gestion_demande_decaissement/routes/ligendemande.route')
+// Détails demande
+const details_demande_route = require('./feature/gestion_demande_decaissement/routes/detaildemande.route')
 
 
 
@@ -115,6 +128,25 @@ app.use("/API/plancomptable", plancomptableroutes);
 app.use("/API/natureoperation", natureoperationroutes);
 app.use("/API/centreanalytique", centreanalytiqueroutes);
 app.use("/API/affectationanalytique", affectationanalytiqueroutes);
+
+
+// Test SQL Server connection Sequelize
+sequelize
+  .authenticate()
+  .then(() => console.log('Connexion SQL Server OK sequelize✔️'))
+  .catch((err) => console.log('Erreur SQL Server ❌', err))
+
+//Regrouper toutes les routes
+//Budget
+app.use('/api/budget', budget_route)
+//Ligne budgetaire
+app.use('/api/ligne-budgetaire', ligne_budgetaire_route)
+//Entete demande
+app.use('/api/entete-demande', entete_demande_route)
+//Ligne demande
+app.use('/api/ligne-demande', ligne_demande_route)
+//Details demande
+app.use('/api/details-demande', details_demande_route)
 
 
 // Handle unhandled promise rejections
