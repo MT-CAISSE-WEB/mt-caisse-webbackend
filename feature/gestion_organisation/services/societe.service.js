@@ -1,5 +1,5 @@
 const { DateTime, UniqueIdentifier } = require('mssql');
-const db = require('../../../config/db');
+const {db, sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 
  //upsert Societe
@@ -35,7 +35,7 @@ const { v4: uuidv4 } = require('uuid');
             END
         `;
 
-        const pool = await db.connectDB();
+        const pool = await connectDB();
         const result = await pool.request()
             .input("idsociete", db.sql.UniqueIdentifier, idsociete)
             .input("codesociete", db.sql.NVarChar, codesociete)
@@ -97,7 +97,7 @@ async function getallsociete(){
  // Get all
 async function getalldevisesactif(){
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const query = `SELECT * FROM DEVISE WHERE ACTIF=1`;
         const result = await pool.request().query(query);
 
@@ -114,10 +114,10 @@ async function getalldevisesactif(){
  //Get one
 async function getonesociete(idsociete){
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const query = "SELECT * FROM Societe where idsociete = @idsociete";
         const result = await pool.request()
-        .input('idsociete',db.sql.UniqueIdentifier,idsociete)
+        .input('idsociete', sql.UniqueIdentifier,idsociete)
         .query(query);
 
         if(!result){
@@ -141,10 +141,10 @@ async function getonesociete(idsociete){
   {
       
       try {
-          const pool = await db.connectDB();
+          const pool = await connectDB();
           const query = "DELETE FROM Societe where idsociete = @idsociete";
           const result = await pool.request()
-          .input('idsociete',db.sql.UniqueIdentifier,idsociete)
+          .input('idsociete', sql.UniqueIdentifier,idsociete)
           .query(query);
           return {success:true,status:200,message:"Suppression effectuée avec succès!"}
       } catch (error) {

@@ -34,7 +34,7 @@ async function upserttauxdevise({iddeviseorigine,iddevisedestination,codetauxdev
             END
         `;
 
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const result = await pool.request()
             .input("idtauxdevise", db.sql.UniqueIdentifier, idtauxdevise)
             .input("iddeviseorigine", db.sql.UniqueIdentifier,iddeviseorigine)
@@ -71,7 +71,7 @@ async function upserttauxdevise({iddeviseorigine,iddevisedestination,codetauxdev
 // Get all
 async function getalltauxdevises(){
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const query =`
     SELECT 
         t.*, 
@@ -94,7 +94,7 @@ async function getalltauxdevises(){
 
 async function getalldevisesactif(){
     try {
-          const pool = await db.poolPromise;
+          const pool = await connectDB();
           const query = "SELECT * FROM devise where actif=1"; 
           const result = await pool.request().query(query);
          return {
@@ -111,7 +111,7 @@ async function getalldevisesactif(){
 //Get one
 async function getonetauxdevise(idtauxdevise){
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const query = "SELECT * FROM tauxDevise where idtauxdevise = @idtauxdevise";
         const result = await pool.request()
         .input('idtauxdevise',db.sql.UniqueIdentifier,idtauxdevise)
@@ -136,7 +136,7 @@ async function deletetauxdevise(idtauxdevise)
 {
     
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const query = "DELETE FROM tauxDevise where idtauxdevise = @idtauxdevise";
         const result = await pool.request()
         .input('idtauxdevise',db.sql.UniqueIdentifier,idtauxdevise)

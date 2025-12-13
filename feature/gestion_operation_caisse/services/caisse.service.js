@@ -12,9 +12,8 @@ let caisse = new caissemodel();
 let journal= new journalmodel();
 let caisses = [];
 
-async function get_all_caisses(page = 1, limit = 5) {
-  const result = await caisse.get_allcaisses(page, limit);
-
+async function get_all_caisses({ page, limit, search, actif}) {
+  const result = await caisse.get_allcaisses({ page, limit, search, actif });
   try {
     caisses = result.data.map(item => new caissemodel(
       item.idcaisse,

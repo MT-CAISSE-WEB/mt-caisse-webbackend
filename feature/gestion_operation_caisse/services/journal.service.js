@@ -6,8 +6,8 @@ const PaginationModel = require("../../../shared/utils/model");
 let journal = new journalmodel();
 let journals = [];
 
-async function get_all_journals(page = 1, limit = 5) {
-  const result = await journal.get_alljournals(page, limit);
+async function get_all_journals({page, limit , search, actif}) {
+  const result = await journal.get_alljournals({page, limit , search, actif});
   journals = result.data.map(item => new journalmodel(
     item.idjournal,
     item.codejournal,

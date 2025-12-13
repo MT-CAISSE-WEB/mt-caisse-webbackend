@@ -20,3 +20,5 @@ class utilisateur {
                 this.updatedat = updatedat;
     }
 }
+
+module.exports = utilisateur;

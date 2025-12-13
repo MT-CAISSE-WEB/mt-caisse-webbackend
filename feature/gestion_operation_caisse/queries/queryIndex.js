@@ -3,6 +3,7 @@ module.exports = {
     operationQueries : require('./operation.query'),
     typeoperationQueries: require('./typeoperation.query'),
     caisseperiodeQueries: require('./caisseperiode.query'),
-    //societeQueries: require('./queries/societe.queries'),
+    utilisateurcaisseQueries : require('./utilisateurcaisse.query'),
+    journalQueries: require('./journal.query')
     // Ajouter ici les autres tables
 };

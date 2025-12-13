@@ -1,0 +1,90 @@
+module.exports = {
+    getAll : `
+        SELECT 
+            uc.*,
+            u.idutilisateur AS user_idutilisateur,
+            u.codeutilisateur AS user_codeutilisateur,
+            u.idsociete AS user_idsociete,
+            u.nom AS user_nom,
+            u.prenom AS user_prenom, 
+            u.adresse AS user_adresse, 
+            u.telephone AS user_telephone, 
+            u.email AS user_email, 
+            u.typeentitesite AS user_typeentitesite, 
+            u.typeentitedepartement AS user_typeentitedepartement, 
+            u.typeentitesociete AS user_typeentitesociete,
+            u.acheteur AS user_acheteur, 
+            c.idcaisse AS caisse_idcaisse,
+            c.codecaisse AS caisse_codecaisse,
+            c.libelle AS caisse_libelle,
+            c.idjournal AS caisse_idjournal,
+            c.iddevise AS caisse_iddevise,
+            c.idsite AS caisse_idsite,
+            c.idsociete AS caisse_idsociete,
+            c.idcompte AS caisse_idcompte,
+            c.actif AS caisse_actif,
+            c.createdat AS caisse_createdat,
+            c.createdby AS caisse_createdby,
+            s.idsociete AS societe_idsociete,
+            s.codesociete AS societe_codesociete,
+            s.raisonsociale AS societe_raisonsociale,
+            s.rccm AS societe_rccm,
+            s.numnui AS societe_numnui,
+            s.email AS societe_email,
+            s.telephone AS societe_telephone,
+            s.logo AS societe_logo,
+            s.adresse AS societe_adresse,
+            s.suivibudgetaire AS societe_suivibudgetaire,
+            s.createdat AS societe_createdat,
+            s.createdby AS societe_createdby,
+            s.updatedat AS societe_updatedat,
+            s.updatedby AS societe_updatedby
+
+        FROM UtilisateurCaisse uc
+        LEFT JOIN Utilisateur u ON u.idutilisateur = uc.idutilisateur
+        LEFT JOIN Caisse c ON c.idcaisse = uc.idcaisse
+        LEFT JOIN Societe s ON s.idsociete = uc.idsociete
+
+        WHERE  (@actif IS NULL OR uc.actif = @actif)
+        
+        ORDER BY uc.createdat ASC
+        OFFSET @offset ROWS
+        FETCH NEXT @limit ROWS ONLY
+
+        SELECT COUNT(*) AS total
+            FROM UtilisateurCaisse
+            WHERE (@actif IS NULL OR actif = @actif)
+                
+    `,
+    insert : `
+        INSERT INTO UtilisateurCaisse (idutilisateurcaisse,idcaisse,idutilisateur,idsociete,actif,createdat,createdby)
+        OUTPUT INSERTED.* 
+        VALUES (@idutilisateurcaisse,@idcaisse,@idutilisateur,@idsociete,@actif,@createdat,@createdby);
+    `,
+    update : `
+        UPDATE UtilisateurCaisse SET idcaisse = @idcaisse,
+        idutilisateur = @idutilisateur, idsociete = @idsociete, actif = @actif, updatedat = @updatedat, updatedby = @updatedby
+        OUTPUT INSERTED.* 
+        WHERE idutilisateurcaisse = @idutilisateurcaisse;
+    `,
+    getbyId: `
+        SELECT * FROM UtilisateurCaisse WHERE idutilisateurcaisse = @idutilisateurcaisse;
+    `,
+    deletesoft : `
+        UPDATE UtilisateurCaisse SET actif = 0,
+            updatedat = @updatedat,
+            updatedby = @updatedby
+            OUTPUT INSERTED.* 
+            WHERE idutilisateurcaisse = @idutilisateurcaisse;
+    `,
+    getcaisseUser : `
+        SELECT 1 FROM UtilisateurCaisse
+        WHERE idcaisse = @idcaisse AND idutilisateur = @idutilisateur
+    `,
+    delete : `
+        Delete from UtilisateurCaisse WHERE idutilisateurcaisse = @idutilisateurcaisse;
+    `,
+    getcaisseByUser : `
+        SELECT * FROM UtilisateurCaisse
+        WHERE idutilisateur = @idutilisateur  AND  actif = 1 `
+}
