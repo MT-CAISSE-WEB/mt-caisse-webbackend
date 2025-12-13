@@ -61,6 +61,7 @@ app.set('views', path.join(__dirname, 'views'))
 
 //Regrouper toutes les routes
 app.use("/API/usersdepartement", usersdepartementsroutes);
+app.use("/API/natureoperation", require("./feature/gestion_donnee_base/routes/natureoperation.route"));
 
 // GESTION DES ERREURS
 app.use(errorHandler)
