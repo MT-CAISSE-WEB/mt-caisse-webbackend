@@ -22,7 +22,20 @@ const roleroute = require('./feature/gestion_users/routes/role.route');
 const permissionroute = require('./feature/gestion_users/routes/permission.route');
 const rolepermissionroute = require('./feature/gestion_users/routes/role_permission.route');
 
+
+// Tiers routes
+const tiersroutes = require("./feature/gestion_donnee_base/routes/tiers.route");
+const plancomptableroutes = require("./feature/gestion_donnee_base/routes/plancomptable.route");
+const natureoperationroutes = require("./feature/gestion_donnee_base/routes/natureoperation.route");
+const centreanalytiqueroutes = require("./feature/gestion_donnee_base/routes/centreanalytique.route");
+const affectationanalytiqueroutes = require("./feature/gestion_donnee_base/routes/affectationanalytique.route");
+
+
+
 const db = require('./config/db');
+
+//connexion db Richard
+const {connectInstance} = require('./config/db')
 
 dotenv.config({path: './config/.env'});
 // INIT EXPRESS
@@ -46,6 +59,8 @@ if (process.env.NODE_ENV === 'development') {
 db.initdatabase();
 //db.connectInstance();
 
+//LANCEMENT DE LA BASE DE DONNEES
+connectInstance();
 
 
 // JOURNALISATION PERSONNALISEE
@@ -92,6 +107,15 @@ app.use('/API',userroute);
 app.use('/API',roleroute);
 app.use('/API',permissionroute);
 app.use('/API',rolepermissionroute);
+
+
+// Gestion donnee de base
+app.use("/API/tiers", tiersroutes);
+app.use("/API/plancomptable", plancomptableroutes);
+app.use("/API/natureoperation", natureoperationroutes);
+app.use("/API/centreanalytique", centreanalytiqueroutes);
+app.use("/API/affectationanalytique", affectationanalytiqueroutes);
+
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {

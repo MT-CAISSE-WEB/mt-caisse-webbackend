@@ -1,10 +1,10 @@
 class sitemodel {
-    constructor(idsite,idsociete,codesite,codeanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdat, updatedat, createdby, updatedby)
+    constructor(idsite,idsociete,codesite,idcentreanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdat, updatedat, createdby, updatedby)
     { 
         this.idsite = idsite;
         this.idsociete = idsociete;
         this.codesite = codesite;
-        this.codeanalytique = codeanalytique;
+        this.idcentreanalytique = idcentreanalytique;
         this.libelle = libelle ;
         this.email = email;
         this.telephone = telephone;

@@ -99,7 +99,7 @@ async function createdevise(data){
      // Get all
     async function getalldevises(){
         try {
-            const pool = await db.poolPromise;
+            const pool = await db.connectDB();
             const query = "SELECT * FROM Devise";
             const result = await pool.request().query(query);
             return {
@@ -116,7 +116,7 @@ async function createdevise(data){
     //Get one
     async function getonedevise(iddevise){
         try {
-            const pool = await db.poolPromise;
+            const pool = await db.connectDB();
             const query = "SELECT * FROM Devise where iddevise = @iddevise";
             const result = await pool.request()
             .input('iddevise',db.sql.UniqueIdentifier,iddevise)
@@ -125,9 +125,6 @@ async function createdevise(data){
             if(!result){
                 return {success:false,status:404,message:"Dévise non trouvée"};
             }
-
-            console.log(result.recordset[0]);
-
             return {
                 success:true,
                 status:200,

@@ -3,6 +3,7 @@ dotenv.config({path: './config/.env'});
 const sql = require("mssql");
 const fs = require('fs');
 
+
 const config = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -10,8 +11,8 @@ const config = {
   database: process.env.DB_NAME,
   options: {
     encrypt: process.env.DB_ENCRYPT === 'true', // true si Azure
-    trustServerCertificate: false,
-    //instanceName: process.env.DB_INSTANCE || undefined, // Nom de l'instance SQL Server, si applicable
+    trustServerCertificate: true,
+    // instanceName: process.env.DB_INSTANCE || undefined, // Nom de l'instance SQL Server, si applicable
   },
 };
 
@@ -21,7 +22,7 @@ const createDB = async () =>{
     const table = fs.readFileSync("./config/init.sql", "utf8");
     await db.request().query(table);
     db.close();
-    console.log(`Tables créees`.yellow.bold);
+    // console.log(`Tables créees`.yellow.bold);
   } catch (error) {
     console.log(`Erreur de création des tables: ${error}`.red.bold);
   }
@@ -33,7 +34,7 @@ const connectDB = async () => {
     console.log(`Connecté à la base de données`.cyan.bold);
     return db;
   } catch (error) {
-    console.log(`Erreur de connexion: ${error}`.red.bold);
+    console.log(`${error}`.red.bold);
     throw error;
   }
 }
@@ -41,16 +42,16 @@ const connectDB = async () => {
 const connectInstance = async () => {
   try {
     const pool = await sql.connect(config);
-    console.log(`Connecté à SQL Server`.cyan.bold);
+    // console.log(`Connecté à SQL Server`.cyan.bold);
     const dbPool = fs.readFileSync("./config/db.sql", "utf8");
     try{
       await pool.request().query(dbPool);
       createDB();
     }catch (err){
-      console.log(`Erreur de création de la base de donnée: ${err}`.cyan.bold);
+      console.log(`${err}`.cyan.bold);
     }
   } catch (err) {
-    console.log(`Erreur de connexion: ${err}`.cyan.bold);
+    console.log(`${err}`.cyan.bold);
   }
 }
 
@@ -63,7 +64,7 @@ const poolPromise = new sql.ConnectionPool(config)
   })
   .catch(err => {
     console.log('Erreur de connexion SQL Server', err);
-    throw err;
+    throw err;
   });
 
 

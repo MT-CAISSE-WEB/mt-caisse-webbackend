@@ -1,40 +1,23 @@
--- OK
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Devise')
-BEGIN
-    CREATE TABLE Devise (
-		iddevise UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        code NVARCHAR(3) UNIQUE,
-		intitule NVARCHAR(150),
-		codeIso NVARCHAR(150),
-		actif INT DEFAULT 0,
-		createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
-    );
-END
+-- USE MTCAISSEWEB;
+-- -- OK
+-- IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Devise')
+-- BEGIN
+--     CREATE TABLE Devise (
+--         iddevise UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+--         codedevise NVARCHAR(3) UNIQUE,
+--         intitule NVARCHAR(150),
+--         codeiso NVARCHAR(150),
+--         actif INT DEFAULT 0,
+--         createdat Datetime,
+--         createdby NVARCHAR(50),
+--         updatedat Datetime,
+--         updatedby NVARCHAR(50)
+--     );
+-- END
 
--- OK
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Tauxdevise')
-BEGIN
-    CREATE TABLE Tauxdevise (
-        idtauxdevise UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-		iddeviseorigine UNIQUEIDENTIFIER,
-		iddevisedestination UNIQUEIDENTIFIER,
-        codetauxdevise NVARCHAR(50) UNIQUE,
-		intitule NVARCHAR(150),
-		typecours NVARCHAR(50),
-        datecours Datetime,
-		coefficient DECIMAL(13,12),
-		coefficientinverse DECIMAL(13,12),
-        createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
-		FOREIGN KEY (iddeviseorigine) REFERENCES Devise(iddevise),
-		FOREIGN KEY (iddevisedestination) REFERENCES Devise(iddevise),
-    );
-END
+-- -- ============================================
+-- -- 2️⃣ Tauxdevise (dépend de Devise)
+-- -- ============================================
 
 -- OK
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Societe')

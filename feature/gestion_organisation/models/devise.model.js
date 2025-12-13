@@ -1,4 +1,3 @@
-
 class devisemodel {
     constructor(codedevise, intitule, codeiso, actif, createdby, updatedby) {
         this.codedevise = codedevise;
@@ -10,8 +9,6 @@ class devisemodel {
         this.createdby = createdby;
         this.updatedby = updatedby;
     }
-
-
 }
 
 module.exports = devisemodel;
