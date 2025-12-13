@@ -70,7 +70,12 @@ const { v4: uuidv4 } = require('uuid');
 async function getalldepartement(){
     try {
         const pool = await db.poolPromise;
-        const query = "SELECT * FROM Departement";
+        const query =`SELECT d.*,st.libelle as site,sc.raisonsociale,u.nom,u.prenom
+        FROM Departement d
+        left join site st on d.idsite = st.idsite
+        left join societe sc on d.idsociete = sc.idsociete
+        left join utilisateur u on d.responsable = u.idutilisateur`;
+
         const result = await pool.request().query(query);
         return {
             success :true,
