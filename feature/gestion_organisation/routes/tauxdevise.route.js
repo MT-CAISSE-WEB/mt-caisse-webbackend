@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const tauxdevisecontroller = require("../controllers/tauxdevise.controller");
+const authmiddleware = require("../../../middlewares/auth.middlewre");
 
 router.get("/Tauxdevise", tauxdevisecontroller.getalltauxdevises);
 router.get("/Tauxdevise/devises", tauxdevisecontroller.getalldevisesactif);

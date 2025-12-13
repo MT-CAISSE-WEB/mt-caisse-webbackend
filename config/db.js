@@ -3,7 +3,6 @@ dotenv.config({path: './config/.env'});
 const sql = require("mssql");
 const fs = require('fs');
 
-
 const config = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -34,7 +33,10 @@ const createDB = async () =>{
     const table = fs.readFileSync("./config/test.sql", "utf8");
     await db.request().query(table);
     db.close();
+<<<<<<< HEAD
     console.log(`Tables créees`.yellow.bold);
+=======
+>>>>>>> main
   } catch (error) {
     console.log(`Erreur de création des tables: ${error}`.red.bold);
   }
@@ -43,6 +45,10 @@ const createDB = async () =>{
 const connectDB = async () => {
   try {
     const db = await sql.connect({...config , database : 'MTCAISSEWEB'});
+<<<<<<< HEAD
+=======
+    //console.log(`Connecté à la base de données`.cyan.bold);
+>>>>>>> main
     return db;
   } catch (error) {
     console.log(`${error}`.red.bold);
@@ -65,7 +71,11 @@ const connectInstance = async () => {
   }
 }
 
+<<<<<<< HEAD
 //un pool spécifique pour les opérations de la base de données
+=======
+  // un pool spécifique pour les opérations de la base de données
+>>>>>>> main
 // const poolPromise = new sql.ConnectionPool(config)
 //   .connect()
 //   .then(pool => {
@@ -77,4 +87,33 @@ const connectInstance = async () => {
 //     throw err;
 //   });
 
+<<<<<<< HEAD
 module.exports =  {connectInstance,connectDB, sql};
+=======
+  const initdatabase = async () => {
+      try {
+         const masterpool = await sql.connect(initconfig);
+
+          await masterpool.request().query(`
+          IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = 'MTCAISSEWEB')
+          BEGIN
+            CREATE DATABASE MTCAISSEWEB;
+          END
+        `);
+
+         console.log("Base MTCAISSEWEB vérifiée/créée");
+
+         const dbPool = await sql.connect({ ...config, database: "MTCAISSEWEB" });
+         const tablesScript = fs.readFileSync("./config/test.sql", "utf8");
+         await dbPool.request().batch(tablesScript);
+
+          console.log("Tables initialisées");
+          await sql.close();
+      } catch (error) {
+         console.error("Erreur initDatabase :", error);
+         await sql.close();
+      }
+  }
+
+module.exports =  {connectInstance, connectDB, initdatabase, sql};
+>>>>>>> main

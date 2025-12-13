@@ -32,7 +32,7 @@ const { v4: uuidv4 } = require('uuid');
             END
         `;
 
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const result = await pool.request()
             .input("iddepartement", db.sql.UniqueIdentifier, iddepartement)
             .input("idsociete", db.sql.UniqueIdentifier,idsociete)
@@ -69,8 +69,13 @@ const { v4: uuidv4 } = require('uuid');
 // Get all
 async function getalldepartement(){
     try {
-        const pool = await db.poolPromise;
-        const query = "SELECT * FROM Departement";
+        const pool = await connectDB()
+        const query =`SELECT d.*,st.libelle as site,sc.raisonsociale,u.nom,u.prenom
+        FROM Departement d
+        left join site st on d.idsite = st.idsite
+        left join societe sc on d.idsociete = sc.idsociete
+        left join utilisateur u on d.responsable = u.idutilisateur`;
+
         const result = await pool.request().query(query);
         return {
             success :true,
@@ -85,7 +90,7 @@ async function getalldepartement(){
  //Get one
 async function getonedepartement(iddepartement){
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB()
         const query = "SELECT * FROM Departement where iddepartement = @iddepartement";
         const result = await pool.request()
         .input('iddepartement',db.sql.UniqueIdentifier,iddepartement)
@@ -111,7 +116,7 @@ async function deletedepartement(iddepartement)
 {
     
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB()
         const query = "DELETE FROM Departement where iddepartement = @iddepartement";
         const result = await pool.request()
         .input('iddepartement',db.sql.UniqueIdentifier,iddepartement)

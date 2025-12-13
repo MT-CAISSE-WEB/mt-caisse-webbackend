@@ -392,6 +392,7 @@ BEGIN
         updatedby NVARCHAR(50),
         FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
         FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
+        CONSTRAINT UQ_UtilisateurCaisse_idcaisse_idutilisateur UNIQUE (idcaisse, idutilisateur),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );
 END

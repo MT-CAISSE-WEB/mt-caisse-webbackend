@@ -1,7 +1,29 @@
 module.exports = {
     getAll: `
+        WITH Cais AS (
         SELECT 
-            c.*,
+            c.idcaisse
+        FROM Caisse c
+        WHERE 1 = 1
+            --Search : codecaisse, devise, journal
+            AND (
+                @search IS NULL OR 
+                c.idcaisse LIKE @search OR 
+                EXISTS (
+                    SELECT 1 FROM Devise dev
+                    WHERE dev.iddevise = c.iddevise AND dev.codedevise = @search
+                ) OR EXISTS (
+                    SELECT 1 FROM Journal jou
+                    WHERE jou.idjournal = c.idjournal AND jou.codejournal = @search
+                )
+            ) AND (@actif IS NULL OR actif = @actif)
+
+            ORDER BY c.createdat DESC
+            OFFSET @offset ROWS
+            FETCH NEXT @limit ROWS ONLY
+    )
+        SELECT 
+            e.*,
             j.idjournal AS journal_idjournal,
             j.codejournal AS journal_codejournal,
             j.idsociete AS journal_idsociete,
@@ -56,18 +78,30 @@ module.exports = {
             pc.updatedat AS compte_updatedat,
             pc.updatedby AS compte_updatedby,
             pc.actif AS compte_actif
-        FROM Caisse c
-        LEFT JOIN Journal j ON c.idjournal = j.idjournal
-        LEFT JOIN Devise d ON c.iddevise = d.iddevise
-        LEFT JOIN Site s ON c.idsite = s.idsite
-        LEFT JOIN Societe so ON c.idsociete = so.idsociete
-        LEFT JOIN PlanComptable pc ON c.idcompte = pc.idcompte
+        FROM Cais c
+        JOIN Caisse e ON e.idcaisse = c.idcaisse
+        LEFT JOIN Journal j ON e.idjournal = j.idjournal
+        LEFT JOIN Devise d ON e.iddevise = d.iddevise
+        LEFT JOIN Site s ON e.idsite = s.idsite
+        LEFT JOIN Societe so ON e.idsociete = so.idsociete
+        LEFT JOIN PlanComptable pc ON e.idcompte = pc.idcompte
 
-        ORDER BY createdat DESC
-        OFFSET @offset ROWS
-        FETCH NEXT @limit ROWS ONLY;
+        ORDER BY e.createdat DESC
 
-        SELECT COUNT(*) AS total FROM Caisse;
+        SELECT COUNT(*) AS total 
+            FROM Caisse e
+            WHERE 1 = 1
+                AND (
+                @search IS NULL OR 
+                e.idcaisse LIKE @search OR 
+                EXISTS (
+                    SELECT 1 FROM Devise dev
+                    WHERE dev.iddevise = e.iddevise AND dev.codedevise = @search
+                ) OR EXISTS (
+                    SELECT 1 FROM Journal jou
+                    WHERE jou.idjournal = e.idjournal AND jou.codejournal = @search
+                )
+            ) AND (@actif IS NULL OR actif = @actif);
     `,
 
     getById: `
