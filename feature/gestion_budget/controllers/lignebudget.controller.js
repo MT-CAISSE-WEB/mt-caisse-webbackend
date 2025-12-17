@@ -15,6 +15,7 @@ const foreignIncludes = [
       'idbudget',
       'codebudget',
       'idbudgetparent',
+      'entite',
       'typebudget',
       'datedebut',
       'datefin',

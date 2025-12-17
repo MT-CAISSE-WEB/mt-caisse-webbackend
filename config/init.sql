@@ -537,7 +537,7 @@ BEGIN
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
         FOREIGN KEY (idsite) REFERENCES Site(idsite),
         FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
-        FOREIGN KEY (iddevise) REFERENCES Devise(iddevise)
+        FOREIGN KEY (iddevise) REFERENCES Devise(iddevise) 
     );
 END
 

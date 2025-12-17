@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "MT Caisse web",
   "main": "server.js",
+  "nodemonConfig": {
+    "ext": "js,mjs,json,sql"
+  },
   "scripts": {
     "start": "nodemon node server",
     "dev": "nodemon server.js",

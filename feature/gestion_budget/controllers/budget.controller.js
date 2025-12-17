@@ -77,6 +77,7 @@ exports.create = async (req, res) => {
       codebudget,
       datedebut,
       typebudget,
+      entite,
       datefin,
       createdby,
       idbudgetparent,
@@ -88,6 +89,7 @@ exports.create = async (req, res) => {
       datedebut,
       typebudget,
       datefin,
+      entite,
       createdby,
     }
 

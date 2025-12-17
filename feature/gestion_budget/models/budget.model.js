@@ -18,6 +18,7 @@ const Budget = sequelize.define(
     },
     codebudget: { type: DataTypes.STRING(24), unique: true },
     idbudgetparent: DataTypes.UUID,
+    entite: DataTypes.STRING(20),
     typebudget: DataTypes.STRING(10),
     datedebut: DataTypes.DATE,
     datefin: DataTypes.DATE,
