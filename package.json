@@ -4,7 +4,7 @@
   "description": "MT Caisse web",
   "main": "server.js",
   "scripts": {
-    "start": "nodemon node server",
+    "start": "nodemon server",
     "dev": "nodemon server",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
