@@ -66,7 +66,7 @@ const foreignIncludes = [
       'idsociete',
       'idcompte',
       'libelle',
-      'avanceajustifier',
+      'decajustifier',
       'imputationtiers',
       'actif',
       'demandedecaissement',

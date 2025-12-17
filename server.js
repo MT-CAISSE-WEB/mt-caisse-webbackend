@@ -45,6 +45,19 @@ const details_demande_route = require('./feature/gestion_demande_decaissement/ro
 
 
 
+// Journal routes
+const journalRoutes = require("./feature/gestion_operation_caisse/routes/journal.route");
+// Caisse routes
+const caisseRoutes = require("./feature/gestion_operation_caisse/routes/caisse.route");
+// Utilisateur caisse routes
+const utilisateurcaisseRoutes = require("./feature/gestion_operation_caisse/routes/utilisateurcaisse.route");
+// Entete operation routes
+const enteteoperationRoutes = require("./feature/gestion_operation_caisse/routes/enteteoperation.route");
+// Ligne operation routes
+const ligneoperationRoutes = require("./feature/gestion_operation_caisse/routes/ligneoperation.route");
+// Type operation routes
+const typeoperationRoutes = require("./feature/gestion_operation_caisse/routes/operation.route");
+
 const db = require('./config/db');
 
 //connexion db Richard
@@ -148,6 +161,14 @@ app.use('/api/ligne-demande', ligne_demande_route)
 //Details demande
 app.use('/api/details-demande', details_demande_route)
 
+
+//GESTION OPERATION CAISSE ROUTES
+app.use("/API/journal", journalRoutes);
+app.use("/API/caisse", caisseRoutes);
+app.use("/API/utilisateur_caisse", utilisateurcaisseRoutes);
+app.use("/API/entete_operation", enteteoperationRoutes);
+app.use("/API/ligne_operation", ligneoperationRoutes);
+app.use("/API/operation", typeoperationRoutes);
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {

@@ -1,23 +1,45 @@
 -- USE MTCAISSEWEB;
 -- -- OK
--- IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Devise')
--- BEGIN
---     CREATE TABLE Devise (
---         iddevise UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
---         codedevise NVARCHAR(3) UNIQUE,
---         intitule NVARCHAR(150),
---         codeiso NVARCHAR(150),
---         actif INT DEFAULT 0,
---         createdat Datetime,
---         createdby NVARCHAR(50),
---         updatedat Datetime,
---         updatedby NVARCHAR(50)
---     );
--- END
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Devise')
+BEGIN
+    CREATE TABLE Devise (
+        iddevise UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codedevise NVARCHAR(3) UNIQUE,
+        intitule NVARCHAR(150),
+        codeiso NVARCHAR(150),
+        actif INT DEFAULT 0,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50)
+    );
+END
 
 -- -- ============================================
 -- -- 2️⃣ Tauxdevise (dépend de Devise)
 -- -- ============================================
+-- OK
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Tauxdevise')
+BEGIN
+    CREATE TABLE Tauxdevise (
+        idtauxdevise UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+		iddeviseorigine UNIQUEIDENTIFIER,
+		iddevisedestination UNIQUEIDENTIFIER,
+        codetauxdevise NVARCHAR(50) UNIQUE,
+		intitule NVARCHAR(150),
+		typecours NVARCHAR(50),
+        datecours Datetime,
+		coefficient DECIMAL(18,9),
+		coefficientinverse DECIMAL(18,9),
+        createdat Datetime,
+		createdby NVARCHAR(50),
+		updatedat Datetime,
+		updatedby NVARCHAR(50),
+		FOREIGN KEY (iddeviseorigine) REFERENCES Devise(iddevise),
+		FOREIGN KEY (iddevisedestination) REFERENCES Devise(iddevise),
+    );
+END
+
 
 -- OK
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Societe')
@@ -68,7 +90,7 @@ BEGIN
         idsite UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
 		idsociete UNIQUEIDENTIFIER,
 		codesite nvarchar(50) unique,
-		codeanalytique UNIQUEIDENTIFIER NULL,
+		idcentreanalytique UNIQUEIDENTIFIER NULL,
 		libelle NVARCHAR(150),
 		email NVARCHAR(30),
 		telephone NVARCHAR(20),
@@ -78,7 +100,7 @@ BEGIN
 		createdby NVARCHAR(50),
 		updatedat Datetime,
 		updatedby NVARCHAR(50),
-		FOREIGN KEY (codeanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
+		FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
 		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
     );
 END
@@ -175,6 +197,7 @@ BEGIN
 		idsociete UNIQUEIDENTIFIER,
 		idsite UNIQUEIDENTIFIER,
 		responsable UNIQUEIDENTIFIER,
+        codedept NVARCHAR(50) UNIQUE,
 		libelle NVARCHAR(150),
 		email NVARCHAR(30),
 		telephone NVARCHAR(20),
@@ -576,9 +599,9 @@ END
 -- 22️⃣ LigneOperationCaisse (dépend de EnteteOperationCaisse, NatureOperation, CentreAnalytique, Tiers, Societe)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'LigneOperationCaisse')
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ligneoperationCaisse')
 BEGIN
-    CREATE TABLE LigneOperationCaisse (
+    CREATE TABLE ligneoperationCaisse (
         idligneoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idoperation UNIQUEIDENTIFIER,
         idnature UNIQUEIDENTIFIER,
@@ -1046,35 +1069,6 @@ BEGIN
     );
 END
 
--- ============================================
--- 22️⃣ LigneOperationCaisse (dépend de EnteteOperationCaisse, NatureOperation, CentreAnalytique, Tiers, Societe)
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'LigneOperationCaisse')
-BEGIN
-    CREATE TABLE LigneOperationCaisse (
-        idligneoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        idoperation UNIQUEIDENTIFIER,
-        idnature UNIQUEIDENTIFIER,
-        idcentre UNIQUEIDENTIFIER,
-        idsociete UNIQUEIDENTIFIER,
-        libelle NVARCHAR(255),
-        montantoperation DECIMAL(22,9),
-        comptabilise INT,
-        numpiececomptable NVARCHAR(50),
-        datecomptabilisation DATETIME,
-        idtiers UNIQUEIDENTIFIER,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (idoperation) REFERENCES EnteteOperationCaisse(idoperation) ON DELETE CASCADE,
-        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
-        FOREIGN KEY (idcentre) REFERENCES CentreAnalytique(idcentreanalytique),
-        FOREIGN KEY (idtiers) REFERENCES Tiers(idtiers),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
-    );
-END
 
 -- ============================================
 -- 62️ CaissePeriode (dépend de EnteteOperationCaisse, Caisse)

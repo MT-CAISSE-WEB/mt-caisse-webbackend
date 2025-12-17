@@ -1,6 +1,7 @@
 const { DateTime, UniqueIdentifier } = require('mssql');
-const {db, sql, connectInstance, connectDB} = require('../../../config/db');
+const {sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
+const db = require('../../../config/db');
 
  //upsert Societe
    async function upsertsociete({codesociete,iddevisereference,iddevisereporting,raisonsociale,sigle, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby, updatedby }) {
@@ -76,7 +77,7 @@ const { v4: uuidv4 } = require('uuid');
  // Get all
 async function getallsociete(){
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const query = `SELECT s.*,
         d1.codeiso AS devise_reference,
         d2.codeiso AS devise_reporting FROM Societe s

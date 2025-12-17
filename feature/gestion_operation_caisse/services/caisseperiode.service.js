@@ -48,13 +48,14 @@ async function create_caisseperiode(data) {
     data.idcaisse, data.dateperiode, data.soldeouverture, data.soldefermeture,  data.montantphysique, data.ecart, 
     data.statut, data.validatedat, data.validatedby, data.createdat || today, 
     data.createdby || 'System', data.updatedat, data.updatedby);
-  const recorded = await periodemodel.create_caisseperiode(newperiode);
+
+  const recorded = await newperiode.create_caisseperiode(newperiode);
   // si le modèle renvoie une erreur
   if (!recorded.success) {
     throw new Error(recorded.message);
   }
 
-  return recorded.data;
+  return {success: true, data: recorded.data};
 }
 
 async function get_by_idperiode(idperiode) {

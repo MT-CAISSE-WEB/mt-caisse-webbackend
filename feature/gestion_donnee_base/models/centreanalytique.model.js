@@ -85,7 +85,7 @@ class CentreAnalytiqueModel {
             const total = result.recordsets[1][0].total;
             const totalPages = Math.ceil(total / limit);
 
-            // console.log(centres)
+            console.log(centres)
 
             return {page, limit, total, totalPages, data: centres};
         } catch (error) {

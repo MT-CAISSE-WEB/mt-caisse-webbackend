@@ -1,6 +1,8 @@
 const { DateTime, UniqueIdentifier } = require('mssql');
 const db = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
+const {connectInstance, connectDB} = require('../../../config/db');
+
 
 const today = new Date();
 
@@ -42,7 +44,7 @@ async function upserttauxdevise({iddeviseorigine,iddevisedestination,codetauxdev
             .input("codetauxdevise", db.sql.NVarChar,codetauxdevise)
             .input("intitule", db.sql.NVarChar, intitule)
             .input("typecours", db.sql.NVarChar, typecours)
-            .input("datecours", db.sql.DateTime,new Date(datecours))
+            .input("datecours", db.sql.DateTime,new Date())
             .input("coefficient", db.sql.Decimal(18,9), coefficient)
             .input("coefficientinverse", db.sql.Decimal(18,9), coefficientinverse)
             .input("createdby", db.sql.NVarChar, createdby)
@@ -60,6 +62,7 @@ async function upserttauxdevise({iddeviseorigine,iddevisedestination,codetauxdev
         
         
     } catch (error) {
+        console.log(error)
          return {
             success: false,
             status: 500,
@@ -137,7 +140,7 @@ async function deletetauxdevise(idtauxdevise)
     
     try {
         const pool = await connectDB();
-        const query = "DELETE FROM tauxDevise where idtauxdevise = @idtauxdevise";
+        const query = "DELETE FROM tauxdevise where idtauxdevise = @idtauxdevise";
         const result = await pool.request()
         .input('idtauxdevise',db.sql.UniqueIdentifier,idtauxdevise)
         .query(query);

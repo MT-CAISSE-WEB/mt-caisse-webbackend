@@ -100,7 +100,7 @@ async function createdevise(data){
     async function getalldevises(){
         try {
             const pool = await connectDB();
-            const query = "SELECT * FROM Devise";
+            const query = "SELECT * FROM devise";
             const result = await pool.request().query(query);
             return {
                 success :true,

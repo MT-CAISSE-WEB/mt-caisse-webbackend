@@ -1,6 +1,8 @@
 const { DateTime, UniqueIdentifier } = require('mssql');
 const db = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
+const {connectInstance, connectDB} = require('../../../config/db');
+
 
 
 //upsert departement

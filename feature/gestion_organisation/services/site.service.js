@@ -13,7 +13,7 @@ const { v4: uuidv4 } = require('uuid');
                 UPDATE site
                 SET 
                     idsociete = @idsociete,
-                    codeanalytique = @codeanalytique,
+                    idcentreanalytique = @idcentreanalytique,
                     libelle = @libelle,
                     email   = @email,
                     telephone = @telephone,

@@ -13,14 +13,8 @@ module.exports = {
         VALUES (@idtypeoperation, @codtypeoperation, @idoperation, @idperiode, @idsociete, @idsite, @idcaisse, @montant, @taux, @montantref, @createdat, @createdby, @updatedat, @updatedby)
     `,
 
-<<<<<<< HEAD
-    update: `
-        UPDATE TypeOperation 
-        SET codtypeoperation = @codtypeoperation, 
-=======
     update: ` UPDATE TypeOperation
     SET codetypeoperation = @codetypeoperation, 
->>>>>>> main
         idoperation = @idoperation, 
         idcaisse = @idcaisse, 
         montant = @montant, 

@@ -1,17 +1,21 @@
-const {db, sql, connectInstance, connectDB} = require('../../../config/db');
+const { sql, poolPromise, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const dotenv = require('dotenv');
 dotenv.config({path: '../../../config/config.env'});
 const argon2 = require('argon2');
 const jwt = require("jsonwebtoken");
+const db = require('../../../config/db');
+
 
 async function upsertuser(params){
     try {
         const {
             codeutilisateur, idsociete, nom, prenom, adresse, telephone, email,
-            login, password, typeentitesite, typeentitedepartement, typeentitesociete,
+            login, password, idrole, typeentitesite, typeentitedepartement, typeentitesociete,
             acheteur, createdby, updatedby
         } = params;
+
+        console.log(params);
 
         const idutilisateur = uuidv4();
 
@@ -28,6 +32,7 @@ async function upsertuser(params){
                 telephone = @telephone,
                 email = @email,
                 login = @login,
+                idrole = @idrole,
                 password = @password, 
                 typeentitesite = @typeentitesite,
                 typeentitedepartement = @typeentitedepartement,
@@ -42,12 +47,12 @@ async function upsertuser(params){
         BEGIN
             INSERT INTO Utilisateur 
                 (idutilisateur, codeutilisateur, idsociete, nom, prenom, adresse, telephone, email, 
-                 login, password, typeentitesite, typeentitedepartement, typeentitesociete, 
+                 login, password, idrole, typeentitesite, typeentitedepartement, typeentitesociete, 
                  acheteur, createdby, createdat)
             OUTPUT 'insert' AS action, INSERTED.*
             VALUES  
                 (@idutilisateur, @codeutilisateur, @idsociete, @nom, @prenom, @adresse, 
-                 @telephone, @email, @login, @password, @typeentitesite, @typeentitedepartement, 
+                 @telephone, @email, @login, @password, @idrole, @typeentitesite, @typeentitedepartement, 
                  @typeentitesociete, @acheteur, @createdby, GETDATE())
         END`;
 
@@ -63,6 +68,7 @@ async function upsertuser(params){
             .input("telephone", sql.NVarChar, telephone)
             .input("email", sql.NVarChar, email)
             .input("login", sql.NVarChar, login)
+            .input("idrole", sql.Int, idrole)
             .input("password", sql.NVarChar, hashpassword)
             .input("typeentitesite", sql.Int, typeentitesite)
             .input("typeentitedepartement", sql.Int, typeentitedepartement)
@@ -72,6 +78,7 @@ async function upsertuser(params){
             .input("updatedby", sql.NVarChar, updatedby)
             .query(query);
 
+            console.log("Securite - upsert user executed");
         
         // SÉCURITÉ → éviter crash
         if (!result.recordset || result.recordset.length === 0) {
@@ -167,7 +174,7 @@ async function deleteuser(iduser)
 async function login(login, password) {
 
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         
         // Vérifier utilisateur
         const result = await pool.request()
