@@ -349,6 +349,7 @@ BEGIN
     CREATE TABLE Budget (
         idbudget UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codebudget NVARCHAR(24) UNIQUE,
+        libelle NVARCHAR(150),
         idbudgetparent UNIQUEIDENTIFIER NULL,
         typebudget NVARCHAR(10),
         datedebut DATETIME,
