@@ -122,6 +122,7 @@ async function get_all_typeoperations({ page, search, date, status }) {
 }
 
 async function create_typeoperation(data) {
+  console.log(data);
   const today = new Date();
 
   if (!Array.isArray(data.caisses) || data.caisses.length === 0) {
@@ -285,10 +286,52 @@ async function delete_typeoperation(idtypeoperation) {
    }
 }
 
+async function get_soldecaisse() {
+   try {
+    const typeoperation_ = await typeoperation.get_soldecaisse();
+    return typeoperation_;
+   } catch (err) {
+    throw err;
+   }
+}
+
+async function get_operationmax() {
+   try {
+    const typeoperation_ = await typeoperation.get_operationmax();
+    const operations = await Promise.all(
+        typeoperation_.map(async item => {
+            const devise = item.iddevise 
+                ? (await deviseservice.getonedevise(item.iddevise)).data 
+                : null;
+
+            return {
+                idtypeoperation: item.idtypeoperation,
+                codtypeoperation: item.codtypeoperation,
+                idcaisse: item.idcaisse,
+                devise: devise,
+                idperiode: item.idperiode,
+                montant: item.montant,
+                taux: item.taux,
+                montantref: item.montantref,
+                dateperiode: item.dateperiode,
+                codeoperation: item.codeoperation,
+                dateoperation: item.dateoperation
+            };
+        })
+    );
+
+    return operations;
+   } catch (err) {
+    throw err;
+   }
+}
+
 module.exports = {
   get_all_typeoperations,
   get_by_idtypeoperation,
   create_typeoperation,
   update_typeoperation,
-  delete_typeoperation
+  delete_typeoperation,
+  get_soldecaisse,
+  get_operationmax
 };

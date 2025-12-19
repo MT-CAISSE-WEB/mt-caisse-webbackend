@@ -1,6 +1,7 @@
 const { DateTime, UniqueIdentifier } = require('mssql');
 const {db, sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
+const deviseservice = require ("../services/devise.service");
 
  //upsert Societe
    async function upsertsociete({codesociete,iddevisereference,iddevisereporting,raisonsociale,sigle, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby, updatedby }) {
@@ -37,23 +38,6 @@ const { v4: uuidv4 } = require('uuid');
 
         const pool = await connectDB();
         const result = await pool.request()
-<<<<<<< HEAD
-            .input("idsociete", db.sql.UniqueIdentifier, idsociete)
-            .input("codesociete", db.sql.NVarChar, codesociete)
-            .input("iddevisereference", db.sql.NVarChar, iddevisereference)
-            .input("iddevisereporting", db.sql.NVarChar, iddevisereporting)
-            .input("raisonsociale", db.sql.NVarChar, raisonsociale)
-            .input("sigle", db.sql.NVarChar,sigle)
-            .input("rccm", db.sql.NVarChar, rccm)
-            .input("numnui", db.sql.NVarChar, numnui)
-            .input("email", db.sql.NVarChar, email)
-            .input("telephone", db.sql.NVarChar, telephone)
-            .input("logo", db.sql.NVarChar,logo)
-            .input("adresse", db.sql.NVarChar,adresse)
-            .input("suivibudgetaire", db.sql.Int,suivibudgetaire)
-            .input("createdby", db.sql.NVarChar, createdby)
-            .input("updatedby", db.sql.NVarChar, updatedby)
-=======
             .input("idsociete", sql.UniqueIdentifier, idsociete)
             .input("codesociete", sql.NVarChar, codesociete)
             .input("iddevisereference", sql.NVarChar, iddevisereference)
@@ -69,7 +53,6 @@ const { v4: uuidv4 } = require('uuid');
             .input("suivibudgetaire", sql.Int,suivibudgetaire)
             .input("createdby", sql.NVarChar, createdby)
             .input("updatedby", sql.NVarChar, updatedby)
->>>>>>> main
             .query(query);
 
         return {
@@ -94,11 +77,7 @@ const { v4: uuidv4 } = require('uuid');
  // Get all
 async function getallsociete(){
     try {
-<<<<<<< HEAD
-        const pool = await db.poolPromise;
-=======
         const pool = await connectDB();
->>>>>>> main
         const query = `SELECT s.*,
         d1.codeiso AS devise_reference,
         d2.codeiso AS devise_reporting FROM Societe s
@@ -142,16 +121,23 @@ async function getonesociete(idsociete){
         .input('idsociete', sql.UniqueIdentifier,idsociete)
         .query(query);
 
+        const data = result.recordset[0];
+        let devisereporting = null;
+        let devisereferentiel = null;
+        if(data.iddevisereporting){
+            devisereporting = await deviseservice.getonedevise(data.iddevisereporting);
+        }
+        if(data.iddevisereference){
+            devisereferentiel = await deviseservice.getonedevise(data.iddevisereference);
+        }
+
         if(!result){
             return {success:false,status:404,message:"Société non trouvée"};
         }
-
-        console.log(result.recordset[0]);
-
         return {
             success:true,
             status:200,
-            data:result.recordset[0],
+            data: {...data, devisereporting: devisereporting.data, devisereference : devisereferentiel.data},
             message : "Element trouvé avec succès!"}
     } catch (error) {
         return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};

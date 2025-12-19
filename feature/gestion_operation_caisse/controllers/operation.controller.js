@@ -70,3 +70,27 @@ module.exports.delete_typeoperation = asyncHandler(async(req, res, next) => {
     res.status(404).json({ success: false, message: error.message });
   }
 });
+
+/**
+ * Get solde caisse
+ */
+module.exports.get_soldecaisse = asyncHandler(async(req, res, next) => {
+  try {
+    const typeoperation_ = await typeoperationservice.get_soldecaisse();
+    res.json({ success: true, data: typeoperation_ });
+  } catch (error) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * Get operation le plux couteux
+ */
+module.exports.get_operationmax = asyncHandler(async(req, res, next) => {
+  try {
+    const max_op = await typeoperationservice.get_operationmax();
+    res.json({ success: true, data: max_op });
+  } catch (error) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+});

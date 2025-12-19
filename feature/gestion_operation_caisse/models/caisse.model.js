@@ -89,18 +89,12 @@ class caisseModel {
         const offset = (page - 1) * limit;
         try {
             const result = await pool.request()
-<<<<<<< HEAD
-            .input('offset', sql.Int, offset)
-            .input('limit', sql.Int, limit)
-            .query(caisseQueries.getAll);
-=======
                 .input('offset', sql.Int, offset)
                 .input('limit', sql.Int, limit)
                 .input('search', sql.NVarChar, search ? `%${search}%` : null)
                 .input('actif', sql.Int, actif)
                 .query(caisseQueries.getAll);
             
->>>>>>> main
             const caisses = result.recordsets[0];
             const total = result.recordsets[1][0].total;
             const totalPages = Math.ceil(total / limit);

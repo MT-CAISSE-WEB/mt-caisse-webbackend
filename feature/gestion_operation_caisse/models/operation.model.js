@@ -146,6 +146,16 @@ class typeoperationModel {
             console.log(`Erreur de suppression: ${error}`.cyan.bold);
         }
     }
+
+    async get_operationmax(){
+        const pool = await connectDB();
+        try {
+            const result = await pool.request().query(typeoperationQueries.operation);
+            return result.recordset;
+        } catch (error) {
+            console.log(`Erreur de suppression: ${error}`.cyan.bold);
+        }
+    }
 }
 
 

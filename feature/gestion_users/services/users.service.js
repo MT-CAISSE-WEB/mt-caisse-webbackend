@@ -168,12 +168,34 @@ async function login(login, password) {
     try {
         const pool = await connectDB();
 
+        const query =`SELECT u.*, 
+        s.idsociete AS societe_idsociete,
+        s.raisonsociale,
+        
+        dref.iddevise  AS devise_ref_id,
+        dref.codedevise      AS devise_ref_code,
+        dref.intitule  AS devise_ref_intitule ,
+        
+        drep.iddevise  AS devise_rep_id,
+        drep.codedevise  AS devise_rep_code,
+        drep.intitule    AS devise_rep_intitule
+        
+        FROM Utilisateur u
+        INNER JOIN Societe s 
+            ON s.idsociete = u.idsociete
+
+        LEFT JOIN Devise dref 
+            ON dref.iddevise = s.iddevisereference
+
+        LEFT JOIN Devise drep 
+            ON drep.iddevise = s.iddevisereporting
+
+        WHERE u.login = @login`;
+
         // Vérifier utilisateur
         const result = await pool.request()
             .input("login", sql.NVarChar, login)
-            .query("SELECT * FROM Utilisateur WHERE LOGIN=@login");
-
-            console.log(result.recordset);
+            .query(query);
 
         if (result.recordset.length === 0) {
             return {status:404, success: false, message: "Utilisateur introuvable" };
@@ -235,8 +257,8 @@ async function login(login, password) {
         };
 
     } catch (error) {
-        return { status:500, success: false, message: "Erreur serveur : " + error };
-    }
+        return { status:500, success: false, message: "Erreur serveur : " + error };
+    }
 }
 
 
