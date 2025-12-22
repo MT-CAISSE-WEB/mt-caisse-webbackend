@@ -8,9 +8,7 @@ const ErrorResponse = require("../../../shared/utils/errorResponse");
 // OK
 module.exports.get_natures = asyncHandler(async(req, res, next) => {
   try {
-    const page = req.query.page ? parseInt(req.query.page) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit) : 5;
-    const natures = await natureoperationservice.get_all_natures(page, limit);
+    const natures = await natureoperationservice.get_all_natures();
     res.json({ success: true, data: natures });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur", error });

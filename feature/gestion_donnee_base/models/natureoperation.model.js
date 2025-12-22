@@ -39,11 +39,7 @@ const query = `
         c.suivibudgetairemensuel AS compte_suivibudgetairemensuel
         FROM NatureOperation AS n
         LEFT JOIN PlanComptable c ON n.idcompte = c.idcompte
-        ORDER BY codenature
-        OFFSET @offset ROWS
-        FETCH NEXT @limit ROWS ONLY;
-
-        SELECT COUNT(*) AS total FROM NatureOperation;
+        ORDER BY codenature;
     `;
 
 
@@ -100,21 +96,16 @@ class NatureOperationModel {
 
 
     // Rechercher toutes les natures d'opération
-    async get_allnatures (page = 1, limit = 50) {
+    async get_allnatures () {
         const pool = await connectDB();
-        const offset = (page - 1) * limit;
     
         try {
             const result = await pool.request()
-            .input('offset', sql.Int, offset)
-            .input('limit', sql.Int, limit)
             .query(query);
 
             const natures = result.recordsets[0];
-            const total = result.recordsets[1][0].total;
-            const totalPages = Math.ceil(total / limit);
 
-            return {page, limit, total, totalPages, data: natures};
+            return { data: natures };
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         }

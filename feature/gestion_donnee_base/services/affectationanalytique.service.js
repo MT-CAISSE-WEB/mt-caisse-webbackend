@@ -1,5 +1,4 @@
 const affectationanalytiquemodel = require("../models/affectationanalytique.model");
-const PaginationModel = require("../../../shared/utils/model");
 const { v4: uuidv4 } = require('uuid');
 
 const societemodel = require("../../gestion_organisation/models/societe.model");
@@ -12,8 +11,8 @@ let affectation = new affectationanalytiquemodel();
 
 let affectations = []; 
 
-async function get_all_affectations(page = 1, limit = 5) {
-    const result = await affectation.get_allaffectations(page, limit);
+async function get_all_affectations() {
+    const result = await affectation.get_allaffectations();
     affectations = result.data.map(item => new affectationanalytiquemodel(
     item.idaffectation,
     item.codeaffectation,
@@ -50,7 +49,7 @@ async function get_all_affectations(page = 1, limit = 5) {
       item.nature_idnature, item.natureoperation_codenature, item.natureoperation_libellenature) : null
   ));
 
-  return new PaginationModel(result.page, result.limit, result.total, affectations);
+  return affectations;
 
 }
 

@@ -1,5 +1,4 @@
 const natureoperationmodel = require("../models/natureoperation.model");
-const PaginationModel = require("../../../shared/utils/model");
 const { v4: uuidv4 } = require('uuid');
 
 const plancomptablemodel = require("../models/plancomptable.model");
@@ -8,8 +7,8 @@ let nature = new natureoperationmodel();
 
 let natures = []; 
 
-async function get_all_natures(page = 1, limit = 5) {
-    const result = await nature.get_allnatures(page, limit);
+async function get_all_natures() {
+    const result = await nature.get_allnatures();
     natures = result.data.map(item => new natureoperationmodel(
     item.idnature,
     item.codenature,
@@ -31,7 +30,7 @@ async function get_all_natures(page = 1, limit = 5) {
       item.compte_suivibudgetairemensuel) : null,
   ));
 
-  return new PaginationModel(result.page, result.limit, result.total, natures);
+  return natures;
 
 }
 

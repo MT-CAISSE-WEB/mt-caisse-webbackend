@@ -1226,3 +1226,49 @@ BEGIN
 		PRIMARY KEY (prefixe, annee, mois, jour)
 	);
 END
+
+
+-- AJOUT
+-- ============================================
+-- AffectationNatureCentre (dépend de Societe)
+-- ============================================
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AffectationNatureCentre')
+BEGIN
+    CREATE TABLE AffectationNatureCentre (
+        idaffnaturecentre UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idsociete UNIQUEIDENTIFIER,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        idnature UNIQUEIDENTIFIER,
+        idcentreanalytique UNIQUEIDENTIFIER,
+        CONSTRAINT UQ_Nature_Centre UNIQUE (idnature, idcentreanalytique),
+        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
+        FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+    );
+END
+
+-- ============================================
+-- AffectationDepartementNature (dépend de Societe)
+-- ============================================
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AffectationDepartementNature')
+BEGIN
+    CREATE TABLE AffectationDepartementNature (
+        idaffdepartementnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idsociete UNIQUEIDENTIFIER,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        iddepartement UNIQUEIDENTIFIER,
+        idnature UNIQUEIDENTIFIER,
+        CONSTRAINT UQ_Dept_Nature UNIQUE (iddepartement, idnature),
+        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
+        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+    );
+END

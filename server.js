@@ -32,6 +32,8 @@ const plancomptableroutes = require("./feature/gestion_donnee_base/routes/planco
 const natureoperationroutes = require("./feature/gestion_donnee_base/routes/natureoperation.route");
 const centreanalytiqueroutes = require("./feature/gestion_donnee_base/routes/centreanalytique.route");
 const affectationanalytiqueroutes = require("./feature/gestion_donnee_base/routes/affectationanalytique.route");
+const affnaturecentreroutes = require("./feature/gestion_donnee_base/routes/affectationnaturecentre.route");
+
 
 
 // Budget
@@ -125,8 +127,8 @@ app.use("/API/circuitvalidation", circuitvalidationroute);
 app.use("/API/validationdemande", validationdemanderoute);
 
 
-// console.log("PORT", process.env.PORT);
-// console.log("TEXT", process.env.text);
+console.log("PORT", process.env.PORT);
+console.log("TEXT", process.env.text);
 
 // GESTION DES ERREURS 
 app.use(errorHandler);
@@ -156,9 +158,10 @@ app.use("/API/plancomptable", plancomptableroutes);
 app.use("/API/natureoperation", natureoperationroutes);
 app.use("/API/centreanalytique", centreanalytiqueroutes);
 app.use("/API/affectationanalytique", affectationanalytiqueroutes);
+app.use("/API/affectationnaturecentre", affnaturecentreroutes);
 
 
-// Test SQL Server connection Sequelize
+// Test SQL Server connection Sequelize 
 sequelize
   .authenticate()
   .then(() => console.log('Connexion SQL Server OK sequelize✔️'))
