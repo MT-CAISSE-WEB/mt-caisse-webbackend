@@ -189,16 +189,24 @@ try{
         drep.intitule    AS devise_rep_intitule, 
         r.idrole,
         r.code,
-        r.libelle
-        
+        r.libelle,
+        d.iddepartement,
+        d.codedept,
+        d.libelle as libelledept
+
         FROM Utilisateur u
         INNER JOIN Societe s 
             ON s.idsociete = u.idsociete
         
-        inner join utilisateur_role ur 
+        left join utilisateur_role ur 
         on ur.idutilisateur=u.idutilisateur
 
-        inner join role r on ur.idrole = r.idrole
+        left join role r on ur.idrole = r.idrole
+
+        left join utilisateurdepartement ud
+        on ud.idutilisateur = u.idutilisateur
+
+        left join departement d on ud.iddepartement = d.iddepartement
 
         LEFT JOIN Devise dref 
             ON dref.iddevise = s.iddevisereference
@@ -208,7 +216,6 @@ try{
 
         WHERE u.login = @login`;
 
-        // Vérifier utilisateur
         const result = await pool.request()
             .input("login", db.sql.NVarChar(50), login)
             .query(query);
@@ -234,18 +241,37 @@ try{
             devise_ref_intitule : result.recordset[0].devise_ref_intitule,
             devise_rep_code : result.recordset[0].devise_ref_code,
             devise_rep_intitule : result.recordset[0].devise_ref_intitule,
-            roles: []
+            roles: [],
+            departements : []
         };
 
-        result.recordset.forEach(row => {
-        if (row.idrole!==null) {
-            user.roles.push({
-            idrole: row.idrole,
-            coderole : row.code,
-            libelle: row.libelle
+            const roles = {};
+            const departements = {};
+
+            result.recordset.forEach(row => {
+
+            if (row.idrole) {
+                roles[row.idrole] = {
+                idrole: row.idrole,
+                code: row.code,
+                libelle: row.libelle
+                };
+            }
+
+            if (row.iddepartement) {
+                departements[row.iddepartement] = {
+                iddepartement: row.iddepartement,
+                codedept: row.codedept,
+                libelle: row.libelledept
+                };
+            }
             });
-        }
-        });
+
+            user.roles = Object.values(roles);
+            user.departements = Object.values(departements);
+
+
+
 
 
 
@@ -261,7 +287,8 @@ try{
         const payload = {
             id: user.idutilisateur,
             login: user.login,
-            roles : user.roles.map(r => r.coderole)
+            roles : user.roles.map(r => r.coderole),
+            departements : user.departements.map(d=>d.codedept)
         };
 
 
@@ -273,7 +300,7 @@ try{
             process.env.JWT_SECRET,
             { expiresIn: "1d" }
         );
-
+        
         // Refresh Token : long
         const refreshToken = jwt.sign(
             payload,
@@ -290,7 +317,9 @@ try{
             .query(`
                 INSERT INTO REFRESH_TOKEN(idutilisateur, token)
                 VALUES (@userid, @token)
-            `);   
+            `);  
+            
+            console.log(user);
 
         return {
             success: true,
