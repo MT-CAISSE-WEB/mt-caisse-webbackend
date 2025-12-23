@@ -1,7 +1,8 @@
 const dotenv = require('dotenv');
-dotenv.config({path: './config/config.env'});
+dotenv.config({path: './config/.env'});
 const sql = require("mssql");
 const fs = require('fs');
+
 
 const config = {
   user: process.env.DB_USER,
@@ -10,30 +11,18 @@ const config = {
   database: process.env.DB_NAME,
   options: {
     encrypt: process.env.DB_ENCRYPT === 'true', // true si Azure
-    trustServerCertificate: false,
-    //instanceName: process.env.DB_INSTANCE || undefined, // Nom de l'instance SQL Server, si applicable
-  },
-};
-
-const initconfig = {
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  server: process.env.DB_SERVER, // ou l’adresse IP du serveur
-  database: process.env.DB_NAME,
-  options: {
-    encrypt: process.env.DB_ENCRYPT === 'true', // true si Azure
-    trustServerCertificate: false,
-    //instanceName: process.env.DB_INSTANCE || undefined, // Nom de l'instance SQL Server, si applicable
+    trustServerCertificate: true,
+    // instanceName: process.env.DB_INSTANCE || undefined, // Nom de l'instance SQL Server, si applicable
   },
 };
 
 const createDB = async () =>{
   try {
-    const db = await sql.connect({...config , database : 'DEVCAISSE'});
-    const table = fs.readFileSync("./config/test.sql", "utf8");
+    const db = await sql.connect({...config , database : config.database});
+    const table = fs.readFileSync("./config/init.sql", "utf8");
     await db.request().query(table);
     db.close();
-    console.log(`Tables créees`.yellow.bold);
+    // console.log(`Tables créees`.yellow.bold);
   } catch (error) {
     console.log(`Erreur de création des tables: ${error}`.red.bold);
   }
@@ -41,11 +30,11 @@ const createDB = async () =>{
 
 const connectDB = async () => {
   try {
-    const db = await sql.connect({...config , database : 'DEVCAISSE'});
+    const db = await sql.connect({...config , database : config.database});
     console.log(`Connecté à la base de données`.cyan.bold);
     return db;
   } catch (error) {
-    console.log(`Erreur de connexion: ${error}`.red.bold);
+    console.log(`${error}`.red.bold);
     throw error;
   }
 }
@@ -53,22 +42,18 @@ const connectDB = async () => {
 const connectInstance = async () => {
   try {
     const pool = await sql.connect(config);
-    console.log(`Connecté à SQL Server`.cyan.bold);
-    /* juste une connexion me suffit 
+    // console.log(`Connecté à SQL Server`.cyan.bold);
     const dbPool = fs.readFileSync("./config/db.sql", "utf8");
     try{
       await pool.request().query(dbPool);
-      //createDB();
+      createDB();
     }catch (err){
-      console.log(`Erreur de création de la base de donnée: ${err}`.cyan.bold);
-    }*/
-   return pool;
+      console.log(`${err}`.cyan.bold);
+    }
   } catch (err) {
-    console.log(`Erreur de connexion: ${err}`.cyan.bold);
+    console.log(`${err}`.cyan.bold);
   }
 }
-
-
 
 //un pool spécifique pour les opérations de la base de données
 const poolPromise = new sql.ConnectionPool(config)
@@ -79,25 +64,27 @@ const poolPromise = new sql.ConnectionPool(config)
   })
   .catch(err => {
     console.log('Erreur de connexion SQL Server', err);
-    throw err;
+    throw err;
   });
 
 
-
   const initdatabase = async () => {
+    
       try {
-         const masterpool = await sql.connect(initconfig);
+
+         const masterpool = await sql.connect(config);
+
 
           await masterpool.request().query(`
-          IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = 'DEVCAISSE')
+          IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '${config.database}')
           BEGIN
-            CREATE DATABASE DEVCAISSE;
+            CREATE DATABASE ${config.database} ;
           END
         `);
 
-         console.log("Base DEVCAISSE vérifiée/créée");
+         console.log("Base  vérifiée/créée");
 
-         const dbPool = await sql.connect({ ...config, database: "DEVCAISSE" });
+         const dbPool = await sql.connect({ ...config, database: config.database });
          const tablesScript = fs.readFileSync("./config/init.sql", "utf8");
          await dbPool.request().batch(tablesScript);
 
@@ -109,4 +96,4 @@ const poolPromise = new sql.ConnectionPool(config)
       }
   }
 
-module.exports =  {connectInstance,connectDB,initdatabase,poolPromise,sql};
+module.exports =  {connectInstance,connectDB, initdatabase,poolPromise,sql};

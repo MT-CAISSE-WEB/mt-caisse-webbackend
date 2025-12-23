@@ -1,24 +1,28 @@
-const db = require('../../../config/db');
+const { sql, poolPromise, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const dotenv = require('dotenv');
 dotenv.config({path: '../../../config/config.env'});
-const argon2 = require("argon2");
+const argon2 = require('argon2');
 const jwt = require("jsonwebtoken");
+const db = require('../../../config/db');
+
 
 async function upsertuser(params){
     try {
         const {
             codeutilisateur, idsociete, nom, prenom, adresse, telephone, email,
-            login, password, typeentitesite, typeentitedepartement, typeentitesociete,
+            login, password, idrole, typeentitesite, typeentitedepartement, typeentitesociete,
             acheteur, createdby, updatedby
         } = params;
+
+        console.log(params);
 
         const idutilisateur = uuidv4();
 
         const hashpassword = await argon2.hash(password);
 
         const query = `
-        IF EXISTS (SELECT 1 FROM utilisateur WHERE codeutilisateur = @codeutilisateur)
+        IF EXISTS (SELECT 1 FROM Utilisateur WHERE codeutilisateur = @codeutilisateur)
         BEGIN
             UPDATE Utilisateur SET 
                 idsociete = @idsociete,
@@ -28,6 +32,7 @@ async function upsertuser(params){
                 telephone = @telephone,
                 email = @email,
                 login = @login,
+                idrole = @idrole,
                 password = @password, 
                 typeentitesite = @typeentitesite,
                 typeentitedepartement = @typeentitedepartement,
@@ -40,38 +45,41 @@ async function upsertuser(params){
         END 
         ELSE
         BEGIN
-            INSERT INTO UTILISATEUR 
+            INSERT INTO Utilisateur 
                 (idutilisateur, codeutilisateur, idsociete, nom, prenom, adresse, telephone, email, 
-                 login, password, typeentitesite, typeentitedepartement, typeentitesociete, 
+                 login, password, idrole, typeentitesite, typeentitedepartement, typeentitesociete, 
                  acheteur, createdby, createdat)
             OUTPUT 'insert' AS action, INSERTED.*
             VALUES  
                 (@idutilisateur, @codeutilisateur, @idsociete, @nom, @prenom, @adresse, 
-                 @telephone, @email, @login, @password, @typeentitesite, @typeentitedepartement, 
+                 @telephone, @email, @login, @password, @idrole, @typeentitesite, @typeentitedepartement, 
                  @typeentitesociete, @acheteur, @createdby, GETDATE())
         END`;
 
-        const pool = await db.poolPromise;
-
+        
+        const pool = await connectDB();
         const result = await pool.request()
-            .input("idutilisateur", db.sql.UniqueIdentifier, idutilisateur)
-            .input("codeutilisateur", db.sql.NVarChar, codeutilisateur)
-            .input("idsociete", db.sql.UniqueIdentifier, idsociete)
-            .input("nom", db.sql.NVarChar, nom)
-            .input("prenom", db.sql.NVarChar, prenom)
-            .input("adresse", db.sql.NVarChar, adresse)
-            .input("telephone", db.sql.NVarChar, telephone)
-            .input("email", db.sql.NVarChar, email)
-            .input("login", db.sql.NVarChar, login)
-            .input("password", db.sql.NVarChar, hashpassword)
-            .input("typeentitesite", db.sql.Int, typeentitesite)
-            .input("typeentitedepartement", db.sql.Int, typeentitedepartement)
-            .input("typeentitesociete", db.sql.Int, typeentitesociete)
-            .input("acheteur", db.sql.Int, acheteur)
-            .input("createdby", db.sql.NVarChar, createdby)
-            .input("updatedby", db.sql.NVarChar, updatedby)
+            .input("idutilisateur", sql.UniqueIdentifier, idutilisateur)
+            .input("codeutilisateur", sql.NVarChar, codeutilisateur)
+            .input("idsociete", sql.UniqueIdentifier, idsociete)
+            .input("nom", sql.NVarChar, nom)
+            .input("prenom", sql.NVarChar, prenom)
+            .input("adresse", sql.NVarChar, adresse)
+            .input("telephone", sql.NVarChar, telephone)
+            .input("email", sql.NVarChar, email)
+            .input("login", sql.NVarChar, login)
+            .input("idrole", sql.Int, idrole)
+            .input("password", sql.NVarChar, hashpassword)
+            .input("typeentitesite", sql.Int, typeentitesite)
+            .input("typeentitedepartement", sql.Int, typeentitedepartement)
+            .input("typeentitesociete", sql.Int, typeentitesociete)
+            .input("acheteur", sql.Int, acheteur)
+            .input("createdby", sql.NVarChar, createdby)
+            .input("updatedby", sql.NVarChar, updatedby)
             .query(query);
 
+            console.log("Securite - upsert user executed");
+        
         // SÉCURITÉ → éviter crash
         if (!result.recordset || result.recordset.length === 0) {
             return {
@@ -104,11 +112,11 @@ async function upsertuser(params){
 
 async function getalluser(){
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const query = `SELECT u.*,
        s.raisonsociale as societe
-       from utilisateur u
-       left join societe s on u.idsociete = s.idsociete`;
+       from Utilisateur u
+       left join Societe s on u.idsociete = s.idsociete`;
         const result = await pool.request().query(query);
 
         return {
@@ -122,36 +130,36 @@ async function getalluser(){
 }
 
 //Get one
-    async function getoneuser(iduser){
-        try {
-            const pool = await db.poolPromise;
-            const query = "SELECT * FROM utilisateur where idutilisateur = @idutilisateur";
-            const result = await pool.request()
-            .input('idutilisateur',db.sql.UniqueIdentifier,iduser)
-            .query(query);
+async function getoneuser(iduser){
+    try {
+        const pool = await connectDB();
+        const query = "SELECT * FROM utilisateur where idutilisateur = @idutilisateur";
+        const result = await pool.request()
+        .input('idutilisateur',db.sql.UniqueIdentifier,iduser)
+        .query(query);
 
-            if(!result){
-                return {success:false,status:404,message:"Utilisateur non trouvé"};
-            }
-
-            return {
-                success:true,
-                status:200,
-                data:result.recordset[0],
-                message : "Element trouvé avec succès!"}
-        } catch (error) {
-            return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
+        if(!result){
+            return {success:false,status:404,message:"Utilisateur non trouvé"};
         }
+
+        return {
+            success:true,
+            status:200,
+            data:result.recordset[0],
+            message : "Element trouvé avec succès!"}
+    } catch (error) {
+        return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
     }
+}
 
 async function deleteuser(iduser)
 {
           
           try {
-              const pool = await db.poolPromise;
+              const pool = await connectDB();
               const query = "DELETE FROM utilisateur where idutilisateur = @idutilisateur";
               const result = await pool.request()
-              .input('idutilisateur',db.sql.UniqueIdentifier,iduser)
+              .input('idutilisateur', sql.UniqueIdentifier,iduser)
               .query(query);
               return {success:true,status:200,message:"Suppression effectuée avec succès!"}
           } catch (error) {
@@ -164,8 +172,8 @@ async function deleteuser(iduser)
 //login
 // LOGIN
 async function login(login, password) {
-    try {
-        const pool = await db.poolPromise;
+try{
+    const pool = await connectDB();
 
         const query =`SELECT u.*, 
         s.idsociete,
@@ -266,8 +274,6 @@ async function login(login, password) {
             { expiresIn: "1d" }
         );
 
-      
-
         // Refresh Token : long
         const refreshToken = jwt.sign(
             payload,
@@ -302,40 +308,40 @@ async function login(login, password) {
 
 
 async function refreshtoken (refreshToken){
-      if (!refreshToken) {
-            return { status: 401, success: false, message: "Refresh token manquant" };
+    if (!refreshToken) {
+        return { status: 401, success: false, message: "Refresh token manquant" };
+    }
+
+    try {
+            const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET_REFRESH);
+
+        const pool = await connectDB();
+
+        // Récupération liste
+        const result = await pool.request().query("SELECT * FROM REFRESH_TOKEN");
+
+        const found = result.recordset.find(rt =>
+            argon2.verify(rt.token, refreshToken)
+        );
+
+        if (!found) {
+            return { status: 403, success: false, message: "Refresh token invalide" };
         }
 
-        try {
-              const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET_REFRESH);
+        const newToken = jwt.sign(
+            { id: decoded.id, login: decoded.login },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        );
 
-            const pool = await db.poolPromise;
-
-            // Récupération liste
-            const result = await pool.request().query("SELECT * FROM REFRESH_TOKEN");
-
-            const found = result.recordset.find(rt =>
-                argon2.verify(rt.token, refreshToken)
-            );
-
-            if (!found) {
-                return { status: 403, success: false, message: "Refresh token invalide" };
-            }
-
-            const newToken = jwt.sign(
-                { id: decoded.id, login: decoded.login },
-                process.env.JWT_SECRET,
-                { expiresIn: "1d" }
-            );
-
-            return {
-                status: 200,
-                success: true,
-                token: newToken
-            };
-        } catch (error) {
-              return { status: 500, success: false, message: "Erreur serveur" };
-        }
+        return {
+            status: 200,
+            success: true,
+            token: newToken
+        };
+    } catch (error) {
+            return { status: 500, success: false, message: "Erreur serveur" };
+    }
 }
 
 async function logout(refreshToken){
@@ -344,7 +350,7 @@ async function logout(refreshToken){
         }
 
         try {
-            const pool = await db.poolPromise;
+            const pool = await connectDB();
 
             // Supprimer le refresh token lié à l'utilisateur
             await pool.request()
@@ -355,18 +361,18 @@ async function logout(refreshToken){
         } catch (error) {
             return { status: 500, success: false, message: "Erreur lors du logout" };
         }
-    }
+}
 
 
 
-    module.exports = {
-        upsertuser,
-        getalluser,
-        getoneuser,
-        deleteuser,
-        login,
-        refreshtoken,
-        logout
-    }
+module.exports = {
+    upsertuser,
+    getalluser,
+    getoneuser,
+    deleteuser,
+    login,
+    refreshtoken,
+    logout
+}
 
 

@@ -1,6 +1,8 @@
 const { DateTime, UniqueIdentifier } = require('mssql');
 const db = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
+const {connectInstance, connectDB} = require('../../../config/db');
+
 
 const today = new Date();
 
@@ -34,7 +36,7 @@ async function upserttauxdevise({iddeviseorigine,iddevisedestination,codetauxdev
             END
         `;
 
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const result = await pool.request()
             .input("idtauxdevise", db.sql.UniqueIdentifier, idtauxdevise)
             .input("iddeviseorigine", db.sql.UniqueIdentifier,iddeviseorigine)
@@ -42,7 +44,7 @@ async function upserttauxdevise({iddeviseorigine,iddevisedestination,codetauxdev
             .input("codetauxdevise", db.sql.NVarChar,codetauxdevise)
             .input("intitule", db.sql.NVarChar, intitule)
             .input("typecours", db.sql.NVarChar, typecours)
-            .input("datecours", db.sql.DateTime,new Date(datecours))
+            .input("datecours", db.sql.DateTime,new Date())
             .input("coefficient", db.sql.Decimal(18,9), coefficient)
             .input("coefficientinverse", db.sql.Decimal(18,9), coefficientinverse)
             .input("createdby", db.sql.NVarChar, createdby)
@@ -60,6 +62,7 @@ async function upserttauxdevise({iddeviseorigine,iddevisedestination,codetauxdev
         
         
     } catch (error) {
+        console.log(error)
          return {
             success: false,
             status: 500,
@@ -71,7 +74,7 @@ async function upserttauxdevise({iddeviseorigine,iddevisedestination,codetauxdev
 // Get all
 async function getalltauxdevises(){
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const query =`
     SELECT 
         t.*, 
@@ -94,7 +97,7 @@ async function getalltauxdevises(){
 
 async function getalldevisesactif(){
     try {
-          const pool = await db.poolPromise;
+          const pool = await connectDB();
           const query = "SELECT * FROM devise where actif=1"; 
           const result = await pool.request().query(query);
          return {
@@ -111,7 +114,7 @@ async function getalldevisesactif(){
 //Get one
 async function getonetauxdevise(idtauxdevise){
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const query = "SELECT * FROM tauxDevise where idtauxdevise = @idtauxdevise";
         const result = await pool.request()
         .input('idtauxdevise',db.sql.UniqueIdentifier,idtauxdevise)
@@ -136,8 +139,8 @@ async function deletetauxdevise(idtauxdevise)
 {
     
     try {
-        const pool = await db.poolPromise;
-        const query = "DELETE FROM tauxDevise where idtauxdevise = @idtauxdevise";
+        const pool = await connectDB();
+        const query = "DELETE FROM tauxdevise where idtauxdevise = @idtauxdevise";
         const result = await pool.request()
         .input('idtauxdevise',db.sql.UniqueIdentifier,idtauxdevise)
         .query(query);

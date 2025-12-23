@@ -1,22 +1,19 @@
 const { DateTime, UniqueIdentifier } = require('mssql');
-const db = require('../../../config/db');
+const {db, sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 
-
-
-
  //upsert Site
-   async function upsertsite({idsociete,codesite,codeanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdby, updatedby }) {
+   async function upsertsite({idsociete,codesite,idcentreanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdby, updatedby }) {
     try {
         const idsite = uuidv4();
 
         const query = `
-            IF EXISTS (SELECT 1 FROM site WHERE codesite = @codesite)
+            IF EXISTS (SELECT 1 FROM Site WHERE codesite = @codesite)
             BEGIN
                 UPDATE site
                 SET 
                     idsociete = @idsociete,
-                    codeanalytique = @codeanalytique,
+                    idcentreanalytique = @idcentreanalytique,
                     libelle = @libelle,
                     email   = @email,
                     telephone = @telephone,
@@ -29,25 +26,25 @@ const { v4: uuidv4 } = require('uuid');
             END
             ELSE
             BEGIN
-                INSERT INTO site (idsite,idsociete,codesite,codeanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdby,createdat)
+                INSERT INTO Site (idsite,idsociete,codesite,idcentreanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdby,createdat)
                 OUTPUT INSERTED.*
-                VALUES (@idsite,@idsociete,@codesite,@codeanalytique,@libelle ,@email,@telephone,@adresse,@estcentreanalytique,@createdby,GETDATE())
+                VALUES (@idsite,@idsociete,@codesite,@idcentreanalytique,@libelle ,@email,@telephone,@adresse,@estcentreanalytique,@createdby,GETDATE())
             END
         `;
 
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const result = await pool.request()
-            .input("idsite", db.sql.UniqueIdentifier, idsite)
-            .input("idsociete", db.sql.UniqueIdentifier,idsociete)
-            .input("codesite", db.sql.NVarChar, codesite)
-            .input("codeanalytique", db.sql.UniqueIdentifier,codeanalytique)
-            .input("libelle", db.sql.NVarChar,libelle)
-            .input("email", db.sql.NVarChar,email)
-            .input("telephone", db.sql.NVarChar,telephone)
-            .input("adresse", db.sql.NVarChar,adresse)
-            .input("estcentreanalytique", db.sql.Int, estcentreanalytique)
-            .input("createdby", db.sql.NVarChar, createdby)
-            .input("updatedby", db.sql.NVarChar, updatedby)
+            .input("idsite", sql.UniqueIdentifier, idsite)
+            .input("idsociete", sql.UniqueIdentifier,idsociete)
+            .input("codesite", sql.NVarChar, codesite)
+            .input("idcentreanalytique", sql.UniqueIdentifier,idcentreanalytique)
+            .input("libelle", sql.NVarChar,libelle)
+            .input("email", sql.NVarChar,email)
+            .input("telephone", sql.NVarChar,telephone)
+            .input("adresse", sql.NVarChar,adresse)
+            .input("estcentreanalytique", sql.Int, estcentreanalytique)
+            .input("createdby", sql.NVarChar, createdby)
+            .input("updatedby", sql.NVarChar, updatedby)
             .query(query);
 
         return {
@@ -71,7 +68,7 @@ const { v4: uuidv4 } = require('uuid');
 // Get all
 async function getallsite(){
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const query = "SELECT s.*,so.raisonsociale FROM Site s LEFT JOIN Societe so ON s.idsociete = so.idsociete";
         const result = await pool.request().query(query);
         return {
@@ -87,10 +84,10 @@ async function getallsite(){
 //Get one
 async function getonesite(idsite){
     try {
-        const pool = await db.poolPromise;
+        const pool = await connectDB();
         const query = "SELECT * FROM Site where idsite = @idsite";
         const result = await pool.request()
-        .input('idsite',db.sql.UniqueIdentifier,idsite)
+        .input('idsite', sql.UniqueIdentifier,idsite)
         .query(query);
 
         if(!result){
@@ -112,8 +109,8 @@ async function getonesite(idsite){
   {
       
       try {
-          const pool = await db.poolPromise;
-          const query = "DELETE FROM Site where idsite = @idsite";
+          const pool = await db.connectDB();
+          const query = "DELETE FROM Sites where idsite = @idsite";
           const result = await pool.request()
           .input('idsite',db.sql.UniqueIdentifier,idsite)
           .query(query);
