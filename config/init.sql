@@ -120,15 +120,15 @@ BEGIN
 		typeentitedepartement INT DEFAULT 0,
 		typeentitesociete INT DEFAULT 0,
 		acheteur INT DEFAULT 0,
-		idrole INT DEFAULT 0,
         createdat Datetime,
 		createdby NVARCHAR(50),
 		updatedat Datetime,
 		updatedby NVARCHAR(50),
-		foreign key (idsociete) references Societe(idsociete),
-		foreign key (idrole) references role(idrole)
+		foreign key (idsociete) references Societe(idsociete)
     );
 END
+
+
 ---Ajout role et permission à completer chez vous
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'role')
 BEGIN
@@ -140,6 +140,21 @@ CREATE TABLE role (
     createdat Datetime,
 	updatedat Datetime,
 	updatedby NVARCHAR(50)
+);
+END
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'utilisateur_role')
+BEGIN
+CREATE TABLE utilisateur_role (
+    idutilisateur UNIQUEIDENTIFIER,
+    idrole INT NOT NULL,
+	createdby NVARCHAR(50),
+    createdat Datetime,
+	updatedat Datetime,
+	updatedby NVARCHAR(50),
+    PRIMARY KEY (idutilisateur, idrole),
+    FOREIGN KEY (idrole) REFERENCES role(idrole),
+    FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur)
 );
 END
 

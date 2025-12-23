@@ -24,5 +24,27 @@ function authentificatetoken(req, res, next) {
     });
 }
 
+function authorizeRoles(...allowedRoles) {
+ 
+  return (req, res, next) => {
+    if (!req.user) 
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
+    const userRoles = req.user.roles || [];
 
-module.exports = {authentificatetoken};
+    console.log(req.user);
+
+    const allowedRolesLower = allowedRoles.map(r => r.toLowerCase());
+    const hasRole = userRoles.some(role => allowedRolesLower.includes(role.toLowerCase()));
+
+    if (!hasRole) {
+      return res.status(403).json({ message: "Accès refusé : rôle non autorisé" });
+    }
+
+    next();
+  };
+}
+
+
+
+
+module.exports = {authentificatetoken,authorizeRoles};

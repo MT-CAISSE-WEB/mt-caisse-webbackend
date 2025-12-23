@@ -21,6 +21,7 @@ const userroute = require('./feature/gestion_users/routes/users.route');
 const roleroute = require('./feature/gestion_users/routes/role.route');
 const permissionroute = require('./feature/gestion_users/routes/permission.route');
 const rolepermissionroute = require('./feature/gestion_users/routes/role_permission.route');
+const utilisateur_role = require('./feature/gestion_users/routes/utilisateur_role.route');
 
 const db = require('./config/db');
 
@@ -92,6 +93,7 @@ app.use('/API',userroute);
 app.use('/API',roleroute);
 app.use('/API',permissionroute);
 app.use('/API',rolepermissionroute);
+app.use('/API',utilisateur_role);
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {

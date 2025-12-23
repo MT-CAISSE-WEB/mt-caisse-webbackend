@@ -25,8 +25,8 @@ module.exports.getonerole = asyncHandler (async(req,res, next)=>{
 
 module.exports.upsertrole = asyncHandler (async(req,res, next)=>{
     try {
-        const {code,description,createdby,updatedby} = req.body;
-        const upsertrole = await roleservice.upsertrole({code,description,createdby,updatedby})
+        const {code,libelle,createdby,updatedby} = req.body;
+        const upsertrole = await roleservice.upsertrole({code,libelle,createdby,updatedby})
         res.status(upsertrole.status).json({success: upsertrole.success,message:upsertrole.message, data: upsertrole.data});
     } catch (error) {
         res.status(500).json({ success: false, message: "Erreur serveur", error });

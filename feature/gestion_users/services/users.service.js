@@ -167,20 +167,82 @@ async function login(login, password) {
     try {
         const pool = await db.poolPromise;
 
+        const query =`SELECT u.*, 
+        s.idsociete,
+        s.codesociete,
+        s.raisonsociale,
+        
+        dref.iddevise  AS devise_ref_id,
+        dref.codedevise      AS devise_ref_code,
+        dref.intitule  AS devise_ref_intitule ,
+        
+        drep.iddevise  AS devise_rep_id,
+        drep.codedevise      AS devise_rep_code,
+        drep.intitule    AS devise_rep_intitule, 
+        r.idrole,
+        r.code,
+        r.libelle
+        
+        FROM Utilisateur u
+        INNER JOIN Societe s 
+            ON s.idsociete = u.idsociete
+        
+        inner join utilisateur_role ur 
+        on ur.idutilisateur=u.idutilisateur
+
+        inner join role r on ur.idrole = r.idrole
+
+        LEFT JOIN Devise dref 
+            ON dref.iddevise = s.iddevisereference
+
+        LEFT JOIN Devise drep 
+            ON drep.iddevise = s.iddevisereporting
+
+        WHERE u.login = @login`;
+
         // Vérifier utilisateur
         const result = await pool.request()
-            .input("login", db.sql.NVarChar, login)
-            .query("SELECT * FROM Utilisateur WHERE LOGIN=@login");
+            .input("login", db.sql.NVarChar(50), login)
+            .query(query);
 
         if (result.recordset.length === 0) {
             return {status:404, success: false, message: "Utilisateur introuvable" };
         }
 
+        const userdb = result.recordset[0];
+        //const user = result.recordset[0];
+        const user = {
+            codesociete :  result.recordset[0].codesociete,
+            raisonsociale : result.recordset[0].raisonsociale,
+            idutilisateur: result.recordset[0].idutilisateur,
+            login: result.recordset[0].login,
+            nom: result.recordset[0].nom,
+            prenom: result.recordset[0].prenom,
+            typeentitesociete: result.recordset[0].typeentitesociete,
+            typeentitesite : result.recordset[0].typeentitesite,
+            typeentitedepartement : result.recordset[0].typeentitedepartement,
+            acheteur : result.recordset[0].acheteur,
+            devise_ref_code : result.recordset[0].devise_ref_code,
+            devise_ref_intitule : result.recordset[0].devise_ref_intitule,
+            devise_rep_code : result.recordset[0].devise_ref_code,
+            devise_rep_intitule : result.recordset[0].devise_ref_intitule,
+            roles: []
+        };
 
-        const user = result.recordset[0];
+        result.recordset.forEach(row => {
+        if (row.idrole!==null) {
+            user.roles.push({
+            idrole: row.idrole,
+            coderole : row.code,
+            libelle: row.libelle
+            });
+        }
+        });
+
+
 
         // Vérifier mot de passe
-        const isOk = await argon2.verify(user.password, password);
+        const isOk = await argon2.verify(userdb.password, password);
         if (!isOk) {
             return {status:500, success: false, message: "Mot de passe incorrect" };
         }
@@ -190,8 +252,10 @@ async function login(login, password) {
         // Payload du token
         const payload = {
             id: user.idutilisateur,
-            login: user.login
+            login: user.login,
+            roles : user.roles.map(r => r.coderole)
         };
+
 
     
       
@@ -216,7 +280,7 @@ async function login(login, password) {
 
              await pool.request()
             .input("userid", db.sql.UniqueIdentifier, user.idutilisateur)
-            .input("token", db.sql.NVarChar, hashedRefresh)
+            .input("token", db.sql.NVarChar(255), hashedRefresh)
             .query(`
                 INSERT INTO REFRESH_TOKEN(idutilisateur, token)
                 VALUES (@userid, @token)
