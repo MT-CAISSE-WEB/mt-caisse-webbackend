@@ -139,7 +139,7 @@ async function fermeture_periode(idperiode, data) {
   }
 
   let soldes = 0;
-  soldes = await typeoperation.get_soldecaisse();
+  soldes = await typeoperation.get_soldeperiode(check_periode.idperiode);
   const soldeItem = soldes.find(s => s.idcaisse === check_periode.idcaisse);
   const solde = soldeItem ? soldeItem.solde : 0;
 
@@ -176,7 +176,6 @@ async function fermeture_periode(idperiode, data) {
       const newperiode = new periodeModel(uuidv4(), data.idcaisse, newDate, data.soldefermeture, 0, 0, 0, 
       "non ouverte", data.validatedat, data.validatedby || null, data.createdat || today, data.createdby || 'System', data.updatedat || null, data.updatedby || null);
       const periodeNext = await newperiode.create_caisseperiode();
-      console.log(periodeNext);
     }
 
     return periode.recordset;
@@ -193,9 +192,9 @@ async function open_periode(idperiode, data) {
   }
 
   const check_periode = await periodemodel.get_onecaisseperiode(idperiode);
-  // if(check_periode.statut == 'ouverte'){
-  //   throw new Error("Caisse déja ouverte");
-  // }
+  if(check_periode.statut == 'ouverte'){
+    throw new Error("Caisse déja ouverte");
+  }
 
   const datePeriode = new Date(data.dateperiode);
   const today = new Date();

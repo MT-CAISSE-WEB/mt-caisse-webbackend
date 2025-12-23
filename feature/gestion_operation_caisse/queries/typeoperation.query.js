@@ -31,15 +31,44 @@ module.exports = {
     `,
     solde_calcul: `
         SELECT 
-            idcaisse,
+            t.idcaisse,
+            c.codecaisse,
+            c.libelle,
+            c.idjournal,
+            c.idcompte,
+            c.iddevise,
+            d.codedevise,
+            c.seuilmnimal,
             SUM(
                 CASE 
                     WHEN codtypeoperation = 'encaissement' THEN montant
                     ELSE -montant
                 END
             ) AS solde
-        FROM TypeOperation
-        GROUP BY idcaisse;
+        FROM TypeOperation t
+        LEFT JOIN Caisse c ON c.idcaisse = t.idcaisse
+        LEFT JOIN Devise d ON d.iddevise = c.iddevise
+        GROUP BY t.idcaisse, c.codecaisse, c.libelle, c.idjournal, c.idcompte, c.iddevise, d.codedevise, c.seuilmnimal;
+    `,
+    solde_caisse_periode: `
+        SELECT 
+            t.idcaisse,
+            c.codecaisse,
+            c.libelle,
+            c.idjournal,
+            c.idcompte,
+            c.iddevise,
+            c.seuilmnimal,
+            SUM(
+                CASE 
+                    WHEN codtypeoperation = 'encaissement' THEN montant
+                    ELSE -montant
+                END
+            ) AS solde
+        FROM TypeOperation t
+        LEFT JOIN Caisse c ON c.idcaisse = t.idcaisse
+        WHERE t.idperiode = @idperiode
+        GROUP BY t.idcaisse;
     `,
     plus_couteux : `
         SELECT TOP 1
