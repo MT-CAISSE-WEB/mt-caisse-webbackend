@@ -1267,7 +1267,7 @@ BEGIN
         iddepartement UNIQUEIDENTIFIER,
         idnature UNIQUEIDENTIFIER,
         CONSTRAINT UQ_Dept_Nature UNIQUE (iddepartement, idnature),
-        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
+        FOREIGN KEY (iddepartement) REFERENCES departement(iddepartement),
         FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );

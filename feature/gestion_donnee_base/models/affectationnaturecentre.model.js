@@ -2,11 +2,6 @@ const { DateTime } = require('mssql');
 const {sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 
-const centreModel = require('./centreanalytique.model');
-const natureModel = require('./natureoperation.model');
-const centremodel = new centreModel()
-const naturemodel = new natureModel()
-
 const queryInsert = `
         INSERT INTO AffectationNatureCentre (idaffnaturecentre, idnature, 
         idcentreanalytique, idsociete,
@@ -87,11 +82,11 @@ class AffectationNatureCentreModel {
             for (const idcentre of idsCentres) {
                 await transaction.request()
                     .input('idaffnaturecentre', sql.UniqueIdentifier, uuidv4())
-                    .input('idsociete', sql.UniqueIdentifier, this.idsociete)
+                    .input('idsociete', sql.UniqueIdentifier, idcentre.idsociete)
                     .input('idnature', sql.UniqueIdentifier, idnature)
                     .input('idcentreanalytique', sql.UniqueIdentifier, idcentre.idcentreanalytique)
                     .input('createdat', sql.DateTime, new Date())
-                    .input('updatedat', sql.DateTime, new Date())
+                    .input('updatedat', sql.DateTime, null)
                     .input('createdby', sql.NVarChar(50), this.createdby)
                     .input('updatedby', sql.NVarChar(50), this.updatedby)
                     .query(queryInsert);

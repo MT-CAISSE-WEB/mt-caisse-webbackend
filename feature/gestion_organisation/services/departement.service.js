@@ -73,7 +73,7 @@ async function getalldepartement(){
     try {
         const pool = await connectDB()
         const query =`SELECT d.*,st.libelle as site,sc.raisonsociale,u.nom,u.prenom
-        FROM Departement d
+        FROM departement d
         left join site st on d.idsite = st.idsite
         left join societe sc on d.idsociete = sc.idsociete
         left join utilisateur u on d.responsable = u.idutilisateur`;
@@ -93,7 +93,7 @@ async function getalldepartement(){
 async function getonedepartement(iddepartement){
     try {
         const pool = await connectDB()
-        const query = "SELECT * FROM Departement where iddepartement = @iddepartement";
+        const query = "SELECT * FROM departement where iddepartement = @iddepartement";
         const result = await pool.request()
         .input('iddepartement',db.sql.UniqueIdentifier,iddepartement)
         .query(query);
@@ -119,7 +119,7 @@ async function deletedepartement(iddepartement)
     
     try {
         const pool = await connectDB()
-        const query = "DELETE FROM Departement where iddepartement = @iddepartement";
+        const query = "DELETE FROM departement where iddepartement = @iddepartement";
         const result = await pool.request()
         .input('iddepartement',db.sql.UniqueIdentifier,iddepartement)
         .query(query);

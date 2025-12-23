@@ -22,9 +22,9 @@ async function upsertuser(params){
         const hashpassword = await argon2.hash(password);
 
         const query = `
-        IF EXISTS (SELECT 1 FROM Utilisateur WHERE codeutilisateur = @codeutilisateur)
+        IF EXISTS (SELECT 1 FROM utilisateur WHERE codeutilisateur = @codeutilisateur)
         BEGIN
-            UPDATE Utilisateur SET 
+            UPDATE utilisateur SET 
                 idsociete = @idsociete,
                 nom = @nom,
                 prenom = @prenom,
@@ -45,7 +45,7 @@ async function upsertuser(params){
         END 
         ELSE
         BEGIN
-            INSERT INTO Utilisateur 
+            INSERT INTO utilisateur 
                 (idutilisateur, codeutilisateur, idsociete, nom, prenom, adresse, telephone, email, 
                  login, password, idrole, typeentitesite, typeentitedepartement, typeentitesociete, 
                  acheteur, createdby, createdat)
@@ -115,7 +115,7 @@ async function getalluser(){
         const pool = await connectDB();
         const query = `SELECT u.*,
        s.raisonsociale as societe
-       from Utilisateur u
+       from utilisateur u
        left join Societe s on u.idsociete = s.idsociete`;
         const result = await pool.request().query(query);
 
@@ -179,7 +179,7 @@ async function login(login, password) {
         // Vérifier utilisateur
         const result = await pool.request()
             .input("login", db.sql.NVarChar, login)
-            .query("SELECT * FROM Utilisateur WHERE login=@login");
+            .query("SELECT * FROM utilisateur WHERE login=@login");
 
         if (result.recordset.length === 0) {
             return {status:404, success: false, message: "Utilisateur introuvable" };

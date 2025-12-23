@@ -33,6 +33,7 @@ const natureoperationroutes = require("./feature/gestion_donnee_base/routes/natu
 const centreanalytiqueroutes = require("./feature/gestion_donnee_base/routes/centreanalytique.route");
 const affectationanalytiqueroutes = require("./feature/gestion_donnee_base/routes/affectationanalytique.route");
 const affnaturecentreroutes = require("./feature/gestion_donnee_base/routes/affectationnaturecentre.route");
+const affdepartementnatureroutes = require("./feature/gestion_donnee_base/routes/affectationdeptnature.route");
 
 
 
@@ -159,6 +160,7 @@ app.use("/API/natureoperation", natureoperationroutes);
 app.use("/API/centreanalytique", centreanalytiqueroutes);
 app.use("/API/affectationanalytique", affectationanalytiqueroutes);
 app.use("/API/affectationnaturecentre", affnaturecentreroutes);
+app.use("/API/affectationdepartementnature", affdepartementnatureroutes);
 
 
 // Test SQL Server connection Sequelize 
