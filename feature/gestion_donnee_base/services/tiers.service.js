@@ -8,8 +8,8 @@ let tier = new tiersmodel();
 let tiers = [];
 
 // OK
-async function get_all_tiers(page = 1, limit = 5) {
-  const result = await tier.get_alltiers(page, limit);
+async function get_all_tiers(page = 1, limit = 5, search = null) {
+  const result = await tier.get_alltiers(page, limit, search);
   tiers = result.data.map(item => new tiersmodel(
     item.idtiers,
     item.codetiers, 

@@ -1,24 +1,28 @@
-const {db, sql, connectInstance, connectDB} = require('../../../config/db');
+const { sql, poolPromise, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const dotenv = require('dotenv');
 dotenv.config({path: '../../../config/config.env'});
 const argon2 = require('argon2');
 const jwt = require("jsonwebtoken");
+const db = require('../../../config/db');
+
 
 async function upsertuser(params){
     try {
         const {
             codeutilisateur, idsociete, nom, prenom, adresse, telephone, email,
-            login, password, typeentitesite, typeentitedepartement, typeentitesociete,
+            login, password, idrole, typeentitesite, typeentitedepartement, typeentitesociete,
             acheteur, createdby, updatedby
         } = params;
+
+        console.log(params);
 
         const idutilisateur = uuidv4();
 
         const hashpassword = await argon2.hash(password);
 
         const query = `
-        IF EXISTS (SELECT 1 FROM utilisateur WHERE codeutilisateur = @codeutilisateur)
+        IF EXISTS (SELECT 1 FROM Utilisateur WHERE codeutilisateur = @codeutilisateur)
         BEGIN
             UPDATE Utilisateur SET 
                 idsociete = @idsociete,
@@ -28,6 +32,7 @@ async function upsertuser(params){
                 telephone = @telephone,
                 email = @email,
                 login = @login,
+                idrole = @idrole,
                 password = @password, 
                 typeentitesite = @typeentitesite,
                 typeentitedepartement = @typeentitedepartement,
@@ -40,14 +45,14 @@ async function upsertuser(params){
         END 
         ELSE
         BEGIN
-            INSERT INTO UTILISATEUR 
+            INSERT INTO Utilisateur 
                 (idutilisateur, codeutilisateur, idsociete, nom, prenom, adresse, telephone, email, 
-                 login, password, typeentitesite, typeentitedepartement, typeentitesociete, 
+                 login, password, idrole, typeentitesite, typeentitedepartement, typeentitesociete, 
                  acheteur, createdby, createdat)
             OUTPUT 'insert' AS action, INSERTED.*
             VALUES  
                 (@idutilisateur, @codeutilisateur, @idsociete, @nom, @prenom, @adresse, 
-                 @telephone, @email, @login, @password, @typeentitesite, @typeentitedepartement, 
+                 @telephone, @email, @login, @password, @idrole, @typeentitesite, @typeentitedepartement, 
                  @typeentitesociete, @acheteur, @createdby, GETDATE())
         END`;
 
@@ -63,6 +68,7 @@ async function upsertuser(params){
             .input("telephone", sql.NVarChar, telephone)
             .input("email", sql.NVarChar, email)
             .input("login", sql.NVarChar, login)
+            .input("idrole", sql.Int, idrole)
             .input("password", sql.NVarChar, hashpassword)
             .input("typeentitesite", sql.Int, typeentitesite)
             .input("typeentitedepartement", sql.Int, typeentitedepartement)
@@ -72,6 +78,7 @@ async function upsertuser(params){
             .input("updatedby", sql.NVarChar, updatedby)
             .query(query);
 
+            console.log("Securite - upsert user executed");
         
         // SÉCURITÉ → éviter crash
         if (!result.recordset || result.recordset.length === 0) {
@@ -107,9 +114,9 @@ async function getalluser(){
     try {
         const pool = await connectDB();
         const query = `SELECT u.*,
-            s.raisonsociale as societe
-            from utilisateur u
-            left join societe s on u.idsociete = s.idsociete`;
+       s.raisonsociale as societe
+       from Utilisateur u
+       left join Societe s on u.idsociete = s.idsociete`;
         const result = await pool.request().query(query);
 
         return {
@@ -165,8 +172,10 @@ async function deleteuser(iduser)
 //login
 // LOGIN
 async function login(login, password) {
+
     try {
         const pool = await connectDB();
+<<<<<<< HEAD
 
         const query =`SELECT u.*, 
         s.idsociete AS societe_idsociete,
@@ -196,6 +205,13 @@ async function login(login, password) {
         const result = await pool.request()
             .input("login", sql.NVarChar, login)
             .query(query);
+=======
+        
+        // Vérifier utilisateur
+        const result = await pool.request()
+            .input("login", db.sql.NVarChar, login)
+            .query("SELECT * FROM Utilisateur WHERE login=@login");
+>>>>>>> origin/preprod
 
         if (result.recordset.length === 0) {
             return {status:404, success: false, message: "Utilisateur introuvable" };
@@ -226,8 +242,6 @@ async function login(login, password) {
             process.env.JWT_SECRET,
             { expiresIn: "1d" }
         );
-
-      
 
         // Refresh Token : long
         const refreshToken = jwt.sign(

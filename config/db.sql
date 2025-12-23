@@ -1,6 +1,9 @@
+
 IF NOT EXISTS (
-    SELECT name FROM sys.databases WHERE name = N'MTCAISSEWEB'
+    SELECT name 
+    FROM sys.databases 
+    WHERE name = N'MTICAISSEWEB'
 )
 BEGIN
-    CREATE DATABASE [MTCAISSEWEB]
+    CREATE DATABASE [MTICAISSEWEB];
 END

@@ -31,7 +31,6 @@ class caisseperiodeModel {
     async create_caisseperiode() {
         const pool = await connectDB();
         try {
-            console.log(this.statut);
             const result = await pool.request()
             .input('idperiode', sql.UniqueIdentifier, this.idperiode)
             .input('idcaisse', sql.UniqueIdentifier, this.idcaisse)
@@ -44,7 +43,7 @@ class caisseperiodeModel {
             .input('createdat', sql.DateTime, this.createdat)
             .input('createdby', sql.NVarChar(100), this.createdby)
             .query(caisseperiodeQueries.INSERT);
-            
+
             return { success: true, data: result.recordset[0] };
         } catch (error) {
             return { success: false, message: error.message };

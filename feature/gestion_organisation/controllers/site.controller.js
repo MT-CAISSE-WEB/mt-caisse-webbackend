@@ -24,8 +24,8 @@ module.exports.getonesite = asyncHandler (async(req,res, next)=>{
 
 module.exports.upsertsite = asyncHandler (async(req,res, next)=>{
     try {
-        const {idsociete,codesite,codeanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdby, updatedby } = req.body;
-        const upsertsite = await siteservice.upsertsite({idsociete,codesite,codeanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdby, updatedby })
+        const {idsociete,codesite,idcentreanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdby, updatedby } = req.body;
+        const upsertsite = await siteservice.upsertsite({idsociete,codesite,idcentreanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdby, updatedby })
         res.status(upsertsite.status).json({success: upsertsite.success,message:upsertsite.message, data: upsertsite.data});
     } catch (error) {
         res.status(500).json({ success: false, message: "Erreur serveur", error });

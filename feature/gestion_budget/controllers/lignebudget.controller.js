@@ -66,7 +66,7 @@ const foreignIncludes = [
       'idsociete',
       'idcompte',
       'libelle',
-      'avanceajustifier',
+      'decajustifier',
       'imputationtiers',
       'actif',
       'demandedecaissement',
@@ -82,6 +82,7 @@ const foreignIncludes = [
 exports.create = async (req, res) => {
   try {
     const {
+      idbudget,
       montantprevisiondept,
       montantprevisionsite,
       montantprevisionsociete,
@@ -92,6 +93,7 @@ exports.create = async (req, res) => {
 
     // Vérification de tous les champs obligatoires
     const requiredFields = {
+      idbudget,
       montantprevisiondept,
       montantprevisionsite,
       montantprevisionsociete,
@@ -155,6 +157,7 @@ exports.getAll = async (req, res) => {
       limit,
       offset,
       include: foreignIncludes,
+      order: [['createdat', 'DESC']],
     })
 
     res.json({
@@ -165,9 +168,10 @@ exports.getAll = async (req, res) => {
       data: items.rows,
     })
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, error: 'Erreur lors de la récupération' })
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la récupération,' + error.message,
+    })
   }
 }
 
@@ -249,7 +253,7 @@ exports.delete = async (req, res) => {
     }
 
     await item.destroy()
-    res.json({ sucess: true, message: 'Supprimé avec succès.' })
+    res.json({ success: true, message: 'Supprimé avec succès.' })
   } catch (error) {
     res
       .status(500)

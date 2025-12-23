@@ -13,7 +13,7 @@ const { v4: uuidv4 } = require('uuid');
                 UPDATE site
                 SET 
                     idsociete = @idsociete,
-                    codeanalytique = @codeanalytique,
+                    idcentreanalytique = @idcentreanalytique,
                     libelle = @libelle,
                     email   = @email,
                     telephone = @telephone,
@@ -68,7 +68,7 @@ const { v4: uuidv4 } = require('uuid');
 // Get all
 async function getallsite(){
     try {
-        const pool = await connectDB();
+        const pool = await db.poolPromise;
         const query = "SELECT s.*,so.raisonsociale FROM Site s LEFT JOIN Societe so ON s.idsociete = so.idsociete";
         const result = await pool.request().query(query);
         return {

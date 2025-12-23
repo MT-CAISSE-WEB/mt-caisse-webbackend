@@ -25,9 +25,9 @@ async function get_allcentres(page = 1, limit = 5) {
 
 // OK
 async function create_centre(data) {
-  if (!data.codecentreanalytique || !data.libelle || !data.actif || !data.idsociete ) {
-    throw new Error("Tous les champs sont requis.");
-  }
+  // if (!data.codecentreanalytique || !data.libelle || !data.actif || !data.idsociete ) {
+  //   throw new Error("Tous les champs sont requis.");
+  // }
 
   const today = new Date();
 

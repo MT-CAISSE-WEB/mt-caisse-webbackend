@@ -52,6 +52,8 @@ async function get_all_caisses({ page, limit, search, actif}) {
         "createdat" : item.compte_createdat, "createdby" : item.compte_createdby, "updatedat" : item.compte_updatedat, "updatedby" : item.compte_updatedby
       } : null
     ));
+
+    console.log(caisses);
   } catch (error) {
     console.log(error);
   }

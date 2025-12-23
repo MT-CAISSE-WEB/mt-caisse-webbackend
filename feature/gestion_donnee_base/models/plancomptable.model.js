@@ -41,12 +41,6 @@ const query = `
         OFFSET @offset ROWS
         FETCH NEXT @limit ROWS ONLY;
 
-        SELECT *
-        FROM PlanComptable
-        ORDER BY numcompte
-        OFFSET @offset ROWS
-        FETCH NEXT @limit ROWS ONLY;
-
         SELECT COUNT(*) AS total FROM PlanComptable;
     `;
 

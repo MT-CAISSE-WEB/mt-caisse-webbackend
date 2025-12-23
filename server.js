@@ -11,7 +11,42 @@ const bodyParser = require('body-parser')
 const logger = require('./shared/middlewares/logger')
 const errorHandler = require('./shared/middlewares/error')
 const sequelize = require('./config/database')
-//DECLARATION DES ROUTES
+
+
+
+// Organisation routes
+const deviseroute = require('./feature/gestion_organisation/routes/devise.route');
+const tauxdeviseroute = require('./feature/gestion_organisation/routes/tauxdevise.route');
+const societeroute = require('./feature/gestion_organisation/routes/societe.route');
+const siteroute = require('./feature/gestion_organisation/routes/site.route');
+const departementroute = require('./feature/gestion_organisation/routes/departement.route');
+const userroute = require('./feature/gestion_users/routes/users.route');
+const roleroute = require('./feature/gestion_users/routes/role.route');
+const permissionroute = require('./feature/gestion_users/routes/permission.route');
+const rolepermissionroute = require('./feature/gestion_users/routes/role_permission.route');
+
+
+// Tiers routes
+const tiersroutes = require("./feature/gestion_donnee_base/routes/tiers.route");
+const plancomptableroutes = require("./feature/gestion_donnee_base/routes/plancomptable.route");
+const natureoperationroutes = require("./feature/gestion_donnee_base/routes/natureoperation.route");
+const centreanalytiqueroutes = require("./feature/gestion_donnee_base/routes/centreanalytique.route");
+const affectationanalytiqueroutes = require("./feature/gestion_donnee_base/routes/affectationanalytique.route");
+
+
+// Budget
+const budget_route = require('./feature/gestion_budget/routes/budget.route')
+// Ligne budgetaire
+const ligne_budgetaire_route = require('./feature/gestion_budget/routes/lignebudget.route')
+// Entete demande
+const entete_demande_route = require('./feature/gestion_demande_decaissement/routes/entetedemande.route')
+// Ligne demande
+const ligne_demande_route = require('./feature/gestion_demande_decaissement/routes/ligendemande.route')
+// Détails demande
+const details_demande_route = require('./feature/gestion_demande_decaissement/routes/detaildemande.route')
+
+
+
 // Journal routes
 const journalRoutes = require("./feature/gestion_operation_caisse/routes/journal.route");
 // Caisse routes
@@ -24,100 +59,120 @@ const enteteoperationRoutes = require("./feature/gestion_operation_caisse/routes
 const ligneoperationRoutes = require("./feature/gestion_operation_caisse/routes/ligneoperation.route");
 // Type operation routes
 const typeoperationRoutes = require("./feature/gestion_operation_caisse/routes/operation.route");
-// Budget
-const budget_route = require('./feature/gestion_budget/routes/budget.route')
-// Ligne budgetaire
-const ligne_budgetaire_route = require('./feature/gestion_budget/routes/lignebudget.route')
-// Entete demande
-const entete_demande_route = require('./feature/gestion_demande_decaissement/routes/entetedemande.route')
-// Ligne demande
-const ligne_demande_route = require('./feature/gestion_demande_decaissement/routes/ligendemande.route')
-// Detail demande
-const details_demande_route = require('./feature/gestion_demande_decaissement/routes/detaildemande.route')
-// Devise routes
-const deviseroute = require('./feature/gestion_organisation/routes/devise.route');
-// Taux de devise routes
-const tauxdeviseroute = require('./feature/gestion_organisation/routes/tauxdevise.route');
-// Societe routes
-const societeroute = require('./feature/gestion_organisation/routes/societe.route');
-// Site routes
-const siteroute = require('./feature/gestion_organisation/routes/site.route');
-// Département routes
-const departementroute = require('./feature/gestion_organisation/routes/departement.route');
-// Tiers routes
-const tiersroutes = require("./feature/gestion_donnee_base/routes/tiers.route");
-const plancomptableroutes = require("./feature/gestion_donnee_base/routes/plancomptable.route");
-const natureoperationroutes = require("./feature/gestion_donnee_base/routes/natureoperation.route");
-const centreanalytiqueroutes = require("./feature/gestion_donnee_base/routes/centreanalytique.route");
-const affectationanalytiqueroutes = require("./feature/gestion_donnee_base/routes/affectationanalytique.route");
-// Routes users
-const userroute = require('./feature/gestion_users/routes/users.route');
 
-//connexion db
+
+// Declaration des routes
+//const societesroutes = require("./feature/gestion_workflow/routes/circuitvalidateur.route");
+const circuitvalidateurroute = require("./feature/gestion_workflow/routes/circuitvalidateur.route");
+const circuitvalidationroute = require("./feature/gestion_workflow/routes/circuitvalidation.route");
+const validationdemanderoute = require("./feature/gestion_workflow/routes/validationdemande.route");
+
+
+
+const db = require('./config/db');
+
+//connexion db Richard
 const {connectInstance} = require('./config/db')
 
-dotenv.config({ path: './config/config.env' })
+dotenv.config({path: './config/.env'});
 // INIT EXPRESS
-const app = express()
+const app = express();
 // ANALYSEUR DE CORPS DE REQ AU FORMAT JSON
-app.use(express.json())
+app.use(express.json());
 // TRAITER DES REQ EXTERIEUR
-app.use(cors())
+app.use(cors());
 // GET INFO DEVICE
-app.use(device.capture())
+app.use(device.capture());
 
 // DOSSIER FICHIER STATIQUE
-global.appRoot = path.resolve(__dirname)
-app.use(express.static(path.join(__dirname, 'public')))
+global.appRoot = path.resolve(__dirname);
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ACTIVE MIDDLEWARE DE JOURNALISATION
 if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'))
+    app.use(morgan('dev'));
 }
 
+db.initdatabase();
+//db.connectInstance();
+
 //LANCEMENT DE LA BASE DE DONNEES
-connectInstance()
+connectInstance();
+
 
 // JOURNALISATION PERSONNALISEE
-app.use(logger)
+app.use(logger);
 
 // Middleware pour parser les données des requêtes POST
-app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Middleware de session
-app.use(
-  session({
+app.use(session({
     secret: 'votre_secret_de_session',
     resave: false,
     saveUninitialized: true,
-  })
-)
+}));
 
 // Set EJS as the view engine
-app.set('view engine', 'ejs')
+app.set('view engine', 'ejs');
 
 // Définir le répertoire des vues
-app.set('views', path.join(__dirname, 'views'))
+app.set('views', path.join(__dirname, 'views'));
+
+//Regrouper toutes les routes
+app.use("/API/circuitvalidateur", circuitvalidateurroute);
+app.use("/API/circuitvalidation", circuitvalidationroute);
+app.use("/API/validationdemande", validationdemanderoute);
+
+
+// console.log("PORT", process.env.PORT);
+// console.log("TEXT", process.env.text);
+
+// GESTION DES ERREURS 
+app.use(errorHandler);
+// PORT DEFINI OU PORT PAR DEFAUT 7000
+const PORT = process.env.PORT || 7000;
+// LANCEMENT DU SERVEUR
+const server = app.listen(
+    PORT,
+    console.log(`Serveur lancer en mode ${process.env.NODE_ENV} sur le port ${PORT}`.yellow.bold)
+);
+
+//API
+app.use('/API',deviseroute);
+app.use('/API',tauxdeviseroute);
+app.use('/API',societeroute);
+app.use('/API',siteroute);
+app.use('/API',departementroute);
+app.use('/API',userroute);
+app.use('/API',roleroute);
+app.use('/API',permissionroute);
+app.use('/API',rolepermissionroute);
+
+
+// Gestion donnee de base
+app.use("/API/tiers", tiersroutes);
+app.use("/API/plancomptable", plancomptableroutes);
+app.use("/API/natureoperation", natureoperationroutes);
+app.use("/API/centreanalytique", centreanalytiqueroutes);
+app.use("/API/affectationanalytique", affectationanalytiqueroutes);
+
 
 // Test SQL Server connection Sequelize
-// sequelize
-//   .authenticate()
-//   .then(() => console.log('Connexion SQL Server OK sequelize'))
-//   .catch((err) => console.log('Erreur SQL Server ', err))
+sequelize
+  .authenticate()
+  .then(() => console.log('Connexion SQL Server OK sequelize✔️'))
+  .catch((err) => console.log('Erreur SQL Server ❌', err))
+
 
 //Regrouper toutes les routes
-//Budget
-app.use('/api/budget', budget_route)
-//Ligne budgetaire
-app.use('/api/ligne-budgetaire', ligne_budgetaire_route)
-//Entete demande
-app.use('/api/entete-demande', entete_demande_route)
-//Ligne demande
-app.use('/api/ligne-demande', ligne_demande_route)
-//Details demande
-app.use('/api/details-demande', details_demande_route)
+app.use('/api/budget', budget_route) //Budget
+app.use('/api/ligne-budgetaire', ligne_budgetaire_route) //Ligne budgetaire
+app.use('/api/entete-demande', entete_demande_route) //Entete demande
+app.use('/api/ligne-demande', ligne_demande_route) //Ligne demande
+app.use('/api/details-demande', details_demande_route) //Details demande
 
-//Regrouper toutes les routes
+
 //GESTION OPERATION CAISSE ROUTES
 app.use("/API/journal", journalRoutes);
 app.use("/API/caisse", caisseRoutes);
@@ -125,44 +180,16 @@ app.use("/API/utilisateur_caisse", utilisateurcaisseRoutes);
 app.use("/API/entete_operation", enteteoperationRoutes);
 app.use("/API/ligne_operation", ligneoperationRoutes);
 app.use("/API/operation", typeoperationRoutes);
-//Budget
-app.use('/API/budget', budget_route)
-//Ligne budgetaire
-app.use('/API/ligne-budgetaire', ligne_budgetaire_route)
-//API
-app.use('/API',deviseroute);
-app.use('/API',tauxdeviseroute);
-app.use('/API',societeroute);
-app.use('/API',siteroute);
-app.use('/API',departementroute);
-// Gestion donnee de base
-app.use("/API/tiers", tiersroutes);
-app.use("/API/plancomptable", plancomptableroutes);
-app.use("/API/natureoperation", natureoperationroutes);
-app.use("/API/centreanalytique", centreanalytiqueroutes);
-app.use("/API/affectationanalytique", affectationanalytiqueroutes);
-// Gestion des users
-app.use('/API',userroute);
 
 
-// GESTION DES ERREURS
-app.use(errorHandler)
-// PORT DEFINI OU PORT PAR DEFAUT 7000
-const PORT = process.env.PORT || 7000
-// LANCEMENT DU SERVEUR
-const server = app.listen(
-  PORT,
-  console.log(
-    `Serveur lancer en mode ${process.env.NODE_ENV} sur le port ${PORT}`.yellow
-      .bold
-  )
-)
+//Regrouper toutes les routes
+app.use("/API/circuitvalidateur", circuitvalidateurroute);
+app.use("/API/circuitvalidation", circuitvalidationroute);
+app.use("/API/validationdemande", validationdemanderoute);
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
-  console.log(`Error: ${err.message}`.red)
-  // Close server & exit process
-  server.close(() => process.exit(1))
-})
-
-
+    console.log(`Error: ${err.message}`.red);
+    // Close server & exit process
+    server.close(() => process.exit(1));
+});

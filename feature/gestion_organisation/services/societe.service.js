@@ -1,7 +1,7 @@
 const { DateTime, UniqueIdentifier } = require('mssql');
-const {db, sql, connectInstance, connectDB} = require('../../../config/db');
+const {sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
-const deviseservice = require ("../services/devise.service");
+const db = require('../../../config/db');
 
  //upsert Societe
    async function upsertsociete({codesociete,iddevisereference,iddevisereporting,raisonsociale,sigle, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby, updatedby }) {
@@ -9,9 +9,9 @@ const deviseservice = require ("../services/devise.service");
         const idsociete = uuidv4();
 
         const query = `
-            IF EXISTS (SELECT 1 FROM societe WHERE codesociete = @codesociete)
+            IF EXISTS (SELECT 1 FROM Societe WHERE codesociete = @codesociete)
             BEGIN
-                UPDATE societe
+                UPDATE Societe
                 SET raisonsociale = @raisonsociale,
                      sigle = @sigle,
                      iddevisereference = @iddevisereference,
@@ -30,7 +30,7 @@ const deviseservice = require ("../services/devise.service");
             END
             ELSE
             BEGIN
-                INSERT INTO societe (idsociete,iddevisereference,iddevisereporting,codesociete, raisonsociale,sigle, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby,createdat)
+                INSERT INTO Societe (idsociete,iddevisereference,iddevisereporting,codesociete, raisonsociale,sigle, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby,createdat)
                 OUTPUT 'insert' AS action, INSERTED.*
                 VALUES (@idsociete,@iddevisereference,@iddevisereporting,@codesociete, @raisonsociale,@sigle, @rccm, @numnui, @email,@telephone,@logo,@adresse,@suivibudgetaire,@createdby,GETDATE())
             END
@@ -38,21 +38,21 @@ const deviseservice = require ("../services/devise.service");
 
         const pool = await connectDB();
         const result = await pool.request()
-            .input("idsociete", sql.UniqueIdentifier, idsociete)
-            .input("codesociete", sql.NVarChar, codesociete)
-            .input("iddevisereference", sql.NVarChar, iddevisereference)
-            .input("iddevisereporting", sql.NVarChar, iddevisereporting)
-            .input("raisonsociale", sql.NVarChar, raisonsociale)
-            .input("sigle", sql.NVarChar,sigle)
-            .input("rccm", sql.NVarChar, rccm)
-            .input("numnui", sql.NVarChar, numnui)
-            .input("email", sql.NVarChar, email)
-            .input("telephone", sql.NVarChar, telephone)
-            .input("logo", sql.NVarChar,logo)
-            .input("adresse", sql.NVarChar,adresse)
-            .input("suivibudgetaire", sql.Int,suivibudgetaire)
-            .input("createdby", sql.NVarChar, createdby)
-            .input("updatedby", sql.NVarChar, updatedby)
+            .input("idsociete", db.sql.UniqueIdentifier, idsociete)
+            .input("codesociete", db.sql.NVarChar, codesociete)
+            .input("iddevisereference", db.sql.NVarChar, iddevisereference)
+            .input("iddevisereporting", db.sql.NVarChar, iddevisereporting)
+            .input("raisonsociale", db.sql.NVarChar, raisonsociale)
+            .input("sigle", db.sql.NVarChar,sigle)
+            .input("rccm", db.sql.NVarChar, rccm)
+            .input("numnui", db.sql.NVarChar, numnui)
+            .input("email", db.sql.NVarChar, email)
+            .input("telephone", db.sql.NVarChar, telephone)
+            .input("logo", db.sql.NVarChar,logo)
+            .input("adresse", db.sql.NVarChar,adresse)
+            .input("suivibudgetaire", db.sql.Int,suivibudgetaire)
+            .input("createdby", db.sql.NVarChar, createdby)
+            .input("updatedby", db.sql.NVarChar, updatedby)
             .query(query);
 
         return {
@@ -81,8 +81,8 @@ async function getallsociete(){
         const query = `SELECT s.*,
         d1.codeiso AS devise_reference,
         d2.codeiso AS devise_reporting FROM Societe s
-        left join devise d1 on s.iddevisereference = d1.iddevise
-        left join devise d2 on s.iddevisereporting = d2.iddevise`;
+        left join Devise d1 on s.iddevisereference = d1.iddevise
+        left join Devise d2 on s.iddevisereporting = d2.iddevise`;
         const result = await pool.request().query(query);
 
         return {

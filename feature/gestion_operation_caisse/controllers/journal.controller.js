@@ -65,7 +65,7 @@ module.exports.delete_journal = asyncHandler(async(req, res, next) => {
     const idjournal = req.params.id;
     console.log(idjournal)
     const journal_ = await journalservice.delete_journal(idjournal);
-    res.json({ success: true, message: "journal supprimée" });
+    res.json({ success: true, message: "Journal supprimé" });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
   }
