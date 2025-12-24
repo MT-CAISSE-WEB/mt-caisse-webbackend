@@ -78,8 +78,6 @@ class AffectationDepartementNatureModel {
                     WHERE iddepartement = @iddepartement
                 `);
 
-            // console.log(idsNatures);
-
             // 2️⃣ Insérer les nouvelles affectations
             for (const idnature of idsNatures) {
                 await transaction.request()
