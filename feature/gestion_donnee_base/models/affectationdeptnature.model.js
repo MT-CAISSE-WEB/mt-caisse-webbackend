@@ -36,7 +36,7 @@ class AffectationDepartementNatureModel {
         // Natures affectées
         const resultAffectes = await pool.request()
             .input("iddepartement", sql.UniqueIdentifier, iddepartement)
-            .query(`SELECT n.idnature, n.codenature, n.libelle
+            .query(`SELECT n.idnature, n.codenature, n.libelle, n.actif
                 FROM NatureOperation n INNER JOIN AffectationDepartementNature a
                 ON a.idnature = n.idnature
                 WHERE a.iddepartement = @iddepartement
@@ -45,7 +45,7 @@ class AffectationDepartementNatureModel {
         // Natures non affectées
         const resultNonAffectes = await pool.request()
             .input("iddepartement", sql.UniqueIdentifier, iddepartement)
-            .query(`SELECT n.idnature, n.codenature, n.libelle
+            .query(`SELECT n.idnature, n.codenature, n.libelle, n.actif
                 FROM NatureOperation n WHERE NOT EXISTS (
                     SELECT 1 FROM AffectationDepartementNature a
                     WHERE a.idnature = n.idnature AND a.iddepartement = @iddepartement)
