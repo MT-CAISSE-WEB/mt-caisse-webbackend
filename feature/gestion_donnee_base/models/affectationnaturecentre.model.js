@@ -37,7 +37,7 @@ class AffectationNatureCentreModel {
         // Centres affectés
         const resultAffectes = await pool.request()
             .input("idnature", sql.UniqueIdentifier, idnature)
-            .query(`SELECT c.idcentreanalytique, c.codecentreanalytique, c.libelle
+            .query(`SELECT c.idcentreanalytique, c.codecentreanalytique, c.libelle, c.actif
                 FROM CentreAnalytique c INNER JOIN AffectationNatureCentre a
                 ON a.idcentreanalytique = c.idcentreanalytique
                 WHERE a.idnature = @idnature
@@ -46,7 +46,7 @@ class AffectationNatureCentreModel {
         // Centres non affectés
         const resultNonAffectes = await pool.request()
             .input("idnature", sql.UniqueIdentifier, idnature)
-            .query(`SELECT c.idcentreanalytique, c.codecentreanalytique, c.libelle
+            .query(`SELECT c.idcentreanalytique, c.codecentreanalytique, c.libelle, c.actif
                 FROM CentreAnalytique c WHERE NOT EXISTS (
                     SELECT 1 FROM AffectationNatureCentre a
                     WHERE a.idcentreanalytique = c.idcentreanalytique AND a.idnature = @idnature)
