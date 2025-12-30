@@ -76,11 +76,7 @@ class CentreAnalytiqueModel {
 
             const centres = result.recordsets[0];
 
-<<<<<<< HEAD
-            return {page, limit, total, totalPages, data: centres};
-=======
             return { data: centres };
->>>>>>> origin/richard
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         }
