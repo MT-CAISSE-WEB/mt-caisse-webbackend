@@ -25,7 +25,6 @@ idsociete = @idsociete, updatedat = @updatedat, updatedby = @updatedby
 OUTPUT INSERTED.* WHERE idcompte = @idcompte`;
 
 const query = `
-
         SELECT c.*,
             so.idsociete AS societe_idsociete,
             so.codesociete AS societe_codesociete,
@@ -37,11 +36,7 @@ const query = `
             so.updatedat AS societe_updatedat
         FROM PlanComptable c
         LEFT JOIN Societe so ON c.idsociete = so.idsociete
-        ORDER BY c.numcompte
-        OFFSET @offset ROWS
-        FETCH NEXT @limit ROWS ONLY;
-
-        SELECT COUNT(*) AS total FROM PlanComptable;
+        ORDER BY c.numcompte ASC;
     `;
 
 // Model plancomptable
@@ -94,23 +89,17 @@ class PlanComptableModel {
 
 
     // Rechercher tous les comptes OK
-    async get_allcomptes (page = 1, limit = 50) {
-        const pool = await connectDB();
-        const offset = (page - 1) * limit;
+    async get_allcomptes () {
 
+        const pool = await connectDB();
         try {
+            
             const result = await pool.request()
-            .input('offset', sql.Int, offset)
-            .input('limit', sql.Int, limit)
             .query(query);
 
             const comptes = result.recordsets[0];
-            const total = result.recordsets[1][0].total;
-            const totalPages = Math.ceil(total / limit);
 
-            // console.log(comptes)
-
-            return {page, limit, total, totalPages, data: comptes};
+            return {success: true, data: comptes};
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         }

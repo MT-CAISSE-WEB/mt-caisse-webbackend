@@ -1,13 +1,12 @@
 const centreanalytiquemodel = require("../models/centreanalytique.model");
-const PaginationModel = require("../../../shared/utils/model");
 const { v4: uuidv4 } = require('uuid');
 
 let centre = new centreanalytiquemodel();
 
 let centres = []; 
 
-async function get_allcentres(page = 1, limit = 5) {
-    const result = await centre.get_allcentres(page, limit);
+async function get_allcentres() {
+    const result = await centre.get_allcentres();
     centres = result.data.map(item => new centreanalytiquemodel(
     item.idcentreanalytique,
     item.codecentreanalytique,
@@ -19,15 +18,15 @@ async function get_allcentres(page = 1, limit = 5) {
     item.createdby, 
     item.updatedby));
     
-  return new PaginationModel(result.page, result.limit, result.total, centres);
+  return centres;
 }
 
 
 // OK
 async function create_centre(data) {
-  // if (!data.codecentreanalytique || !data.libelle || !data.actif || !data.idsociete ) {
-  //   throw new Error("Tous les champs sont requis.");
-  // }
+  if (!data.codecentreanalytique || !data.libelle || !data.actif || !data.idsociete ) {
+    throw new Error("Tous les champs sont requis.");
+  }
 
   const today = new Date();
 

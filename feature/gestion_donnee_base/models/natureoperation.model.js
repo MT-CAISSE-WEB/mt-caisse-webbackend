@@ -39,11 +39,7 @@ const query = `
         c.suivibudgetairemensuel AS compte_suivibudgetairemensuel
         FROM NatureOperation AS n
         LEFT JOIN PlanComptable c ON n.idcompte = c.idcompte
-        ORDER BY codenature
-        OFFSET @offset ROWS
-        FETCH NEXT @limit ROWS ONLY;
-
-        SELECT COUNT(*) AS total FROM NatureOperation;
+        ORDER BY codenature;
     `;
 
 
@@ -80,7 +76,7 @@ class NatureOperationModel {
             .input('idnature', sql.UniqueIdentifier, this.idnature)
             .input('codenature', sql.NVarChar(50), this.codenature)
             .input('libelle', sql.NVarChar(150), this.libelle)
-            .input('typeoperation', sql.Int, this.typeoperation)
+            .input('typeoperation', sql.NVarChar(50), this.typeoperation)
             .input('decajustifier', sql.Int, this.decajustifier)
             .input('imputationtiers', sql.Int, this.imputationtiers)
             .input('actif', sql.Int, this.actif)
@@ -100,21 +96,16 @@ class NatureOperationModel {
 
 
     // Rechercher toutes les natures d'opération
-    async get_allnatures (page = 1, limit = 50) {
+    async get_allnatures () {
         const pool = await connectDB();
-        const offset = (page - 1) * limit;
     
         try {
             const result = await pool.request()
-            .input('offset', sql.Int, offset)
-            .input('limit', sql.Int, limit)
             .query(query);
 
             const natures = result.recordsets[0];
-            const total = result.recordsets[1][0].total;
-            const totalPages = Math.ceil(total / limit);
 
-            return {page, limit, total, totalPages, data: natures};
+            return { data: natures };
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         }
@@ -152,7 +143,7 @@ class NatureOperationModel {
                     .input('idnature', idnature)
                     .input('codenature', sql.NVarChar(50), data.codenature)
                     .input('libelle', sql.NVarChar(150), data.libelle)
-                    .input('typeoperation', sql.NVarChar(150), data.typeoperation)
+                    .input('typeoperation', sql.NVarChar(50), data.typeoperation)
                     .input('decajustifier', sql.Int, data.decajustifier)
                     .input('imputationtiers', sql.Int, data.imputationtiers)
                     .input('actif', sql.Int, data.actif)
@@ -169,7 +160,7 @@ class NatureOperationModel {
                     .input('idnature', sql.UniqueIdentifier, uuidv4())
                     .input('codenature', sql.NVarChar(50), data.codenature)
                     .input('libelle', sql.NVarChar(150), data.libelle)
-                    .input('typeoperation', sql.NVarChar(150), data.typeoperation)
+                    .input('typeoperation', sql.NVarChar(50), data.typeoperation)
                     .input('decajustifier', sql.Int, data.decajustifier)
                     .input('imputationtiers', sql.Int, data.imputationtiers)
                     .input('actif', sql.Int, data.actif)

@@ -8,9 +8,7 @@ const ErrorResponse = require("../../../shared/utils/errorResponse");
 // OK
 module.exports.get_allcentres = asyncHandler(async(req, res, next) => {
   try {
-    const page = req.query.page ? parseInt(req.query.page) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit) : 5;
-    const centres = await centreanalytiqueservice.get_allcentres(page, limit);
+    const centres = await centreanalytiqueservice.get_allcentres();
     res.json({ success: true, data: centres });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur", error });

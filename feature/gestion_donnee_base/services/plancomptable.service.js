@@ -1,16 +1,13 @@
 const plancomptablemodel = require("../models/plancomptable.model");
 const { v4: uuidv4 } = require('uuid');
-const PaginationModel = require("../../../shared/utils/model");
 const societemodel = require("../../gestion_organisation/models/societe.model");
-
-
 
 let compte = new plancomptablemodel();
 
 let comptes = []; 
 
-async function get_all_comptes(page = 1, limit = 5) {
-    const result = await compte.get_allcomptes(page, limit);
+async function get_all_comptes() {
+    const result = await compte.get_allcomptes();
     comptes = result.data.map(item => new plancomptablemodel(
     item.idcompte,
     item.numcompte,
@@ -34,7 +31,7 @@ async function get_all_comptes(page = 1, limit = 5) {
       ) : null,
   ));
 
-  return new PaginationModel(result.page, result.limit, result.total, comptes);
+  return comptes;
 }
 
 // OK

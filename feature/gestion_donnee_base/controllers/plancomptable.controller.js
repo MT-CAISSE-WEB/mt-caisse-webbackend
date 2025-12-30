@@ -7,9 +7,7 @@ const ErrorResponse = require("../../../shared/utils/errorResponse");
  */
 module.exports.get_comptes = asyncHandler(async(req, res, next) => {
   try {
-    const page = req.query.page ? parseInt(req.query.page) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit) : 5;
-    const comptes = await plancomptableservice.get_all_comptes(page, limit);
+    const comptes = await plancomptableservice.get_all_comptes();
     res.json({ success: true, data: comptes });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur", error });

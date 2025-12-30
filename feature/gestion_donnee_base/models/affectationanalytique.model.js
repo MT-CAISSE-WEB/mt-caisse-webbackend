@@ -47,11 +47,7 @@ const query = `
         LEFT JOIN Departement de ON A.iddepartement = de.iddepartement
         LEFT JOIN CentreAnalytique ca ON A.idcentreanalytique = ca.idcentreanalytique
         LEFT JOIN NatureOperation na ON A.idnature = na.idnature
-        ORDER BY A.codeaffectation
-        OFFSET @offset ROWS
-        FETCH NEXT @limit ROWS ONLY;
-
-        SELECT COUNT(*) AS total FROM Affectation;
+        ORDER BY A.codeaffectation;
     `;
 
 // Model AffectationAnalytique
@@ -109,21 +105,16 @@ class AffectationAnalytiqueModel {
 
 
     // Rechercher tous les comptes
-    async get_allaffectations (page = 1, limit = 50) {
+    async get_allaffectations () {
         const pool = await connectDB();
-        const offset = (page - 1) * limit;
                     
         try {
             const result = await pool.request()
-            .input('offset', sql.Int, offset)
-            .input('limit', sql.Int, limit)
             .query(query);
 
             const affectations = result.recordsets[0];
-            const total = result.recordsets[1][0].total;
-            const totalPages = Math.ceil(total / limit);
 
-            return {page, limit, total, totalPages, data: affectations};
+            return { data: affectations };
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         }

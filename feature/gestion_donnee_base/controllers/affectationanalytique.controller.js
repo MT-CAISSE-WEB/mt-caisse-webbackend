@@ -8,9 +8,7 @@ const ErrorResponse = require("../../../shared/utils/errorResponse");
 // OK
 module.exports.get_allaffectations = asyncHandler(async(req, res, next) => {
   try {
-    const page = req.query.page ? parseInt(req.query.page) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit) : 5;
-    const affectations = await affectationanalytiqueservice.get_all_affectations(page, limit);
+    const affectations = await affectationanalytiqueservice.get_all_affectations();
     res.json({ success: true, data: affectations });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur", error });

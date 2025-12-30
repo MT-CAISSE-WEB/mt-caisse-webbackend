@@ -24,11 +24,7 @@ const queryUpdate = `UPDATE CentreAnalytique SET libelle = @libelle, actif = @ac
 const query = `
         SELECT *
         FROM CentreAnalytique
-        ORDER BY codecentreanalytique
-        OFFSET @offset ROWS
-        FETCH NEXT @limit ROWS ONLY;
-
-        SELECT COUNT(*) AS total FROM CentreAnalytique;
+        ORDER BY codecentreanalytique;
     `;
 
 // Model centreanalytique
@@ -71,21 +67,20 @@ class CentreAnalytiqueModel {
 
 
     // Rechercher tous les centres OK
-    async get_allcentres (page = 1, limit = 50) {
+    async get_allcentres () {
         const pool = await connectDB();
-        const offset = (page - 1) * limit;
             
         try {
             const result = await pool.request()
-            .input('offset', sql.Int, offset)
-            .input('limit', sql.Int, limit)
             .query(query);
 
             const centres = result.recordsets[0];
-            const total = result.recordsets[1][0].total;
-            const totalPages = Math.ceil(total / limit);
 
+<<<<<<< HEAD
             return {page, limit, total, totalPages, data: centres};
+=======
+            return { data: centres };
+>>>>>>> origin/richard
         } catch (error) {
             console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         }

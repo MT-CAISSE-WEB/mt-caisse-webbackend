@@ -1,6 +1,5 @@
 const tiersmodel = require("../models/tiers.model");
 const { v4: uuidv4 } = require('uuid');
-const PaginationModel = require("../../../shared/utils/model");
 const societemodel = require("../../gestion_organisation/models/societe.model");
 
 let tier = new tiersmodel();
@@ -8,8 +7,8 @@ let tier = new tiersmodel();
 let tiers = [];
 
 // OK
-async function get_all_tiers(page = 1, limit = 5, search = null) {
-  const result = await tier.get_alltiers(page, limit, search);
+async function get_all_tiers() {
+  const result = await tier.get_alltiers();
   tiers = result.data.map(item => new tiersmodel(
     item.idtiers,
     item.codetiers, 
@@ -27,7 +26,7 @@ async function get_all_tiers(page = 1, limit = 5, search = null) {
         item.societe_createdat, item.societe_updatedat) : null,
   ));
 
-  return new PaginationModel(result.page, result.limit, result.total, tiers);
+  return tiers;
 }
 
 

@@ -7,9 +7,7 @@ const ErrorResponse = require("../../../shared/utils/errorResponse");
  */
 module.exports.get_tiers = asyncHandler(async(req, res, next) => {
   try {
-    const page = req.query.page ? parseInt(req.query.page) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit) : 5;
-    const tiers = await tiersservice.get_all_tiers(page, limit);
+    const tiers = await tiersservice.get_all_tiers();
     res.json({ success: true, data: tiers });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur", error });

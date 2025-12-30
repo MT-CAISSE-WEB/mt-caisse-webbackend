@@ -15,7 +15,7 @@ async function upsertuser(params){
             acheteur, createdby, updatedby
         } = params;
 
-        console.log(params);
+        // console.log(params);
 
         const idutilisateur = uuidv4();
 
@@ -203,10 +203,10 @@ try{
 
         left join role r on ur.idrole = r.idrole
 
-        left join utilisateurdepartement ud
+        left join UtilisateurDepartement ud
         on ud.idutilisateur = u.idutilisateur
 
-        left join departement d on ud.iddepartement = d.iddepartement
+        left join Departement d on ud.iddepartement = d.iddepartement
 
         LEFT JOIN Devise dref 
             ON dref.iddevise = s.iddevisereference
@@ -220,12 +220,12 @@ try{
             .input("login", db.sql.NVarChar(50), login)
             .query(query);
 
+
         if (result.recordset.length === 0) {
             return {status:404, success: false, message: "Utilisateur introuvable" };
         }
 
         const userdb = result.recordset[0];
-        //const user = result.recordset[0];
         const user = {
             codesociete :  result.recordset[0].codesociete,
             raisonsociale : result.recordset[0].raisonsociale,
@@ -315,7 +315,7 @@ try{
             .input("userid", db.sql.UniqueIdentifier, user.idutilisateur)
             .input("token", db.sql.NVarChar(255), hashedRefresh)
             .query(`
-                INSERT INTO REFRESH_TOKEN(idutilisateur, token)
+                INSERT INTO Refresh_token(idutilisateur, token)
                 VALUES (@userid, @token)
             `);  
             
@@ -347,7 +347,7 @@ async function refreshtoken (refreshToken){
         const pool = await connectDB();
 
         // Récupération liste
-        const result = await pool.request().query("SELECT * FROM REFRESH_TOKEN");
+        const result = await pool.request().query("SELECT * FROM Refresh_token");
 
         const found = result.recordset.find(rt =>
             argon2.verify(rt.token, refreshToken)
@@ -383,7 +383,7 @@ async function logout(refreshToken){
 
             // Supprimer le refresh token lié à l'utilisateur
             await pool.request()
-                .query("DELETE FROM REFRESH_TOKEN");
+                .query("DELETE FROM Refresh_token");
 
             return { status: 200, success: true, message: "Déconnexion réussie" };
 

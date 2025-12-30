@@ -4,38 +4,6 @@ const { v4: uuidv4 } = require('uuid');
 
 const societeservice = require('../../gestion_organisation/services/societe.service');
 
-const getTiers = `
-
-    SELECT 
-        t.*,
-        so.idsociete AS societe_idsociete,
-        so.codesociete AS societe_codesociete,
-        so.raisonsociale AS societe_raisonsociale,
-        so.rccm AS societe_rccm,
-        so.numnui AS societe_numnui,
-        so.email AS societe_email,
-        so.telephone AS societe_telephone,
-        so.adresse AS societe_adresse,
-        so.suivibudgetaire AS societe_suivibudgetaire,
-        so.createdat AS societe_createdat,
-        so.updatedat AS societe_updatedat
-    FROM Tiers t
-    LEFT JOIN Societe so ON t.idsociete = so.idsociete
-    WHERE 
-        @search IS NULL OR
-        t.codetiers   COLLATE Latin1_General_CI_AI LIKE @search OR
-        t.designation COLLATE Latin1_General_CI_AI LIKE @search OR
-        t.typetiers   COLLATE Latin1_General_CI_AI LIKE @search;
-
-    SELECT COUNT(*) AS total
-    FROM Tiers t
-    WHERE 
-        @search IS NULL OR
-        t.codetiers   COLLATE Latin1_General_CI_AI LIKE @search OR
-        t.designation COLLATE Latin1_General_CI_AI LIKE @search OR
-        t.typetiers   COLLATE Latin1_General_CI_AI LIKE @search;
-`;
-
 const queryInsert = `
         INSERT INTO Tiers (idtiers, codetiers, designation, typetiers, actif, idsociete,
         createdat, updatedat, createdby, updatedby)
@@ -60,11 +28,7 @@ const query = `
             so.updatedat AS societe_updatedat
         FROM Tiers t
         LEFT JOIN Societe so ON t.idsociete = so.idsociete
-        ORDER BY t.codetiers
-        OFFSET @offset ROWS
-        FETCH NEXT @limit ROWS ONLY;
-
-        SELECT COUNT(*) AS total FROM Tiers;
+        ORDER BY t.codetiers;
     `;
 
 
@@ -106,7 +70,7 @@ class TiersModel {
             .input('updatedby', sql.NVarChar(50), this.updatedby)
             .query(queryInsert);
 
-            // console.log(result);
+            console.log(result);
 
             return { success: true, data: result.recordset[0] };
         } catch (error) {
@@ -116,23 +80,16 @@ class TiersModel {
 
 
     // Rechercher tous les tiers OK
-    async get_alltiers (page = 1, limit = 50, search = null) {
+    async get_alltiers () {
         const pool = await connectDB();
-        const offset = (page - 1) * limit;
 
         try {
             const result = await pool.request()
-            .input('offset', sql.Int, offset)
-            .input('search', sql.NVarChar, search ? `%${search}%` : null)
-            .input('limit', sql.Int, limit)
-            .query(getTiers);
+            .query(query);
 
             const tiers = result.recordsets[0];
-            const total = result.recordsets[1][0].total;
-            const totalPages = Math.ceil(total / limit);
 
-
-            return {page, limit, total, totalPages, data: tiers};
+            return {success: true, data: tiers};
         } catch (error) {
             console.log(`Erreur ds de recuperation: ${error}`.cyan.bold);
         }

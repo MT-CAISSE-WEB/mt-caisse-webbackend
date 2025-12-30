@@ -5,7 +5,9 @@ const departementservice = require ("../services/departement.service");
 module.exports.getalldepartement = asyncHandler (async(req,res, next)=>{
     try {
         const departements = await departementservice.getalldepartement();
-        res.status(departements.status).json({success:departements.success,message:departements.message,data:departements.data});
+        res.status(departements.status).json({success:departements.success,
+            message:departements.message, 
+            data:departements.data});
     } catch (error) {
         res.status(500).json({success:false, message:"Erreur serveur", error});
     }
