@@ -6,26 +6,28 @@ dotenv.config({path: '../../../config/config.env'});
 async function upsertrole(params){
     try {
         const pool = await db.poolPromise;
-        const {code,description, createdby,updatedby} = params;
+        const {code,libelle, createdby,updatedby} = params;
 
         const query = ` IF EXISTS (SELECT 1 FROM role WHERE code = @code)
-         BEGIN
-            UPDATE role SET
-                description = @description,
-                updatedby = @updatedby,
-                updatedat = GETDATE()
-            OUTPUT 'update' AS action, INSERTED.*
-            WHERE code = @code
-         END
-         ELSE
-         BEGIN
-            INSERT INTO role (code, description, createdby, createdat) 
-            OUTPUT 'insert' AS action, INSERTED.*
-            VALUES (@code, @description, @createdby, GETDATE())`;
+                        BEGIN
+                            UPDATE role SET
+                                libelle = @libelle,
+                                updatedby = @updatedby,
+                                updatedat = GETDATE()
+                            OUTPUT 'update' AS action, INSERTED.*
+                            WHERE code = @code;
+                        END
+                        ELSE
+                        BEGIN
+                            INSERT INTO role (code, libelle, createdby, createdat)
+                            OUTPUT 'insert' AS action, INSERTED.*
+                            VALUES (@code, @libelle, @createdby, GETDATE());
+                        END
+                        `;
 
         const result = await pool.request()
             .input('code',db.sql.NVarChar(50), code)
-            .input('description',db.sql.NVarChar(50), description)
+            .input('libelle',db.sql.NVarChar(50), libelle)
             .input('createdby', db.sql.NVarChar(50), createdby)
             .input('updatedby', db.sql.NVarChar(50), updatedby)
             .query(query);  

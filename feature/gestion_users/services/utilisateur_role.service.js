@@ -3,10 +3,10 @@ const { v4: uuidv4 } = require('uuid');
 const dotenv = require('dotenv');
 dotenv.config({path: '../../../config/config.env'});
 
-async function getutilisateurdepartement(idutilisateur){
+async function getutilisateurrole(idutilisateur){
     try {
         const pool = await db.poolPromise;
-        const query =`select * from UtilisateurDepartement
+        const query =`select * from utilisateur_role
                       WHERE idutilisateur = @idutilisateur`;
 
         const result = await pool.request()
@@ -16,7 +16,7 @@ async function getutilisateurdepartement(idutilisateur){
      return {
             success: true,
             status: 200,
-            message: "Departement récupérés avec succès !",
+            message: "Rôles récupérés avec succès !",
             data: result.recordsets
         };
     } 
@@ -29,30 +29,30 @@ async function getutilisateurdepartement(idutilisateur){
     }
 }
 
-async function upsertutilisateurdept(params){
+async function upsertutilisateurrole(params){
     try {
         const pool = await db.poolPromise;
-        const {idutilisateur, iddepartement, createdby, updatedby} = params;
-        const query = ` IF EXISTS (SELECT 1 FROM UtilisateurDepartement WHERE idutilisateur = @idutilisateur AND iddepartement = @iddepartement)
+        const {idutilisateur, idrole, createdby, updatedby} = params;
+        const query = ` IF EXISTS (SELECT 1 FROM utilisateur_role WHERE idutilisateur = @idutilisateur AND idrole = @idrole)
          BEGIN
-            UPDATE  UtilisateurDepartement SET
+            UPDATE  utilisateur_role SET
                 idutilisateur = @idutilisateur,
-                iddepartement = @iddepartement,
+                idrole = @idrole,
                 updatedby = @updatedby,
                 updatedat = GETDATE()
                 OUTPUT 'update' AS action, INSERTED.*
-            WHERE idutilisateur = @idutilisateur AND  iddepartement = @iddepartement 
+            WHERE idutilisateur = @idutilisateur AND  idrole = @idrole 
          END
          ELSE
          BEGIN
-            INSERT INTO  UtilisateurDepartement (idutilisateur,iddepartement,createdby,createdat)
+            INSERT INTO  utilisateur_role (idutilisateur,idrole,createdby, createdat)
             OUTPUT 'insert' AS action, INSERTED.*
-            VALUES (@idutilisateur,@iddepartement, @createdby, GETDATE())
+            VALUES (@idutilisateur,@idrole, @createdby, GETDATE())
          END`;
 
         const result = await pool.request()
             .input('idutilisateur',db.sql.UniqueIdentifier, idutilisateur)
-            .input('iddepartement',db.sql.UniqueIdentifier, iddepartement)
+            .input('idrole',db.sql.Int, idrole)
             .input('createdby', db.sql.NVarChar(50), createdby)
             .input('updatedby', db.sql.NVarChar(50), updatedby)
             .query(query);
@@ -75,13 +75,13 @@ async function upsertutilisateurdept(params){
     }
 }
 
-async function getAllutilisateurdept(){
+async function getAllutilisateurrole(){
     try {
         const pool = await db.poolPromise;
-        const query = `SELECT ud.*, r.code,d.codedept,d.libelle,d.responsable,u.nom,u.prenom
-                       FROM UtilisateurDepartement ud
-                       left JOIN Utilisateur u ON ur.idutilisateur = u.idutilisateur
-                       left JOIN Departement d ON ud.iddepartement = d.iddepartement
+        const query = `SELECT ur.*, r.code,r.libelle,u.nom,u.prenom
+                       FROM utilisateur_role ur
+                       left JOIN utilisateur u ON ur.idutilisateur = u.idutilisateur
+                       left JOIN role r ON ur.idrole = r.idrole
                        `;
         const result = await pool.request().query(query);  
         return {
@@ -100,18 +100,18 @@ async function getAllutilisateurdept(){
 
 }
 
-async function deleteutilisateurdept(idutilisateur,iddepartement){
+async function deleteutilisateurrole(idutilisateur,idrole){
     try {
         const pool = await db.poolPromise;
-        const query = `DELETE FROM UtilisateurDepartement WHERE idutilisateur = @idutilisateur AND iddepartement = @iddepartement`;
+        const query = `DELETE FROM utilisateur_role WHERE idutilisateur = @idutilisateur AND idrole = @idrole`;
         await pool.request()
             .input('idutilisateur', db.sql.UniqueIdentifier, idutilisateur)
-            .input('iddepartement', db.sql.UniqueIdentifier, iddepartement)
+            .input('idrole', db.sql.Int, idrole)
             .query(query);  
         return {
             success: true,
             status: 200,
-            message: "Departement user supprimé avec succès !"
+            message: "Role user supprimé avec succès !"
         };
     } catch (error) {
         return {
@@ -122,11 +122,9 @@ async function deleteutilisateurdept(idutilisateur,iddepartement){
     }
 }
 
-
 module.exports = {
-    getutilisateurdepartement,
-    upsertutilisateurdept,
-    getAllutilisateurdept,
-    deleteutilisateurdept
+    getutilisateurrole,
+    upsertutilisateurrole,
+    getAllutilisateurrole,
+    deleteutilisateurrole
 }
-

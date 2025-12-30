@@ -15,16 +15,16 @@ async function upsertuser(params){
             acheteur, createdby, updatedby
         } = params;
 
-        console.log(params);
+        // console.log(params);
 
         const idutilisateur = uuidv4();
 
         const hashpassword = await argon2.hash(password);
 
         const query = `
-        IF EXISTS (SELECT 1 FROM utilisateur WHERE codeutilisateur = @codeutilisateur)
+        IF EXISTS (SELECT 1 FROM Utilisateur WHERE codeutilisateur = @codeutilisateur)
         BEGIN
-            UPDATE utilisateur SET 
+            UPDATE Utilisateur SET 
                 idsociete = @idsociete,
                 nom = @nom,
                 prenom = @prenom,
@@ -45,7 +45,7 @@ async function upsertuser(params){
         END 
         ELSE
         BEGIN
-            INSERT INTO utilisateur 
+            INSERT INTO Utilisateur 
                 (idutilisateur, codeutilisateur, idsociete, nom, prenom, adresse, telephone, email, 
                  login, password, idrole, typeentitesite, typeentitedepartement, typeentitesociete, 
                  acheteur, createdby, createdat)
@@ -115,7 +115,7 @@ async function getalluser(){
         const pool = await connectDB();
         const query = `SELECT u.*,
        s.raisonsociale as societe
-       from utilisateur u
+       from Utilisateur u
        left join Societe s on u.idsociete = s.idsociete`;
         const result = await pool.request().query(query);
 
@@ -172,24 +172,111 @@ async function deleteuser(iduser)
 //login
 // LOGIN
 async function login(login, password) {
+try{
+    const pool = await connectDB();
 
-    try {
-        const pool = await connectDB();
+        const query =`SELECT u.*, 
+        s.idsociete,
+        s.codesociete,
+        s.raisonsociale,
         
-        // Vérifier utilisateur
+        dref.iddevise  AS devise_ref_id,
+        dref.codedevise      AS devise_ref_code,
+        dref.intitule  AS devise_ref_intitule ,
+        
+        drep.iddevise  AS devise_rep_id,
+        drep.codedevise      AS devise_rep_code,
+        drep.intitule    AS devise_rep_intitule, 
+        r.idrole,
+        r.code,
+        r.libelle,
+        d.iddepartement,
+        d.codedept,
+        d.libelle as libelledept
+
+        FROM Utilisateur u
+        INNER JOIN Societe s 
+            ON s.idsociete = u.idsociete
+        
+        left join utilisateur_role ur 
+        on ur.idutilisateur=u.idutilisateur
+
+        left join role r on ur.idrole = r.idrole
+
+        left join UtilisateurDepartement ud
+        on ud.idutilisateur = u.idutilisateur
+
+        left join Departement d on ud.iddepartement = d.iddepartement
+
+        LEFT JOIN Devise dref 
+            ON dref.iddevise = s.iddevisereference
+
+        LEFT JOIN Devise drep 
+            ON drep.iddevise = s.iddevisereporting
+
+        WHERE u.login = @login`;
+
         const result = await pool.request()
-            .input("login", db.sql.NVarChar, login)
-            .query("SELECT * FROM utilisateur WHERE login=@login");
+            .input("login", db.sql.NVarChar(50), login)
+            .query(query);
+
 
         if (result.recordset.length === 0) {
             return {status:404, success: false, message: "Utilisateur introuvable" };
         }
 
+        const userdb = result.recordset[0];
+        const user = {
+            codesociete :  result.recordset[0].codesociete,
+            raisonsociale : result.recordset[0].raisonsociale,
+            idutilisateur: result.recordset[0].idutilisateur,
+            login: result.recordset[0].login,
+            nom: result.recordset[0].nom,
+            prenom: result.recordset[0].prenom,
+            typeentitesociete: result.recordset[0].typeentitesociete,
+            typeentitesite : result.recordset[0].typeentitesite,
+            typeentitedepartement : result.recordset[0].typeentitedepartement,
+            acheteur : result.recordset[0].acheteur,
+            devise_ref_code : result.recordset[0].devise_ref_code,
+            devise_ref_intitule : result.recordset[0].devise_ref_intitule,
+            devise_rep_code : result.recordset[0].devise_ref_code,
+            devise_rep_intitule : result.recordset[0].devise_ref_intitule,
+            roles: [],
+            departements : []
+        };
 
-        const user = result.recordset[0];
+            const roles = {};
+            const departements = {};
+
+            result.recordset.forEach(row => {
+
+            if (row.idrole) {
+                roles[row.idrole] = {
+                idrole: row.idrole,
+                code: row.code,
+                libelle: row.libelle
+                };
+            }
+
+            if (row.iddepartement) {
+                departements[row.iddepartement] = {
+                iddepartement: row.iddepartement,
+                codedept: row.codedept,
+                libelle: row.libelledept
+                };
+            }
+            });
+
+            user.roles = Object.values(roles);
+            user.departements = Object.values(departements);
+
+
+
+
+
 
         // Vérifier mot de passe
-        const isOk = await argon2.verify(user.password, password);
+        const isOk = await argon2.verify(userdb.password, password);
         if (!isOk) {
             return {status:500, success: false, message: "Mot de passe incorrect" };
         }
@@ -199,8 +286,11 @@ async function login(login, password) {
         // Payload du token
         const payload = {
             id: user.idutilisateur,
-            login: user.login
+            login: user.login,
+            roles : user.roles.map(r => r.coderole),
+            departements : user.departements.map(d=>d.codedept)
         };
+
 
     
       
@@ -210,7 +300,7 @@ async function login(login, password) {
             process.env.JWT_SECRET,
             { expiresIn: "1d" }
         );
-
+        
         // Refresh Token : long
         const refreshToken = jwt.sign(
             payload,
@@ -222,12 +312,14 @@ async function login(login, password) {
         const hashedRefresh = await argon2.hash(refreshToken);
 
              await pool.request()
-            .input("userid", sql.UniqueIdentifier, user.idutilisateur)
-            .input("token", sql.NVarChar, hashedRefresh)
+            .input("userid", db.sql.UniqueIdentifier, user.idutilisateur)
+            .input("token", db.sql.NVarChar(255), hashedRefresh)
             .query(`
-                INSERT INTO REFRESH_TOKEN(idutilisateur, token)
+                INSERT INTO Refresh_token(idutilisateur, token)
                 VALUES (@userid, @token)
-            `);   
+            `);  
+            
+            console.log(user);
 
         return {
             success: true,
@@ -255,7 +347,7 @@ async function refreshtoken (refreshToken){
         const pool = await connectDB();
 
         // Récupération liste
-        const result = await pool.request().query("SELECT * FROM REFRESH_TOKEN");
+        const result = await pool.request().query("SELECT * FROM Refresh_token");
 
         const found = result.recordset.find(rt =>
             argon2.verify(rt.token, refreshToken)
@@ -291,7 +383,7 @@ async function logout(refreshToken){
 
             // Supprimer le refresh token lié à l'utilisateur
             await pool.request()
-                .query("DELETE FROM REFRESH_TOKEN");
+                .query("DELETE FROM Refresh_token");
 
             return { status: 200, success: true, message: "Déconnexion réussie" };
 

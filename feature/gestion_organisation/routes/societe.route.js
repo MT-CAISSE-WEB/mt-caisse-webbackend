@@ -7,7 +7,7 @@ const uploadLogo = require('../../../middlewares/uploadlogo');
 router.get("/Societe", societecontroller.getallsocietes);
 router.get("/Societe/devises", societecontroller.getalldevises);
 router.get("/Societe/:id", societecontroller.getonesociete);
-router.post("/Societe", uploadLogo.single('logo'), societecontroller.upsertsociete);
+router.post("/Societe", societecontroller.upsertsociete);
 router.delete("/Societe/:id", societecontroller.deletesociete);
 
 module.exports = router;

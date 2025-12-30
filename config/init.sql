@@ -53,7 +53,7 @@ BEGIN
 		sigle NVARCHAR(50),
 		rccm NVARCHAR(50),
 		numnui NVARCHAR(50),
-		email NVARCHAR(30),
+		email NVARCHAR(50),
 		telephone NVARCHAR(20),
 		logo NVARCHAR(50),
 		adresse NVARCHAR(200),
@@ -91,6 +91,7 @@ BEGIN
 END
 
 
+
 ---Ajout role et permission à completer chez vous
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'role')
 BEGIN
@@ -102,6 +103,51 @@ BEGIN
         createdat Datetime,
         updatedat Datetime,
         updatedby NVARCHAR(50)
+    );
+END
+
+
+-- OK
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Utilisateur')
+BEGIN
+    CREATE TABLE Utilisateur (
+		idutilisateur UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+		codeutilisateur NVARCHAR(24) UNIQUE,
+		idsociete UNIQUEIDENTIFIER,
+		nom NVARCHAR(100),
+		prenom NVARCHAR(100),
+		adresse NVARCHAR(100),
+		telephone NVARCHAR(50),
+		email NVARCHAR(50) unique,
+		login NVARCHAR(50) unique,
+		password NVARCHAR(255),
+		typeentitesite INT DEFAULT 0,
+		typeentitedepartement INT DEFAULT 0,
+		typeentitesociete INT DEFAULT 0,
+		acheteur INT DEFAULT 0,
+		idrole INT DEFAULT 0,
+        createdat Datetime,
+		createdby NVARCHAR(50),
+		updatedat Datetime,
+		updatedby NVARCHAR(50),
+		foreign key (idsociete) references Societe(idsociete),
+		foreign key (idrole) references role(idrole)
+    );
+END
+
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'utilisateur_role')
+BEGIN
+    CREATE TABLE utilisateur_role (
+        idutilisateur UNIQUEIDENTIFIER,
+        idrole INT NOT NULL,
+        createdby NVARCHAR(50),
+        createdat Datetime,
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        PRIMARY KEY (idutilisateur, idrole),
+        FOREIGN KEY (idrole) REFERENCES role(idrole),
+        FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur)
     );
 END
 
@@ -136,33 +182,6 @@ BEGIN
 END
 
 
--- OK
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Utilisateur')
-BEGIN
-    CREATE TABLE Utilisateur (
-		idutilisateur UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-		codeutilisateur NVARCHAR(24) UNIQUE,
-		idsociete UNIQUEIDENTIFIER,
-		nom NVARCHAR(100),
-		prenom NVARCHAR(100),
-		adresse NVARCHAR(100),
-		telephone NVARCHAR(50),
-		email NVARCHAR(50) unique,
-		login NVARCHAR(50) unique,
-		password NVARCHAR(255),
-		typeentitesite INT DEFAULT 0,
-		typeentitedepartement INT DEFAULT 0,
-		typeentitesociete INT DEFAULT 0,
-		acheteur INT DEFAULT 0,
-		idrole INT DEFAULT 0,
-        createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
-		foreign key (idsociete) references Societe(idsociete),
-		foreign key (idrole) references role(idrole)
-    );
-END
 
 
 ---refresh token a ajouter aussi
@@ -174,6 +193,7 @@ BEGIN
 		foreign key (idutilisateur) references Utilisateur(idutilisateur)
 	);
 END
+
 
 -- OK
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Departement')
@@ -343,7 +363,7 @@ BEGIN
         iddepartement UNIQUEIDENTIFIER,
         idnature UNIQUEIDENTIFIER,
         CONSTRAINT UQ_Dept_Nature UNIQUE (iddepartement, idnature),
-        FOREIGN KEY (iddepartement) REFERENCES departement(iddepartement),
+        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
         FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );
@@ -787,19 +807,15 @@ END
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'UtilisateurDepartement')
 BEGIN
     CREATE TABLE UtilisateurDepartement (
-		iduserdepartement UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
 		idutilisateur UNIQUEIDENTIFIER,
 		iddepartement UNIQUEIDENTIFIER,
-		idsociete UNIQUEIDENTIFIER,
-		debutactivite Datetime,
-		finactivite Datetime,
 		createdat Datetime,
 		createdby NVARCHAR(50),
 		updatedat Datetime,
 		updatedby NVARCHAR(50),
+        PRIMARY KEY (idutilisateur,iddepartement),
 		FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
 		FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
-		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );
 END
 -- FIN INIT DENIS
