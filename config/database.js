@@ -20,6 +20,7 @@ const sequelize = new Sequelize(
     logging: false,
     dialectOptions: {
       options: {
+        instanceName: process.env.DB_INSTANCE,
         encrypt: process.env.DB_ENCRYPT === 'true',
         trustServerCertificate: true,
       },

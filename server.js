@@ -22,6 +22,9 @@ const userroute = require('./feature/gestion_users/routes/users.route');
 const roleroute = require('./feature/gestion_users/routes/role.route');
 const permissionroute = require('./feature/gestion_users/routes/permission.route');
 const rolepermissionroute = require('./feature/gestion_users/routes/role_permission.route');
+const utilisateur_role = require('./feature/gestion_users/routes/utilisateur_role.route');
+const utilisateurdept = require('./feature/gestion_users/routes/usersdepartement.route');
+
 // Tiers routes
 const tiersroutes = require("./feature/gestion_donnee_base/routes/tiers.route");
 const plancomptableroutes = require("./feature/gestion_donnee_base/routes/plancomptable.route");
@@ -106,10 +109,6 @@ app.set('view engine', 'ejs');
 // Définir le répertoire des vues
 app.set('views', path.join(__dirname, 'views'));
 
-//Regrouper toutes les routes
-app.use("/API/circuitvalidateur", circuitvalidateurroute);
-app.use("/API/circuitvalidation", circuitvalidationroute);
-app.use("/API/validationdemande", validationdemanderoute);
 
 
 // console.log("PORT", process.env.PORT);
@@ -135,7 +134,8 @@ app.use('/API',userroute);
 app.use('/API',roleroute);
 app.use('/API',permissionroute);
 app.use('/API',rolepermissionroute);
-
+app.use('/API',utilisateur_role);
+app.use('/API',utilisateurdept);
 
 // Gestion donnee de base
 app.use("/API/tiers", tiersroutes);

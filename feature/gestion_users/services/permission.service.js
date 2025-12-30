@@ -10,19 +10,21 @@ async function upsertpermission(params){
         const pool = await db.poolPromise;
         const {code,description, createdby,updatedby} = params;
         const query = ` IF EXISTS (SELECT 1 FROM permission WHERE code = @code)
-         BEGIN  
-            UPDATE permission SET
-                description = @description,
-                updatedby = @createdby, 
-                updatedat = GETDATE()
-            OUTPUT 'update' AS action, INSERTED.*
-            WHERE code = @code
-         END
-         ELSE
-         BEGIN
-            INSERT INTO permission (code, description, createdby, createdat) 
-            OUTPUT 'insert' AS action, INSERTED.*
-            VALUES (@code, @description, @createdby, GETDATE())`;
+                        BEGIN
+                            UPDATE permission SET
+                                description = @description,
+                                updatedby = @updatedby,
+                                updatedat = GETDATE()
+                            OUTPUT 'update' AS action, INSERTED.*
+                            WHERE code = @code;
+                        END
+                        ELSE
+                        BEGIN
+                            INSERT INTO permission (code,description, createdby, createdat)
+                            OUTPUT 'insert' AS action, INSERTED.*
+                            VALUES (@code, @description, @createdby, GETDATE());
+                        END
+                        `;
         const result = await pool.request()
             .input('code', db.sql.NVarChar(50), code)    
             .input('description', db.sql.NVarChar(50), description)
