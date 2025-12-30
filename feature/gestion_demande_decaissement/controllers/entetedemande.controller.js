@@ -218,9 +218,8 @@ exports.getAll = async (req, res) => {
       data: items.rows,
     })
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, error: 'Erreur lors de la récupération' })
+    console.error(error.message)
+    res.status(500).json({ success: false, error: error.message })
   }
 }
 

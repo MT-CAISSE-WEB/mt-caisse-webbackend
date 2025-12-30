@@ -257,23 +257,6 @@ exports.delete = async (req, res) => {
   }
 }
 
-exports.deleteByLigne = async (req, res) => {
-  try {
-    const { idlignedemande } = req.params
-
-    await DetailsDemande.destroy({
-      where: { idlignedemande },
-    })
-
-    return res
-      .status(200)
-      .json({ success: true, message: 'Détail(s) supprimé(s) avec succès.' })
-  } catch (error) {
-    console.error('Erreur lors de la suppression des détails: ', error)
-    res.status(500).json({ success: false, error: error.message })
-  }
-}
-
 // ========== DUPLICATE ==========
 exports.duplicate = async (req, res) => {
   try {

@@ -12,7 +12,24 @@ const logger = require('./shared/middlewares/logger')
 const errorHandler = require('./shared/middlewares/error')
 const sequelize = require('./config/database')
 
-// Declaration des routes
+// Organisation routes
+const deviseroute = require('./feature/gestion_organisation/routes/devise.route')
+const tauxdeviseroute = require('./feature/gestion_organisation/routes/tauxdevise.route')
+const societeroute = require('./feature/gestion_organisation/routes/societe.route')
+const siteroute = require('./feature/gestion_organisation/routes/site.route')
+const departementroute = require('./feature/gestion_organisation/routes/departement.route')
+const userroute = require('./feature/gestion_users/routes/users.route')
+const roleroute = require('./feature/gestion_users/routes/role.route')
+const permissionroute = require('./feature/gestion_users/routes/permission.route')
+const rolepermissionroute = require('./feature/gestion_users/routes/role_permission.route')
+
+// Tiers routes
+const tiersroutes = require('./feature/gestion_donnee_base/routes/tiers.route')
+const plancomptableroutes = require('./feature/gestion_donnee_base/routes/plancomptable.route')
+const natureoperationroutes = require('./feature/gestion_donnee_base/routes/natureoperation.route')
+const centreanalytiqueroutes = require('./feature/gestion_donnee_base/routes/centreanalytique.route')
+const affectationanalytiqueroutes = require('./feature/gestion_donnee_base/routes/affectationanalytique.route')
+const affdepartementnatureroutes = require('./feature/gestion_donnee_base/routes/affectationdeptnature.route')
 
 // Budget
 const budget_route = require('./feature/gestion_budget/routes/budget.route')
@@ -25,10 +42,31 @@ const ligne_demande_route = require('./feature/gestion_demande_decaissement/rout
 // Détails demande
 const details_demande_route = require('./feature/gestion_demande_decaissement/routes/detaildemande.route')
 
-//connexion db
+// Journal routes
+const journalRoutes = require('./feature/gestion_operation_caisse/routes/journal.route')
+// Caisse routes
+const caisseRoutes = require('./feature/gestion_operation_caisse/routes/caisse.route')
+// Utilisateur caisse routes
+const utilisateurcaisseRoutes = require('./feature/gestion_operation_caisse/routes/utilisateurcaisse.route')
+// Entete operation routes
+const enteteoperationRoutes = require('./feature/gestion_operation_caisse/routes/enteteoperation.route')
+// Ligne operation routes
+const ligneoperationRoutes = require('./feature/gestion_operation_caisse/routes/ligneoperation.route')
+// Type operation routes
+const typeoperationRoutes = require('./feature/gestion_operation_caisse/routes/operation.route')
+
+// Declaration des routes
+//const societesroutes = require("./feature/gestion_workflow/routes/circuitvalidateur.route");
+const circuitvalidateurroute = require('./feature/gestion_workflow/routes/circuitvalidateur.route')
+const circuitvalidationroute = require('./feature/gestion_workflow/routes/circuitvalidation.route')
+const validationdemanderoute = require('./feature/gestion_workflow/routes/validationdemande.route')
+
 const db = require('./config/db')
 
-dotenv.config({ path: './config/config.env' })
+//connexion db Richard
+const { connectInstance } = require('./config/db')
+
+dotenv.config({ path: './config/.env' })
 // INIT EXPRESS
 const app = express()
 // ANALYSEUR DE CORPS DE REQ AU FORMAT JSON
@@ -47,7 +85,11 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'))
 }
 
-db.connectInstance()
+db.initdatabase()
+//db.connectInstance();
+
+//LANCEMENT DE LA BASE DE DONNEES
+connectInstance()
 
 // JOURNALISATION PERSONNALISEE
 app.use(logger)
@@ -70,23 +112,13 @@ app.set('view engine', 'ejs')
 // Définir le répertoire des vues
 app.set('views', path.join(__dirname, 'views'))
 
-// Test SQL Server connection Sequelize
-sequelize
-  .authenticate()
-  .then(() => console.log('Connexion SQL Server OK sequelize✔️'))
-  .catch((err) => console.log('Erreur SQL Server ❌', err))
-
 //Regrouper toutes les routes
-//Budget
-app.use('/api/budget', budget_route)
-//Ligne budgetaire
-app.use('/api/ligne-budgetaire', ligne_budgetaire_route)
-//Entete demande
-app.use('/api/entete-demande', entete_demande_route)
-//Ligne demande
-app.use('/api/ligne-demande', ligne_demande_route)
-//Details demande
-app.use('/api/details-demande', details_demande_route)
+app.use('/API/circuitvalidateur', circuitvalidateurroute)
+app.use('/API/circuitvalidation', circuitvalidationroute)
+app.use('/API/validationdemande', validationdemanderoute)
+
+// console.log("PORT", process.env.PORT);
+// console.log("TEXT", process.env.text);
 
 // GESTION DES ERREURS
 app.use(errorHandler)
@@ -100,6 +132,51 @@ const server = app.listen(
       .bold
   )
 )
+
+//API
+app.use('/API', deviseroute)
+app.use('/API', tauxdeviseroute)
+app.use('/API', societeroute)
+app.use('/API', siteroute)
+app.use('/API', departementroute)
+app.use('/API', userroute)
+app.use('/API', roleroute)
+app.use('/API', permissionroute)
+app.use('/API', rolepermissionroute)
+
+// Gestion donnee de base
+app.use('/API/tiers', tiersroutes)
+app.use('/API/plancomptable', plancomptableroutes)
+app.use('/API/natureoperation', natureoperationroutes)
+app.use('/API/centreanalytique', centreanalytiqueroutes)
+app.use('/API/affectationanalytique', affectationanalytiqueroutes)
+app.use('/API/affectationdepartementnature', affdepartementnatureroutes)
+
+// Test SQL Server connection Sequelize
+sequelize
+  .authenticate()
+  .then(() => console.log('Connexion SQL Server OK sequelize✔️'))
+  .catch((err) => console.log('Erreur SQL Server ❌', err))
+
+//Regrouper toutes les routes
+app.use('/api/budget', budget_route) //Budget
+app.use('/api/ligne-budgetaire', ligne_budgetaire_route) //Ligne budgetaire
+app.use('/api/entete-demande', entete_demande_route) //Entete demande
+app.use('/api/ligne-demande', ligne_demande_route) //Ligne demande
+app.use('/api/details-demande', details_demande_route) //Details demande
+
+//GESTION OPERATION CAISSE ROUTES
+app.use('/API/journal', journalRoutes)
+app.use('/API/caisse', caisseRoutes)
+app.use('/API/utilisateur_caisse', utilisateurcaisseRoutes)
+app.use('/API/entete_operation', enteteoperationRoutes)
+app.use('/API/ligne_operation', ligneoperationRoutes)
+app.use('/API/operation', typeoperationRoutes)
+
+//Regrouper toutes les routes
+app.use('/API/circuitvalidateur', circuitvalidateurroute)
+app.use('/API/circuitvalidation', circuitvalidationroute)
+app.use('/API/validationdemande', validationdemanderoute)
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {

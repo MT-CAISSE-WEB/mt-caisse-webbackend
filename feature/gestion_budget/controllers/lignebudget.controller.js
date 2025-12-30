@@ -15,6 +15,7 @@ const foreignIncludes = [
       'idbudget',
       'codebudget',
       'idbudgetparent',
+      'libelle',
       'entite',
       'typebudget',
       'datedebut',
@@ -67,7 +68,7 @@ const foreignIncludes = [
       'idsociete',
       'idcompte',
       'libelle',
-      'avanceajustifier',
+      'decajustifier',
       'imputationtiers',
       'actif',
       'demandedecaissement',
@@ -98,8 +99,8 @@ exports.create = async (req, res) => {
       montantprevisiondept,
       montantprevisionsite,
       montantprevisionsociete,
-      totalconsocloture,
-      soldecloture,
+      // totalconsocloture,
+      // soldecloture,
       createdby,
     }
 

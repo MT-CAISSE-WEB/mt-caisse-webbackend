@@ -1,0 +1,315 @@
+const { sql, poolPromise, connectInstance, connectDB} = require('../../../config/db');
+const { v4: uuidv4 } = require('uuid');
+const dotenv = require('dotenv');
+dotenv.config({path: '../../../config/config.env'});
+const argon2 = require('argon2');
+const jwt = require("jsonwebtoken");
+const db = require('../../../config/db');
+
+
+async function upsertuser(params){
+    try {
+        const {
+            codeutilisateur, idsociete, nom, prenom, adresse, telephone, email,
+            login, password, idrole, typeentitesite, typeentitedepartement, typeentitesociete,
+            acheteur, createdby, updatedby
+        } = params;
+
+        console.log(params);
+
+        const idutilisateur = uuidv4();
+
+        const hashpassword = await argon2.hash(password);
+
+        const query = `
+        IF EXISTS (SELECT 1 FROM Utilisateur WHERE codeutilisateur = @codeutilisateur)
+        BEGIN
+            UPDATE Utilisateur SET 
+                idsociete = @idsociete,
+                nom = @nom,
+                prenom = @prenom,
+                adresse = @adresse,
+                telephone = @telephone,
+                email = @email,
+                login = @login,
+                idrole = @idrole,
+                password = @password, 
+                typeentitesite = @typeentitesite,
+                typeentitedepartement = @typeentitedepartement,
+                typeentitesociete = @typeentitesociete,
+                acheteur = @acheteur,
+                updatedby = @updatedby,
+                updatedat = GETDATE()
+            OUTPUT 'update' AS action, INSERTED.*
+            WHERE codeutilisateur = @codeutilisateur
+        END 
+        ELSE
+        BEGIN
+            INSERT INTO Utilisateur 
+                (idutilisateur, codeutilisateur, idsociete, nom, prenom, adresse, telephone, email, 
+                 login, password, idrole, typeentitesite, typeentitedepartement, typeentitesociete, 
+                 acheteur, createdby, createdat)
+            OUTPUT 'insert' AS action, INSERTED.*
+            VALUES  
+                (@idutilisateur, @codeutilisateur, @idsociete, @nom, @prenom, @adresse, 
+                 @telephone, @email, @login, @password, @idrole, @typeentitesite, @typeentitedepartement, 
+                 @typeentitesociete, @acheteur, @createdby, GETDATE())
+        END`;
+
+        
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input("idutilisateur", sql.UniqueIdentifier, idutilisateur)
+            .input("codeutilisateur", sql.NVarChar, codeutilisateur)
+            .input("idsociete", sql.UniqueIdentifier, idsociete)
+            .input("nom", sql.NVarChar, nom)
+            .input("prenom", sql.NVarChar, prenom)
+            .input("adresse", sql.NVarChar, adresse)
+            .input("telephone", sql.NVarChar, telephone)
+            .input("email", sql.NVarChar, email)
+            .input("login", sql.NVarChar, login)
+            .input("idrole", sql.Int, idrole)
+            .input("password", sql.NVarChar, hashpassword)
+            .input("typeentitesite", sql.Int, typeentitesite)
+            .input("typeentitedepartement", sql.Int, typeentitedepartement)
+            .input("typeentitesociete", sql.Int, typeentitesociete)
+            .input("acheteur", sql.Int, acheteur)
+            .input("createdby", sql.NVarChar, createdby)
+            .input("updatedby", sql.NVarChar, updatedby)
+            .query(query);
+
+            console.log("Securite - upsert user executed");
+        
+        // SÉCURITÉ → éviter crash
+        if (!result.recordset || result.recordset.length === 0) {
+            return {
+                success: false,
+                status: 500,
+                message: "Aucune donnée retournée (probable erreur SQL)"
+            };
+        }
+
+        const data = result.recordset[0];
+
+        return {
+            success: true,
+            status: 200,
+            message: data.action === "update"
+                ? "Utilisateur mis à jour avec succès !"
+                : "Utilisateur créé avec succès !",
+            data
+        };
+
+    } catch (error) {
+        return {
+            success: false,
+            status: 500,
+            message: `Erreur de l'opération : ${error}`
+        };
+    }
+}
+
+
+async function getalluser(){
+    try {
+        const pool = await connectDB();
+        const query = `SELECT u.*,
+       s.raisonsociale as societe
+       from Utilisateur u
+       left join Societe s on u.idsociete = s.idsociete`;
+        const result = await pool.request().query(query);
+
+        return {
+            success :true,
+            status:200, 
+            data : result.recordsets[0],
+            message : "Eléments trouvés avec succès!"}
+    } catch (error) {
+        return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
+    }
+}
+
+//Get one
+async function getoneuser(iduser){
+    try {
+        const pool = await connectDB();
+        const query = "SELECT * FROM utilisateur where idutilisateur = @idutilisateur";
+        const result = await pool.request()
+        .input('idutilisateur',db.sql.UniqueIdentifier,iduser)
+        .query(query);
+
+        if(!result){
+            return {success:false,status:404,message:"Utilisateur non trouvé"};
+        }
+
+        return {
+            success:true,
+            status:200,
+            data:result.recordset[0],
+            message : "Element trouvé avec succès!"}
+    } catch (error) {
+        return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
+    }
+}
+
+async function deleteuser(iduser)
+{
+          
+          try {
+              const pool = await connectDB();
+              const query = "DELETE FROM utilisateur where idutilisateur = @idutilisateur";
+              const result = await pool.request()
+              .input('idutilisateur', sql.UniqueIdentifier,iduser)
+              .query(query);
+              return {success:true,status:200,message:"Suppression effectuée avec succès!"}
+          } catch (error) {
+              return {success:false,status:500,message:`Erreur lors de la suppression : ${error}`.cyan.bold}; 
+          }
+}
+
+//fonctionnalités métier User
+
+//login
+// LOGIN
+async function login(login, password) {
+
+    try {
+        const pool = await connectDB();
+        
+        // Vérifier utilisateur
+        const result = await pool.request()
+            .input("login", db.sql.NVarChar, login)
+            .query("SELECT * FROM Utilisateur WHERE login=@login");
+
+        if (result.recordset.length === 0) {
+            return {status:404, success: false, message: "Utilisateur introuvable" };
+        }
+
+
+        const user = result.recordset[0];
+
+        // Vérifier mot de passe
+        const isOk = await argon2.verify(user.password, password);
+        if (!isOk) {
+            return {status:500, success: false, message: "Mot de passe incorrect" };
+        }
+
+
+
+        // Payload du token
+        const payload = {
+            id: user.idutilisateur,
+            login: user.login
+        };
+
+    
+      
+        // Access Token : court
+        const token = jwt.sign(
+            payload,
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        );
+
+        // Refresh Token : long
+        const refreshToken = jwt.sign(
+            payload,
+            process.env.JWT_SECRET_REFRESH,
+            { expiresIn: "30d" }
+        );
+       
+        // Stockage du refresh token (hashé)
+        const hashedRefresh = await argon2.hash(refreshToken);
+
+             await pool.request()
+            .input("userid", sql.UniqueIdentifier, user.idutilisateur)
+            .input("token", sql.NVarChar, hashedRefresh)
+            .query(`
+                INSERT INTO REFRESH_TOKEN(idutilisateur, token)
+                VALUES (@userid, @token)
+            `);   
+
+        return {
+            success: true,
+            status : 200,
+            message: "Connexion réussie",
+            data: user,
+            token: token,
+            refreshToken: refreshToken
+        };
+
+    } catch (error) {
+        return { status:500, success: false, message: "Erreur serveur : " + error };
+    }
+}
+
+
+async function refreshtoken (refreshToken){
+    if (!refreshToken) {
+        return { status: 401, success: false, message: "Refresh token manquant" };
+    }
+
+    try {
+            const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET_REFRESH);
+
+        const pool = await connectDB();
+
+        // Récupération liste
+        const result = await pool.request().query("SELECT * FROM REFRESH_TOKEN");
+
+        const found = result.recordset.find(rt =>
+            argon2.verify(rt.token, refreshToken)
+        );
+
+        if (!found) {
+            return { status: 403, success: false, message: "Refresh token invalide" };
+        }
+
+        const newToken = jwt.sign(
+            { id: decoded.id, login: decoded.login },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        );
+
+        return {
+            status: 200,
+            success: true,
+            token: newToken
+        };
+    } catch (error) {
+            return { status: 500, success: false, message: "Erreur serveur" };
+    }
+}
+
+async function logout(refreshToken){
+     if (!refreshToken) {
+            return { status: 400, success: false, message: "Refresh token manquant" };
+        }
+
+        try {
+            const pool = await connectDB();
+
+            // Supprimer le refresh token lié à l'utilisateur
+            await pool.request()
+                .query("DELETE FROM REFRESH_TOKEN");
+
+            return { status: 200, success: true, message: "Déconnexion réussie" };
+
+        } catch (error) {
+            return { status: 500, success: false, message: "Erreur lors du logout" };
+        }
+}
+
+
+
+module.exports = {
+    upsertuser,
+    getalluser,
+    getoneuser,
+    deleteuser,
+    login,
+    refreshtoken,
+    logout
+}
+
+

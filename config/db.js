@@ -1,5 +1,5 @@
 const dotenv = require('dotenv')
-dotenv.config({ path: './config/config.env' })
+dotenv.config({ path: './config/.env' })
 const sql = require('mssql')
 const fs = require('fs')
 
@@ -10,47 +10,47 @@ const config = {
   database: process.env.DB_NAME,
   options: {
     encrypt: process.env.DB_ENCRYPT === 'true', // true si Azure
-    trustServerCertificate: false,
-    //instanceName: process.env.DB_INSTANCE || undefined, // Nom de l'instance SQL Server, si applicable
+    trustServerCertificate: true,
+    // instanceName: process.env.DB_INSTANCE || undefined, // Nom de l'instance SQL Server, si applicable
   },
 }
 
 const createDB = async () => {
   try {
-    const db = await sql.connect({ ...config, database: 'MTCAISSEWEB' })
-    // const table = fs.readFileSync('./config/init.sql', 'utf8')
-    // await db.request().query(table)
+    const db = await sql.connect({ ...config, database: config.database })
+    const table = fs.readFileSync('./config/init.sql', 'utf8')
+    await db.request().query(table)
     db.close()
-    // console.log(`Tables créees`.yellow.bold)
+    // console.log(`Tables créees`.yellow.bold);
   } catch (error) {
     console.log(`Erreur de création des tables: ${error}`.red.bold)
   }
 }
 
-// const connectDB = async () => {
-//   try {
-//     const db = await sql.connect({ ...config, database: 'MTCAISSEWEB' })
-//     console.log(`Connecté à la base de données`.cyan.bold)
-//     return db
-//   } catch (error) {
-//     console.log(`Erreur de connexion: ${error}`.red.bold)
-//     throw error
-//   }
-// }
+const connectDB = async () => {
+  try {
+    const db = await sql.connect({ ...config, database: config.database })
+    console.log(`Connecté à la base de données`.cyan.bold)
+    return db
+  } catch (error) {
+    console.log(`${error}`.red.bold)
+    throw error
+  }
+}
 
 const connectInstance = async () => {
   try {
     const pool = await sql.connect(config)
-    console.log(`Connecté à SQL Server`.cyan.bold)
+    // console.log(`Connecté à SQL Server`.cyan.bold);
     const dbPool = fs.readFileSync('./config/db.sql', 'utf8')
     try {
       await pool.request().query(dbPool)
       createDB()
     } catch (err) {
-      console.log(`Erreur de création de la base de donnée: ${err}`.cyan.bold)
+      console.log(`${err}`.cyan.bold)
     }
   } catch (err) {
-    console.log(`Erreur de connexion: ${err.message}`.cyan.bold)
+    console.log(`${err}`.cyan.bold)
   }
 }
 
@@ -58,7 +58,7 @@ const connectInstance = async () => {
 const poolPromise = new sql.ConnectionPool(config)
   .connect()
   .then((pool) => {
-    console.log('Connecté à SQL Server via')
+    console.log('Connecté à SQL Server')
     return pool
   })
   .catch((err) => {
@@ -66,4 +66,29 @@ const poolPromise = new sql.ConnectionPool(config)
     throw err
   })
 
-module.exports = { connectInstance, poolPromise, sql, config }
+const initdatabase = async () => {
+  try {
+    const masterpool = await sql.connect(config)
+
+    await masterpool.request().query(`
+          IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '${config.database}')
+          BEGIN
+            CREATE DATABASE ${config.database} ;
+          END
+        `)
+
+    console.log('Base  vérifiée/créée')
+
+    const dbPool = await sql.connect({ ...config, database: config.database })
+    const tablesScript = fs.readFileSync('./config/init.sql', 'utf8')
+    await dbPool.request().batch(tablesScript)
+
+    console.log('Tables initialisées')
+    await sql.close()
+  } catch (error) {
+    console.error('Erreur initDatabase :', error)
+    await sql.close()
+  }
+}
+
+module.exports = { connectInstance, connectDB, initdatabase, poolPromise, sql }

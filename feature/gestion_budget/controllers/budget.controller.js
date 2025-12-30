@@ -77,7 +77,6 @@ exports.create = async (req, res) => {
       codebudget,
       datedebut,
       typebudget,
-      entite,
       datefin,
       createdby,
       idbudgetparent,
@@ -89,7 +88,6 @@ exports.create = async (req, res) => {
       datedebut,
       typebudget,
       datefin,
-      entite,
       createdby,
     }
 
@@ -175,9 +173,8 @@ exports.getAll = async (req, res) => {
       data: items.rows,
     })
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, error: 'Erreur lors de la récupération' })
+    console.log(error)
+    res.status(500).json({ success: false, error: error.message })
   }
 }
 
@@ -202,7 +199,7 @@ exports.getById = async (req, res) => {
 // ========== UPDATE (PATCH) ==========
 exports.update = async (req, res) => {
   try {
-    console.log('Updated data:', req.body)
+    // console.log('Updated data:', req.body)
     const { updatedby, ...restBody } = req.body
 
     if (!updatedby || updatedby === '') {

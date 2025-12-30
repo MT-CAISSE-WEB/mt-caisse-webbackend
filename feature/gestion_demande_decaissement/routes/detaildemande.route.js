@@ -8,6 +8,5 @@ router.get('/:id', controller.getById) // READ ONE BY ID
 router.patch('/update/:id', controller.update) // UPDATE
 router.delete('/delete/:id', controller.delete) // DELETE
 router.post('/duplicate/:id', controller.duplicate) // DUPLICATE
-router.delete('/delete-by-ligne/:idlignedemande', controller.deleteByLigne) // DELETE BY LIGNE
 
 module.exports = router
