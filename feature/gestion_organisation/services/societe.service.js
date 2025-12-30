@@ -2,6 +2,7 @@ const { DateTime, UniqueIdentifier } = require('mssql');
 const {sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../../../config/db');
+const deviseservice = require("../../gestion_organisation/services/devise.service");
 
  //upsert Societe
    async function upsertsociete({codesociete,iddevisereference,iddevisereporting,raisonsociale,sigle, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby, updatedby }) {

@@ -215,10 +215,6 @@ END
 -- FIN INIT JUNIOR
 
 
-
-
-
-
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PlanComptable')
 BEGIN
     CREATE TABLE PlanComptable (
@@ -385,7 +381,7 @@ END
 
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'BudgetDepartementNature')
 BEGIN
-    CREATE TABLE BudgetDepartementNature (
+    CREATE TABLE BudgetDeEntetpartementNature (
         idbudgetdepartementnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idbudget UNIQUEIDENTIFIER,
         iddepartement UNIQUEIDENTIFIER,
@@ -420,7 +416,7 @@ BEGIN
         datedemande DATETIME,
         decaisse INT DEFAULT 0,
         solde INT DEFAULT 0,
-        statut NVARCHAR(50),
+        statut INT DEFAULT 0,
         idcircuit UNIQUEIDENTIFIER,
         idsociete UNIQUEIDENTIFIER,
         idsite UNIQUEIDENTIFIER,
@@ -448,12 +444,13 @@ BEGIN
     CREATE TABLE LigneDemande (
         idlignedemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         iddemande UNIQUEIDENTIFIER,
-        numligne INT UNIQUE,
+        numligne INT,
         libellelignedemande NVARCHAR(255),
         montantdemande DECIMAL(22, 9),
         idnature UNIQUEIDENTIFIER,
         idbudget UNIQUEIDENTIFIER DEFAULT NULL,
         idcentre UNIQUEIDENTIFIER,
+        idtiers UNIQUEIDENTIFIER,
         idsociete UNIQUEIDENTIFIER,
         idsite UNIQUEIDENTIFIER,
         createdat Datetime DEFAULT GETDATE(),
@@ -462,6 +459,7 @@ BEGIN
         updatedby NVARCHAR(50),
         FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
         FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
+        FOREIGN KEY (idtiers) REFERENCES Tiers(idtiers),
         FOREIGN KEY (idbudget) REFERENCES Budget(idbudget),
         FOREIGN KEY (idcentre) REFERENCES CentreAnalytique(idcentreanalytique),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
@@ -494,9 +492,6 @@ BEGIN
 END
 
 -- FIN INIT FERREOL
-
-
-
 
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Journal')
 BEGIN

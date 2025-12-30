@@ -10,9 +10,10 @@ module.exports.get_typeoperations = asyncHandler(async(req, res, next) => {
     const page = req.query.page ? parseInt(req.query.page) : 1;
     const search = req.query.search || null;
     const date = req.query.date || null;
-    const status = req.query.status || null;      // Comptabilisé / Non comptabilisé / Tous
+    const limit = req.query.limit ? parseInt(req.query.limit) : 5;      // Comptabilisé / Non comptabilisé / Tous
+    const status = req.query.statut;
 
-    const typeoperations = await typeoperationservice.get_all_typeoperations({page,search,date,status});
+    const typeoperations = await typeoperationservice.get_all_typeoperations({page, limit, search, date});
     res.json({ success: true, data: typeoperations });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur", error });
@@ -39,7 +40,7 @@ module.exports.create_typeoperation = asyncHandler(async(req, res, next) => {
   try {
     const data = req.body;
     const new_typeoperation = await typeoperationservice.create_typeoperation(data);
-    res.status(201).json({ success: true, data: new_typeoperation });
+    res.status(201).json({ success: true, data: data });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }

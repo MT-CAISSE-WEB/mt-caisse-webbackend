@@ -1,84 +1,135 @@
-const { DataTypes } = require('sequelize')
-const sequelize = require('../../../config/database')
+const {sql, connectInstance, connectDB} = require('../../../config/db');
+const { v4: uuidv4 } = require('uuid');
+const entetedemandeQuery = require('../queries/entetedemande.query');
 
-// Import des autres modèles
-const {
-  CircuitValidation,
-  Departement,
-  Site,
-  Societe,
-  Utilisateur,
-  Devise,
-} = require('./foreign_models')
 
-const EnteteDemande = sequelize.define(
-  'EnteteDemande',
-  {
-    iddemande: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-    },
-    codedemande: { type: DataTypes.STRING(50), unique: true },
-    iddemandeur: DataTypes.UUID,
-    typedemande: DataTypes.STRING(50),
-    libelledemande: DataTypes.STRING(200),
-    datedemande: DataTypes.DATE,
-    decaisse: { type: DataTypes.INTEGER, defaultValue: 0 },
-    solde: { type: DataTypes.INTEGER, defaultValue: 0 },
-    statut: DataTypes.STRING(50),
-    idcircuit: DataTypes.UUID,
-    idsociete: DataTypes.UUID,
-    idsite: DataTypes.UUID,
-    iddepartement: DataTypes.UUID,
-    iddevise: DataTypes.UUID,
-    createdat: DataTypes.DATE,
-    createdby: DataTypes.STRING(50),
-    updatedat: DataTypes.DATE,
-    updatedby: DataTypes.STRING(50),
-  },
-  {
-    tableName: 'EnteteDemande',
-    timestamps: false,
+class enteteDemandeModel {
+  constructor( iddemande, codedemande, iddemandeur, typedemande, libelledemande, datedemande, decaisse, solde, statut, idcircuit, idsociete, idsite, iddepartement, iddevise, 
+    createdat, createdby, updatedat, updatedby, circuit = null, societe = null, site = null, departement = null, devise = null) {
+    this.iddemande = iddemande
+    this.codedemande = codedemande
+    this.iddemandeur = iddemandeur
+    this.typedemande = typedemande
+    this.libelledemande = libelledemande
+    this.datedemande = datedemande
+    this.decaisse = decaisse
+    this.solde = solde
+    this.statut = statut
+    this.idcircuit = idcircuit
+    this.idsociete = idsociete
+    this.idsite = idsite
+    this.iddepartement = iddepartement
+    this.iddevise = iddevise
+
+    this.circuit = circuit
+    this.societe = societe
+    this.site = site
+    this.departement = departement 
+    this.devise = devise
+
+    this.createdat = createdat
+    this.createdby = createdby
+    this.updatedat = updatedat
+    this.updatedby = updatedby
   }
-)
 
-// ===== Associations =====
 
-// Demandeur
-EnteteDemande.belongsTo(Utilisateur, {
-  foreignKey: 'iddemandeur',
-  as: 'demandeur',
-})
+  async create_enteteDemande() {
+    const pool = await connectDB();
+    try {
+      const result = await pool.request()
+        .input('iddemande', sql.UniqueIdentifier, this.iddemande || uuidv4())
+        .input('codedemande', sql.NVarChar(50), this.codedemande)
+        .input('iddemandeur', sql.UniqueIdentifier, this.iddemandeur)
+        .input('typedemande', sql.NVarChar(50), this.typedemande)
+        .input('libelledemande', sql.NVarChar(200), this.libelledemande)
+        .input('datedemande', sql.DateTime, this.datedemande)
+        .input('decaisse', sql.Int, this.decaisse || 0)
+        .input('solde', sql.Int, this.solde || 0)
+        .input('statut', sql.Int, this.statut)
+        .input('idcircuitvalidation', sql.UniqueIdentifier, this.idcircuit)
+        .input('idsociete', sql.UniqueIdentifier, this.idsociete)
+        .input('idsite', sql.UniqueIdentifier, this.idsite)
+        .input('iddepartement', sql.UniqueIdentifier, this.iddepartement)
+        .input('iddevise', sql.UniqueIdentifier, this.iddevise)
+        .input('createdat', sql.DateTime, new Date())
+        .input('createdby', sql.NVarChar(50), this.createdby)
+        .query(entetedemandeQuery.insert);
 
-// Circuit de validation
-EnteteDemande.belongsTo(CircuitValidation, {
-  foreignKey: 'idcircuit',
-  as: 'circuit',
-})
+      return { success: true, data: result.recordset[0] }
+    } catch (error) {
+      return { success: false, message: error.message }
+    }
+  }
 
-// Société
-EnteteDemande.belongsTo(Societe, {
-  foreignKey: 'idsociete',
-  as: 'societe',
-})
+  async get_allDemandes({ page = 1, limit = 10, search = null, statut = null }) {
+    page = parseInt(page);
+    limit = parseInt(limit);
+    const offset = (page - 1) * limit;
 
-// Site
-EnteteDemande.belongsTo(Site, {
-  foreignKey: 'idsite',
-  as: 'site',
-})
+    const pool = await connectDB();
+    try {
+      const result = await pool.request()
+        .input('offset', sql.Int, offset)
+        .input('limit', sql.Int, limit)
+        .input('search', sql.NVarChar, search ? `%${search}%` : null)
+        .query(entetedemandeQuery.demandes);
 
-// Département
-EnteteDemande.belongsTo(Departement, {
-  foreignKey: 'iddepartement',
-  as: 'departement',
-})
+      const data = result.recordsets[0]
+      const total = result.recordsets[1][0].total
+      const totalPages = Math.ceil(total / limit)
 
-// Devise
-EnteteDemande.belongsTo(Devise, {
-  foreignKey: 'iddevise',
-  as: 'devise',
-})
+      return { page, limit, total, totalPages, data }
+    } catch (error) {
+      throw error
+    }
+  }
 
-module.exports = EnteteDemande
+  async get_demande_by_id(iddemande) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddemande', sql.UniqueIdentifier, iddemande)
+      .query(entetedemandeQuery.getOne)
+
+    return result.recordset
+  }
+
+  async update_enteteDemande(iddemande, data) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddemande', sql.UniqueIdentifier, iddemande)
+      .input('devise', sql.UniqueIdentifier, data.devise)
+      .input('departement', sql.UniqueIdentifier, data.iddepartement)
+      .input('datedemande', sql.DateTime, data.datedemande)
+      .input('libelledemande', sql.NVarChar(200), data.libelledemande)
+      .input('typedemande', sql.NVarChar(50), data.typedemande)
+      .input('updatedat', sql.DateTime, new Date())
+      .input('updatedby', sql.NVarChar(50), data.updatedby)
+      .query(entetedemandeQuery.update);
+
+    return result
+  }
+
+  async decaisse_enteteDemande(iddemande, decaisse) {
+    console.log(decaisse)
+    const pool = await connectDB();
+    const result = await pool.request()
+      .input('decaisse', sql.Int, decaisse)
+      .input('iddemande', sql.UniqueIdentifier, iddemande)
+      .query(entetedemandeQuery.decaisse);
+      
+    return { success: true, data: result }
+  }
+
+  async delete_enteteDemande(iddemande) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddemande', sql.UniqueIdentifier, iddemande)
+      .query(entetedemandeQuery.delete);
+
+    return { success: true, data: result }
+  }
+
+}
+
+module.exports = enteteDemandeModel

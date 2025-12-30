@@ -10,14 +10,17 @@ const siteservice = require("../../gestion_organisation/services/site.service");
 const enteteoperationservice = require("../services/enteteoperation.service");
 const ligneoperationservice = require("../services/ligneoperation.service");
 const caisseservice = require("../services/caisse.service");
+const enteteDemandeModel = require("../../gestion_demande_decaissement/models/entetedemande.model");
+let demandemodel = new enteteDemandeModel();
 
 let typeoperation = new typeoperationmodel();
 let typeoperations = [];
 
-async function get_all_typeoperations({ page, search, date, status }) {
-  let soldes = 0;
+async function get_all_typeoperations({ page, limit, search, date}) {
+  let soldes = [];
   soldes = await typeoperation.get_soldecaisse();
-  const result = await typeoperation.get_alltypeoperations({ page, search, date, status });
+  const result = await typeoperation.get_alltypeoperations({ page, limit, search, date});
+
   try {
     const operations = {};
     result.data.forEach(row => {
@@ -118,11 +121,10 @@ async function get_all_typeoperations({ page, search, date, status }) {
     console.log(error);
   }
 
-  return new PaginationModel(result.page, result.limit, result.total, typeoperations);;
+  return new PaginationModel(result.page, result.limit, result.total, typeoperations);
 }
 
 async function create_typeoperation(data) {
-  console.log(data);
   const today = new Date();
 
   if (!Array.isArray(data.caisses) || data.caisses.length === 0) {
@@ -132,13 +134,21 @@ async function create_typeoperation(data) {
   //Récuperer la societe
   let societe = null;
   if(data.societe){
-    societe = await societeservice.getonesociete(data.societe);
+    try {
+      societe = await societeservice.getonesociete(data.societe);
+    } catch (error) {
+      throw new Error(error);
+    }
   }
   
   //Récuperer le site
   let site = null;
   if(data.site){
-    site = await siteservice.getonesite(data.site);
+    try {
+      site = await siteservice.getonesite(data.site);
+    } catch (error) {
+      throw new Error(error);
+    }
   }
 
   let enteteoperation = null;
@@ -156,7 +166,7 @@ async function create_typeoperation(data) {
     try {
       const ligneoperation = await ligneoperationservice.create_ligneoperation(dataligne);
     } catch (error) {
-      console.log(error);
+      throw new Error(error);
     }
   }
 
@@ -181,6 +191,14 @@ async function create_typeoperation(data) {
       if (!recorded1.success) {
         throw new Error(recorded1.message);
       }
+    }
+  }
+
+  if(data.demande !== undefined && data.demande !== null && data.demande !== ''){
+    try {
+      const decaisse = await demandemodel.decaisse_enteteDemande(data.demande, 1);
+    } catch (error) {
+      throw new Error(error);
     }
   }
 

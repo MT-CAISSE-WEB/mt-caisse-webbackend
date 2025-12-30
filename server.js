@@ -12,8 +12,6 @@ const logger = require('./shared/middlewares/logger')
 const errorHandler = require('./shared/middlewares/error')
 const sequelize = require('./config/database')
 
-
-
 // Organisation routes
 const deviseroute = require('./feature/gestion_organisation/routes/devise.route');
 const tauxdeviseroute = require('./feature/gestion_organisation/routes/tauxdevise.route');
@@ -24,16 +22,12 @@ const userroute = require('./feature/gestion_users/routes/users.route');
 const roleroute = require('./feature/gestion_users/routes/role.route');
 const permissionroute = require('./feature/gestion_users/routes/permission.route');
 const rolepermissionroute = require('./feature/gestion_users/routes/role_permission.route');
-
-
 // Tiers routes
 const tiersroutes = require("./feature/gestion_donnee_base/routes/tiers.route");
 const plancomptableroutes = require("./feature/gestion_donnee_base/routes/plancomptable.route");
 const natureoperationroutes = require("./feature/gestion_donnee_base/routes/natureoperation.route");
 const centreanalytiqueroutes = require("./feature/gestion_donnee_base/routes/centreanalytique.route");
 const affectationanalytiqueroutes = require("./feature/gestion_donnee_base/routes/affectationanalytique.route");
-
-
 // Budget
 const budget_route = require('./feature/gestion_budget/routes/budget.route')
 // Ligne budgetaire
@@ -44,9 +38,6 @@ const entete_demande_route = require('./feature/gestion_demande_decaissement/rou
 const ligne_demande_route = require('./feature/gestion_demande_decaissement/routes/ligendemande.route')
 // Détails demande
 const details_demande_route = require('./feature/gestion_demande_decaissement/routes/detaildemande.route')
-
-
-
 // Journal routes
 const journalRoutes = require("./feature/gestion_operation_caisse/routes/journal.route");
 // Caisse routes
@@ -59,15 +50,11 @@ const enteteoperationRoutes = require("./feature/gestion_operation_caisse/routes
 const ligneoperationRoutes = require("./feature/gestion_operation_caisse/routes/ligneoperation.route");
 // Type operation routes
 const typeoperationRoutes = require("./feature/gestion_operation_caisse/routes/operation.route");
-
-
 // Declaration des routes
 //const societesroutes = require("./feature/gestion_workflow/routes/circuitvalidateur.route");
 const circuitvalidateurroute = require("./feature/gestion_workflow/routes/circuitvalidateur.route");
 const circuitvalidationroute = require("./feature/gestion_workflow/routes/circuitvalidation.route");
 const validationdemanderoute = require("./feature/gestion_workflow/routes/validationdemande.route");
-
-
 
 const db = require('./config/db');
 

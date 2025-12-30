@@ -175,7 +175,6 @@ async function login(login, password) {
 
     try {
         const pool = await connectDB();
-<<<<<<< HEAD
 
         const query =`SELECT u.*, 
         s.idsociete AS societe_idsociete,
@@ -205,13 +204,6 @@ async function login(login, password) {
         const result = await pool.request()
             .input("login", sql.NVarChar, login)
             .query(query);
-=======
-        
-        // Vérifier utilisateur
-        const result = await pool.request()
-            .input("login", db.sql.NVarChar, login)
-            .query("SELECT * FROM Utilisateur WHERE login=@login");
->>>>>>> origin/preprod
 
         if (result.recordset.length === 0) {
             return {status:404, success: false, message: "Utilisateur introuvable" };

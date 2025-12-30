@@ -1,54 +1,95 @@
-const { DataTypes } = require('sequelize')
-const sequelize = require('../../../config/database')
+const {sql, connectInstance, connectDB} = require('../../../config/db');
+const { v4: uuidv4 } = require('uuid');
+const detaildemandeQuery = require('../queries/detaildemande.query');
 
-// Import des autres modèles
-const { Societe } = require('./foreign_models')
-const LigneDemande = require('./lignedemande.model')
-const EnteteDemande = require('./entetedemande.model')
-
-const DetailsDemande = sequelize.define(
-  'DetailsDemande',
-  {
-    iddetailsdemande: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-    },
-    iddemande: DataTypes.UUID,
-    idlignedemande: DataTypes.UUID,
-    idsociete: DataTypes.UUID,
-    description: DataTypes.STRING(255),
-    quantite: DataTypes.DECIMAL(22, 9),
-    montant: DataTypes.DECIMAL(22, 9),
-    createdat: DataTypes.DATE,
-    createdby: DataTypes.STRING(50),
-    updatedat: DataTypes.DATE,
-    updatedby: DataTypes.STRING(50),
-  },
-  {
-    tableName: 'DetailsDemande',
-    timestamps: false,
+class detailsDemandeModel {
+  constructor(iddetailsdemande, iddemande, idlignedemande, idsociete, description, quantite, montant, createdat, createdby, updatedat, 
+    updatedby, demande = null, lignedemande = null) {
+    this.iddetailsdemande = iddetailsdemande
+    this.iddemande = iddemande
+    this.idlignedemande = idlignedemande
+    this.idsociete = idsociete
+    this.description = description
+    this.quantite = quantite
+    this.montant = montant
+    this.createdat = createdat
+    this.createdby = createdby
+    this.updatedat = updatedat
+    this.updatedby = updatedby
   }
-)
 
-// ===== Associations =====
+  async create_detailsDemande() {
+    const pool = await connectDB()
+    try {
+      const result = await pool.request()
+        .input('iddetailsdemande', sql.UniqueIdentifier, this.iddetailsdemande || uuidv4())
+        .input('iddemande', sql.UniqueIdentifier, this.iddemande)
+        .input('idlignedemande', sql.UniqueIdentifier, this.idlignedemande)
+        .input('idsociete', sql.UniqueIdentifier, this.idsociete)
+        .input('description', sql.NVarChar(255), this.description)
+        .input('quantite', sql.Decimal(22, 9), this.quantite)
+        .input('montant', sql.Decimal(22, 9), this.montant)
+        .input('createdat', sql.DateTime, new Date())
+        .input('createdby', sql.NVarChar(50), this.createdby)
+        .query(detaildemandeQuery.insert)
 
-// Entete de la demande
-DetailsDemande.belongsTo(EnteteDemande, {
-  foreignKey: 'iddemande',
-  as: 'entete',
-})
+      return { success: true, data: result.recordset[0] }
+    } catch (error) {
+      return { success: false, message: error.message }
+    }
+  }
 
-// Société
-DetailsDemande.belongsTo(Societe, {
-  foreignKey: 'idsociete',
-  as: 'societe',
-})
+  async get_detailsByLigne(idlignedemande) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('idlignedemande', sql.UniqueIdentifier, idlignedemande)
+      .query(detaildemandeQuery.getDetailByLigne)
 
-// Ligne demande
-DetailsDemande.belongsTo(LigneDemande, {
-  foreignKey: 'idlignedemande',
-  as: 'ligne_demande',
-})
+    return result.recordset
+  }
 
-module.exports = DetailsDemande
+  async get_detailsByDemande(iddemande) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddemande', sql.UniqueIdentifier, iddemande)
+      .query(detaildemandeQuery.getDetailByDemande)
+
+    return result.recordset
+  }
+
+  async get_oneDetail(iddetailsdemande) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddetailsdemande', sql.UniqueIdentifier, iddetailsdemande)
+      .query(detaildemandeQuery.getOne)
+
+    return result.recordset[0]
+  }
+
+  async update_detailsDemande(iddetailsdemande, data) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddetailsdemande', sql.UniqueIdentifier, iddetailsdemande)
+      .input('description', sql.NVarChar(255), data.description)
+      .input('quantite', sql.Decimal(22, 9), data.quantite)
+      .input('montant', sql.Decimal(22, 9), data.montant)
+      .input('updatedat', sql.DateTime, new Date())
+      .input('updatedby', sql.NVarChar(50), data.updatedby)
+      .query(detaildemandeQuery.update)
+
+    return result
+  }
+
+  async delete_detailsDemande(iddetailsdemande) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddetailsdemande', sql.UniqueIdentifier, iddetailsdemande)
+      .query(detaildemandeQuery.delete)
+
+      console.log(result);
+    return { success: true, data: result }
+  }
+
+}
+
+module.exports = detailsDemandeModel
