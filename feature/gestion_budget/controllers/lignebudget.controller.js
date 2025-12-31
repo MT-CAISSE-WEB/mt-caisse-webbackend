@@ -88,8 +88,8 @@ exports.create = async (req, res) => {
       montantprevisiondept,
       montantprevisionsite,
       montantprevisionsociete,
-      totalconsocloture,
-      soldecloture,
+      // totalconsocloture,
+      // soldecloture,
       createdby,
     } = req.body
 
@@ -315,3 +315,4 @@ exports.duplicate = async (req, res) => {
     })
   }
 }
+
