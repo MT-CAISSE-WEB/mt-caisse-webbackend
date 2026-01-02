@@ -380,20 +380,54 @@ BEGIN
     CREATE TABLE CircuitValidation (
         idcircuitvalidation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codecircuitvalidation NVARCHAR(24) UNIQUE,
+        libelle NVARCHAR(100),
         typeentite NVARCHAR(100),
         typeaction NVARCHAR(100),
         idsociete UNIQUEIDENTIFIER,
         idsite UNIQUEIDENTIFIER,
-        iddepartement UNIQUEIDENTIFIER,
-        nombrevalidateur INT NOT NULL,
         actif INT DEFAULT 1,
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idsite) REFERENCES Site(idsite),
-        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement)
+        FOREIGN KEY (idsite) REFERENCES Site(idsite)
+    );
+END
+
+-- ============================================
+--  CircuitEtape 
+-- ============================================
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Circuitetape')
+BEGIN
+    CREATE TABLE Circuitetape (
+        idcircuitetape UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idcircuitvalidation UNIQUEIDENTIFIER,
+        rang INT,
+        nombrevalidateur INT,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation)
+    );
+END
+
+-- ============================================
+--  EtapeValidateur 
+-- ============================================
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Etapevalidateur')
+BEGIN
+    CREATE TABLE Etapevalidateur (
+        idcircuitetape UNIQUEIDENTIFIER,
+        idutilisateur UNIQUEIDENTIFIER,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        PRIMARY KEY (idcircuitetape,idutilisateur)
     );
 END
 
