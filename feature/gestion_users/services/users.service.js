@@ -11,16 +11,13 @@ async function upsertuser(params){
     try {
         const {
             codeutilisateur, idsociete, nom, prenom, adresse, telephone, email,
-            login, password, idrole, typeentitesite, typeentitedepartement, typeentitesociete,
+            login, password,typeentitesite, typeentitedepartement, typeentitesociete,
             acheteur, createdby, updatedby
         } = params;
 
-        console.log(params);
-
         const idutilisateur = uuidv4();
-
-        const hashpassword = await argon2.hash(password);
-
+        const hashpassword = password ? await argon2.hash(password) : null;
+        
         const query = `
         IF EXISTS (SELECT 1 FROM Utilisateur WHERE codeutilisateur = @codeutilisateur)
         BEGIN
@@ -32,8 +29,6 @@ async function upsertuser(params){
                 telephone = @telephone,
                 email = @email,
                 login = @login,
-                idrole = @idrole,
-                password = @password, 
                 typeentitesite = @typeentitesite,
                 typeentitedepartement = @typeentitedepartement,
                 typeentitesociete = @typeentitesociete,
@@ -47,12 +42,12 @@ async function upsertuser(params){
         BEGIN
             INSERT INTO Utilisateur 
                 (idutilisateur, codeutilisateur, idsociete, nom, prenom, adresse, telephone, email, 
-                 login, password, idrole, typeentitesite, typeentitedepartement, typeentitesociete, 
+                 login, password, typeentitesite, typeentitedepartement, typeentitesociete, 
                  acheteur, createdby, createdat)
             OUTPUT 'insert' AS action, INSERTED.*
             VALUES  
                 (@idutilisateur, @codeutilisateur, @idsociete, @nom, @prenom, @adresse, 
-                 @telephone, @email, @login, @password, @idrole, @typeentitesite, @typeentitedepartement, 
+                 @telephone, @email, @login, @password, @typeentitesite, @typeentitedepartement, 
                  @typeentitesociete, @acheteur, @createdby, GETDATE())
         END`;
 
@@ -68,8 +63,7 @@ async function upsertuser(params){
             .input("telephone", sql.NVarChar, telephone)
             .input("email", sql.NVarChar, email)
             .input("login", sql.NVarChar, login)
-            .input("idrole", sql.Int, idrole)
-            .input("password", sql.NVarChar, hashpassword)
+            .input("password", sql.NVarChar, hashpassword?? null)
             .input("typeentitesite", sql.Int, typeentitesite)
             .input("typeentitedepartement", sql.Int, typeentitedepartement)
             .input("typeentitesociete", sql.Int, typeentitesociete)
@@ -78,7 +72,6 @@ async function upsertuser(params){
             .input("updatedby", sql.NVarChar, updatedby)
             .query(query);
 
-            console.log("Securite - upsert user executed");
         
         // SÉCURITÉ → éviter crash
         if (!result.recordset || result.recordset.length === 0) {
@@ -101,6 +94,7 @@ async function upsertuser(params){
         };
 
     } catch (error) {
+        console.log(error);
         return {
             success: false,
             status: 500,
@@ -195,7 +189,7 @@ try{
         d.libelle as libelledept
 
         FROM Utilisateur u
-        INNER JOIN Societe s 
+        left JOIN Societe s 
             ON s.idsociete = u.idsociete
         
         left join utilisateur_role ur 
@@ -227,6 +221,7 @@ try{
         const userdb = result.recordset[0];
         //const user = result.recordset[0];
         const user = {
+            idsociete : result.recordset[0].idsociete,
             codesociete :  result.recordset[0].codesociete,
             raisonsociale : result.recordset[0].raisonsociale,
             idutilisateur: result.recordset[0].idutilisateur,

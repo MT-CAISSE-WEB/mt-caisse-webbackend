@@ -4,7 +4,7 @@ const societecontroller = require("../controllers/societe.controller");
 const authmiddleware = require("../../../middlewares/auth.middlewre");
 const uploadLogo = require('../../../middlewares/uploadlogo');
 
-router.get("/Societe",authmiddleware.authentificatetoken,authmiddleware.authorizeRoles('Admin'), societecontroller.getallsocietes);
+router.get("/Societe",authmiddleware.authentificatetoken, societecontroller.getallsocietes);
 router.get("/Societe/devises",authmiddleware.authentificatetoken, societecontroller.getalldevises);
 router.get("/Societe/:id",authmiddleware.authentificatetoken, societecontroller.getonesociete);
 router.post("/Societe",authmiddleware.authentificatetoken, uploadLogo.single('logo'), societecontroller.upsertsociete);

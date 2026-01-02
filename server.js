@@ -66,6 +66,8 @@ const typeoperationRoutes = require("./feature/gestion_operation_caisse/routes/o
 //const societesroutes = require("./feature/gestion_workflow/routes/circuitvalidateur.route");
 const circuitvalidateurroute = require("./feature/gestion_workflow/routes/circuitvalidateur.route");
 const circuitvalidationroute = require("./feature/gestion_workflow/routes/circuitvalidation.route");
+const circuitetaperoute = require("./feature/gestion_workflow/routes/circuitetape.route");
+const etapevalidateurroute = require("./feature/gestion_workflow/routes/etapevalidateur.route");
 const validationdemanderoute = require("./feature/gestion_workflow/routes/validationdemande.route");
 
 
@@ -183,6 +185,8 @@ app.use("/API/operation", typeoperationRoutes);
 //Regrouper toutes les routes
 app.use("/API/circuitvalidateur", circuitvalidateurroute);
 app.use("/API/circuitvalidation", circuitvalidationroute);
+app.use("/API/circuitetape", circuitetaperoute);
+app.use("/API/etapevalidateur", etapevalidateurroute);
 app.use("/API/validationdemande", validationdemanderoute);
 
 // Handle unhandled promise rejections
