@@ -6,7 +6,11 @@ dotenv.config({path: '../../../config/config.env'});
 async function getutilisateurdepartement(idutilisateur){
     try {
         const pool = await db.poolPromise;
-        const query =`select * from UtilisateurDepartement
+        const query =`select ud.*,
+                            d.codedept,
+                            d.libelle
+                        from UtilisateurDepartement ud
+                        LEFT JOIN Departement d ON d.iddepartement = ud.iddepartement
                       WHERE idutilisateur = @idutilisateur`;
 
         const result = await pool.request()

@@ -125,7 +125,11 @@ async function getAll({page, limit , search, status}) {
             idsite: row.idsite,
             libelle : row.site
           },
-          departement : {},
+          departement : {
+            iddepartement : row.iddepartement,
+            codedept: row.codedept,
+            libelle: row.libelledept
+          },
           lignes : [],
           _lignesMap: {} // interne
         }
@@ -215,6 +219,7 @@ async function get_demande_by_id(iddemande){
           createdat: row.entete_createdat,
           updatedat: row.entete_updatedat,
           iddemandeur: row.idutilisateur,
+          iddepartement: row.iddepartement,
           idsociete: row.idsociete,
           idsite: row.idsite,
           iddevise: row.iddevise,
@@ -239,6 +244,11 @@ async function get_demande_by_id(iddemande){
           site: {
             idsite: row.idsite,
             libelle: row.site
+          },
+          departement : {
+            iddepartement : row.iddepartement,
+            codedept: row.codedept,
+            libelle: row.libelledept
           },
 
           lignes: [],

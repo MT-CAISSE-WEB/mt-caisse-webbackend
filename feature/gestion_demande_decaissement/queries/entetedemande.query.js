@@ -122,6 +122,11 @@ module.exports = {
             DE.iddevise,
             DE.codedevise,
 
+            -- ================= DEPARTEMENT =================
+            DEP.iddepartement,
+            DEP.codedept,
+            DEP.libelle AS libelledept,
+
             -- ================= CIRCUIT =================
             CI.idcircuitvalidation AS circuit_idcircuit,
             CI.codecircuitvalidation AS circuit_codecircuit,
@@ -164,6 +169,7 @@ module.exports = {
         LEFT JOIN Societe S ON S.idsociete = E.idsociete
         LEFT JOIN Site SI ON SI.idsite = E.idsite
         LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
+        LEFT JOIN Departement DEP ON DEP.iddepartement = E.iddepartement
         LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = E.idcircuitvalidation
 
         LEFT JOIN LigneDemande L ON L.iddemande = E.iddemande
@@ -241,6 +247,11 @@ module.exports = {
             DE.iddevise, 
             DE.codedevise,
 
+            -- ================= DEPARTEMENT =================
+            DEP.iddepartement,
+            DEP.codedept,
+            DEP.libelle AS libelledept,
+
             -- ================= LIGNE =================
             L.idlignedemande,
             L.numligne,
@@ -269,6 +280,7 @@ module.exports = {
         LEFT JOIN Societe S ON S.idsociete = E.idsociete
         LEFT JOIN Site SI ON SI.idsite = E.idsite
         LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
+        LEFT JOIN Departement DEP ON DEP.iddepartement = E.iddepartement
         LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = E.idcircuitvalidation
 
         LEFT JOIN LigneDemande L 

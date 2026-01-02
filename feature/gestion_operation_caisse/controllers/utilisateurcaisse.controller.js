@@ -38,7 +38,7 @@ module.exports.get_oneutilisateurcaisse = asyncHandler(async(req, res, next) => 
 module.exports.get_caisseByUser = asyncHandler(async(req, res, next) => {
   try {
     const utilisateur  = req.params.id;
-    const utilisateurcaisse_ = await utilisateurcaisseservice.get_caiiseByuser(utilisateur);
+    const utilisateurcaisse_ = await utilisateurcaisseservice.get_caisseByuser(utilisateur);
     res.json({ success: true, data: utilisateurcaisse_ });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
@@ -79,6 +79,19 @@ module.exports.delete_utilisateurcaisse = asyncHandler(async(req, res, next) => 
     const idutilisateurcaisse = req.params.id;
     const utilisateurcaisse_ = await utilisateurcaisseservice.delete_utilisateurcaisse(idutilisateurcaisse);
     res.json({ success: true, message: "Affectation utilisateur caisse supprimée" });
+  } catch (error) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * Des périodes caisses by user
+ */
+module.exports.get_caissePeriodeByUser = asyncHandler(async(req, res, next) => {
+  try {
+    const utilisateur  = req.params.id;
+    const utilisateurcaisse_ = await utilisateurcaisseservice.get_caissePeriodeByUser(utilisateur);
+    res.json({ success: true, data: utilisateurcaisse_ });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
   }
