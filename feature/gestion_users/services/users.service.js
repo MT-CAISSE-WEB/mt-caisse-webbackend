@@ -10,16 +10,11 @@ const db = require('../../../config/db');
 async function upsertuser(params){
     try {
         const {
-            codeutilisateur, idsociete, nom, prenom, adresse, telephone, email,
+            codeutilisateur, idsociete, idsite, nom, prenom, adresse, telephone, email,
             login, password,typeentitesite, typeentitedepartement, typeentitesociete,
-            acheteur, createdby, updatedby
+            acheteur, idrole, createdby, updatedby
         } = params;
 
-<<<<<<< HEAD
-        // console.log(params);
-
-=======
->>>>>>> origin/junior
         const idutilisateur = uuidv4();
         const hashpassword = password ? await argon2.hash(password) : null;
         
@@ -28,6 +23,7 @@ async function upsertuser(params){
         BEGIN
             UPDATE Utilisateur SET 
                 idsociete = @idsociete,
+                idsite = @idsite,
                 nom = @nom,
                 prenom = @prenom,
                 adresse = @adresse,
@@ -38,6 +34,7 @@ async function upsertuser(params){
                 typeentitedepartement = @typeentitedepartement,
                 typeentitesociete = @typeentitesociete,
                 acheteur = @acheteur,
+                idrole = @idrole,
                 updatedby = @updatedby,
                 updatedat = GETDATE()
             OUTPUT 'update' AS action, INSERTED.*
@@ -46,14 +43,14 @@ async function upsertuser(params){
         ELSE
         BEGIN
             INSERT INTO Utilisateur 
-                (idutilisateur, codeutilisateur, idsociete, nom, prenom, adresse, telephone, email, 
+                (idutilisateur, codeutilisateur, idsociete, idsite, nom, prenom, adresse, telephone, email, 
                  login, password, typeentitesite, typeentitedepartement, typeentitesociete, 
-                 acheteur, createdby, createdat)
+                 acheteur, idrole, createdby, createdat)
             OUTPUT 'insert' AS action, INSERTED.*
             VALUES  
-                (@idutilisateur, @codeutilisateur, @idsociete, @nom, @prenom, @adresse, 
+                (@idutilisateur, @codeutilisateur, @idsociete, @idsite, @nom, @prenom, @adresse, 
                  @telephone, @email, @login, @password, @typeentitesite, @typeentitedepartement, 
-                 @typeentitesociete, @acheteur, @createdby, GETDATE())
+                 @typeentitesociete, @acheteur, @idrole, @createdby, GETDATE())
         END`;
 
         
@@ -62,6 +59,7 @@ async function upsertuser(params){
             .input("idutilisateur", sql.UniqueIdentifier, idutilisateur)
             .input("codeutilisateur", sql.NVarChar, codeutilisateur)
             .input("idsociete", sql.UniqueIdentifier, idsociete)
+            .input("idsite", sql.UniqueIdentifier, idsite)
             .input("nom", sql.NVarChar, nom)
             .input("prenom", sql.NVarChar, prenom)
             .input("adresse", sql.NVarChar, adresse)
@@ -73,6 +71,7 @@ async function upsertuser(params){
             .input("typeentitedepartement", sql.Int, typeentitedepartement)
             .input("typeentitesociete", sql.Int, typeentitesociete)
             .input("acheteur", sql.Int, acheteur)
+            .input("idrole", sql.Int, idrole)
             .input("createdby", sql.NVarChar, createdby)
             .input("updatedby", sql.NVarChar, updatedby)
             .query(query);
@@ -99,7 +98,6 @@ async function upsertuser(params){
         };
 
     } catch (error) {
-        console.log(error);
         return {
             success: false,
             status: 500,

@@ -114,6 +114,7 @@ BEGIN
 		idutilisateur UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
 		codeutilisateur NVARCHAR(24) UNIQUE,
 		idsociete UNIQUEIDENTIFIER,
+        idsite UNIQUEIDENTIFIER,
 		nom NVARCHAR(100),
 		prenom NVARCHAR(100),
 		adresse NVARCHAR(100),
@@ -131,6 +132,7 @@ BEGIN
 		updatedat Datetime,
 		updatedby NVARCHAR(50),
 		foreign key (idsociete) references Societe(idsociete),
+        foreign key (idsite) references Site(idsite),
 		foreign key (idrole) references role(idrole)
     );
 END
@@ -478,7 +480,7 @@ END
 
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'BudgetDepartementNature')
 BEGIN
-    CREATE TABLE BudgetDeEntetpartementNature (
+    CREATE TABLE BudgetDepartementNature (
         idbudgetdepartementnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idbudget UNIQUEIDENTIFIER,
         iddepartement UNIQUEIDENTIFIER,
@@ -555,7 +557,7 @@ BEGIN
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
-        FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
+        FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande) ON DELETE CASCADE,
         FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
         FOREIGN KEY (idtiers) REFERENCES Tiers(idtiers),
         FOREIGN KEY (idbudget) REFERENCES Budget(idbudget),
@@ -583,7 +585,7 @@ BEGIN
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
-        FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
+        FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande) ON DELETE CASCADE,
         FOREIGN KEY (idlignedemande) REFERENCES LigneDemande(idlignedemande),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );
@@ -655,7 +657,7 @@ BEGIN
         updatedat DATETIME,
         updatedby NVARCHAR(50),
         CONSTRAINT UQ_UtilisateurCaisse_idcaisse_idutilisateur UNIQUE (idcaisse, idutilisateur),
-        FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
+        FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse) ON DELETE CASCADE,
         FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );
@@ -809,7 +811,7 @@ BEGIN
         updatedby NVARCHAR(50),
         FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation)
+        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation) ON DELETE CASCADE
     );
 END
 
@@ -847,8 +849,54 @@ BEGIN
 		updatedat Datetime,
 		updatedby NVARCHAR(50),
         PRIMARY KEY (idutilisateur,iddepartement),
-		FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
+		FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement) ON DELETE CASCADE,
 		FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
     );
 END
 -- FIN INIT DENIS
+
+
+-- IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Compteurs')
+-- BEGIN
+--     CREATE OR ALTER PROCEDURE GenererNumeroOperation
+--         @prefixe NVARCHAR(10),
+--         @annee INT,
+--         @mois INT,
+--         @jour INT,
+--         @numero NVARCHAR(50) OUTPUT
+--     AS
+--     BEGIN
+--         SET NOCOUNT ON;
+--         DECLARE @compteur INT;
+--         BEGIN TRANSACTION;
+
+--         -- Créer compteur si inexistant
+--         IF NOT EXISTS (
+--             SELECT 1 FROM Compteurs WHERE prefixe = @prefixe AND annee = @annee AND mois = @mois AND jour = @jour
+--         )
+--         BEGIN
+--             INSERT INTO Compteurs(prefixe, annee, mois, jour, compteur)
+--             VALUES(@prefixe, @annee, @mois, @jour, 0);
+--         END
+
+--         -- Incrémenter
+--         UPDATE Compteurs
+--         SET compteur = compteur + 1
+--         WHERE prefixe = @prefixe AND annee = @annee AND mois = @mois AND jour = @jour;
+
+--         SELECT @compteur = compteur 
+--         FROM Compteurs
+--         WHERE prefixe = @prefixe AND annee = @annee AND mois = @mois AND jour = @jour;
+
+--         COMMIT TRANSACTION;
+
+--         -- Format final
+--         SET @numero = 
+--             @prefixe + '-' 
+--             + CAST(@annee AS NVARCHAR) + '-' 
+--             + CAST(@mois AS NVARCHAR) + '-' 
+--             + CAST(@jour AS NVARCHAR) + '-' 
+--             + RIGHT('000' + CAST(@compteur AS NVARCHAR), 3);
+--     END
+-- END
+
