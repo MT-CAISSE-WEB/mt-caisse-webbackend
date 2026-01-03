@@ -150,7 +150,7 @@ async function create_budget(data) {
 // Obtenir tous les budgets
 async function get_all_budgets() {
   try {
-    const pool = await db.connectDB();
+    const pool = await db.poolPromise
 
     const SQL_QUERY_COMPLETE = `
     SELECT b.*,
