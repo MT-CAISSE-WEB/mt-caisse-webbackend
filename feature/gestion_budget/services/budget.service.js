@@ -30,7 +30,7 @@ async function create_budget(data) {
     throw new Error('Le budget parent est obligatoire')
   }
 
-  const db = await sql.connect({ ...config, database: 'MTICAISSEWEB' })
+  const db = await sql.connect({ ...config, database: 'MTCAISSEWEB' })
 
   try {
     const now = new Date()

@@ -15,6 +15,8 @@ const foreignIncludes = [
       'idbudget',
       'codebudget',
       'idbudgetparent',
+      'libelle',
+      'entite',
       'typebudget',
       'datedebut',
       'datefin',
@@ -86,8 +88,8 @@ exports.create = async (req, res) => {
       montantprevisiondept,
       montantprevisionsite,
       montantprevisionsociete,
-      totalconsocloture,
-      soldecloture,
+      // totalconsocloture,
+      // soldecloture,
       createdby,
     } = req.body
 
@@ -97,8 +99,8 @@ exports.create = async (req, res) => {
       montantprevisiondept,
       montantprevisionsite,
       montantprevisionsociete,
-      totalconsocloture,
-      soldecloture,
+      // totalconsocloture,
+      // soldecloture,
       createdby,
     }
 
@@ -313,3 +315,4 @@ exports.duplicate = async (req, res) => {
     })
   }
 }
+

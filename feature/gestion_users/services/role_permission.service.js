@@ -3,37 +3,11 @@ const { v4: uuidv4 } = require('uuid');
 const dotenv = require('dotenv');
 dotenv.config({path: '../../../config/config.env'});
 
-async function getpermissionbyrole(idrole){
-    try {
-        const pool = await db.poolPromise;
-        const query =`select * from role_permission
-                      WHERE idrole = @idrole`;
-
-        const result = await pool.request()
-                       .input("idrole", db.sql.Int,idrole)
-                       .query(query);
-
-     return {
-            success: true,
-            status: 200,
-            message: "Permission de rôle récupérée avec succès !",
-            data: result.recordsets
-        };
-    } 
-    catch (error) {
-         return {
-            success: false,
-            status: 500,
-            message: `Erreur de l'opération : ${error}`
-        };
-    }
-}
-
 async function upsertrolepermission(params){
     try {
         const pool = await db.poolPromise;
         const {idrole, idpermission, createdby, updatedby} = params;
-        const query = ` IF EXISTS (SELECT 1 FROM role_permission WHERE idrole = @idrole AND idpermission = @idpermission)
+        const query = ` IF EXISTS (SELECT 1 FROM role_permission WHERE idrole = @idrole OR idpermission = @idpermission)
          BEGIN
             UPDATE role_permission SET
                 idrole = @idrole,
@@ -152,6 +126,5 @@ module.exports = {
     upsertrolepermission,
     getAllrolepermission,
     deleterolepermission,
-    getrolepermissionByid,
-    getpermissionbyrole
+    getrolepermissionByid
 };

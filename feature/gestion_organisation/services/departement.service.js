@@ -13,7 +13,7 @@ const {connectInstance, connectDB} = require('../../../config/db');
         const query = `
             IF EXISTS (SELECT 1 FROM Departement WHERE codedept = @codedept)
             BEGIN
-                UPDATE departement
+                UPDATE Departement
                 SET idsociete = @idsociete,
                     idsite = @idsite,
                     responsable = @responsable,

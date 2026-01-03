@@ -85,53 +85,6 @@ module.exports = {
         Delete from UtilisateurCaisse WHERE idutilisateurcaisse = @idutilisateurcaisse;
     `,
     getcaisseByUser : `
-        SELECT *
-        FROM UtilisateurCaisse
-        WHERE idutilisateur = @idutilisateur  AND  actif = 1 `,
-    getRecentCaisseUser : `
-        SELECT
-            -- ================= UTILISATEUR CAISSE =================
-            UC.idutilisateurcaisse,
-            UC.idutilisateur,
-            UC.actif AS utilisateurcaisse_actif,
-
-            -- ================= CAISSE =================
-            C.idcaisse,
-            C.codecaisse,
-            C.libelle AS libellecaisse,
-            C.iddevise,
-            C.idsite,
-            C.idsociete,
-            C.soldeinitialisation,
-            C.seuilmnimal,
-            C.actif AS caisse_actif,
-
-            -- ================= DEVISE ========================= --
-            D.codedevise,
-            D.intitule,
-            D.codeiso,
-
-            -- ================= DERNIÈRE PÉRIODE =================
-            CP.idperiode,
-            CP.dateperiode,
-            CP.soldeouverture,
-            CP.soldefermeture,
-            CP.montantphysique,
-            CP.ecart,
-            CP.statut AS statutperiode
-
-        FROM UtilisateurCaisse UC
-        JOIN Caisse C ON C.idcaisse = UC.idcaisse AND C.actif = 1
-        LEFT JOIN Devise D ON D.iddevise = C.iddevise AND D.actif = 1
-
-        OUTER APPLY (
-            SELECT TOP 1 *
-            FROM CaissePeriode CP
-            WHERE CP.idcaisse = C.idcaisse
-            ORDER BY CP.dateperiode DESC
-        ) CP
-
-        WHERE UC.idutilisateur = @idutilisateur
-        AND UC.actif = 1;
-    `
+        SELECT * FROM UtilisateurCaisse
+        WHERE idutilisateur = @idutilisateur  AND  actif = 1 `
 }

@@ -52,7 +52,7 @@ class typeoperationModel {
         }
     }
 
-    async get_alltypeoperations ({ page = 1, limit, search = null, date = null}) {
+    async get_alltypeoperations ({ page = 1, limit = 5, search = null, date = null}) {
         page = parseInt(page) || 1;
         limit = parseInt(limit) || 5;
         
@@ -141,26 +141,6 @@ class typeoperationModel {
         const pool = await connectDB();
         try {
             const result = await pool.request().query(typeoperationQueries.solde_calcul);
-            return result.recordset;
-        } catch (error) {
-            console.log(`Erreur de suppression: ${error}`.cyan.bold);
-        }
-    }
-
-    async get_soldeperiode(idperiode){
-        const pool = await connectDB();
-        try {
-            const result = await pool.request().input("idperiode", idperiode).query(typeoperationQueries.solde_caisse_periode);
-            return result.recordset;
-        } catch (error) {
-            console.log(`Erreur de suppression: ${error}`.cyan.bold);
-        }
-    }
-
-    async get_operationmax(){
-        const pool = await connectDB();
-        try {
-            const result = await pool.request().query(typeoperationQueries.operation);
             return result.recordset;
         } catch (error) {
             console.log(`Erreur de suppression: ${error}`.cyan.bold);

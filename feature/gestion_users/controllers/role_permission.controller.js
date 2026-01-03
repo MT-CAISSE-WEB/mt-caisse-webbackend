@@ -41,13 +41,3 @@ module.exports.deleterolepermission = asyncHandler (async(req,res, next)=>{
     }   
 });
 
-module.exports.getpermissionsbyrole = asyncHandler (async(req,res, next)=>{
-    try {
-        const id = req.params['id'];
-        const permissions = await rolepermissionservice.getpermissionbyrole(id);
-        res.status(permissions.status).json({success:permissions.success,message:permissions.message,data:permissions.data})
-    } catch (error) {
-       res.status(500).json({ success: false, message: "Erreur serveur", error }); 
-    }
-});
-

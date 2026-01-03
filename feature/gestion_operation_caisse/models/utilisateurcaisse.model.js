@@ -106,17 +106,6 @@ class UtilisateurCaisseModel {
         }
     }
 
-    async get_caissePeriodeByUser(idutilisateur){
-        const pool = await connectDB();
-        try {
-            const result = await pool.request().input("idutilisateur", idutilisateur).query(utilisateurcaisseQueries.getRecentCaisseUser);
-            const utilsateurcaisse = result.recordset;
-            return utilsateurcaisse;
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    }
-
     async update_utilisateurcaisse (idutilisateurcaisse, data) {
         const pool = await connectDB();
         try {

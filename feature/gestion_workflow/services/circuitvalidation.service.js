@@ -5,71 +5,24 @@ let circuitvalidation = new circuitvalidationmodel();
 let circuitvalidations = [];
 
 async function get_all_circuitvalidation() {
-  const result = await circuitvalidation.get_allcircuitvalidation(); // modifie la requête ici
-  
-  // résultat plat (chaque ligne = circuit + étape + validateur)
-  const rows = result.recordset;
-
-  // Map pour regrouper circuits
-  const circuitsMap = new Map();
-
-  for (const row of rows) {
-    // Ajout ou récupération du circuit
-    if (!circuitsMap.has(row.idcircuitvalidation)) {
-      circuitsMap.set(row.idcircuitvalidation, {
-        idcircuitvalidation: row.idcircuitvalidation,
-        codecircuitvalidation: row.codecircuitvalidation,
-        typeentite: row.typeentite,
-        typeaction: row.typeaction,
-        idsociete: row.idsociete,
-        idsite: row.idsite,
-        actif: row.actif,
-        createdat: row.createdat,
-        createdby: row.createdby,
-        updatedat: row.updatedat,
-        updatedby: row.updatedby,
-        societe: row.societe,
-        site: row.site,
-        etapes: []
-      });
-    }
-
-    const circuit = circuitsMap.get(row.idcircuitvalidation);
-
-    // Gestion des étapes (Map temporaire pour éviter doublons)
-    if (!circuit._etapesMap) circuit._etapesMap = new Map();
-
-    if (!circuit._etapesMap.has(row.idcircuitetape)) {
-      circuit._etapesMap.set(row.idcircuitetape, {
-        idcircuitetape: row.idcircuitetape,
-        rang: row.rang,
-        nombrevalidateur: row.nombrevalidateur,
-        validateurs: []
-      });
-      circuit.etapes.push(circuit._etapesMap.get(row.idcircuitetape));
-    }
-
-    const etape = circuit._etapesMap.get(row.idcircuitetape);
-
-    // Ajouter validateur s'il existe
-    if (row.idutilisateur) {
-      etape.validateurs.push({
-        idutilisateur: row.idutilisateur,
-        prenom: row.prenom,
-        nom: row.nom
-      });
-    }
-  }
-
-  // Nettoyer les maps temporaires
-  for (const circuit of circuitsMap.values()) {
-    delete circuit._etapesMap;
-  }
-
-  // Retourner tableau de circuits avec étapes + validateurs imbriqués
-  return Array.from(circuitsMap.values());
+  const result = await circuitvalidation.get_allcircuitvalidation();
+  circuitvalidations = result.recordset.map(item => new circuitvalidationmodel(
+    item.idcircuitvalidation,
+    item.codecircuitvalidation, 
+    item.typeentite,
+    item.typeaction,
+    item.idsociete,
+    item.idsite,
+    item.iddepartement,
+    item.nombrevalidateur,
+    item.actif,
+    item.createdat,  
+    item.createdby,
+    item.updatedat, 
+    item.updatedby
+  ));
+  return circuitvalidations;
 }
-
 
 
 async function create_circuitvalidation(data) {
@@ -83,6 +36,9 @@ async function create_circuitvalidation(data) {
     data.typeaction,
     data.idsociete,
     data.idsite,
+    data.iddepartement,
+    data.nombrevalidateur,
+    data.actif,
     data.createdat || today,
     data.createdby || 'System',
     data.updatedat || today,
@@ -137,7 +93,6 @@ async function delete_circuitvalidation(idcircuitvalidation) {
     throw err;
    }
 }
-
 
 module.exports = {
   get_all_circuitvalidation,

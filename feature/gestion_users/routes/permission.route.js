@@ -3,8 +3,6 @@ const router = express.Router();
 const permissioncontroller = require("../controllers/permission.controller");
 const authmiddleware = require("../../../middlewares/auth.middlewre");
 
-// authmiddleware.authentificatetoken
-
 router.get("/Permission",permissioncontroller.getallpermission);
 router.get("/Permission/:id", permissioncontroller.getonepermission);
 router.post("/Permission", permissioncontroller.upsertpermission);

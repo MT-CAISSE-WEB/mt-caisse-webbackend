@@ -1,13 +1,17 @@
-const express = require('express');
-const router = express.Router();
-const societecontroller = require("../controllers/societe.controller");
-const authmiddleware = require("../../../middlewares/auth.middlewre");
-const uploadLogo = require('../../../middlewares/uploadlogo');
+const express = require('express')
+const router = express.Router()
+const societecontroller = require('../controllers/societe.controller')
+const authmiddleware = require('../../../middlewares/auth.middlewre')
+const uploadLogo = require('../../../middlewares/uploadlogo')
 
-router.get("/Societe",authmiddleware.authentificatetoken, societecontroller.getallsocietes);
-router.get("/Societe/devises",authmiddleware.authentificatetoken, societecontroller.getalldevises);
-router.get("/Societe/:id",authmiddleware.authentificatetoken, societecontroller.getonesociete);
-router.post("/Societe",authmiddleware.authentificatetoken, uploadLogo.single('logo'), societecontroller.upsertsociete);
-router.delete("/Societe/:id",authmiddleware.authentificatetoken, societecontroller.deletesociete);
+router.get('/Societe', societecontroller.getallsocietes)
+router.get('/Societe/devises', societecontroller.getalldevises)
+router.get('/Societe/:id', societecontroller.getonesociete)
+router.post(
+  '/Societe',
+  uploadLogo.single('logo'),
+  societecontroller.upsertsociete
+)
+router.delete('/Societe/:id', societecontroller.deletesociete)
 
-module.exports = router;
+module.exports = router
