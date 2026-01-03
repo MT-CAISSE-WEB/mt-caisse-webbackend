@@ -2,8 +2,8 @@
 -- IF NOT EXISTS (
 --     SELECT name 
 --     FROM sys.databases 
---     WHERE name = N'MTICAISSEWEB'
+--     WHERE name = N'MTCAISSEWEB'
 -- )
 -- BEGIN
---     CREATE DATABASE [MTICAISSEWEB];
+--     CREATE DATABASE [MTCAISSEWEB];
 -- END

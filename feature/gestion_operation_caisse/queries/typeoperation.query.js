@@ -68,7 +68,7 @@ module.exports = {
         FROM TypeOperation t
         LEFT JOIN Caisse c ON c.idcaisse = t.idcaisse
         WHERE t.idperiode = @idperiode
-        GROUP BY t.idcaisse;
+        GROUP BY t.idcaisse, c.codecaisse, c.libelle, c.idjournal, c.idcompte, c.iddevise, c.seuilmnimal;
     `,
     plus_couteux : `
         SELECT TOP 1

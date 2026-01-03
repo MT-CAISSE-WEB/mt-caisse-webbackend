@@ -5,6 +5,7 @@ const utilisateurmodel = require("../../gestion_users/models/users.model");
 const caisseModel = require("../models/caisse.model");
 const PaginationModel = require("../../../shared/utils/model");
 let utilisateurcaisse = new utilisateurcaissemodel();
+let caissemodel = new caisseModel();
 let utilisateurcaisses = [];
 
 async function get_all_utilisateurcaisses({page, limit , search, actif}) {
@@ -74,19 +75,45 @@ async function get_by_idutilisateurcaisse(idutilisateurcaisse) {
   }
 }
 
-
-async function get_caiiseByuser(idutilisateur) {
+async function get_caisseByuser(idutilisateur) {
   if (!idutilisateur) {
     throw new Error("Erreur de donnée");
   }
 
   try {
-    const utilisateurcaisse_ = await utilisateurcaisse.get_caisseByUser(idutilisateur);
-    return utilisateurcaisse_;
-  } catch (err) {
-    console.log(`Aucune donnée: ${err}`.cyan.bold);
-    throw err;
+    const rows = await utilisateurcaisse.get_caisseByUser(idutilisateur);
+
+    if (!rows || rows.length === 0) {
+      return [];
+    }
+
+    const utilisateurcaisses = await Promise.all(
+      rows.map(async (row) => {
+        const caisse = await caissemodel.get_onecaisse(row.idcaisse);
+
+        return {
+          idutilisateurcaisse: row.idutilisateurcaisse,
+          idcaisse: row.idcaisse,
+          codecaisse: row.codecaisse,
+          idutilisateur: row.idutilisateur,
+          idsociete: row.idsociete,
+          actif: row.actif,
+          createdat: row.createdat,
+          createdby: row.createdby,
+          updatedat: row.updatedat,
+          updatedby: row.updatedby,
+          caisse
+        };
+      })
+    );
+
+    return utilisateurcaisses;
+
+  } catch (error) {
+    console.error("Erreur récupération caisses utilisateur :", error);
+    throw error;
   }
+
 }
 
 async function update_utilisateurcaisse(idutilisateurcaisse, data) {
@@ -116,11 +143,63 @@ async function delete_utilisateurcaisse(idutilisateurcaisse) {
    }
 }
 
+async function get_caissePeriodeByUser(idutilisateur) {
+  if (!idutilisateur) {
+    throw new Error("Erreur de donnée");
+  }
+
+  try {
+    const rows = await utilisateurcaisse.get_caissePeriodeByUser(idutilisateur);
+
+    if (!rows || rows.length === 0) {
+      return [];
+    }
+
+    const utilisateurcaisses = rows.map(row => ({
+      idutilisateurcaisse: row.idutilisateurcaisse,
+      actif: row.utilisateurcaisse_actif,
+
+      caisse: {
+        idcaisse: row.idcaisse,
+        codecaisse: row.codecaisse,
+        libelle: row.libellecaisse,
+        iddevise: row.iddevise,
+        codedevise : row.codedevise,
+        codeiso : row.codeiso,
+        intitule : row.intitule,
+        idsite: row.idsite,
+        idsociete: row.idsociete,
+        soldeinitialisation: row.soldeinitialisation,
+        seuilminimal: row.seuilmnimal,
+        actif: row.caisse_actif
+      },
+
+      dernierePeriode: row.idperiode ? {
+        idperiode: row.idperiode,
+        dateperiode: row.dateperiode,
+        soldeouverture: row.soldeouverture,
+        soldefermeture: row.soldefermeture,
+        montantphysique: row.montantphysique,
+        ecart: row.ecart,
+        statut: row.statutperiode
+      } : null
+    }));
+
+    return utilisateurcaisses;
+
+  } catch (error) {
+    console.error("Erreur récupération de la période caisses de utilisateur :", error);
+    throw error;
+  }
+
+}
+
 module.exports = {
   get_all_utilisateurcaisses,
   get_by_idutilisateurcaisse,
   create_utilisateurcaisse,
   update_utilisateurcaisse,
   delete_utilisateurcaisse,
-  get_caiiseByuser
+  get_caisseByuser,
+  get_caissePeriodeByUser
 };

@@ -139,6 +139,8 @@ async function create_typeoperation(data) {
     } catch (error) {
       throw new Error(error);
     }
+  }else{
+    throw new Error("Societe de utilisateur invalide");
   }
   
   //Récuperer le site
@@ -149,6 +151,8 @@ async function create_typeoperation(data) {
     } catch (error) {
       throw new Error(error);
     }
+  }else{
+    throw new Error("Site de utilisateur invalide");
   }
 
   let enteteoperation = null;
@@ -176,15 +180,18 @@ async function create_typeoperation(data) {
       try {
         caisse1 = await caisseservice.get_by_idcaisse(caisse.idcaisse);
       } catch (error) {
-        console.log(error);
+        throw new Error(error);
       }
+      
       const newtypeoperation1 = new typeoperationmodel( uuidv4(), data.typepaiement, enteteoperation.idoperation, caisse.idperiode, societe.data.idsociete ? societe.data.idsociete : null, site.data.idsite ? site.data.idsite : null, caisse1.idcaisse ? caisse1.idcaisse : null, 
       Number(caisse.montantcaisse), caisse.taux, caisse.montantref, data.createdat || today, data.createdby || 'System', data.updatedat, data.updatedby);
       let recorded1 = null;
+  
       try {
         recorded1 = await newtypeoperation1.create_typeoperationmodel(newtypeoperation1);
+        console.log(recorded1);
       } catch (error) {
-        console.log(error);
+        throw new Error(error);
       }
       
       // si le modèle renvoie une erreur
