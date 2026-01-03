@@ -129,6 +129,8 @@ exports.create = async (req, res) => {
       createdat: new Date(),
     }
 
+    console.log('Data created:', newData)
+
     const item = await Budget.create(newData)
     
 
