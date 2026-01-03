@@ -132,6 +132,7 @@ exports.create = async (req, res) => {
     console.log('Data created:', newData)
 
     const item = await Budget.create(newData)
+    
 
     // Recharger avec les relations pour la réponse
     const itemWithRelations = await Budget.findByPk(item.idbudget, {
