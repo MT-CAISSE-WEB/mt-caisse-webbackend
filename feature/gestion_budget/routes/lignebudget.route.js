@@ -64,8 +64,6 @@ router.put('/bulk-update', async (req, res) => {
   try {
     const lignes = req.body
 
-    console.log('lignes updated:', lignes)
-
     if (!Array.isArray(lignes) || lignes.length === 0) {
       return res.status(400).json({
         success: false,
