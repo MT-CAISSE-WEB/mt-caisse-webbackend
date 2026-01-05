@@ -5,7 +5,7 @@ const entetedemandeQuery = require('../queries/entetedemande.query');
 
 class enteteDemandeModel {
   constructor( iddemande, codedemande, iddemandeur, typedemande, libelledemande, datedemande, decaisse, solde, statut, idcircuit, idsociete, idsite, iddepartement, iddevise, 
-    createdat, createdby, updatedat, updatedby, circuit = null, societe = null, site = null, departement = null, devise = null) {
+    niveauactuel, createdat, createdby, updatedat, updatedby, circuit = null, societe = null, site = null, departement = null, devise = null) {
     this.iddemande = iddemande
     this.codedemande = codedemande
     this.iddemandeur = iddemandeur
@@ -15,6 +15,7 @@ class enteteDemandeModel {
     this.decaisse = decaisse
     this.solde = solde
     this.statut = statut
+    this.niveauactuel = niveauactuel
     this.idcircuit = idcircuit
     this.idsociete = idsociete
     this.idsite = idsite
@@ -47,7 +48,8 @@ class enteteDemandeModel {
         .input('decaisse', sql.Int, this.decaisse || 0)
         .input('solde', sql.Int, this.solde || 0)
         .input('statut', sql.Int, this.statut)
-        .input('idcircuitvalidation', sql.UniqueIdentifier, this.idcircuit)
+        .input('niveauactuel', sql.Int, this.niveauactuel)
+        .input('idcircuit', sql.UniqueIdentifier, this.idcircuit)
         .input('idsociete', sql.UniqueIdentifier, this.idsociete)
         .input('idsite', sql.UniqueIdentifier, this.idsite)
         .input('iddepartement', sql.UniqueIdentifier, this.iddepartement)
@@ -128,6 +130,51 @@ class enteteDemandeModel {
       .query(entetedemandeQuery.delete);
 
     return { success: true, data: result }
+  }
+
+  async get_circuitValidation(idsite) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('idsite', sql.UniqueIdentifier, idsite)
+      .query(entetedemandeQuery.circuitDemande)
+
+    return result.recordset
+  }
+
+  async prepareValidateurCircuit(idcircuitvalidation) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('idcircuitvalidation', sql.UniqueIdentifier, idcircuitvalidation)
+      .query(entetedemandeQuery.validateurCircuit)
+
+    return result.recordset
+  }
+
+  async initValidationDemande(data){
+    const pool = await connectDB()
+    try {
+      const result = await pool.request()
+      .input('iddemande', sql.UniqueIdentifier, data.iddemande)
+      .input('idcircuitvalidation', sql.UniqueIdentifier, data.idcircuitvalidation)
+      .input('idcircuitetape', sql.UniqueIdentifier, data.idcircuitetape)
+      .input('idutilisateur', sql.UniqueIdentifier, data.user)
+      .input('rang', sql.Int, data.rang)
+      .query(entetedemandeQuery.initvalidationDemande)
+
+      return result.recordset
+      
+    } catch (error) {
+      return error
+    }
+  }
+
+  async getDemandeAvalider(idutilisateur) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('idutilisateur', sql.UniqueIdentifier, idutilisateur)
+      .query(entetedemandeQuery.getDemandeAvalider)
+
+    return result.recordset
   }
 
 }

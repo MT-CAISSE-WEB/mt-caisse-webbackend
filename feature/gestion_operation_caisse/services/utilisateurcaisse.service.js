@@ -116,6 +116,56 @@ async function delete_utilisateurcaisse(idutilisateurcaisse) {
    }
 }
 
+async function get_caissePeriodeByUser(idutilisateur) {
+  if (!idutilisateur) {
+    throw new Error("Erreur de donnée");
+  }
+
+  try {
+    const rows = await utilisateurcaisse.get_caissePeriodeByUser(idutilisateur);
+    if (!rows || rows.length === 0) {
+      return [];
+    }
+
+    const utilisateurcaisses = rows.map(row => ({
+      idutilisateurcaisse: row.idutilisateurcaisse,
+      actif: row.utilisateurcaisse_actif,
+
+      caisse: {
+        idcaisse: row.idcaisse,
+        codecaisse: row.codecaisse,
+        libelle: row.libellecaisse,
+        iddevise: row.iddevise,
+        codedevise : row.codedevise,
+        codeiso : row.codeiso,
+        intitule : row.intitule,
+        idsite: row.idsite,
+        idsociete: row.idsociete,
+        soldeinitialisation: row.soldeinitialisation,
+        seuilminimal: row.seuilmnimal,
+        actif: row.caisse_actif
+      },
+
+      dernierePeriode: row.idperiode ? {
+        idperiode: row.idperiode,
+        dateperiode: row.dateperiode,
+        soldeouverture: row.soldeouverture,
+        soldefermeture: row.soldefermeture,
+        montantphysique: row.montantphysique,
+        ecart: row.ecart,
+        statut: row.statutperiode
+      } : null
+    }));
+
+    return utilisateurcaisses;
+
+  } catch (error) {
+    console.error("Erreur récupération de la période caisses de utilisateur :", error);
+    throw error;
+  }
+
+}
+
 module.exports = {
   get_all_utilisateurcaisses,
   get_by_idutilisateurcaisse,

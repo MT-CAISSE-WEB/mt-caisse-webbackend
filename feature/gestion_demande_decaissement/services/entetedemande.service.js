@@ -10,10 +10,12 @@ const siteservice = require("../../gestion_organisation/services/site.service");
 const enteteoperationmodel = require("../../gestion_operation_caisse/models/enteteoperation.model");
 const lignedemandeservice = require("../services/ligendemande.service");
 const detaildemandeservice = require("../services/detaildemande.service");
+const lignedemandeModel = require("../models/lignedemande.model");
 
 let demandeModel = new enteteDemandeModel();
 let demandesArray = [];
 let enteteoperation = new enteteoperationmodel();
+let lignedemandemodel = new lignedemandeModel();
 
 async function create_demande(data) {
   const today = new Date();
@@ -27,39 +29,97 @@ async function create_demande(data) {
   let societe = null;
   if(data.societe){
     societe = await societeservice.getonesociete(data.societe);
+  }else{
+    throw new Error('Société utilisateur introuvable');
   }
 
   //Récuperer le site
   let site = null;
   if(data.site){
     site = await siteservice.getonesite(data.site);
+  }else{
+    throw new Error('Site utilisateur introuvable');
   }
 
   //Récuperer la devise
   let devise = null;
   if(data.devise){
     devise = await deviseservice.getonedevise(data.devise);
+  }else{
+    throw new Error('Dévise inexistante dans la base');
+  }
+
+  if(societe && societe.data.suivibudgetaire == 1){
+    for (const ligne of data.lignes){
+      try {
+        const budgetsAll = await lignedemandemodel.resolveBudget({
+          idsociete: data.societe || societe.idsociete, idsite: data.site || site.idsite,
+          iddepartement: data.departement, idnature: ligne.natureop, datedemande: data.datedemande
+        });
+
+        const budgets = prioriserBudget(budgetsAll);
+        try {
+          const check_soldeBudget = await lignedemandemodel.checkBudgetSolde({
+            idbudget : budgets.idbudget, idnature: ligne.natureop,
+            montant: ligne.montantdemande, iddepartement : data.departement
+          });
+        } catch (error) {
+          throw new Error(error);
+        }
+      } catch (error) {
+        throw new Error(error);
+      }
+    }
   }
 
   //Génération du code de la demande
   const prefix = "DEC";
   const numerogenere = await enteteoperation.create_numoperation(prefix, datePeriode);
 
+  //Recuperer le circuit de validation de la demande
+  const circuit = await demandeModel.get_circuitValidation(data.site);
+  //Vérifier si le circuit a des validateurs ou pas
+
   let entetedemande = null;
   const newentete = new enteteDemandeModel(uuidv4(), numerogenere, data.demandeur, data.typedemande, data.libelledemande,
-  data.datedemande, data.decaisse || 0, data.solde || 0, data.statut || 0, data.circuit || null, data.societe || societe.idsociete, data.site || site.idsite, 
-  data.departement || null, data.devise || devise.iddevise, data.createdat || today, data.createdby || 'systeme', data.updatedat || null, data.updatedby || null);
+  data.datedemande, data.decaisse || 0, data.solde || 0, data.statut || 0, circuit[0].idcircuitvalidation || null, data.societe || societe.data.idsociete, data.site || site.data.idsite, 
+  data.departement || null, data.devise || devise.iddevise, data.niveauactuel || null, data.createdat || today, data.createdby || 'systeme', data.updatedat || null, data.updatedby || null);
   entetedemande = await newentete.create_enteteDemande();
 
   if (!entetedemande?.data.iddemande) {
     throw new Error("Échec de création de l'entête de la demande (iddemande manquant).");
   }
 
+  //Récuperer les validateurs du cicruit
+  const validateur_circuits = await demandeModel.prepareValidateurCircuit(entetedemande.data.idcircuit)
+  if(validateur_circuits || validateur_circuits.length > 0){
+    for(const valid of validateur_circuits){
+      const dataValidation = {iddemande: entetedemande.data.iddemande, idcircuitvalidation: valid.idcircuitvalidation,
+        idcircuitetape : valid.idcircuitetape, user: valid.idutilisateur, rang: valid.rang
+      }
+
+      const init = await demandeModel.initValidationDemande(dataValidation);
+    }
+  }
+
   let num = 0;
   for (const ligne of data.lignes){
     num = num + 1;
+    let budget_ = null;
+    // 1. Résoudre automatiquement le budget
+    const budgetsAll = await lignedemandemodel.resolveBudget({
+      idsociete: data.societe || societe.idsociete, idsite: data.site || site.idsite,
+      iddepartement: data.departement, idnature: ligne.natureop, datedemande: data.datedemande
+    });
+
+    const budgets = prioriserBudget(budgetsAll);
+
+    if(societe && societe.data.suivibudgetaire == 1){
+      budget_ = budgets.idbudget;
+    }
+
     const dataligne = {iddemande : entetedemande.data.iddemande, numligne: num, libellelignedemande: data.libelledemande, montantdemande: ligne.montantdemande, idnature: ligne.natureop, idcentre: ligne.centre, idtiers: ligne.tiers || null,
-      idbudget: ligne.budget, idsociete: data.societe || societe.idsociete, idsite: data.site || site.idsite, createdby: data.createdby || 'system'};
+      idbudget: budget_ || null, idsociete: data.societe || societe.data.idsociete, idsite: data.site || site.data.idsite, createdby: data.createdby || 'system'};
     try {
       const lignedemande = await lignedemandeservice.create_lignedemande(dataligne);
       let compteur = 0;
@@ -83,7 +143,6 @@ async function create_demande(data) {
 
 async function getAll({page, limit , search, status}) {
   const result = await demandeModel.get_allDemandes({page, limit , search, status});
-  
   try{
     const demandes = {};
     result.data.forEach(row => {
@@ -99,6 +158,8 @@ async function getAll({page, limit , search, status}) {
           decaisse : row.decaisse,
           solde : row.solde,
           statut : row.statut,
+          idciruit: row.idcircuit,
+          canValidate: row.canValidate,
           createdat : row.entete_createdat,
           createdby : row.entete_createdby,
           updatedat : row.entete_updatedat,
@@ -379,6 +440,19 @@ async function delete_demande(iddemande){
     }
 }
 
+async function get_demandeAvalider(idutilisateur){
+    if (!idutilisateur) {
+        throw new Error("ID Utilisateur requis");
+    }
+
+    try {
+        const demande_ = await demandeModel.getDemandeAvalider(idutilisateur);
+        return demande_;
+    } catch (err) {
+        throw err;
+    }
+}
+
 async function validate(iddemande, data){
   if (!iddemande || !data.decision) {
     throw new Error("Données invalides");
@@ -427,11 +501,23 @@ async function validate(iddemande, data){
   return { statut: 2, message: "Demande validée définitivement" };
 }
 
+function prioriserBudget(budgets) {
+  const PRIORITY = {
+    'Mensuel': 1,
+    'Annuel': 2
+  };
+
+  return budgets.sort(
+    (a, b) => PRIORITY[a.typebudget] - PRIORITY[b.typebudget]
+  )[0];
+}
+
 module.exports = {
   getAll,
   create_demande,
   get_demande_by_id,
   update_demande,
   delete_demande,
-  validate
+  validate,
+  get_demandeAvalider
 };

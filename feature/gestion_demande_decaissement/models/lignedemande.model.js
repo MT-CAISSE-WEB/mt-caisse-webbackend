@@ -114,6 +114,51 @@ class ligneDemandeModel {
 
     return { success: true, data: result }
   }
+
+  async resolveBudget({idsociete, idsite, iddepartement, idnature, datedemande}){
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('idnature', sql.UniqueIdentifier, idnature)
+      .input('idsociete', sql.UniqueIdentifier, idsociete)
+      .input('idsite', sql.UniqueIdentifier, idsite)
+      .input('iddepartement', sql.UniqueIdentifier, iddepartement)
+      .input('datedemande', sql.DateTime, datedemande)
+      .query(ligneDemandeQuery.resoleveBudget);
+
+      return result.recordset;
+  }
+
+  async checkBudgetSolde({ idbudget, idnature, montant, iddepartement }){
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('idnature', sql.UniqueIdentifier, idnature)
+      .input('idbudget', sql.UniqueIdentifier, idbudget)
+      .input('iddepartement', sql.UniqueIdentifier, iddepartement)
+      .input('montant', sql.Decimal(22,9), montant)
+      .query(ligneDemandeQuery.checkBudgetSolde);
+
+      if (!result.recordset.length || result.recordset[0].solde < montant) {
+        throw new Error('Budget insuffisant');
+      }
+
+      return result.recordset;
+  }
+
+  async get_suiviBudget() {
+    const pool = await connectDB()
+    const result = await pool.request().query(ligneDemandeQuery.suivibudget)
+
+    return result.recordset
+  }
+
+  async get_suiviBudgetBydemande(idbudget) {
+    const pool = await connectDB()
+    const result = await pool.request()
+    .input('idbudget', sql.UniqueIdentifier, idbudget)
+    .query(ligneDemandeQuery.suiviBydemande)
+
+    return result.recordset
+  }
   
 }
 
