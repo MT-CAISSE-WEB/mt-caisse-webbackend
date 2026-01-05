@@ -7,7 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 
 
 const queryInsert = `
-        INSERT INTO CircuitValidation (idcircuitvalidation, codecircuitvalidation, typeentite, typeaction, idsociete, idsite, iddepartement, nombrevalidateur, actif,
+        INSERT INTO CircuitValidation (idcircuitvalidation, codecircuitvalidation, typeentite, typeaction, idsociete, idsite, actif,
         createdat, createdby, updatedat, updatedby)
         OUTPUT INSERTED.*
         VALUES (@idcircuitvalidation, @codecircuitvalidation, @typeentite, @typeaction, @idsociete, @idsite, @iddepartement, @nombrevalidateur, @actif, @createdat, @createdby, @updatedat, @updatedby)
@@ -20,8 +20,6 @@ UPDATE CircuitValidation SET
     typeaction = @typeaction,
     idsociete = @idsociete,
     idsite = @idsite,
-    iddepartement = @iddepartement,
-    nombrevalidateur = @nombrevalidateur,
     actif = @actif,
     updatedat = @updatedat,
     updatedby = @updatedby
@@ -29,8 +27,8 @@ WHERE idcircuitvalidation = @idcircuitvalidation
 `;
 
 class circuitvalidationmodel {
-    constructor(idcircuitvalidation, codecircuitvalidation, typeentite, typeaction, idsociete, idsite,  iddepartement, nombrevalidateur, actif,
-        createdat, createdby, updatedat, updatedby)
+    constructor(idcircuitvalidation, codecircuitvalidation, typeentite, typeaction, idsociete, idsite, actif,
+        createdat, createdby, updatedat, updatedby,societe,site,departement)
     {
         this.idcircuitvalidation = idcircuitvalidation;
         this.codecircuitvalidation = codecircuitvalidation;
@@ -38,15 +36,13 @@ class circuitvalidationmodel {
         this.typeaction = typeaction;
         this.idsociete = idsociete;
         this.idsite = idsite;
-        this.iddepartement = iddepartement;
-        this.nombrevalidateur = nombrevalidateur;
         this.actif = actif;
         this.createdat = createdat;
         this.createdby = createdby;
         this.updatedat = updatedat;
         this.updatedby = updatedby;
-        
-      
+        this.societe = societe;
+        this.site = site;
     }
 
     async create_circuitvalidationmodel() {
@@ -59,8 +55,6 @@ class circuitvalidationmodel {
             .input('typeaction', sql.NVARCHAR(100), this.typeaction)
             .input('idsociete', sql.UniqueIdentifier, this.idsociete)
             .input('idsite', sql.UniqueIdentifier, this.idsite)
-            .input('iddepartement', sql.UniqueIdentifier, this.iddepartement)
-            .input('nombrevalidateur', sql.INT, this.nombrevalidateur)
             .input('actif', sql.INT , this.actif)
             .input('createdat', sql.DateTime, this.createdat)
             .input('createdby', sql.NVARCHAR(50), this.createdby)
@@ -78,7 +72,25 @@ class circuitvalidationmodel {
 
     async get_allcircuitvalidation () {
         const pool = await connectDB();
-        const query = "SELECT * FROM CircuitValidation"
+        const query = `SELECT
+  cr.*,
+  st.libelle AS site,
+  sc.raisonsociale AS societe,
+  ct.idcircuitetape,
+  ct.rang,
+  ct.nombrevalidateur,
+  ev.idutilisateur,
+  u.prenom,
+  u.nom
+FROM CircuitValidation cr
+LEFT JOIN Societe sc ON cr.idsociete = sc.idsociete
+LEFT JOIN Site st ON cr.idsite = st.idsite
+LEFT JOIN Circuitetape ct ON cr.idcircuitvalidation = ct.idcircuitvalidation
+LEFT JOIN Etapevalidateur ev ON ct.idcircuitetape = ev.idcircuitetape
+LEFT JOIN Utilisateur u ON ev.idutilisateur = u.idutilisateur
+--WHERE cr.idcircuitvalidation = @idcircuitvalidation -- optionnel si tu cherches un seul circuit
+ORDER BY ct.rang, ev.idutilisateur`;
+
         try {
             const result = await pool.request().query(query);
             return result;
@@ -138,8 +150,6 @@ async get_onecircuitvalidation(idcircuitvalidation) {
             .input('typeaction', sql.NVarChar(100), data.typeaction)
             .input('idsociete', sql.UniqueIdentifier, data.idsociete)
             .input('idsite', sql.UniqueIdentifier, data.idsite)
-            .input('iddepartement', sql.UniqueIdentifier, data.iddepartement)
-            .input('nombrevalidateur', sql.Int, data.nombrevalidateur)
             .input('actif', sql.Int, data.actif)
             .input('updatedat', sql.DateTime, new Date())
             .input('updatedby', sql.NVarChar(50), data.updatedby)

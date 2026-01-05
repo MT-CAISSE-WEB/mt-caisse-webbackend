@@ -57,10 +57,13 @@ async function create_demande(data) {
           iddepartement: data.departement, idnature: ligne.natureop, datedemande: data.datedemande
         });
 
+        if (!budgetsAll || budgetsAll.length === 0) {
+          continue;
+        }
         const budgets = prioriserBudget(budgetsAll);
         try {
           const check_soldeBudget = await lignedemandemodel.checkBudgetSolde({
-            idbudget : budgets.idbudget, idnature: ligne.natureop,
+            idbudget : budgets.idbudget || null, idnature: ligne.natureop,
             montant: ligne.montantdemande, iddepartement : data.departement
           });
         } catch (error) {
@@ -78,11 +81,15 @@ async function create_demande(data) {
 
   //Recuperer le circuit de validation de la demande
   const circuit = await demandeModel.get_circuitValidation(data.site);
+  let i = null;
+  if(circuit && circuit.length > 0){
+    i = circuit[0].idcircuitvalidation;  
+  }
   //Vérifier si le circuit a des validateurs ou pas
 
   let entetedemande = null;
   const newentete = new enteteDemandeModel(uuidv4(), numerogenere, data.demandeur, data.typedemande, data.libelledemande,
-  data.datedemande, data.decaisse || 0, data.solde || 0, data.statut || 0, circuit[0].idcircuitvalidation || null, data.societe || societe.data.idsociete, data.site || site.data.idsite, 
+  data.datedemande, data.decaisse || 0, data.solde || 0, data.statut || 0, i || null, data.societe || societe.data.idsociete, data.site || site.data.idsite, 
   data.departement || null, data.devise || devise.iddevise, data.niveauactuel || null, data.createdat || today, data.createdby || 'systeme', data.updatedat || null, data.updatedby || null);
   entetedemande = await newentete.create_enteteDemande();
 
@@ -112,10 +119,13 @@ async function create_demande(data) {
       iddepartement: data.departement, idnature: ligne.natureop, datedemande: data.datedemande
     });
 
-    const budgets = prioriserBudget(budgetsAll);
-
-    if(societe && societe.data.suivibudgetaire == 1){
+    if(budgetsAll && budgetsAll.length > 0){
+      const budgets = prioriserBudget(budgetsAll);
       budget_ = budgets.idbudget;
+    }
+
+    if(societe && societe.data.suivibudgetaire == 0){
+      budget_ = null
     }
 
     const dataligne = {iddemande : entetedemande.data.iddemande, numligne: num, libellelignedemande: data.libelledemande, montantdemande: ligne.montantdemande, idnature: ligne.natureop, idcentre: ligne.centre, idtiers: ligne.tiers || null,
@@ -452,6 +462,7 @@ async function get_demandeAvalider(idutilisateur){
         throw err;
     }
 }
+
 
 async function validate(iddemande, data){
   if (!iddemande || !data.decision) {

@@ -157,3 +157,4 @@ async function createdevise(data){
         getonedevise,
         deletedevise
     }
+

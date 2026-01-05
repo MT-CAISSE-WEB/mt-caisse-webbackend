@@ -92,7 +92,6 @@ class enteteDemandeModel {
     const result = await pool.request()
       .input('iddemande', sql.UniqueIdentifier, iddemande)
       .query(entetedemandeQuery.getOne)
-
     return result.recordset
   }
 
@@ -128,7 +127,6 @@ class enteteDemandeModel {
     const result = await pool.request()
       .input('iddemande', sql.UniqueIdentifier, iddemande)
       .query(entetedemandeQuery.delete);
-
     return { success: true, data: result }
   }
 

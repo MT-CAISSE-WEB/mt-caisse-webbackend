@@ -12,9 +12,9 @@ async function upserttauxdevise({iddeviseorigine,iddevisedestination,codetauxdev
         const idtauxdevise = uuidv4();
 
         const query = `
-            IF EXISTS (SELECT 1 FROM tauxdevise WHERE codetauxdevise = @codetauxdevise)
+            IF EXISTS (SELECT 1 FROM Tauxdevise WHERE codetauxdevise = @codetauxdevise)
             BEGIN
-                UPDATE tauxdevise
+                UPDATE Tauxdevise
                 SET  iddeviseorigine= @iddeviseorigine,
                      iddevisedestination = @iddevisedestination,
                      codetauxdevise = @codetauxdevise,
@@ -30,7 +30,7 @@ async function upserttauxdevise({iddeviseorigine,iddevisedestination,codetauxdev
             END
             ELSE
             BEGIN
-                INSERT INTO tauxdevise (iddeviseorigine,iddevisedestination,codetauxdevise,intitule,typecours,datecours,coefficient,coefficientinverse,createdat,createdby)
+                INSERT INTO Tauxdevise (iddeviseorigine,iddevisedestination,codetauxdevise,intitule,typecours,datecours,coefficient,coefficientinverse,createdat,createdby)
                 OUTPUT INSERTED.*
                 VALUES (@iddeviseorigine, @iddevisedestination, @codetauxdevise, @intitule, @typecours, @datecours, @coefficient,@coefficientinverse,GETDATE(),@createdby)
             END
@@ -98,7 +98,7 @@ async function getalltauxdevises(){
 async function getalldevisesactif(){
     try {
           const pool = await connectDB();
-          const query = "SELECT * FROM devise where actif=1"; 
+          const query = "SELECT * FROM Devise where actif=1"; 
           const result = await pool.request().query(query);
          return {
             success :true,
@@ -115,7 +115,7 @@ async function getalldevisesactif(){
 async function getonetauxdevise(idtauxdevise){
     try {
         const pool = await connectDB();
-        const query = "SELECT * FROM tauxDevise where idtauxdevise = @idtauxdevise";
+        const query = "SELECT * FROM Tauxdevise where idtauxdevise = @idtauxdevise";
         const result = await pool.request()
         .input('idtauxdevise',db.sql.UniqueIdentifier,idtauxdevise)
         .query(query);
@@ -140,7 +140,7 @@ async function deletetauxdevise(idtauxdevise)
     
     try {
         const pool = await connectDB();
-        const query = "DELETE FROM tauxdevise where idtauxdevise = @idtauxdevise";
+        const query = "DELETE FROM Tauxdevise where idtauxdevise = @idtauxdevise";
         const result = await pool.request()
         .input('idtauxdevise',db.sql.UniqueIdentifier,idtauxdevise)
         .query(query);

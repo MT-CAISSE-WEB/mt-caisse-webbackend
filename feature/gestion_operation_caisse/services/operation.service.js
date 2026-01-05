@@ -10,14 +10,17 @@ const siteservice = require("../../gestion_organisation/services/site.service");
 const enteteoperationservice = require("../services/enteteoperation.service");
 const ligneoperationservice = require("../services/ligneoperation.service");
 const caisseservice = require("../services/caisse.service");
+const enteteDemandeModel = require("../../gestion_demande_decaissement/models/entetedemande.model");
+let demandemodel = new enteteDemandeModel();
 
 let typeoperation = new typeoperationmodel();
 let typeoperations = [];
 
-async function get_all_typeoperations({ page, search, date, status }) {
-  let soldes = 0;
+async function get_all_typeoperations({ page, limit, search, date}) {
+  let soldes = [];
   soldes = await typeoperation.get_soldecaisse();
-  const result = await typeoperation.get_alltypeoperations({ page, search, date, status });
+  const result = await typeoperation.get_alltypeoperations({ page, limit, search, date});
+
   try {
     const operations = {};
     result.data.forEach(row => {
@@ -118,7 +121,7 @@ async function get_all_typeoperations({ page, search, date, status }) {
     throw new Error(error);
   }
 
-  return new PaginationModel(result.page, result.limit, result.total, typeoperations);;
+  return new PaginationModel(result.page, result.limit, result.total, typeoperations);
 }
 
 async function create_typeoperation(data) {
@@ -131,13 +134,25 @@ async function create_typeoperation(data) {
   //Récuperer la societe
   let societe = null;
   if(data.societe){
-    societe = await societeservice.getonesociete(data.societe);
+    try {
+      societe = await societeservice.getonesociete(data.societe);
+    } catch (error) {
+      throw new Error(error);
+    }
+  }else{
+    throw new Error("Societe de utilisateur invalide");
   }
   
   //Récuperer le site
   let site = null;
   if(data.site){
-    site = await siteservice.getonesite(data.site);
+    try {
+      site = await siteservice.getonesite(data.site);
+    } catch (error) {
+      throw new Error(error);
+    }
+  }else{
+    throw new Error("Site de utilisateur invalide");
   }
 
   let enteteoperation = null;
@@ -155,7 +170,7 @@ async function create_typeoperation(data) {
     try {
       const ligneoperation = await ligneoperationservice.create_ligneoperation(dataligne);
     } catch (error) {
-      console.log(error);
+      throw new Error(error);
     }
   }
 
@@ -165,21 +180,32 @@ async function create_typeoperation(data) {
       try {
         caisse1 = await caisseservice.get_by_idcaisse(caisse.idcaisse);
       } catch (error) {
-        console.log(error);
+        throw new Error(error);
       }
+      
       const newtypeoperation1 = new typeoperationmodel( uuidv4(), data.typepaiement, enteteoperation.idoperation, caisse.idperiode, societe.data.idsociete ? societe.data.idsociete : null, site.data.idsite ? site.data.idsite : null, caisse1.idcaisse ? caisse1.idcaisse : null, 
       Number(caisse.montantcaisse), caisse.taux, caisse.montantref, data.createdat || today, data.createdby || 'System', data.updatedat, data.updatedby);
       let recorded1 = null;
+  
       try {
         recorded1 = await newtypeoperation1.create_typeoperationmodel(newtypeoperation1);
+        console.log(recorded1);
       } catch (error) {
-        console.log(error);
+        throw new Error(error);
       }
       
       // si le modèle renvoie une erreur
       if (!recorded1.success) {
         throw new Error(recorded1.message);
       }
+    }
+  }
+
+  if(data.demande !== undefined && data.demande !== null && data.demande !== ''){
+    try {
+      const decaisse = await demandemodel.decaisse_enteteDemande(data.demande, 1);
+    } catch (error) {
+      throw new Error(error);
     }
   }
 
@@ -285,10 +311,52 @@ async function delete_typeoperation(idtypeoperation) {
    }
 }
 
+async function get_soldecaisse() {
+   try {
+    const typeoperation_ = await typeoperation.get_soldecaisse();
+    return typeoperation_;
+   } catch (err) {
+    throw err;
+   }
+}
+
+async function get_operationmax() {
+   try {
+    const typeoperation_ = await typeoperation.get_operationmax();
+    const operations = await Promise.all(
+        typeoperation_.map(async item => {
+            const devise = item.iddevise 
+                ? (await deviseservice.getonedevise(item.iddevise)).data 
+                : null;
+
+            return {
+                idtypeoperation: item.idtypeoperation,
+                codtypeoperation: item.codtypeoperation,
+                idcaisse: item.idcaisse,
+                devise: devise,
+                idperiode: item.idperiode,
+                montant: item.montant,
+                taux: item.taux,
+                montantref: item.montantref,
+                dateperiode: item.dateperiode,
+                codeoperation: item.codeoperation,
+                dateoperation: item.dateoperation
+            };
+        })
+    );
+
+    return operations;
+   } catch (err) {
+    throw err;
+   }
+}
+
 module.exports = {
   get_all_typeoperations,
   get_by_idtypeoperation,
   create_typeoperation,
   update_typeoperation,
-  delete_typeoperation
+  delete_typeoperation,
+  get_soldecaisse,
+  get_operationmax
 };

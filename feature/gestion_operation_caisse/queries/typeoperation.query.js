@@ -13,8 +13,9 @@ module.exports = {
         VALUES (@idtypeoperation, @codtypeoperation, @idoperation, @idperiode, @idsociete, @idsite, @idcaisse, @montant, @taux, @montantref, @createdat, @createdby, @updatedat, @updatedby)
     `,
 
-    update: ` UPDATE TypeOperation
-    SET codetypeoperation = @codetypeoperation, 
+    update: `
+        UPDATE TypeOperation 
+        SET codtypeoperation = @codtypeoperation, 
         idoperation = @idoperation, 
         idcaisse = @idcaisse, 
         montant = @montant, 
@@ -30,7 +31,14 @@ module.exports = {
     `,
     solde_calcul: `
         SELECT 
-            idcaisse,
+            t.idcaisse,
+            c.codecaisse,
+            c.libelle,
+            c.idjournal,
+            c.idcompte,
+            c.iddevise,
+            d.codedevise,
+            c.seuilmnimal,
             SUM(
                 CASE 
                     WHEN codtypeoperation = 'encaissement' THEN montant

@@ -1,7 +1,7 @@
 const db = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const dotenv = require('dotenv');
-dotenv.config({path: '../../../config/.env'});
+dotenv.config({path: '../../../config/config.env'});
 
 async function getutilisateurrole(idutilisateur){
     try {

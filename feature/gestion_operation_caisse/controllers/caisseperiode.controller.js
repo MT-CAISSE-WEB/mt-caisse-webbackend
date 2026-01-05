@@ -72,8 +72,8 @@ module.exports.delete_caisseperiode = asyncHandler(async(req, res, next) => {
  */
 module.exports.fermeture_caisse = asyncHandler(async(req, res, next) => {
   try {
-    const idperiode  = req.params.id;
-    const periode_ = await caisseperiodeservice.fermeture_periode(idperiode, req.body);
+    const idutilisateur  = req.params.id;
+    const periode_ = await caisseperiodeservice.fermeture_periode(idutilisateur, req.body);
     res.json({ success: true, data: periode_ });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
@@ -98,8 +98,8 @@ module.exports.validate_caisse = asyncHandler(async(req, res, next) => {
  */
 module.exports.open_caisse = asyncHandler(async(req, res, next) => {
   try {
-    const idperiode  = req.params.id;
-    const periode_ = await caisseperiodeservice.open_periode(idperiode, req.body);
+    const idutilisateur  = req.params.id;
+    const periode_ = await caisseperiodeservice.open_periode(idutilisateur, req.body);
     res.json({ success: true, data: periode_ });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });

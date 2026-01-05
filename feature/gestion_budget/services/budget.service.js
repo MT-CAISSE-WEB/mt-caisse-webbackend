@@ -52,7 +52,7 @@ async function create_budget(data) {
     const siteResult = await db
       .request()
       .input('id', sql.UniqueIdentifier, data.idsite)
-      .query('SELECT * FROM Site WHERE idsite = @id')
+      .query('SELECT * FROM Sites WHERE idsite = @id')
 
     if (siteResult.recordset.length === 0) {
       throw new Error("Le site spécifié n'existe pas.")
@@ -219,7 +219,7 @@ async function get_all_budgets() {
 
 FROM Budget b
 LEFT JOIN Societe s ON s.idsociete = b.idsociete
-LEFT JOIN Site si ON si.idsite = b.idsite
+LEFT JOIN Sites si ON si.idsite = b.idsite
 LEFT JOIN Budget bp ON bp.idbudget = b.idbudgetparent
 ORDER BY b.createdat DESC;
 
@@ -415,7 +415,7 @@ async function get_budget_by_id(id) {
 
 FROM Budget b
 LEFT JOIN Societe s ON s.idsociete = b.idsociete
-LEFT JOIN Site si ON si.idsite = b.idsite
+LEFT JOIN Sites si ON si.idsite = b.idsite
 LEFT JOIN Budget bp ON bp.idbudget = b.idbudgetparent
 WHERE b.idbudget = @id
 ORDER BY b.createdat DESC;

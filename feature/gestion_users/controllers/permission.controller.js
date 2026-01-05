@@ -12,6 +12,7 @@ module.exports.getallpermission = asyncHandler (async(req,res, next)=>{
     }
 });
 
+ 
 module.exports.getonepermission = asyncHandler (async(req,res, next)=>{
     try {
         const idpermission = req.params.id
@@ -25,8 +26,8 @@ module.exports.getonepermission = asyncHandler (async(req,res, next)=>{
 
 module.exports.upsertpermission = asyncHandler (async(req,res, next)=>{
     try {
-        const {code,libelle,createdby,updatedby} = req.body;
-        const upsertpermission = await permissionservice.upsertpermission({code,libelle,createdby,updatedby})
+        const {code,description,createdby,updatedby} = req.body;
+        const upsertpermission = await permissionservice.upsertpermission({code,description,createdby,updatedby})
         res.status(upsertpermission.status).json({success: upsertpermission.success,message:upsertpermission.message, data: upsertpermission.data});
     } catch (error) {
         res.status(500).json({ success: false, message: "Erreur serveur", error });

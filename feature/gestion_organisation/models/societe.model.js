@@ -1,39 +1,28 @@
 class societemodel {
-  constructor(
-    idsociete,
-    codesociete,
-    iddevisereference,
-    iddevisereporting,
-    raisonsociale,
-    rccm,
-    numnui,
-    email,
-    telephone,
-    logo,
-    adresse,
-    suivibudgetaire,
-    createdat,
-    updatedat,
-    createdby,
-    updatedby
-  ) {
-    this.idsociete = idsociete
-    this.codesociete = codesociete
-    this.iddevisereference = iddevisereference
-    this.iddevisereporting = iddevisereporting
-    this.raisonsociale = raisonsociale
-    this.rccm = rccm
-    this.numnui = numnui
-    this.email = email
-    this.telephone = telephone
-    this.logo = logo
-    this.adresse = adresse
-    this.suivibudgetaire = suivibudgetaire
-    this.createdat = createdat
-    this.updatedat = updatedat
-    this.createdby = createdby
-    this.updatedby = updatedby
-  }
+    constructor(idsociete, codesociete, 
+        iddevisereference, iddevisereporting,
+        raisonsociale, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire, 
+        createdat, updatedat, createdby, updatedby)
+    {
+        this.idsociete = idsociete;
+        this.codesociete = codesociete;
+        this.iddevisereference = iddevisereference;
+        this.iddevisereporting = iddevisereporting;
+        this.raisonsociale = raisonsociale;
+        this.rccm = rccm;
+        this.numnui = numnui;
+        this.email = email;
+        this.telephone = telephone;
+        this.logo = logo;
+        this.adresse = adresse;
+        this.suivibudgetaire = suivibudgetaire;
+        this.createdat = createdat;
+        this.updatedat = updatedat;
+        this.createdby = createdby;
+        this.updatedby = updatedby;
+    }   
 }
 
-module.exports = societemodel
+
+
+module.exports = societemodel;

@@ -174,7 +174,7 @@ module.exports = {
         LEFT JOIN Site SI ON SI.idsite = E.idsite
         LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
         LEFT JOIN Departement DEP ON DEP.iddepartement = E.iddepartement
-        LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = E.idcircuit
+        LEFT JOIN CircuitValidation CI ON CI.idcircuitvalidation = E.idcircuit
 
         LEFT JOIN LigneDemande L ON L.iddemande = E.iddemande
         LEFT JOIN NatureOperation N ON N.idnature = L.idnature
@@ -284,7 +284,7 @@ module.exports = {
         LEFT JOIN Site SI ON SI.idsite = E.idsite
         LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
         LEFT JOIN Departement DEP ON DEP.iddepartement = E.iddepartement
-        LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = E.idcircuit
+        LEFT JOIN CircuitValidation CI ON CI.idcircuitvalidation = E.idcircuit
 
         LEFT JOIN LigneDemande L 
             ON L.iddemande = E.iddemande

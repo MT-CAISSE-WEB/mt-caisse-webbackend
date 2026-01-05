@@ -435,25 +435,28 @@ END
 -- 18️⃣ LigneDemande (dépend de EnteteDemande, NatureOperation, Budget, CentreAnalytique, Sites, Societe)
 -- ============================================
 
+
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'LigneDemande')
 BEGIN
     CREATE TABLE LigneDemande (
         idlignedemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         iddemande UNIQUEIDENTIFIER,
-        numligne INT UNIQUE,
+        numligne INT,
         libellelignedemande NVARCHAR(255),
         montantdemande DECIMAL(22, 9),
         idnature UNIQUEIDENTIFIER,
         idbudget UNIQUEIDENTIFIER DEFAULT NULL,
         idcentre UNIQUEIDENTIFIER,
+        idtiers UNIQUEIDENTIFIER,
         idsociete UNIQUEIDENTIFIER,
         idsite UNIQUEIDENTIFIER,
         createdat Datetime DEFAULT GETDATE(),
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
-        FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
+        FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande) ON DELETE CASCADE,
         FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
+        FOREIGN KEY (idtiers) REFERENCES Tiers(idtiers),
         FOREIGN KEY (idbudget) REFERENCES Budget(idbudget),
         FOREIGN KEY (idcentre) REFERENCES CentreAnalytique(idcentreanalytique),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
@@ -1006,19 +1009,40 @@ END
 -- 20️⃣ ValidationDemande (dépend de EnteteDemande, Societe)
 -- ============================================
 
+-- IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ValidationDemande')
+-- BEGIN
+--     CREATE TABLE ValidationDemande (
+--         idvalidationdemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+--         iddemande UNIQUEIDENTIFIER,
+--         idsociete UNIQUEIDENTIFIER,
+--         datevalidation DATETIME,
+--         createdat Datetime,
+--         createdby NVARCHAR(50),
+--         updatedat Datetime,
+--         updatedby NVARCHAR(50),
+--         FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
+--         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+--     );
+-- END
+
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ValidationDemande')
 BEGIN
     CREATE TABLE ValidationDemande (
         idvalidationdemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         iddemande UNIQUEIDENTIFIER,
-        idsociete UNIQUEIDENTIFIER,
+        idcircuitvalidation UNIQUEIDENTIFIER,
+        idcircuitetape UNIQUEIDENTIFIER,
+        idutilisateur UNIQUEIDENTIFIER,
+        decision NVARCHAR(20), -- APPROUVE | REJETE | EN_ATTENTE
+        commentaire NVARCHAR(255),
         datevalidation DATETIME,
-        createdat Datetime,
+        rang  INT Default null,
+        createdat DATETIME DEFAULT GETDATE(),
         createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
         FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation),
+        FOREIGN KEY (idcircuitetape) REFERENCES Circuitetape(idcircuitetape),
+        FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur)
     );
 END
 
@@ -1326,4 +1350,3 @@ END
 --             + RIGHT('000' + CAST(@compteur AS NVARCHAR), 3);
 --     END
 -- END
-
