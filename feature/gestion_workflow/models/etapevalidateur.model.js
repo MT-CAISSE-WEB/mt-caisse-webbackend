@@ -36,10 +36,10 @@ class etapevalidateurmodel {
         const pool = await connectDB();
         try {
             const result = await pool.request()
-            .input('idcircuitetape', sql.NVARCHAR(24) , this.idcircuitetape)
+            .input('idcircuitetape', sql.NVarChar(24) , this.idcircuitetape)
             .input('idutilisateur', sql.UniqueIdentifier, this.idutilisateur)
             .input('createdat', sql.DateTime, this.createdat)
-            .input('createdby', sql.NVARCHAR(50), this.createdby)
+            .input('createdby', sql.NVarChar(50), this.createdby)
         
            
             .query(queryInsert);

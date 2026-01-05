@@ -79,7 +79,7 @@ async function getalldepartement(){
         left join Utilisateur u on d.responsable = u.idutilisateur`;
 
         const result = await pool.request().query(query);
-        console.log(result);
+        // console.log(result);
         return {
             success :true,
             status:200, 

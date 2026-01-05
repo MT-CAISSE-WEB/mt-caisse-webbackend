@@ -1,7 +1,7 @@
 const { sql, poolPromise, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const dotenv = require('dotenv');
-dotenv.config({path: '../../../config/config.env'});
+dotenv.config({path: '../../../config/.env'});
 const argon2 = require('argon2');
 const jwt = require("jsonwebtoken");
 const db = require('../../../config/db');
@@ -133,7 +133,7 @@ async function getalluser(){
 async function getoneuser(iduser){
     try {
         const pool = await connectDB();
-        const query = "SELECT * FROM utilisateur where idutilisateur = @idutilisateur";
+        const query = "SELECT * FROM Utilisateur where idutilisateur = @idutilisateur";
         const result = await pool.request()
         .input('idutilisateur',db.sql.UniqueIdentifier,iduser)
         .query(query);
@@ -157,7 +157,7 @@ async function deleteuser(iduser)
           
           try {
               const pool = await connectDB();
-              const query = "DELETE FROM utilisateur where idutilisateur = @idutilisateur";
+              const query = "DELETE FROM Utilisateur where idutilisateur = @idutilisateur";
               const result = await pool.request()
               .input('idutilisateur', sql.UniqueIdentifier,iduser)
               .query(query);
@@ -225,7 +225,7 @@ async function login(login, password) {
             .input("userid", sql.UniqueIdentifier, user.idutilisateur)
             .input("token", sql.NVarChar, hashedRefresh)
             .query(`
-                INSERT INTO REFRESH_TOKEN(idutilisateur, token)
+                INSERT INTO Refresh_token(idutilisateur, token)
                 VALUES (@userid, @token)
             `);   
 
@@ -255,7 +255,7 @@ async function refreshtoken (refreshToken){
         const pool = await connectDB();
 
         // Récupération liste
-        const result = await pool.request().query("SELECT * FROM REFRESH_TOKEN");
+        const result = await pool.request().query("SELECT * FROM Refresh_token");
 
         const found = result.recordset.find(rt =>
             argon2.verify(rt.token, refreshToken)
@@ -291,7 +291,7 @@ async function logout(refreshToken){
 
             // Supprimer le refresh token lié à l'utilisateur
             await pool.request()
-                .query("DELETE FROM REFRESH_TOKEN");
+                .query("DELETE FROM Refresh_token");
 
             return { status: 200, success: true, message: "Déconnexion réussie" };
 

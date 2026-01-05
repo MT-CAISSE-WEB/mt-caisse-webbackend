@@ -39,7 +39,7 @@ async function get_all_caisses({ page, limit, search, actif}) {
         item.devise_iddevise, item.devise_codedevise, item.devise_intitule, item.devise_codeiso, item.devise_actif, item.devise_createdat, item.devise_createdby, item.devise_updatedat, item.devise_updatedby) : null,
       // Site
       item.idsite ? new sitemodel(
-        item.site_idsite, item.site_idsociete, null, item.site_idcentreanalytique, item.site_libelle, item.site_email, item.site_telephone, item.site_adresse, item.site_estcentreanalytique,
+        item.site_idsite, item.site_idsociete, null, item.site_idcentreanalytique, item.site_libelle, item.site_email, item.site_telephone, item.site_adresse,
         item.site_createdat, item.site_updatedat, item.site_createdby, item.site_updatedby ) : null,
 
       item.idsociete ? new societemodel(
@@ -53,7 +53,6 @@ async function get_all_caisses({ page, limit, search, actif}) {
       } : null
     ));
 
-    console.log(caisses);
   } catch (error) {
     console.log(error);
   }
