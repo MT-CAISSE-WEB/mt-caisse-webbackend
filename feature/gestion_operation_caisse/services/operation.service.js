@@ -118,7 +118,7 @@ async function get_all_typeoperations({ page, limit, search, date}) {
     // Convertit en tableau
     typeoperations = Object.values(operations);
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 
   return new PaginationModel(result.page, result.limit, result.total, typeoperations);

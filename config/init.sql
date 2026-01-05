@@ -820,21 +820,42 @@ END
 -- 20️⃣ ValidationDemande (dépend de EnteteDemande, Societe)
 -- ============================================
 
+-- IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ValidationDemande')
+-- BEGIN
+--     CREATE TABLE ValidationDemande (
+--         idvalidationdemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+--         iddemande UNIQUEIDENTIFIER,
+--         idsociete UNIQUEIDENTIFIER,
+--         datevalidation DATETIME,
+--         createdat Datetime,
+--         createdby NVARCHAR(50),
+--         updatedat Datetime,
+--         updatedby NVARCHAR(50),
+--         FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
+--         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+--     );
+-- END
+
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ValidationDemande')
 BEGIN
     CREATE TABLE ValidationDemande (
         idvalidationdemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         iddemande UNIQUEIDENTIFIER,
-        idsociete UNIQUEIDENTIFIER,
+        idcircuitvalidation UNIQUEIDENTIFIER,
+        idcircuitetape UNIQUEIDENTIFIER,
+        idutilisateur UNIQUEIDENTIFIER,
+        decision NVARCHAR(20), -- APPROUVE | REJETE | EN_ATTENTE
+        commentaire NVARCHAR(255),
         datevalidation DATETIME,
-        createdat Datetime,
+        createdat DATETIME DEFAULT GETDATE(),
         createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
         FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation),
+        FOREIGN KEY (idcircuitetape) REFERENCES Circuitetape(idcircuitetape),
+        FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur)
     );
 END
+
 -- FIN INIT GIL
 
 

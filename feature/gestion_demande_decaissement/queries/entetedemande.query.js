@@ -64,7 +64,7 @@ module.exports = {
         LEFT JOIN Societe S ON S.idsociete = E.idsociete
         LEFT JOIN Site SI ON SI.idsite = E.idsite
         LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
-        LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = E.idcircuitvalidation
+        LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = E.idcircuit
 
         LEFT JOIN LigneDemande L ON L.iddemande = E.iddemande
         LEFT JOIN NatureOperation N ON N.idnature = L.idnature
@@ -108,10 +108,15 @@ module.exports = {
             E.decaisse,
             E.solde,
             E.statut,
+            E.idcircuit,
             E.createdat AS entete_createdat,
             E.createdby AS entete_createdby,
             E.updatedat AS entete_updatedat,
             E.updatedby AS entete_updatedby,
+            CASE 
+                WHEN E.idcircuit IS NOT NULL THEN 1
+                ELSE 0
+            END AS canValidate,
 
             -- ================= DEMANDEUR =================
             U.idutilisateur,
@@ -134,7 +139,6 @@ module.exports = {
             CI.typeaction AS circuit_typeaction,
             CI.idsociete AS circuit_idsociete,
             CI.idsite AS circuit_idsite,
-            CI.iddepartement AS circuit_iddepartement,
             CI.actif AS circuit_actif,
 
             -- ================= SOCIETE / SITE =================
@@ -170,7 +174,7 @@ module.exports = {
         LEFT JOIN Site SI ON SI.idsite = E.idsite
         LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
         LEFT JOIN Departement DEP ON DEP.iddepartement = E.iddepartement
-        LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = E.idcircuitvalidation
+        LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = E.idcircuit
 
         LEFT JOIN LigneDemande L ON L.iddemande = E.iddemande
         LEFT JOIN NatureOperation N ON N.idnature = L.idnature
@@ -190,11 +194,11 @@ module.exports = {
     `,
     insert : `
         INSERT INTO EnteteDemande ( iddemande, codedemande, iddemandeur, typedemande,
-            libelledemande, datedemande, decaisse, solde, statut, idcircuitvalidation, idsociete, idsite, iddepartement, iddevise,
+            libelledemande, datedemande, decaisse, solde, statut, idcircuit, idsociete, idsite, iddepartement, iddevise,
             createdat, createdby )
           OUTPUT INSERTED.*
           VALUES ( @iddemande, @codedemande, @iddemandeur, @typedemande, @libelledemande, @datedemande, @decaisse, @solde, @statut,
-            @idcircuitvalidation, @idsociete, @idsite, @iddepartement, @iddevise, @createdat, @createdby)
+            @idcircuit, @idsociete, @idsite, @iddepartement, @iddevise, @createdat, @createdby)
     `,
     getAll : `
         SELECT *
@@ -234,7 +238,6 @@ module.exports = {
             CI.typeaction AS circuit_typeaction, 
             CI.idsociete AS circuit_idsociete, 
             CI.idsite AS circuit_idsite, 
-            CI.iddepartement AS circuit_iddepartement, 
             CI.actif AS circuit_actif,
 
             -- ================= SOCIETE / SITE =================
@@ -281,7 +284,7 @@ module.exports = {
         LEFT JOIN Site SI ON SI.idsite = E.idsite
         LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
         LEFT JOIN Departement DEP ON DEP.iddepartement = E.iddepartement
-        LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = E.idcircuitvalidation
+        LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = E.idcircuit
 
         LEFT JOIN LigneDemande L 
             ON L.iddemande = E.iddemande
@@ -321,4 +324,55 @@ module.exports = {
         SET decaisse = @decaisse
         WHERE iddemande = @iddemande
     `,
+    circuitDemande: `
+        Select CV.*
+        From CircuitValidation CV
+        Where CV.typeaction = 'decaissement' 
+        AND CV.actif = 1 
+        AND CV.typeentite = 'site'
+        AND CV.idsite = @idsite
+    `,
+    validateurCircuit : `
+        Select CE.*,
+            CV.typeaction,
+            CV.typeentite,
+            CV.idsite,
+            U.idutilisateur,
+            U.nom,
+            U.prenom
+        FROM Circuitetape CE
+        LEFT JOIN CircuitValidation CV ON CV.idcircuitvalidation = CE.idcircuitvalidation
+        LEFT JOIN Etapevalidateur EV ON EV.idcircuitetape = CE.idcircuitetape
+        LEFT JOIN Utilisateur U ON U.idutilisateur = EV.idutilisateur
+        WHERE CE.idcircuitvalidation = @idcircuitvalidation
+    `,
+    initvalidationDemande: `
+        INSERT INTO ValidationDemande
+        (iddemande, idcircuitvalidation, idcircuitetape, idutilisateur, decision, rang)
+        OUTPUT INSERTED.*
+        VALUES (@iddemande, @idcircuitvalidation ,@idcircuitetape ,@idutilisateur , 'en attente', @rang)
+    `,
+    getDemandeAvalider : `
+        SELECT DISTINCT
+            ED.iddemande,
+            ED.codedemande,
+            ED.libelledemande,
+            ED.niveauactuel,
+            ED.idcircuit,
+
+            CASE 
+            WHEN EV.idutilisateur IS NOT NULL THEN 1
+            ELSE 0
+            END AS canValidate
+
+        FROM EnteteDemande ED
+        LEFT JOIN Circuitetape CE 
+            ON CE.idcircuitvalidation = ED.idcircuit
+        AND CE.rang = ED.niveauactuel
+        LEFT JOIN Etapevalidateur EV 
+            ON EV.idcircuitetape = CE.idcircuitetape
+        AND EV.idutilisateur = @idutilisateur
+
+        WHERE ED.statut < 2;
+    `
 }

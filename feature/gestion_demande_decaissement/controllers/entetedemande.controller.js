@@ -83,3 +83,16 @@ module.exports.validate = asyncHandler(async(req, res, next) => {
     res.status(404).json({ success: false, message: error.message });
   }
 });
+
+/**
+ * Demande a valider
+ */
+module.exports.getDemandeAvalider = asyncHandler(async(req, res, next) => {
+  try {
+    const idutilisateur = req.params.id;
+    const demande_ = await demandeservice.get_demandeAvalider(idutilisateur);
+    res.json({ success: true, data: demande_, message: "Demande a valider" });
+  } catch (error) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+});

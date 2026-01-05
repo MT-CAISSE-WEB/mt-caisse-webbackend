@@ -7,6 +7,7 @@ router.get('/', controller.getAll) // READ ALL
 router.get('/:id', controller.getById) // READ ONE BY ID
 router.put('/update/:id', controller.update) // UPDATE
 router.put('/validate/:id', controller.validate) // UPDATE
+router.get('/avalider/:id', controller.getDemandeAvalider) // UPDATE
 router.delete('/delete/:id', controller.delete) // DELETE
 //router.post('/duplicate/:id', controller.duplicate) // DUPLICATE
 

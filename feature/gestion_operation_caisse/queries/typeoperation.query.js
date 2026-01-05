@@ -160,5 +160,112 @@ module.exports = {
         LEFT JOIN CaissePeriode cp ON cp.idperiode = t.idperiode
         ORDER BY
             t.montantref DESC;
+    `,
+    decaissBydemandeDevRef: `
+        SELECT
+            ED.iddemande,
+            ED.codedemande,
+
+            SUM(TOp.montantref) AS montant_decaisse_ref
+
+        FROM EnteteDemande ED
+        JOIN EnteteOperationCaisse EOC 
+            ON EOC.iddemande = ED.iddemande
+        JOIN TypeOperation TOp 
+            ON TOp.idoperation = EOC.idoperation
+
+        GROUP BY
+            ED.iddemande,
+            ED.codedemande;
+    `,
+    decaissBydemandeDevCaisse : `
+        SELECT
+            ED.codedemande,
+            C.codecaisse,
+            D.codedevise,
+
+            SUM(TOp.montant) AS montant_decaisse_devise,
+            SUM(TOp.montantref) AS montant_decaisse_ref
+
+        FROM EnteteDemande ED
+        LEFT JOIN EnteteOperationCaisse EOC ON EOC.iddemande = ED.iddemande
+        LEFT JOIN TypeOperation TOp ON TOp.idoperation = EOC.idoperation
+        LEFT JOIN Caisse C ON C.idcaisse = TOp.idcaisse
+        LEFT JOIN Devise D ON D.iddevise = C.iddevise
+
+        WHERE ED.iddemande = @iddemande
+
+        GROUP BY
+            ED.codedemande,
+            C.codecaisse,
+            D.codedevise;
+
+    `,
+    decaissBydemandeNature: `
+        SELECT
+            ED.codedemande,
+            NO.codenature,
+            NO.libelle AS nature,
+
+            SUM(TOp.montantref) AS montant_decaisse_ref
+
+        FROM EnteteDemande ED
+        JOIN EnteteOperationCaisse EOC ON EOC.iddemande = ED.iddemande
+        JOIN ligneoperationCaisse LOC ON LOC.idoperation = EOC.idoperation
+        JOIN TypeOperation TOp ON TOp.idoperation = EOC.idoperation
+        JOIN NatureOperation NO ON NO.idnature = LOC.idnature
+
+        WHERE ED.iddemande = @iddemande
+
+        GROUP BY
+            ED.codedemande,
+            NO.codenature,
+            NO.libelle;
+
+    `,
+    decaissBydempandeBudget: `
+        SELECT
+            ED.codedemande,
+            B.codebudget,
+            B.libelle AS budget,
+
+            SUM(TOp.montantref) AS montant_decaisse_ref
+
+        FROM EnteteDemande ED
+        JOIN EnteteOperationCaisse EOC ON EOC.iddemande = ED.iddemande
+        JOIN ligneoperationCaisse LOC ON LOC.idoperation = EOC.idoperation
+        JOIN TypeOperation TOp ON TOp.idoperation = EOC.idoperation
+
+        JOIN LigneDemande LD 
+            ON LD.iddemande = ED.iddemande
+            AND LD.idnature = LOC.idnature
+
+        JOIN Budget B ON B.idbudget = LD.idbudget
+
+        WHERE ED.iddemande = @iddemande
+
+        GROUP BY
+            ED.codedemande,
+            B.codebudget,
+            B.libelle;
+
+    `,
+    decaisseBudgetPeriode: `
+        SELECT
+            B.codebudget,
+            FORMAT(EOC.dateoperation, 'yyyy-MM') AS periode,
+
+            SUM(TOp.montantref) AS montant_decaisse_ref
+
+        FROM EnteteOperationCaisse EOC
+        JOIN TypeOperation TOp ON TOp.idoperation = EOC.idoperation
+        JOIN ligneoperationCaisse LOC ON LOC.idoperation = EOC.idoperation
+        JOIN LigneDemande LD ON LD.idnature = LOC.idnature
+        JOIN Budget B ON B.idbudget = LD.idbudget
+
+        GROUP BY
+            B.codebudget,
+            FORMAT(EOC.dateoperation, 'yyyy-MM');
+
     `
 };
