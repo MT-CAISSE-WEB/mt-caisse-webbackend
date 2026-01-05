@@ -374,5 +374,28 @@ module.exports = {
         AND EV.idutilisateur = @idutilisateur
 
         WHERE ED.statut < 2;
+    `,
+    circuitValidateur: `
+        Select VD.*,
+            U.nom,
+            U.prenom,
+            CI.codecircuitvalidation,
+            D.codedemande
+        from ValidationDemande VD
+            LEFT JOIN EnteteDemande D ON D.iddemande = VD.iddemande
+            LEFT JOIN Utilisateur U ON U.idutilisateur = VD.idutilisateur
+            LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = VD.idcircuitvalidation
+        Where VD.iddemande = @iddemande
+    `,
+    detailBudget: `
+        Select E.iddemande, E.codedemande, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
+			LD.idbudget, SUM(LD.montantdemande) AS montant_demande
+        From EnteteDemande E
+            LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
+            LEFT JOIN Budget BU ON BU.idbudget = LD.idbudget
+            LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
+        Where E.iddemande = @iddemande
+        Group By E.iddemande, E.codedemande, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
+                LD.idbudget
     `
 }

@@ -96,3 +96,29 @@ module.exports.getDemandeAvalider = asyncHandler(async(req, res, next) => {
     res.status(404).json({ success: false, message: error.message });
   }
 });
+
+/**
+ * Validateurs des demandes
+ */
+module.exports.getValidateursCircuit = asyncHandler(async(req, res, next) => {
+  try {
+    const iddemande = req.params.id;
+    const demande_ = await demandeservice.get_validateurCircuit(iddemande);
+    res.json({ success: true, data: demande_, message: "Validateurs du circuit" });
+  } catch (error) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * Detail budget des demandes
+ */
+module.exports.getDetailBudget = asyncHandler(async(req, res, next) => {
+  try {
+    const iddemande = req.params.id;
+    const demande_ = await demandeservice.get_detailBudget(iddemande);
+    res.json({ success: true, data: demande_[0], message: "Details budget de la demande" });
+  } catch (error) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+});

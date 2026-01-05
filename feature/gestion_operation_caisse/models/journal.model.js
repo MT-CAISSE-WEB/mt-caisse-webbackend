@@ -128,6 +128,7 @@ class journalModel {
                 // 3️ Sinon → INSERT
                 const result = await pool.request()
                     .input('idjournal', sql.UniqueIdentifier, uuidv4())
+                    .input('idsociete', sql.UniqueIdentifier, data.idsociete)
                     .input('codejournal', sql.NVarChar(24), data.codejournal)
                     .input('designation', sql.NVarChar(50), data.designation)
                     .input('actif', sql.Int, data.actif)

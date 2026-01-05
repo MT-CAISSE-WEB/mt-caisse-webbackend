@@ -57,6 +57,8 @@ async function create_demande(data) {
           iddepartement: data.departement, idnature: ligne.natureop, datedemande: data.datedemande
         });
 
+        //Si le budget inexistant
+
         const budgets = prioriserBudget(budgetsAll);
         try {
           const check_soldeBudget = await lignedemandemodel.checkBudgetSolde({
@@ -78,6 +80,7 @@ async function create_demande(data) {
 
   //Recuperer le circuit de validation de la demande
   const circuit = await demandeModel.get_circuitValidation(data.site);
+  //Si le circuit introuvable
   //Vérifier si le circuit a des validateurs ou pas
 
   let entetedemande = null;
@@ -512,6 +515,32 @@ function prioriserBudget(budgets) {
   )[0];
 }
 
+async function get_validateurCircuit(iddemande){
+    if (!iddemande) {
+        throw new Error("ID demande requis");
+    }
+
+    try {
+        const demande_ = await demandeModel.get_validateurCircuit(iddemande);
+        return demande_;
+    } catch (err) {
+        throw err;
+    }
+}
+
+async function get_detailBudget(iddemande){
+    if (!iddemande) {
+        throw new Error("ID demande requis");
+    }
+
+    try {
+        const demande_ = await demandeModel.get_detailBudget(iddemande);
+        return demande_;
+    } catch (err) {
+        throw err;
+    }
+}
+
 module.exports = {
   getAll,
   create_demande,
@@ -519,5 +548,7 @@ module.exports = {
   update_demande,
   delete_demande,
   validate,
-  get_demandeAvalider
+  get_demandeAvalider,
+  get_validateurCircuit,
+  get_detailBudget
 };

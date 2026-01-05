@@ -177,6 +177,24 @@ class enteteDemandeModel {
     return result.recordset
   }
 
+  async get_validateurCircuit(iddemande) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddemande', sql.UniqueIdentifier, iddemande)
+      .query(entetedemandeQuery.circuitValidateur)
+
+    return result.recordset
+  }
+
+  async get_detailBudget(iddemande) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddemande', sql.UniqueIdentifier, iddemande)
+      .query(entetedemandeQuery.detailBudget)
+
+    return result.recordset
+  }
+
 }
 
 module.exports = enteteDemandeModel
