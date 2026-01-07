@@ -116,7 +116,7 @@ module.exports = {
             CASE 
                 WHEN E.idcircuit IS NOT NULL THEN 1
                 ELSE 0
-            END AS canValidate,
+            END AS circuitExist,
 
             -- ================= DEMANDEUR =================
             U.idutilisateur,
@@ -194,11 +194,11 @@ module.exports = {
     `,
     insert : `
         INSERT INTO EnteteDemande ( iddemande, codedemande, iddemandeur, typedemande,
-            libelledemande, datedemande, decaisse, solde, statut, idcircuit, idsociete, idsite, iddepartement, iddevise,
+            libelledemande, datedemande, decaisse, solde, statut, idcircuit, idsociete, idsite, iddepartement, iddevise, niveauactuel,
             createdat, createdby )
           OUTPUT INSERTED.*
           VALUES ( @iddemande, @codedemande, @iddemandeur, @typedemande, @libelledemande, @datedemande, @decaisse, @solde, @statut,
-            @idcircuit, @idsociete, @idsite, @iddepartement, @iddevise, @createdat, @createdby)
+            @idcircuit, @idsociete, @idsite, @iddepartement, @iddevise, @niveauactuel, @createdat, @createdby)
     `,
     getAll : `
         SELECT *
@@ -224,6 +224,7 @@ module.exports = {
             E.decaisse,
             E.solde,
             E.statut,
+            E.niveauactuel,
             E.createdat AS entete_createdat,
 
             -- ================= DEMANDEUR =================
@@ -386,6 +387,7 @@ module.exports = {
             LEFT JOIN Utilisateur U ON U.idutilisateur = VD.idutilisateur
             LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = VD.idcircuitvalidation
         Where VD.iddemande = @iddemande
+        ORDER BY VD.rang ASC;
     `,
     detailBudget: `
         Select E.iddemande, E.codedemande, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
@@ -397,5 +399,51 @@ module.exports = {
         Where E.iddemande = @iddemande
         Group By E.iddemande, E.codedemande, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
                 LD.idbudget
+    `,
+    bydetailLigneBudget : `
+        Select E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle as dept_libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
+			LD.idbudget,BDN.idnature, N.codenature, N.libelle AS nature_lib, LD.budgetconso,  BDN.montantprevisionsociete, SUM(LD.montantdemande) AS montant_demande
+        From EnteteDemande E
+            LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
+            LEFT JOIN Budget BU ON BU.idbudget = LD.idbudget
+			LEFT JOIN BudgetDepartementNature BDN ON BDN.iddepartement = E.iddepartement AND BDN.idbudget = BU.idbudget
+			AND BDN.idnature = LD.idnature
+			LEFT JOIN NatureOperation N ON N.idnature = LD.idnature
+            LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
+            LEFT JOIN Departement DP ON DP.iddepartement = E.iddepartement
+        Where E.iddemande = @iddemande
+        Group By E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
+			LD.idbudget,BDN.idnature, N.codenature, N.libelle, LD.budgetconso,  BDN.montantprevisionsociete
+    `,
+    checkDroit : `
+        SELECT 1
+        FROM ValidationDemande
+        WHERE iddemande = @iddemande
+            AND rang = @niveauactuel
+            AND idutilisateur = @iduser
+            AND decision = 'en attente'
+    `,
+    saveDecision : `
+        UPDATE ValidationDemande
+        SET decision = @decision,
+            commentaire = @commentaire,
+            datevalidation = GETDATE()
+        WHERE iddemande = @iddemande
+        AND idutilisateur = @iduser
+    `,
+    updateStatut : `
+        UPDATE EnteteDemande
+        SET statut = @statut
+        WHERE iddemande = @iddemande
+    `,
+    dernierNiveau: `
+        SELECT MAX(rang) AS dernierRang
+        FROM ValidationDemande
+        WHERE iddemande = @iddemande;
+    `,
+    niveauActuel: `
+        UPDATE EnteteDemande
+        SET niveauactuel = niveauactuel + 1
+        WHERE iddemande = @iddemande
     `
 }

@@ -117,7 +117,7 @@ module.exports.getDetailBudget = asyncHandler(async(req, res, next) => {
   try {
     const iddemande = req.params.id;
     const demande_ = await demandeservice.get_detailBudget(iddemande);
-    res.json({ success: true, data: demande_[0], message: "Details budget de la demande" });
+    res.json({ success: true, data: demande_, message: "Details budget de la demande" });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
   }

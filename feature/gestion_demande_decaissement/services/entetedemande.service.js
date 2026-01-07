@@ -58,15 +58,16 @@ async function create_demande(data) {
         });
 
         //Si le budget inexistant
-
-        const budgets = prioriserBudget(budgetsAll);
-        try {
-          const check_soldeBudget = await lignedemandemodel.checkBudgetSolde({
-            idbudget : budgets.idbudget, idnature: ligne.natureop,
-            montant: ligne.montantdemande, iddepartement : data.departement
-          });
-        } catch (error) {
-          throw new Error(error);
+        if(budgetsAll && budgetsAll.length != 0){
+          const budgets = prioriserBudget(budgetsAll);
+          try {
+            const check_soldeBudget = await lignedemandemodel.checkBudgetSolde({
+              idbudget : budgets.idbudget, idnature: ligne.natureop,
+              montant: ligne.montantdemande, iddepartement : data.departement
+            });
+          } catch (error) {
+            throw new Error(error);
+          }
         }
       } catch (error) {
         throw new Error(error);
@@ -79,14 +80,16 @@ async function create_demande(data) {
   const numerogenere = await enteteoperation.create_numoperation(prefix, datePeriode);
 
   //Recuperer le circuit de validation de la demande
+  let circt = null
   const circuit = await demandeModel.get_circuitValidation(data.site);
-  //Si le circuit introuvable
-  //Vérifier si le circuit a des validateurs ou pas
+  if(circuit && circuit.length != 0){
+    circt = circuit[0].idcircuitvalidation;
+  }
 
   let entetedemande = null;
   const newentete = new enteteDemandeModel(uuidv4(), numerogenere, data.demandeur, data.typedemande, data.libelledemande,
-  data.datedemande, data.decaisse || 0, data.solde || 0, data.statut || 0, circuit[0].idcircuitvalidation || null, data.societe || societe.data.idsociete, data.site || site.data.idsite, 
-  data.departement || null, data.devise || devise.iddevise, data.niveauactuel || null, data.createdat || today, data.createdby || 'systeme', data.updatedat || null, data.updatedby || null);
+  data.datedemande, data.decaisse || 0, data.solde || 0, data.statut || 0, circt || null, data.societe || societe.data.idsociete, data.site || site.data.idsite, 
+  data.departement || null, data.devise || devise.iddevise, 1, data.createdat || today, data.createdby || 'systeme', data.updatedat || null, data.updatedby || null);
   entetedemande = await newentete.create_enteteDemande();
 
   if (!entetedemande?.data.iddemande) {
@@ -109,15 +112,15 @@ async function create_demande(data) {
   for (const ligne of data.lignes){
     num = num + 1;
     let budget_ = null;
-    // 1. Résoudre automatiquement le budget
-    const budgetsAll = await lignedemandemodel.resolveBudget({
-      idsociete: data.societe || societe.idsociete, idsite: data.site || site.idsite,
-      iddepartement: data.departement, idnature: ligne.natureop, datedemande: data.datedemande
-    });
-
-    const budgets = prioriserBudget(budgetsAll);
 
     if(societe && societe.data.suivibudgetaire == 1){
+      // 1. Résoudre automatiquement le budget
+      const budgetsAll = await lignedemandemodel.resolveBudget({
+        idsociete: data.societe || societe.idsociete, idsite: data.site || site.idsite,
+        iddepartement: data.departement, idnature: ligne.natureop, datedemande: data.datedemande
+      });
+
+      const budgets = prioriserBudget(budgetsAll);
       budget_ = budgets.idbudget;
     }
 
@@ -146,6 +149,10 @@ async function create_demande(data) {
 
 async function getAll({page, limit , search, status}) {
   const result = await demandeModel.get_allDemandes({page, limit , search, status});
+  if (!result || result.length === 0) {
+    throw new Error("Liste des demandes non chargée");
+  }
+
   try{
     const demandes = {};
     result.data.forEach(row => {
@@ -162,7 +169,7 @@ async function getAll({page, limit , search, status}) {
           solde : row.solde,
           statut : row.statut,
           idciruit: row.idcircuit,
-          canValidate: row.canValidate,
+          circuitExist: row.circuitExist,
           createdat : row.entete_createdat,
           createdby : row.entete_createdby,
           updatedat : row.entete_updatedat,
@@ -370,7 +377,6 @@ async function get_demande_by_id(iddemande){
     return demande;
 
   } catch (error) {
-    console.log(error);
     throw error;
   }
 }
@@ -458,7 +464,7 @@ async function get_demandeAvalider(idutilisateur){
 
 async function validate(iddemande, data){
   if (!iddemande || !data.decision) {
-    throw new Error("Données invalides");
+    throw new Error("Aucune donnée reçue");
   }
 
   if (data.decision === 'refuser' && !data.motif) {
@@ -472,36 +478,65 @@ async function validate(iddemande, data){
     throw new Error("Demande introuvable");
   }
 
-  //Récupérer l'étape du validateur courant ou du dernier validateur
-  //const validation = await circuitModel.get_validation_by_demande_and_user(iddemande,idutilisateur);
-  // if (!validation) {
-  //   throw new Error("Vous n'êtes pas autorisé à valider cette demande");
-  // }
-  // if (validation.statut_validation !== 0) {
-  //   throw new Error("Cette demande a déjà été traitée par vous");
-  // }
+  if(demande[0].statut >= 2){
+    throw new Error("Demande non validable");
+  }else{
+    const filtreData = {iddemande: demande[0].iddemande, iduser : data.userId, niveauactuel: demande[0].niveauactuel}
+    const droit = await demandeModel.check_doit_user(filtreData);
+    if (!droit.length) {
+      throw new Error("Vous n'êtes pas autorisé à valider à ce niveau");
+    }
 
-  // Mettre à jour l'étape courante
-  //await circuitModel.update_validation(validation.id, {statut_validation: data.decision === 'accepter' ? 1 : 2, date_validation: new Date(), motif: data.motif || null});
+    //Mapper la décision utilisateur
+    const isAccepted = data.decision === 'accepter';
 
-  // CAS REFUS → arrêt immédiat
-  // if (data.decision === 'refuser') {
-  //   await demandeModel.update_statut_demande(iddemande, 3);
-  //   return { statut: 3, message: "Demande rejetée" };
-  // }
-  // Vérifier s'il reste des validations en attente
-  // const validationsRestantes =
-  //   await circuitModel.count_validation_en_attente(iddemande);
+    const decisionPayload = {
+      iddemande: data.iddemande,
+      iduser: data.userId,
+      commentaire: data.motif ?? null,
+      decision: isAccepted ? 'approuve' : 'rejete'
+    };
 
-  // if (validationsRestantes > 0) {
-  //   // Toujours en cours
-  //   await demandeModel.update_statut_demande(iddemande, 1);
-  //   return { statut: 1, message: "Validation enregistrée, circuit en cours" };
-  // }
+    //Enregistrer la décision
+    await demandeModel.save_decision(decisionPayload);
 
-  // // Toutes validées
-  // await demandeModel.update_statut_demande(iddemande, 2);
-  return { statut: 2, message: "Demande validée définitivement" };
+    //Cas REFUS → rejet immédiat
+    if (!isAccepted) {
+      await demandeModel.update_statut({
+        iddemande: data.iddemande,
+        statut: 3 // REJETÉE
+      });
+      return;
+    }
+
+    //Cas ACCEPTATION
+    const { statut, niveauactuel } = demande[0];
+
+    // première validation → EN COURS
+    if (statut === 0) {
+      await demandeModel.update_statut({
+        iddemande: data.iddemande,
+        statut: 1 // EN COURS
+      });
+    }
+
+    // vérifier si dernier niveau atteint
+    const [{ dernierRang }] = await demandeModel.get_dernierniveau(data.iddemande);
+
+    if (niveauactuel === dernierRang) {
+      // validation finale
+      await demandeModel.update_statut({
+        iddemande: data.iddemande,
+        statut: 2 // VALIDÉE
+      });
+    } else {
+      // passer au niveau suivant
+      await demandeModel.augNiveauactuel(data.iddemande);
+    }
+
+  }
+
+  return {message: "Demande validée" };
 }
 
 function prioriserBudget(budgets) {
@@ -533,9 +568,58 @@ async function get_detailBudget(iddemande){
         throw new Error("ID demande requis");
     }
 
+    let dmd = null;
     try {
         const demande_ = await demandeModel.get_detailBudget(iddemande);
-        return demande_;
+        try {
+          const demandes = {};
+          for(const row of demande_){
+            if(!dmd){
+              dmd = {
+                iddemande: row.iddemande,
+                codedemande: row.codedemande,
+                datedemande: row.datedemande,
+                decaisse : row.decaisse,
+                solde : row.solde,
+                statut : row.statut,
+                idsite : row.idsite,
+                iddepartement : row.iddepartement,
+                dept_lib : row.dept_libelle,
+                codedept: row.codedept,
+                codedevise : row.codedevise,
+                montant_demande : row.montant_demande,
+                budget : {
+                  idbudget : row.idbudget,
+                  codebudget : row.codebudget,
+                  libelle : row.libelle,
+                  typebudget: row.typebudget,
+                  cloture : row.cloture,
+                  valide : row.valide,
+                  datedebut: row.datedebut,
+                  datefin : row.datefin
+                },
+                details : []
+              }
+            }
+
+            if(row.idnature){
+              if(!demandes[row.idnature]){
+                demandes[row.idnature] = {
+                  idnature : row.idnature,
+                  codenature : row.codenature,
+                  nature_lib : row.nature_lib,
+                  conso : row.budgetconso,
+                  prevision : row.montantprevisionsociete
+                }
+
+                dmd.details.push(demandes[row.idnature])
+              }
+            }
+          }
+        } catch (error) {
+          throw error;
+        }
+        return dmd;
     } catch (err) {
         throw err;
     }

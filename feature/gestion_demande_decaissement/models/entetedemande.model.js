@@ -190,7 +190,58 @@ class enteteDemandeModel {
     const pool = await connectDB()
     const result = await pool.request()
       .input('iddemande', sql.UniqueIdentifier, iddemande)
-      .query(entetedemandeQuery.detailBudget)
+      .query(entetedemandeQuery.bydetailLigneBudget)
+
+    return result.recordset
+  }
+
+  async check_doit_user(data) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddemande', sql.UniqueIdentifier, data.iddemande)
+      .input('iduser', sql.UniqueIdentifier, data.iduser)
+      .input('niveauactuel', sql.Int, data.niveauactuel)
+      .query(entetedemandeQuery.checkDroit)
+
+    return result.recordset
+  }
+
+  async save_decision(data) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddemande', sql.UniqueIdentifier, data.iddemande)
+      .input('iduser', sql.UniqueIdentifier, data.iduser)
+      .input('commentaire', sql.NVarChar(255), data.commentaire)
+      .input('decision', sql.NVarChar(20), data.decision)
+      .query(entetedemandeQuery.saveDecision)
+
+    return result.recordset
+  }
+
+  async update_statut(data) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddemande', sql.UniqueIdentifier, data.iddemande)
+      .input('statut', sql.Int, data.statut)
+      .query(entetedemandeQuery.updateStatut)
+
+    return result.recordset
+  }
+
+  async get_dernierniveau(iddemande) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddemande', sql.UniqueIdentifier, iddemande)
+      .query(entetedemandeQuery.dernierNiveau)
+
+    return result.recordset
+  }
+
+  async augNiveauactuel(iddemande) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddemande', sql.UniqueIdentifier, iddemande)
+      .query(entetedemandeQuery.niveauActuel)
 
     return result.recordset
   }
