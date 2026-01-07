@@ -11,12 +11,12 @@ module.exports = {
     `,
     insert : `
         INSERT INTO LigneDemande (
-            idlignedemande, iddemande, numligne, libellelignedemande, montantdemande,
+            idlignedemande, iddemande, numligne, libellelignedemande, montantdemande, budgetconso, preengage, engage, realise,
             idnature, idbudget, idcentre, idtiers, idsociete, idsite, createdat, createdby
         )
         OUTPUT INSERTED.*
-        VALUES ( @idlignedemande, @iddemande, @numligne,
-            @libellelignedemande, @montantdemande, @idnature, @idbudget, @idcentre, @idtiers, @idsociete, @idsite, @createdat, @createdby
+        VALUES ( @idlignedemande, @iddemande, @numligne, @libellelignedemande, @montantdemande, @budgetconso, @preengage, @engage, @realise,
+            @idnature, @idbudget, @idcentre, @idtiers, @idsociete, @idsite, @createdat, @createdby
         )
     `,
     update : `
@@ -69,6 +69,8 @@ module.exports = {
 		AND (BDN.iddepartement = @iddepartement OR BDN.iddepartement IS NULL ) 
         GROUP BY BDN.idbudget, BDN.iddepartement, BDN.idnature, BDN.montantprevisionsociete
     `,
+
+    // OK
     suivibudget : `
         SELECT
             B.idbudget,
@@ -117,6 +119,8 @@ module.exports = {
             B.datedebut, B.codebudget;
 
     `,
+
+    // OK
     suiviBydemande : `
         SELECT
             ED.codedemande,
@@ -135,9 +139,36 @@ module.exports = {
         LEFT JOIN Budget B ON B.idbudget = LD.idbudget
         LEFT JOIN NatureOperation NO ON NO.idnature = LD.idnature
         LEFT JOIN Devise D ON D.iddevise = ED.iddevise
-        LEFT JOIN Departement DP ON DP.iddepartement = LD.iddepartement
+        LEFT JOIN Departement DP ON DP.iddepartement = ED.iddepartement
         WHERE
             B.idbudget = @idbudget
         ORDER BY ED.datedemande;
+    `,
+    preengage: `
+        Select SUM(LD.montantdemande) AS preengage
+        from EnteteDemande E
+            LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
+            LEFT JOIN Budget B ON B.idbudget = LD.idbudget
+        Where E.statut < 2 AND E.decaisse = 0 
+                and LD.idnature = @idnature 
+                AND LD.idbudget IS NOT NULL
+    `,
+    engage : `
+        Select SUM(LD.montantdemande) AS engage
+        from EnteteDemande E
+            LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
+            LEFT JOIN Budget B ON B.idbudget = LD.idbudget
+        Where E.statut = 2 AND E.decaisse = 0 
+                and LD.idnature = @idnature 
+                AND LD.idbudget IS NOT NULL
+    `,
+    reel : `
+        Select SUM(LD.montantdemande) AS realise
+        from EnteteDemande E
+            LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
+            LEFT JOIN Budget B ON B.idbudget = LD.idbudget
+        Where E.statut = 2 AND E.decaisse = 1 
+                and LD.idnature = @idnature 
+                AND LD.idbudget IS NOT NULL
     `
 }

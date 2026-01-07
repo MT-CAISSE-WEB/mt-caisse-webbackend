@@ -10,7 +10,7 @@ const { v4: uuidv4 } = require('uuid');
         const query = `
             IF EXISTS (SELECT 1 FROM Site WHERE codesite = @codesite)
             BEGIN
-                UPDATE site
+                UPDATE Site
                 SET 
                     idsociete = @idsociete,
                     libelle = @libelle,

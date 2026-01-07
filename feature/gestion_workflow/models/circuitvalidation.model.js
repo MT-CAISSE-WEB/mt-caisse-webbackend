@@ -83,11 +83,11 @@ class circuitvalidationmodel {
   u.prenom,
   u.nom
 FROM CircuitValidation cr
-LEFT JOIN societe sc ON cr.idsociete = sc.idsociete
-LEFT JOIN site st ON cr.idsite = st.idsite
-LEFT JOIN circuitetape ct ON cr.idcircuitvalidation = ct.idcircuitvalidation
-LEFT JOIN etapevalidateur ev ON ct.idcircuitetape = ev.idcircuitetape
-LEFT JOIN utilisateur u ON ev.idutilisateur = u.idutilisateur
+LEFT JOIN Societe sc ON cr.idsociete = sc.idsociete
+LEFT JOIN Site st ON cr.idsite = st.idsite
+LEFT JOIN Circuitetape ct ON cr.idcircuitvalidation = ct.idcircuitvalidation
+LEFT JOIN Etapevalidateur ev ON ct.idcircuitetape = ev.idcircuitetape
+LEFT JOIN Utilisateur u ON ev.idutilisateur = u.idutilisateur
 --WHERE cr.idcircuitvalidation = @idcircuitvalidation -- optionnel si tu cherches un seul circuit
 ORDER BY ct.rang, ev.idutilisateur`;
 

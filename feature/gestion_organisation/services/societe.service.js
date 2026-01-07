@@ -100,7 +100,7 @@ async function getallsociete(){
 async function getalldevisesactif(){
     try {
         const pool = await connectDB();
-        const query = `SELECT * FROM DEVISE WHERE ACTIF=1`;
+        const query = `SELECT * FROM Devise WHERE ACTIF=1`;
         const result = await pool.request().query(query);
 
         return {

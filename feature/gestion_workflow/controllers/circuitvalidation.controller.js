@@ -109,7 +109,7 @@ async function insertCircuit(circuit, transaction) {
     .input('idsite', circuit.idsite)
     // Autres inputs selon tes colonnes
     .query(`
-      INSERT INTO circuitvalidation (codecircuitvalidation, typeentite, typeaction, idsociete, idsite)
+      INSERT INTO CircuitValidation (codecircuitvalidation, typeentite, typeaction, idsociete, idsite)
       OUTPUT INSERTED.idcircuitvalidation
       VALUES (@codecircuitvalidation, @typeentite, @typeaction, @idsociete, @idsite)
     `);
@@ -186,7 +186,7 @@ async function updateCircuit(id, circuit, transaction) {
     .input('idsociete', circuit.idsociete)
     .input('idsite', circuit.idsite)
     .query(`
-      UPDATE circuitvalidation
+      UPDATE CircuitValidation
       SET codecircuitvalidation = @codecircuitvalidation,
           typeentite = @typeentite,
           typeaction = @typeaction,
@@ -203,11 +203,11 @@ async function deleteCircuitEtapes(idcircuitvalidation) {
     .input('idcircuitvalidation', idcircuitvalidation)
     .query(`
       DELETE ev
-      FROM etapevalidateur ev
-      JOIN circuitetape ce ON ce.idcircuitetape = ev.idcircuitetape
+      FROM Etapevalidateur ev
+      JOIN Circuitetape ce ON ce.idcircuitetape = ev.idcircuitetape
       WHERE ce.idcircuitvalidation = @idcircuitvalidation;
 
-      DELETE FROM circuitetape
+      DELETE FROM Circuitetape
       WHERE idcircuitvalidation = @idcircuitvalidation;
     `);
   } catch (error) {

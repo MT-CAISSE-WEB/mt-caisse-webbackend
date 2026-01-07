@@ -4,13 +4,17 @@ const ligneDemandeQuery = require('../queries/ligneDemande.query');
 
 class ligneDemandeModel {
   constructor(
-    idlignedemande, iddemande, numligne, libellelignedemande, montantdemande, idnature, idbudget, idcentre, idtiers, idsociete, idsite, 
+    idlignedemande, iddemande, numligne, libellelignedemande, montantdemande, budgetconso, preengage, engage, realise, idnature, idbudget, idcentre, idtiers, idsociete, idsite, 
     createdat, createdby, updatedat, updatedby, demande = null, nature = null, budget = null, centre = null, tiers = null, societe = null, site = null) {
     this.idlignedemande = idlignedemande
     this.iddemande = iddemande
     this.numligne = numligne
     this.libellelignedemande = libellelignedemande
     this.montantdemande = montantdemande
+    this.budgetconso = budgetconso
+    this.preengage = preengage
+    this.engage = engage
+    this.realise = realise
     this.idnature = idnature
     this.idbudget = idbudget
     this.idcentre = idcentre
@@ -41,6 +45,10 @@ class ligneDemandeModel {
         .input('numligne', sql.Int, this.numligne)
         .input('libellelignedemande', sql.NVarChar(255), this.libellelignedemande)
         .input('montantdemande', sql.Decimal(22, 9), this.montantdemande)
+        .input('budgetconso', sql.Decimal(22, 9), this.budgetconso)
+        .input('preengage', sql.Decimal(22, 9), this.preengage)
+        .input('engage', sql.Decimal(22, 9), this.engage)
+        .input('realise', sql.Decimal(22, 9), this.realise)
         .input('idnature', sql.UniqueIdentifier, this.idnature)
         .input('idbudget', sql.UniqueIdentifier, this.idbudget)
         .input('idcentre', sql.UniqueIdentifier, this.idcentre)
@@ -156,6 +164,33 @@ class ligneDemandeModel {
     const result = await pool.request()
     .input('idbudget', sql.UniqueIdentifier, idbudget)
     .query(ligneDemandeQuery.suiviBydemande)
+
+    return result.recordset
+  }
+
+  async get_preengageBynature(idnature){
+    const pool = await connectDB()
+    const result = await pool.request()
+    .input('idnature', sql.UniqueIdentifier, idnature)
+    .query(ligneDemandeQuery.preengage)
+
+    return result.recordset
+  }
+
+  async get_engageBynature(idnature){
+    const pool = await connectDB()
+    const result = await pool.request()
+    .input('idnature', sql.UniqueIdentifier, idnature)
+    .query(ligneDemandeQuery.engage)
+
+    return result.recordset
+  }
+
+  async get_realiseBynature(idnature){
+    const pool = await connectDB()
+    const result = await pool.request()
+    .input('idnature', sql.UniqueIdentifier, idnature)
+    .query(ligneDemandeQuery.reel)
 
     return result.recordset
   }

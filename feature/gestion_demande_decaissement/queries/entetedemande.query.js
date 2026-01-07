@@ -64,7 +64,7 @@ module.exports = {
         LEFT JOIN Societe S ON S.idsociete = E.idsociete
         LEFT JOIN Site SI ON SI.idsite = E.idsite
         LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
-        LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = E.idcircuit
+        LEFT JOIN CircuitValidation CI ON CI.idcircuitvalidation = E.idcircuit
 
         LEFT JOIN LigneDemande L ON L.iddemande = E.iddemande
         LEFT JOIN NatureOperation N ON N.idnature = L.idnature
@@ -174,7 +174,7 @@ module.exports = {
         LEFT JOIN Site SI ON SI.idsite = E.idsite
         LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
         LEFT JOIN Departement DEP ON DEP.iddepartement = E.iddepartement
-        LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = E.idcircuit
+        LEFT JOIN CircuitValidation CI ON CI.idcircuitvalidation = E.idcircuit
 
         LEFT JOIN LigneDemande L ON L.iddemande = E.iddemande
         LEFT JOIN NatureOperation N ON N.idnature = L.idnature
@@ -285,7 +285,7 @@ module.exports = {
         LEFT JOIN Site SI ON SI.idsite = E.idsite
         LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
         LEFT JOIN Departement DEP ON DEP.iddepartement = E.iddepartement
-        LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = E.idcircuit
+        LEFT JOIN CircuitValidation CI ON CI.idcircuitvalidation = E.idcircuit
 
         LEFT JOIN LigneDemande L 
             ON L.iddemande = E.iddemande
@@ -402,7 +402,7 @@ module.exports = {
     `,
     bydetailLigneBudget : `
         Select E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle as dept_libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
-			LD.idbudget,BDN.idnature, N.codenature, N.libelle AS nature_lib, LD.budgetconso,  BDN.montantprevisionsociete, SUM(LD.montantdemande) AS montant_demande
+			LD.idbudget,BDN.idnature, N.codenature, N.libelle AS nature_lib, LD.budgetconso, LD.preengage, LD.engage, LD.realise, BDN.montantprevisionsociete, SUM(LD.montantdemande) AS montant_demande
         From EnteteDemande E
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
             LEFT JOIN Budget BU ON BU.idbudget = LD.idbudget
@@ -413,7 +413,7 @@ module.exports = {
             LEFT JOIN Departement DP ON DP.iddepartement = E.iddepartement
         Where E.iddemande = @iddemande
         Group By E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
-			LD.idbudget,BDN.idnature, N.codenature, N.libelle, LD.budgetconso,  BDN.montantprevisionsociete
+			LD.idbudget,BDN.idnature, N.codenature, N.libelle, LD.budgetconso, LD.budgetconso, LD.preengage, LD.engage, LD.realise, BDN.montantprevisionsociete
     `,
     checkDroit : `
         SELECT 1

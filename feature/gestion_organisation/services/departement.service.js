@@ -13,7 +13,7 @@ const {connectInstance, connectDB} = require('../../../config/db');
         const query = `
             IF EXISTS (SELECT 1 FROM Departement WHERE codedept = @codedept)
             BEGIN
-                UPDATE departement
+                UPDATE Departement
                 SET idsociete = @idsociete,
                     idsite = @idsite,
                     responsable = @responsable,
@@ -79,7 +79,6 @@ async function getalldepartement(){
         left join Utilisateur u on d.responsable = u.idutilisateur`;
 
         const result = await pool.request().query(query);
-        console.log(result);
         return {
             success :true,
             status:200, 

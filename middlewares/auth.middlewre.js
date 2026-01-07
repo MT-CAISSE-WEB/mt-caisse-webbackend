@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const dotenv = require('dotenv');
-dotenv.config({path: '../config/config.env'});
+dotenv.config({path: '../config/.env'});
 
 function authentificatetoken(req, res, next) {
     const authHeader = req.headers['authorization'];
@@ -9,8 +9,8 @@ function authentificatetoken(req, res, next) {
         return res.status(401).json({ message: "Token manquant" });
     }
 
-    const token = authHeader.split(' ')[1];
-
+    const token = authHeader.split(' ')[1]; 
+    
     if (!token) {
         return res.status(401).json({ message: "Token manquant" });
     }
@@ -24,27 +24,5 @@ function authentificatetoken(req, res, next) {
     });
 }
 
-function authorizeRoles(...allowedRoles) {
- 
-  return (req, res, next) => {
-    if (!req.user) 
-      return res.status(401).json({ message: "Utilisateur non authentifié" });
-    const userRoles = req.user.roles || [];
 
-    console.log(req.user);
-
-    const allowedRolesLower = allowedRoles.map(r => r.toLowerCase());
-    const hasRole = userRoles.some(role => allowedRolesLower.includes(role.toLowerCase()));
-
-    if (!hasRole) {
-      return res.status(403).json({ message: "Accès refusé : rôle non autorisé" });
-    }
-
-    next();
-  };
-}
-
-
-
-
-module.exports = {authentificatetoken,authorizeRoles};
+module.exports = {authentificatetoken};

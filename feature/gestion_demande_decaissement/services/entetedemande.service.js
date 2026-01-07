@@ -69,6 +69,7 @@ async function create_demande(data) {
             throw new Error(error);
           }
         }
+        
       } catch (error) {
         throw new Error(error);
       }
@@ -112,6 +113,9 @@ async function create_demande(data) {
   for (const ligne of data.lignes){
     num = num + 1;
     let budget_ = null;
+    let preengage = 0;
+    let engage = 0;
+    let realise = 0;
 
     if(societe && societe.data.suivibudgetaire == 1){
       // 1. Résoudre automatiquement le budget
@@ -122,10 +126,18 @@ async function create_demande(data) {
 
       const budgets = prioriserBudget(budgetsAll);
       budget_ = budgets.idbudget;
+
+      //Calcule des valeurs budgetaires
+      const preengages = await lignedemandemodel.get_preengageBynature(ligne.natureop) ;
+      preengage = preengages[0].preengage;
+      const engages = await lignedemandemodel.get_engageBynature(ligne.natureop) ;
+      engage = engages[0].engage;
+      const realises = await lignedemandemodel.get_realiseBynature(ligne.natureop) ;
+      realise = realises[0].realise;
     }
 
     const dataligne = {iddemande : entetedemande.data.iddemande, numligne: num, libellelignedemande: data.libelledemande, montantdemande: ligne.montantdemande, idnature: ligne.natureop, idcentre: ligne.centre, idtiers: ligne.tiers || null,
-      idbudget: budget_ || null, idsociete: data.societe || societe.data.idsociete, idsite: data.site || site.data.idsite, createdby: data.createdby || 'system'};
+      idbudget: budget_ || null, preengage: preengage, engage: engage, realise : realise,  idsociete: data.societe || societe.data.idsociete, idsite: data.site || site.data.idsite, createdby: data.createdby || 'system'};
     try {
       const lignedemande = await lignedemandeservice.create_lignedemande(dataligne);
       let compteur = 0;
@@ -391,44 +403,57 @@ async function update_demande(iddemande, data) {
   }
 
   const societe = data.societe ? await societeservice.getonesociete(data.societe) : null;
-
   const site = data.site ? await siteservice.getonesite(data.site) : null;
 
   /* =====================
-      UPDATE ENTÊTE
+      GET ENTÊTE
   ===================== */
-  await demandeModel.update_enteteDemande(iddemande, data);
+  let demande = null
+  demande = await demandeModel.get_demande_by_id(iddemande);
+  if (!demande) {
+    throw new Error("Demande introuvable");
+  }
 
-  /* =====================
-     LIGNES
-  ===================== */
-  for (const ligne of data.lignes) {
-    const dataligne = {
-      iddemande,libellelignedemande: data.libelledemande,montantdemande: ligne.montantdemande,idnature: ligne.natureop,idcentre: ligne.centre, idtiers: ligne.tiers || null, idsociete: data.societe, idsite: data.site, updatedby: data.updatedby || 'system'
-    };
+  if(demande.statut == 2){
+    /* =====================
+        UPDATE ENTÊTE
+    ===================== */
+    await demandeModel.update_enteteDemande(iddemande, data);
 
-    let idlignedemande = ligne.idlignedemande;
+    /* =====================
+      LIGNES
+    ===================== */
+    for (const ligne of data.lignes) {
+        const dataligne = {
+          iddemande,libellelignedemande: data.libelledemande,montantdemande: ligne.montantdemande,idnature: ligne.natureop,idcentre: ligne.centre, idtiers: ligne.tiers || null, idsociete: data.societe, idsite: data.site, updatedby: data.updatedby || 'system'
+        };
 
-    if (idlignedemande) {
-      await lignedemandeservice.update_lignedemande(idlignedemande, dataligne);
-    } else {
-      const newLine = await lignedemandeservice.create_lignedemande(dataligne);
-      idlignedemande = newLine.idlignedemande;
-    }
+        let idlignedemande = ligne.idlignedemande;
 
-    if (Array.isArray(ligne.details) && ligne.details.length > 0) {
-      for (const detail of ligne.details) {
-        const detailLine = { iddemande, idlignedemande, description: detail.description, quantite: detail.quantite, montant: detail.montant, updatedby: data.updatedby || 'system'}
-
-        let iddetailligne = detail.iddetailsdemande
-        if(iddetailligne){
-          await detaildemandeservice.update_detaildemande(iddetailligne, detailLine);
-        }else{
-          await detaildemandeservice.create_detaildemande(detailLine);
+        if (idlignedemande) {
+          await lignedemandeservice.update_lignedemande(idlignedemande, dataligne);
+        } else {
+          const newLine = await lignedemandeservice.create_lignedemande(dataligne);
+          idlignedemande = newLine.idlignedemande;
         }
-      }
+
+        if (Array.isArray(ligne.details) && ligne.details.length > 0) {
+          for (const detail of ligne.details) {
+            const detailLine = { iddemande, idlignedemande, description: detail.description, quantite: detail.quantite, montant: detail.montant, updatedby: data.updatedby || 'system'}
+
+            let iddetailligne = detail.iddetailsdemande
+            if(iddetailligne){
+              await detaildemandeservice.update_detaildemande(iddetailligne, detailLine);
+            }else{
+              await detaildemandeservice.create_detaildemande(detailLine);
+            }
+          }
+        }
     }
-}
+    
+  }else{
+    throw new Error("Demandz déja validée");
+  }
 
   return { success: true };
 }
@@ -587,7 +612,7 @@ async function get_detailBudget(iddemande){
                 dept_lib : row.dept_libelle,
                 codedept: row.codedept,
                 codedevise : row.codedevise,
-                montant_demande : row.montant_demande,
+                totaldemande : 0,
                 budget : {
                   idbudget : row.idbudget,
                   codebudget : row.codebudget,
@@ -596,11 +621,19 @@ async function get_detailBudget(iddemande){
                   cloture : row.cloture,
                   valide : row.valide,
                   datedebut: row.datedebut,
-                  datefin : row.datefin
+                  datefin : row.datefin,
                 },
                 details : []
               }
             }
+
+            //Calcule des valeurs budgetaires
+            const preengages = await lignedemandemodel.get_preengageBynature(row.idnature) ;
+            const preengage = preengages[0].preengage;
+            const engages = await lignedemandemodel.get_engageBynature(row.idnature) ;
+            const engage = engages[0].engage;
+            const realises = await lignedemandemodel.get_realiseBynature(row.idnature) ;
+            const realise = realises[0].realise;
 
             if(row.idnature){
               if(!demandes[row.idnature]){
@@ -609,10 +642,15 @@ async function get_detailBudget(iddemande){
                   codenature : row.codenature,
                   nature_lib : row.nature_lib,
                   conso : row.budgetconso,
-                  prevision : row.montantprevisionsociete
+                  preengage : preengage || 0,
+                  engage : engage || 0,
+                  realise : realise || 0,
+                  prevision : row.montantprevisionsociete,
+                  montant_demande : row.montant_demande,
                 }
 
                 dmd.details.push(demandes[row.idnature])
+                dmd.totaldemande += row.montant_demande || 0;
               }
             }
           }

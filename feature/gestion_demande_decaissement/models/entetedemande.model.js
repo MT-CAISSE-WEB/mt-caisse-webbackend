@@ -21,7 +21,7 @@ class enteteDemandeModel {
     this.idsite = idsite
     this.iddepartement = iddepartement
     this.iddevise = iddevise
-
+  
     this.circuit = circuit
     this.societe = societe
     this.site = site
