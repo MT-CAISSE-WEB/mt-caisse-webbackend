@@ -21,7 +21,7 @@ class enteteDemandeModel {
     this.idsite = idsite
     this.iddepartement = iddepartement
     this.iddevise = iddevise
-
+  
     this.circuit = circuit
     this.societe = societe
     this.site = site
@@ -92,6 +92,7 @@ class enteteDemandeModel {
     const result = await pool.request()
       .input('iddemande', sql.UniqueIdentifier, iddemande)
       .query(entetedemandeQuery.getOne)
+
     return result.recordset
   }
 
@@ -127,6 +128,7 @@ class enteteDemandeModel {
     const result = await pool.request()
       .input('iddemande', sql.UniqueIdentifier, iddemande)
       .query(entetedemandeQuery.delete);
+
     return { success: true, data: result }
   }
 

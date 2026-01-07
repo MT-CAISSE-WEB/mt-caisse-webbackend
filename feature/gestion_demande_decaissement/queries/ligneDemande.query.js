@@ -69,6 +69,8 @@ module.exports = {
 		AND (BDN.iddepartement = @iddepartement OR BDN.iddepartement IS NULL ) 
         GROUP BY BDN.idbudget, BDN.iddepartement, BDN.idnature, BDN.montantprevisionsociete
     `,
+
+    // OK
     suivibudget : `
         SELECT
             B.idbudget,
@@ -117,6 +119,8 @@ module.exports = {
             B.datedebut, B.codebudget;
 
     `,
+
+    // OK
     suiviBydemande : `
         SELECT
             ED.codedemande,
@@ -135,7 +139,7 @@ module.exports = {
         LEFT JOIN Budget B ON B.idbudget = LD.idbudget
         LEFT JOIN NatureOperation NO ON NO.idnature = LD.idnature
         LEFT JOIN Devise D ON D.iddevise = ED.iddevise
-        LEFT JOIN Departement DP ON DP.iddepartement = LD.iddepartement
+        LEFT JOIN Departement DP ON DP.iddepartement = ED.iddepartement
         WHERE
             B.idbudget = @idbudget
         ORDER BY ED.datedemande;

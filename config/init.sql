@@ -482,7 +482,7 @@ BEGIN
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
-        FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
+        FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande) ON DELETE CASCADE,
         FOREIGN KEY (idlignedemande) REFERENCES LigneDemande(idlignedemande),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );

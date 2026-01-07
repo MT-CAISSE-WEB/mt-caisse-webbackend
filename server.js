@@ -66,6 +66,11 @@ const circuitetaperoute = require("./feature/gestion_workflow/routes/circuitetap
 const etapevalidateurroute = require("./feature/gestion_workflow/routes/etapevalidateur.route");
 const validationdemanderoute = require("./feature/gestion_workflow/routes/validationdemande.route");
 
+// Declaration des routes pour les consultations
+const suivibudgetroute = require("./feature/consultations/routes/suivibudget.route");
+
+
+
 const db = require('./config/db');
 
 //connexion db Richard
@@ -184,6 +189,10 @@ app.use("/API/circuitvalidation", circuitvalidationroute);
 app.use("/API/circuitetape", circuitetaperoute);
 app.use("/API/etapevalidateur", etapevalidateurroute);
 app.use("/API/validationdemande", validationdemanderoute);
+
+
+//Regrouper toutes les routes pour les consultations
+app.use("/API/suivibudget", suivibudgetroute);
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
