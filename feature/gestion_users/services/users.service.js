@@ -106,7 +106,6 @@ async function upsertuser(params){
     }
 }
 
-
 async function getalluser(){
     try {
         const pool = await connectDB();
@@ -179,7 +178,7 @@ async function login(login, password) {
                   
             dref.iddevise  AS devise_ref_id,
             dref.codedevise      AS devise_ref_code,
-            dref.intitule  AS devise_ref_intitule ,
+            dref.intitule  AS devise_ref_intitule,
             
             drep.iddevise  AS devise_rep_id,
             drep.codedevise      AS devise_rep_code,
@@ -229,6 +228,7 @@ async function login(login, password) {
                 codesociete :  result.recordset[0].codesociete,
                 raisonsociale : result.recordset[0].raisonsociale,
                 idutilisateur: result.recordset[0].idutilisateur,
+                codeutilisateur: result.recordset[0].codeutilisateur,
                 login: result.recordset[0].login,
                 nom: result.recordset[0].nom,
                 prenom: result.recordset[0].prenom,
@@ -236,10 +236,12 @@ async function login(login, password) {
                 typeentitesite : result.recordset[0].typeentitesite,
                 typeentitedepartement : result.recordset[0].typeentitedepartement,
                 acheteur : result.recordset[0].acheteur,
+                devise_ref_id : result.recordset[0].devise_ref_id,
                 devise_ref_code : result.recordset[0].devise_ref_code,
                 devise_ref_intitule : result.recordset[0].devise_ref_intitule,
-                devise_rep_code : result.recordset[0].devise_ref_code,
-                devise_rep_intitule : result.recordset[0].devise_ref_intitule,
+                devise_rep_id : result.recordset[0].devise_rep_id,
+                devise_rep_code : result.recordset[0].devise_rep_code,
+                devise_rep_intitule : result.recordset[0].devise_rep_intitule,
                 roles: [],
                 departements : []
             };
@@ -290,8 +292,6 @@ async function login(login, password) {
                 departements : user.departements.map(d=>d.codedept)
             };
 
-
-        
         
             // Access Token : court
             const token = jwt.sign(
@@ -317,8 +317,6 @@ async function login(login, password) {
                     INSERT INTO Refresh_token(idutilisateur, token)
                     VALUES (@userid, @token)
                 `);  
-                
-                console.log(user);
 
             return {
                 success: true,
@@ -333,7 +331,6 @@ async function login(login, password) {
             return { status:500, success: false, message: "Erreur serveur : " + error };
         }
 }
-
 
 async function refreshtoken (refreshToken){
     if (!refreshToken) {

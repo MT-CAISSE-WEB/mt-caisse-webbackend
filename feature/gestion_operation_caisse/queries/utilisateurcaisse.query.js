@@ -87,7 +87,8 @@ module.exports = {
     getcaisseByUser : `
         SELECT *
         FROM UtilisateurCaisse
-        WHERE idutilisateur = @idutilisateur  AND  actif = 1 `,
+        WHERE idutilisateur = @idutilisateur  AND  actif = 1 
+    `,
     getRecentCaisseUser : `
         SELECT
             -- ================= UTILISATEUR CAISSE =================
@@ -133,5 +134,129 @@ module.exports = {
 
         WHERE UC.idutilisateur = @idutilisateur
         AND UC.actif = 1;
+    `,
+    getLoadCaisseUser : `
+        WITH DernierePeriode AS (
+            SELECT
+                cp.idcaisse,
+                cp.idperiode,
+                cp.dateperiode,
+                cp.soldeouverture,
+                cp.statut,
+                ROW_NUMBER() OVER (
+                    PARTITION BY cp.idcaisse
+                    ORDER BY cp.dateperiode DESC
+                ) AS rn
+            FROM CaissePeriode cp
+        )
+
+        SELECT
+            uc.idutilisateur,
+
+            c.idcaisse,
+            c.codecaisse,
+            c.libelle AS libellecaisse,
+
+            d.iddevise,
+            d.codedevise,
+            d.intitule AS libelledevise,
+
+            dp.idperiode,
+            dp.dateperiode,
+            dp.statut AS statutperiode,
+
+            -- Total entrées
+            ISNULL(SUM(
+                CASE
+                    WHEN tope.codtypeoperation = 'encaissement'
+                        THEN tope.montantref
+                    ELSE 0
+                END
+            ), 0) AS totalentree,
+
+            -- Total sorties
+            ISNULL(SUM(
+                CASE
+                    WHEN tope.codtypeoperation = 'decaissement'
+                        THEN tope.montantref
+                    ELSE 0
+                END
+            ), 0) AS totalsortie,
+
+
+            -- Solde dynamique (devise caisse)
+            dp.soldeouverture
+            + ISNULL(SUM(
+                CASE
+                    WHEN tope.codtypeoperation = 'encaissement'
+                        THEN tope.montantref
+                    WHEN tope.codtypeoperation = 'decaissement'
+                        THEN -tope.montantref
+                    ELSE 0
+                END
+            ), 0) AS soldedynamique,
+
+            -- Taux de change utilisé
+            tx.coefficient AS tauxdevise,
+
+            -- Solde converti vers devise destination
+            (dp.soldeouverture
+            + ISNULL(SUM(
+                CASE
+                    WHEN tope.codtypeoperation = 'encaissement'
+                        THEN tope.montantref
+                    WHEN tope.codtypeoperation = 'decaissement'
+                        THEN -tope.montantref
+                    ELSE 0
+                END
+            ), 0)) * ISNULL(tx.coefficient, 1) AS soldedynamiqueconverti
+
+        FROM UtilisateurCaisse uc
+
+        INNER JOIN Caisse c
+            ON c.idcaisse = uc.idcaisse
+
+        INNER JOIN Devise d
+            ON d.iddevise = c.iddevise
+
+        INNER JOIN DernierePeriode dp
+            ON dp.idcaisse = c.idcaisse
+            AND dp.rn = 1
+
+        LEFT JOIN TypeOperation tope
+            ON tope.idcaisse = c.idcaisse
+            AND tope.idperiode = dp.idperiode
+
+        -- Dernier taux ≤ date de la période
+        OUTER APPLY (
+            SELECT TOP 1
+                td.coefficient,
+                td.coefficientinverse,
+                td.datecours
+            FROM Tauxdevise td
+            WHERE td.iddeviseorigine = d.iddevise
+            AND td.iddevisedestination = @iddevisesociete
+            AND td.datecours <= dp.dateperiode
+            ORDER BY td.datecours DESC
+        ) tx
+
+        WHERE uc.idutilisateur = @idutilisateur
+        AND uc.actif = 1
+
+        GROUP BY
+            uc.idutilisateur,
+            c.idcaisse,
+            c.codecaisse,
+            c.libelle,
+            d.iddevise,
+            d.codedevise,
+            d.intitule,
+            dp.idperiode,
+            dp.dateperiode,
+            dp.soldeouverture,
+            dp.statut,
+            tx.coefficient
+
+        ORDER BY c.libelle;
     `
 }

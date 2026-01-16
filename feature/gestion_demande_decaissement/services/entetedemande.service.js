@@ -88,10 +88,15 @@ async function create_demande(data) {
   }
 
   let entetedemande = null;
-  const newentete = new enteteDemandeModel(uuidv4(), numerogenere, data.demandeur, data.typedemande, data.libelledemande,
+  const newentete = new enteteDemandeModel(uuidv4(), numerogenere, data.demandeur, data.typedemande, data.libelledemande, data.taux || 1,
   data.datedemande, data.decaisse || 0, data.solde || 0, data.statut || 0, circt || null, data.societe || societe.data.idsociete, data.site || site.data.idsite, 
   data.departement || null, data.devise || devise.iddevise, 1, data.createdat || today, data.createdby || 'systeme', data.updatedat || null, data.updatedby || null);
-  entetedemande = await newentete.create_enteteDemande();
+
+  try {
+    entetedemande = await newentete.create_enteteDemande();
+  } catch (error) {
+    throw new Error(error);
+  }
 
   if (!entetedemande?.data.iddemande) {
     throw new Error("Échec de création de l'entête de la demande (iddemande manquant).");
@@ -136,8 +141,11 @@ async function create_demande(data) {
       realise = realises[0].realise;
     }
 
+    const montantref = (ligne.montantdemande * entetedemande.data.taux) || ligne.montantdemande;
+    console.log(montantref);
+
     const dataligne = {iddemande : entetedemande.data.iddemande, numligne: num, libellelignedemande: data.libelledemande, montantdemande: ligne.montantdemande, idnature: ligne.natureop, idcentre: ligne.centre, idtiers: ligne.tiers || null,
-      idbudget: budget_ || null, preengage: preengage, engage: engage, realise : realise,  idsociete: data.societe || societe.data.idsociete, idsite: data.site || site.data.idsite, createdby: data.createdby || 'system'};
+      idbudget: budget_ || null, montantref: montantref, preengage: preengage, engage: engage, realise : realise,  idsociete: data.societe || societe.data.idsociete, idsite: data.site || site.data.idsite, createdby: data.createdby || 'system'};
     try {
       const lignedemande = await lignedemandeservice.create_lignedemande(dataligne);
       let compteur = 0;
@@ -647,6 +655,7 @@ async function get_detailBudget(iddemande){
                   realise : realise || 0,
                   prevision : row.montantprevisionsociete,
                   montant_demande : row.montant_demande,
+                  montant_ref : row.montant_ref,
                 }
 
                 dmd.details.push(demandes[row.idnature])

@@ -2,6 +2,7 @@ const { DateTime, UniqueIdentifier } = require('mssql');
 const db = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const {connectInstance, connectDB} = require('../../../config/db');
+const entetedemandeQuery = require('../../gestion_demande_decaissement/queries/entetedemande.query');
 
 
 const today = new Date();
@@ -110,7 +111,6 @@ async function getalldevisesactif(){
     }
 }
 
-
 //Get one
 async function getonetauxdevise(idtauxdevise){
     try {
@@ -150,10 +150,26 @@ async function deletetauxdevise(idtauxdevise)
     }
 }
 
+async function getDernierTaux(deviseorigine, devisedestination, date){
+    const pool = await connectDB()
+    try {
+        const result = await pool.request()
+            .input('idDeviseDemande', db.sql.UniqueIdentifier, deviseorigine)
+            .input('idDeviseSociete', db.sql.UniqueIdentifier, devisedestination)
+            .input('date', db.sql.DateTime, date)
+            .query(entetedemandeQuery.dernierTaux)
+
+        return result.recordset
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 module.exports = {
     upserttauxdevise,
     getalltauxdevises,
     getonetauxdevise,
     deletetauxdevise,
-    getalldevisesactif
+    getalldevisesactif,
+    getDernierTaux
 }

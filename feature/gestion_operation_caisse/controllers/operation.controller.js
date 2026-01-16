@@ -1,6 +1,7 @@
 const typeoperationservice = require("../services/operation.service");
 const asyncHandler = require("../../../shared/middlewares/async");
 const ErrorResponse = require("../../../shared/utils/errorResponse");
+const pdfjs = require("../../../shared/utils/pdf")
 
 /**
  * Liste toutes les types operations
@@ -94,4 +95,19 @@ module.exports.get_operationmax = asyncHandler(async(req, res, next) => {
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
   }
+});
+
+
+module.exports.get_recudecaisse = asyncHandler(async (req, res) => {
+    try {
+        const data = await typeoperationservice.getDataRecu(req.params.id);
+        const pdfBuffer = await pdfjs.genererPdfRecu(data);
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'inline; filename=recu-caisse.pdf');
+        res.send(pdfBuffer);
+
+    } catch (e) {
+        res.status(500).json({ message: 'Erreur génération PDF' });
+    }
 });

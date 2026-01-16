@@ -166,7 +166,7 @@ async function create_typeoperation(data) {
   }
 
   for (const ligne of data.lignes){
-    const dataligne = {idoperation : enteteoperation.idoperation, idnature: ligne.natureop, idcentre: ligne.centre, idtiers: ligne.tiers, montantoperation: Number(ligne.montantligne), createdby: ligne.created};
+    const dataligne = {idoperation : enteteoperation.idoperation, idnature: ligne.natureop, idcentre: ligne.centre, idtiers: ligne.tiers, libelle: data.libelle, montantoperation: Number(ligne.montantligne), createdby: ligne.created};
     try {
       const ligneoperation = await ligneoperationservice.create_ligneoperation(dataligne);
     } catch (error) {
@@ -351,6 +351,67 @@ async function get_operationmax() {
    }
 }
 
+async function getDataRecu(idoperation){
+
+  if (!idoperation) {
+    throw new Error("Erreur de donnée");
+  }
+
+  try {
+    const rows = await typeoperation.get_dataReçuPdf(idoperation);
+    if(!rows.length){
+      throw new Error('Aucune donnée pour ce reçu');
+    }
+
+    const head = rows[0];
+
+    // Get total ligne
+    const total = rows.reduce((sum, r) => sum + (r.montantoperation || 0), 0);
+    const caissesMap = {};
+
+    rows.forEach(r => {
+      if (!caissesMap[r.caisse]) {
+          caissesMap[r.caisse] =  {
+            libelle: r.caisse,
+            montant: r.montantpaye ?? 0,
+            devise: r.devisecaisse
+          };
+        }
+    });
+
+    // Construction d'objet final
+    const data = {
+      societe: head.societe,
+      site : head.site,
+      numero: head.numero,
+      date: new Date(head.dateoperation).toLocaleDateString('fr-FR'),
+      devise: head.deviseoperation, 
+      description: head.libelleoperation,
+      soldeouverture: head.soldeouverture,
+      soldefermeture: head.soldefermeture,
+      total,
+      type : head.typeoperation,
+
+      lignes: rows.map(r => ({
+          libelle: r.nature,
+          montant: r.montantoperation
+      })),
+
+      caisses: Object.values(caissesMap)
+
+      // caisses: rows.map(r => ({
+      //   libelle: r.caisse,
+      //   montant: r.montantpaye,
+      //   devise: r.devisecaisse   //ajouté
+      // }))
+    }
+
+    return data;
+   } catch (err) {
+     throw err;
+   }
+}
+
 module.exports = {
   get_all_typeoperations,
   get_by_idtypeoperation,
@@ -358,5 +419,6 @@ module.exports = {
   update_typeoperation,
   delete_typeoperation,
   get_soldecaisse,
-  get_operationmax
+  get_operationmax,
+  getDataRecu
 };

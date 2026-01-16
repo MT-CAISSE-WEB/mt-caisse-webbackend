@@ -11,11 +11,11 @@ module.exports = {
     `,
     insert : `
         INSERT INTO LigneDemande (
-            idlignedemande, iddemande, numligne, libellelignedemande, montantdemande, budgetconso, preengage, engage, realise,
+            idlignedemande, iddemande, numligne, libellelignedemande, montantdemande, montantref, budgetconso, preengage, engage, realise,
             idnature, idbudget, idcentre, idtiers, idsociete, idsite, createdat, createdby
         )
         OUTPUT INSERTED.*
-        VALUES ( @idlignedemande, @iddemande, @numligne, @libellelignedemande, @montantdemande, @budgetconso, @preengage, @engage, @realise,
+        VALUES ( @idlignedemande, @iddemande, @numligne, @libellelignedemande, @montantdemande, @montantref, @budgetconso, @preengage, @engage, @realise,
             @idnature, @idbudget, @idcentre, @idtiers, @idsociete, @idsite, @createdat, @createdby
         )
     `,
@@ -145,7 +145,7 @@ module.exports = {
         ORDER BY ED.datedemande;
     `,
     preengage: `
-        Select SUM(LD.montantdemande) AS preengage
+        Select SUM(LD.montantref) AS preengage
         from EnteteDemande E
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
             LEFT JOIN Budget B ON B.idbudget = LD.idbudget
@@ -154,7 +154,7 @@ module.exports = {
                 AND LD.idbudget IS NOT NULL
     `,
     engage : `
-        Select SUM(LD.montantdemande) AS engage
+        Select SUM(LD.montantref) AS engage
         from EnteteDemande E
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
             LEFT JOIN Budget B ON B.idbudget = LD.idbudget
@@ -163,7 +163,7 @@ module.exports = {
                 AND LD.idbudget IS NOT NULL
     `,
     reel : `
-        Select SUM(LD.montantdemande) AS realise
+        Select SUM(LD.montantref) AS realise
         from EnteteDemande E
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
             LEFT JOIN Budget B ON B.idbudget = LD.idbudget

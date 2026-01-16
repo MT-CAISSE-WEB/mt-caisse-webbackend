@@ -193,11 +193,11 @@ module.exports = {
         );
     `,
     insert : `
-        INSERT INTO EnteteDemande ( iddemande, codedemande, iddemandeur, typedemande,
+        INSERT INTO EnteteDemande ( iddemande, codedemande, iddemandeur, typedemande, taux,
             libelledemande, datedemande, decaisse, solde, statut, idcircuit, idsociete, idsite, iddepartement, iddevise, niveauactuel,
             createdat, createdby )
           OUTPUT INSERTED.*
-          VALUES ( @iddemande, @codedemande, @iddemandeur, @typedemande, @libelledemande, @datedemande, @decaisse, @solde, @statut,
+          VALUES ( @iddemande, @codedemande, @iddemandeur, @typedemande, @taux, @libelledemande, @datedemande, @decaisse, @solde, @statut,
             @idcircuit, @idsociete, @idsite, @iddepartement, @iddevise, @niveauactuel, @createdat, @createdby)
     `,
     getAll : `
@@ -391,7 +391,7 @@ module.exports = {
     `,
     detailBudget: `
         Select E.iddemande, E.codedemande, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
-			LD.idbudget, SUM(LD.montantdemande) AS montant_demande
+			LD.idbudget, SUM(LD.montantref) AS montant_demande
         From EnteteDemande E
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
             LEFT JOIN Budget BU ON BU.idbudget = LD.idbudget
@@ -402,7 +402,7 @@ module.exports = {
     `,
     bydetailLigneBudget : `
         Select E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle as dept_libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
-			LD.idbudget,BDN.idnature, N.codenature, N.libelle AS nature_lib, LD.budgetconso, LD.preengage, LD.engage, LD.realise, BDN.montantprevisionsociete, SUM(LD.montantdemande) AS montant_demande
+			LD.idbudget,BDN.idnature, N.codenature, N.libelle AS nature_lib, LD.budgetconso, LD.preengage, LD.engage, LD.realise, BDN.montantprevisionsociete, SUM(LD.montantdemande) AS montant_demande, SUM(LD.montantref) AS montant_ref
         From EnteteDemande E
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
             LEFT JOIN Budget BU ON BU.idbudget = LD.idbudget
@@ -445,5 +445,17 @@ module.exports = {
         UPDATE EnteteDemande
         SET niveauactuel = niveauactuel + 1
         WHERE iddemande = @iddemande
+    `,
+    dernierTaux : `
+        SELECT TOP 1
+            coefficient,
+            coefficientinverse,
+            datecours
+        FROM Tauxdevise
+        WHERE
+            iddeviseorigine = @idDeviseDemande
+            AND iddevisedestination = @idDeviseSociete
+            AND datecours <= @date
+        ORDER BY datecours DESC;
     `
 }

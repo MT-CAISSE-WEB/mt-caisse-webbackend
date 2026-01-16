@@ -11,5 +11,7 @@ router.get("/paiement/max", operation_controller.get_operationmax);
 router.post("/create/", operation_controller.create_typeoperation);
 router.put("/update/:id", operation_controller.update_typeoperation);
 router.delete("/delete/:id", operation_controller.delete_typeoperation);
+router.get('/recu-caisse/:id', operation_controller.get_recudecaisse);
+
 
 module.exports = router;

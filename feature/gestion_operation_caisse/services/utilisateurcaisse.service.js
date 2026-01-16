@@ -116,6 +116,53 @@ async function get_caisseByuser(idutilisateur) {
 
 }
 
+async function get_loadcaisseuser(data) {
+  if (!data.idutilisateur) {
+    throw new Error("Erreur de donnée");
+  }
+
+  try {
+    const rows = await utilisateurcaisse.get_loadcaisseuser(data);
+
+    if (!rows || rows.length === 0) {
+      return [];
+    }
+
+    const utilisateurCaisses = rows.map(row => ({
+      caisse: {
+        idcaisse: row.idcaisse,
+        code: row.codecaisse,
+        libelle: row.libellecaisse,
+      },
+
+      devise: {
+        iddevise: row.iddevise,
+        code: row.codedevise,
+        libelle: row.libelledevise,
+      },
+
+      periode: {
+        idperiode: row.idperiode,
+        dateperiode: row.dateperiode,
+        statut: row.statutperiode,
+      },
+
+      solde: {
+        montant: row.soldedynamique,
+        montantConverti: row.soldedynamiqueconverti,
+        taux: row.tauxdevise,
+      }
+    }));
+
+    return utilisateurCaisses;
+
+  } catch (error) {
+    console.error("Erreur récupération caisses utilisateur :", error);
+    throw error;
+  }
+
+}
+
 async function update_utilisateurcaisse(idutilisateurcaisse, data) {
   if (!idutilisateurcaisse || !data.idcaisse || !data.idutilisateur) {
     throw new Error("Erreur de donnée");
@@ -200,5 +247,6 @@ module.exports = {
   update_utilisateurcaisse,
   delete_utilisateurcaisse,
   get_caisseByuser,
-  get_caissePeriodeByUser
+  get_caissePeriodeByUser,
+  get_loadcaisseuser
 };

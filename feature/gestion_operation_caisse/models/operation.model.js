@@ -164,6 +164,20 @@ class typeoperationModel {
             return result.recordset;
         } catch (error) {
             console.log(`Erreur de suppression: ${error}`.cyan.bold);
+            throw new Error(error);
+        }
+    }
+
+    async get_dataReçuPdf(idoperation){
+        const pool = await connectDB();
+        try {
+            const result = await pool.request()
+                .input('idoperation', sql.UniqueIdentifier, idoperation)
+                .query(typeoperationQueries.reçucaisse);
+            return result.recordset;
+        } catch (error) {
+            console.log(`Erreur de suppression: ${error}`.cyan.bold);
+            throw new Error(error);
         }
     }
 }

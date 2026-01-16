@@ -267,5 +267,38 @@ module.exports = {
             B.codebudget,
             FORMAT(EOC.dateoperation, 'yyyy-MM');
 
+    `,
+    reçucaisse : `
+        SELECT
+            S.raisonsociale        AS societe,
+            SI.libelle             AS site,
+            C.libelle               AS caisse,
+            E.codeoperation         AS numero,
+            E.dateoperation,
+            D.codedevise            AS deviseoperation,
+            DC.codedevise            AS devisecaisse,
+            CP.soldeouverture,
+            CP.soldefermeture,
+
+            TOPE.codtypeoperation   AS typeoperation,
+            N.libelle               AS nature,
+            T.designation              AS tiers,
+            L.montantoperation      AS montantoperation,
+            L.libelle      AS libelleoperation,
+            TOPE.montant            AS montantpaye
+
+        FROM EnteteOperationCaisse E
+        JOIN TypeOperation TOPE ON TOPE.idoperation = E.idoperation
+        JOIN Caisse C ON C.idcaisse = TOPE.idcaisse
+        JOIN Societe S ON S.idsociete = E.idsociete
+        JOIN Site SI ON SI.idsite = E.idsite
+        JOIN Devise DC ON DC.iddevise = C.iddevise
+        JOIN Devise D ON D.iddevise = E.iddevise
+        JOIN CaissePeriode CP ON CP.idperiode = TOPE.idperiode
+        LEFT JOIN ligneoperationCaisse L ON L.idoperation = E.idoperation
+        LEFT JOIN NatureOperation N ON N.idnature = L.idnature
+        LEFT JOIN Tiers T ON T.idtiers = L.idtiers
+
+        WHERE E.idoperation = @idoperation
     `
 };

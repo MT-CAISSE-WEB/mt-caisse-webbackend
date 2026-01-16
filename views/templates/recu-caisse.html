@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Reçu de caisse</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+    }
+
+    .ticket {
+        width: 80mm;
+        margin: auto;
+    }
+
+    .center { text-align: center; }
+    .right  { text-align: right; }
+    .bold   { font-weight: bold; }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        padding: 3px 0;
+        font-size: 10.5px;
+    }
+
+    th {
+        border-bottom: 1px solid #000;
+        text-align: left;
+    }
+
+    .line {
+        border-top: 1px dashed #000;
+        margin: 8px 0;
+    }
+
+    .small {
+        font-size: 10px;
+    }
+</style>
+</head>
+
+<body>
+<div class="ticket">
+
+    <!-- ENTÊTE -->
+    <div class="center bold">REÇU DE CAISSE</div>
+    <div class="center">{{societe}}</div>
+    <div class="center small">{{site}}</div>
+
+    <div class="line"></div>
+
+    <div>Date : {{date}}</div>
+    <div>N° opération : {{numero}}</div>
+    <div>Type : {{type}}</div>
+
+    <div class="line"></div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{description}}</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="line"></div>
+    <!-- TOTAUX -->
+    <div class="bold right">Total : {{total}} {{devise}}</div>
+
+    <div class="line"></div>
+
+    <br> <br>
+
+    <!-- TABLE DES CAISSES -->
+    <div class="bold center">PAIEMENT</div>
+
+    <br>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Caisse</th>
+                <th class="right">Montant</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{caisses}}
+        </tbody>
+    </table>
+
+    <div class="line"></div>
+
+    <br> <br> <br>
+
+    <table>
+        <tr>
+            <td class="left">
+                <div class="bold">Le caissier</div>
+                <br><br><br>
+                <div class="small">Signature</div>
+            </td>
+            <td class="right">
+                <div class="bold">Le bénéficiaire</div>
+                <br><br><br>
+                <div class="small">Signature</div>
+            </td>
+        </tr>
+    </table>
+
+</div>
+</body>
+</html>

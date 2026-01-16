@@ -20,8 +20,6 @@ module.exports.getalldevisesactif = asyncHandler (async(req,res, next)=>{
     }
 });
 
-
-
 module.exports.getonetauxdevise = asyncHandler (async(req,res, next)=>{
     try {
         const idtauxdevise = req.params.id
@@ -32,7 +30,6 @@ module.exports.getonetauxdevise = asyncHandler (async(req,res, next)=>{
          res.status(500).json({success:false, message:"Erreur serveur", error});
     }
 });
-
 
 module.exports.upserttauxdevise = asyncHandler (async(req,res, next)=>{
     try {
@@ -52,5 +49,15 @@ module.exports.deletetauxdevise = asyncHandler (async(req,res, next)=>{
     } catch (error) {       
         res.status(500).json({ success: false, message: "Erreur serveur", error });
     }           
+});
+
+module.exports.gettauxrecent = asyncHandler (async(req,res, next)=>{
+    try {
+        const {iddeviseorigine,iddevisedestination, datepiece} = req.body;
+        const tauxrecents = await tauxdeviseservice.getDernierTaux(iddeviseorigine,iddevisedestination, datepiece);
+        res.json({success: true, data: tauxrecents[0]});
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erreur serveur", error });
+    }
 });
 

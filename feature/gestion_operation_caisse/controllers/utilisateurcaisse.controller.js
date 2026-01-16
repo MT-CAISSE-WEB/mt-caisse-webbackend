@@ -46,6 +46,20 @@ module.exports.get_caisseByUser = asyncHandler(async(req, res, next) => {
 });
 
 /**
+ * Des caisses chargeée by user
+ */
+module.exports.get_loadcaisseuser = asyncHandler(async(req, res, next) => {
+  try {
+    //const data  = req.params.id;
+    const data  = req.body;
+    const utilisateurcaisse_ = await utilisateurcaisseservice.get_loadcaisseuser(data);
+    res.json({ success: true, data: utilisateurcaisse_ });
+  } catch (error) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+});
+
+/**
  * Crée un nouveau utilisateurcaisse
  */
 module.exports.create_utilisateurcaisse = asyncHandler(async(req, res, next) => {

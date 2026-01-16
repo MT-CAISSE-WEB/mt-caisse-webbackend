@@ -106,6 +106,20 @@ class UtilisateurCaisseModel {
         }
     }
 
+    async get_loadcaisseuser(data){
+        const pool = await connectDB();
+        try {
+            const result = await pool.request()
+                .input("iddevisesociete", sql.UniqueIdentifier, data.iddeviserefsoc)
+                .input("idutilisateur", sql.UniqueIdentifier, data.idutilisateur)
+                .query(utilisateurcaisseQueries.getLoadCaisseUser);
+            const utilsateurcaisse = result.recordset ?? [];
+            return utilsateurcaisse;
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    }
+
     async get_caissePeriodeByUser(idutilisateur){
         const pool = await connectDB();
         try {

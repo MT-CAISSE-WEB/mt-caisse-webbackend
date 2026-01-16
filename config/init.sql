@@ -444,6 +444,7 @@ BEGIN
         numligne INT,
         libellelignedemande NVARCHAR(255),
         montantdemande DECIMAL(22, 9),
+        montantref DECIMAL(22, 9),
         idnature UNIQUEIDENTIFIER,
         idbudget UNIQUEIDENTIFIER DEFAULT NULL,
         idcentre UNIQUEIDENTIFIER,

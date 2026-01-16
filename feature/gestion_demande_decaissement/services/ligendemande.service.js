@@ -30,7 +30,7 @@ async function create_lignedemande(data) {
         throw new Error("Nature operation non renseigné.");
     }
 
-    const newLignedemande = new ligneDemandeModel(uuidv4(), data.iddemande || entetedemande.data.iddemande, data.numligne, data.libellelignedemande, data.montantdemande, data.engage, data.preengage, data.engage, data.realise,
+    const newLignedemande = new ligneDemandeModel(uuidv4(), data.iddemande || entetedemande.data.iddemande, data.numligne, data.libellelignedemande, data.montantref, data.montantdemande, data.engage, data.preengage, data.engage, data.realise,
     data.idnature, data.idbudget || null, data.idcentre, data.idtiers, data.idsociete, data.idsite, data.createdat, data.createdby);
 
     const recorded = await newLignedemande.create_ligneDemande(newLignedemande);

@@ -4,13 +4,14 @@ const ligneDemandeQuery = require('../queries/ligneDemande.query');
 
 class ligneDemandeModel {
   constructor(
-    idlignedemande, iddemande, numligne, libellelignedemande, montantdemande, budgetconso, preengage, engage, realise, idnature, idbudget, idcentre, idtiers, idsociete, idsite, 
+    idlignedemande, iddemande, numligne, libellelignedemande, montantref, montantdemande, budgetconso, preengage, engage, realise, idnature, idbudget, idcentre, idtiers, idsociete, idsite, 
     createdat, createdby, updatedat, updatedby, demande = null, nature = null, budget = null, centre = null, tiers = null, societe = null, site = null) {
     this.idlignedemande = idlignedemande
     this.iddemande = iddemande
     this.numligne = numligne
     this.libellelignedemande = libellelignedemande
     this.montantdemande = montantdemande
+    this.montantref =  montantref
     this.budgetconso = budgetconso
     this.preengage = preengage
     this.engage = engage
@@ -45,6 +46,7 @@ class ligneDemandeModel {
         .input('numligne', sql.Int, this.numligne)
         .input('libellelignedemande', sql.NVarChar(255), this.libellelignedemande)
         .input('montantdemande', sql.Decimal(22, 9), this.montantdemande)
+        .input('montantref', sql.Decimal(22, 9), this.montantref)
         .input('budgetconso', sql.Decimal(22, 9), this.budgetconso)
         .input('preengage', sql.Decimal(22, 9), this.preengage)
         .input('engage', sql.Decimal(22, 9), this.engage)

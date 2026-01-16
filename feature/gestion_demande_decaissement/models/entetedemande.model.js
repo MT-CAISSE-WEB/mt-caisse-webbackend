@@ -4,13 +4,14 @@ const entetedemandeQuery = require('../queries/entetedemande.query');
 
 
 class enteteDemandeModel {
-  constructor( iddemande, codedemande, iddemandeur, typedemande, libelledemande, datedemande, decaisse, solde, statut, idcircuit, idsociete, idsite, iddepartement, iddevise, 
+  constructor( iddemande, codedemande, iddemandeur, typedemande, libelledemande, taux, datedemande, decaisse, solde, statut, idcircuit, idsociete, idsite, iddepartement, iddevise, 
     niveauactuel, createdat, createdby, updatedat, updatedby, circuit = null, societe = null, site = null, departement = null, devise = null) {
     this.iddemande = iddemande
     this.codedemande = codedemande
     this.iddemandeur = iddemandeur
     this.typedemande = typedemande
     this.libelledemande = libelledemande
+    this.taux = taux
     this.datedemande = datedemande
     this.decaisse = decaisse
     this.solde = solde
@@ -45,6 +46,7 @@ class enteteDemandeModel {
         .input('typedemande', sql.NVarChar(50), this.typedemande)
         .input('libelledemande', sql.NVarChar(200), this.libelledemande)
         .input('datedemande', sql.DateTime, this.datedemande)
+        .input('taux', sql.Decimal(22,9), this.taux || 1)
         .input('decaisse', sql.Int, this.decaisse || 0)
         .input('solde', sql.Int, this.solde || 0)
         .input('statut', sql.Int, this.statut)
@@ -241,6 +243,16 @@ class enteteDemandeModel {
     const pool = await connectDB()
     const result = await pool.request()
       .input('iddemande', sql.UniqueIdentifier, iddemande)
+      .query(entetedemandeQuery.niveauActuel)
+
+    return result.recordset
+  }
+
+  async getDernierTaux(deviseorigine, devisedestination){
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddeviseorigine', sql.UniqueIdentifier, deviseorigine)
+      .input('iddevisedestination', sql.UniqueIdentifier, devisedestination)
       .query(entetedemandeQuery.niveauActuel)
 
     return result.recordset
