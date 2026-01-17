@@ -1,4 +1,6 @@
+const budgetservice = require('../services/budget.service');
 const Budget = require('../models/budget.model')
+
 const {
   CircuitValidation,
   Site,
@@ -130,6 +132,13 @@ exports.create = async (req, res) => {
     console.log('Data created:', newData)
 
     const item = await Budget.create(newData)
+
+    //ICI cahrger le circuit de validation
+    try {
+      await budgetservice.initCircuitBudget(item);
+    } catch (error) {
+      throw new Error(error);
+    }
 
     // Recharger avec les relations pour la réponse
     const itemWithRelations = await Budget.findByPk(item.idbudget, {

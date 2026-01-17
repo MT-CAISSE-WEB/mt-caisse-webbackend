@@ -1056,6 +1056,27 @@ END
 
 -- FIN INIT GIL
 
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ValidationBudget')
+BEGIN
+    CREATE TABLE ValidationBudget (
+        idvalidationbudget UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idbudget UNIQUEIDENTIFIER,
+        idcircuitvalidation UNIQUEIDENTIFIER,
+        idcircuitetape UNIQUEIDENTIFIER,
+        idutilisateur UNIQUEIDENTIFIER,
+        decision NVARCHAR(20), -- APPROUVE | REJETE | EN_ATTENTE
+        commentaire NVARCHAR(255),
+        datevalidation DATETIME,
+        rang  INT Default null,
+        createdat DATETIME DEFAULT GETDATE(),
+        createdby NVARCHAR(50),
+        FOREIGN KEY (idbudget) REFERENCES Budget(idbudget),
+        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation),
+        FOREIGN KEY (idcircuitetape) REFERENCES Circuitetape(idcircuitetape),
+        FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur)
+    );
+END
+
 
 
 -- En ce qui concerne la gestion des demandes
