@@ -15,6 +15,52 @@ BEGIN
     );
 END
 
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Motif')
+BEGIN
+    CREATE TABLE Motif (
+		idmotif UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+		codemotif NVARCHAR(50) UNIQUE,
+		libellemotif NVARCHAR(150),
+		createdat Datetime,
+		createdby NVARCHAR(50),
+		updatedat Datetime,
+		updatedby NVARCHAR(50),
+    );
+END
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PieceJointe')
+BEGIN
+    CREATE TABLE PieceJointe (
+		idpiecejointe UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+		urlpiece NVARCHAR(150) UNIQUE,
+		nomtable NVARCHAR(50),
+        idtable UNIQUEIDENTIFIER,
+        dossier NVARCHAR(50),
+		createdat Datetime,
+		createdby NVARCHAR(50),
+		updatedat Datetime,
+		updatedby NVARCHAR(50),
+    );
+END
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ModeleCompteur')
+BEGIN
+    CREATE TABLE ModeleCompteur (
+		idmodelecompteur UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+		codemodelecompteur NVARCHAR(50) UNIQUE,
+		libelle NVARCHAR(50),
+        typedocument NVARCHAR(50) NOT NULL,
+        sequence_1 NVARCHAR(50),
+        prefixe_1 NVARCHAR(50),
+        sequence_2 NVARCHAR(50),
+        prefixe_2 NVARCHAR(50),
+		createdat Datetime,
+		createdby NVARCHAR(50),
+		updatedat Datetime,
+		updatedby NVARCHAR(50),
+    );
+END
+
 -- -- ============================================
 -- -- 2️⃣ Tauxdevise (dépend de Devise)
 -- -- ============================================
@@ -1041,6 +1087,7 @@ BEGIN
         idcircuitvalidation UNIQUEIDENTIFIER,
         idcircuitetape UNIQUEIDENTIFIER,
         idutilisateur UNIQUEIDENTIFIER,
+        idmotif UNIQUEIDENTIFIER,
         decision NVARCHAR(20), -- APPROUVE | REJETE | EN_ATTENTE
         commentaire NVARCHAR(255),
         datevalidation DATETIME,
@@ -1048,6 +1095,7 @@ BEGIN
         createdat DATETIME DEFAULT GETDATE(),
         createdby NVARCHAR(50),
         FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
+        FOREIGN KEY (idmotif) REFERENCES Motif(idmotif),
         FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation),
         FOREIGN KEY (idcircuitetape) REFERENCES Circuitetape(idcircuitetape),
         FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur)
@@ -1064,6 +1112,7 @@ BEGIN
         idcircuitvalidation UNIQUEIDENTIFIER,
         idcircuitetape UNIQUEIDENTIFIER,
         idutilisateur UNIQUEIDENTIFIER,
+        idmotif UNIQUEIDENTIFIER,
         decision NVARCHAR(20), -- APPROUVE | REJETE | EN_ATTENTE
         commentaire NVARCHAR(255),
         datevalidation DATETIME,
@@ -1071,6 +1120,7 @@ BEGIN
         createdat DATETIME DEFAULT GETDATE(),
         createdby NVARCHAR(50),
         FOREIGN KEY (idbudget) REFERENCES Budget(idbudget),
+        FOREIGN KEY (idmotif) REFERENCES Motif(idmotif),
         FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation),
         FOREIGN KEY (idcircuitetape) REFERENCES Circuitetape(idcircuitetape),
         FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur)
@@ -1337,7 +1387,7 @@ END
 -- FIN INIT DENIS
 
 
--- IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Compteurs')
+-- IF NOT EXISTS (SELECT * FROM sys.procedure WHERE name = 'GenererNumeroOperation')
 -- BEGIN
 --     CREATE OR ALTER PROCEDURE GenererNumeroOperation
 --         @prefixe NVARCHAR(10),

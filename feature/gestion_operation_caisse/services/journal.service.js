@@ -67,7 +67,6 @@ async function update_journal(idjournal, data) {
     throw new Error("Erreur de donnée");
   }
 
-  console.log("ok")
   try {
     const journal_ = await journal.update_journal(data.codejournal, data);
     return journal_.recordset;

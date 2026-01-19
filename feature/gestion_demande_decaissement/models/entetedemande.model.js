@@ -213,6 +213,7 @@ class enteteDemandeModel {
     const result = await pool.request()
       .input('iddemande', sql.UniqueIdentifier, data.iddemande)
       .input('iduser', sql.UniqueIdentifier, data.iduser)
+      .input('motif', sql.NVarChar(255), data.motif)
       .input('commentaire', sql.NVarChar(255), data.commentaire)
       .input('decision', sql.NVarChar(20), data.decision)
       .query(entetedemandeQuery.saveDecision)

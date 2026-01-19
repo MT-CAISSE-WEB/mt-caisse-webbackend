@@ -151,11 +151,11 @@ async function validateBudget(idbudget, data){
     throw new Error("Aucune donnée reçue");
   }
 
-  if (data.decision === 'refuser' && !data.comment) {
+  if (data.decision === 'refuser' && !data.motif) {
     throw new Error("Motif requis");
   }
 
-  if (data.decision === 'complement' && !data.comment) {
+  if (data.decision === 'complement' && !data.motif) {
     throw new Error("Motif requis");
   }
 
@@ -188,6 +188,7 @@ async function validateBudget(idbudget, data){
     const decisionPayload = {
       idbudget: data.idbudget,
       iduser: data.iduser,
+      motif: data.motif ?? null,
       commentaire: data.comment ?? null,
       decision: reponse
     };

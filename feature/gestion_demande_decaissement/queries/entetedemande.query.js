@@ -427,6 +427,7 @@ module.exports = {
         UPDATE ValidationDemande
         SET decision = @decision,
             commentaire = @commentaire,
+            motif = @motif,
             datevalidation = GETDATE()
         WHERE iddemande = @iddemande
         AND idutilisateur = @iduser

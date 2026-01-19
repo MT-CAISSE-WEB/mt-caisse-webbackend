@@ -504,14 +504,17 @@ async function validate(iddemande, data){
     throw new Error("Motif requis");
   }
 
-  //Le statut de la demande dépend de l'etat global du statut (identete, statut, idcircuitValidation)
+  if (data.decision === 'complement' && !data.motif) {
+    throw new Error("Motif requis");
+  }
+
   let demande = null
   demande = await demandeModel.get_demande_by_id(iddemande);
   if (!demande) {
     throw new Error("Demande introuvable");
   }
 
-  if(demande[0].statut >= 2){
+  if(demande[0].statut >= 3){
     throw new Error("Demande non validable");
   }else{
     const filtreData = {iddemande: demande[0].iddemande, iduser : data.userId, niveauactuel: demande[0].niveauactuel}
@@ -523,21 +526,42 @@ async function validate(iddemande, data){
     //Mapper la décision utilisateur
     const isAccepted = data.decision === 'accepter';
 
+    //Mapper la décision utilisateur
+    let reponse = null;
+    if(data.decision == 'accepter'){
+        reponse = 'approuve';
+    }else if(data.decision == 'refuser'){
+        reponse = 'rejete';
+    }else{
+        reponse = 'revoir'
+    }
+
     const decisionPayload = {
       iddemande: data.iddemande,
       iduser: data.userId,
-      commentaire: data.motif ?? null,
-      decision: isAccepted ? 'approuve' : 'rejete'
+      motif: data.motif ?? null,
+      commentaire: data.comment ?? null,
+      decision: reponse
     };
 
     //Enregistrer la décision
     await demandeModel.save_decision(decisionPayload);
 
     //Cas REFUS → rejet immédiat
-    if (!isAccepted) {
+    if (reponse && reponse == 'rejete') {
       await demandeModel.update_statut({
         iddemande: data.iddemande,
-        statut: 3 // REJETÉE
+        statut: 4 // REJETÉE
+      });
+      return;
+    }
+
+
+    //Cas COMPLEMENT → complement d'information immédiat
+    if (reponse && reponse == 'revoir') {
+      await demandeModel.update_statut({
+        iddemande: data.iddemande,
+        statut: 2 
       });
       return;
     }
@@ -560,7 +584,7 @@ async function validate(iddemande, data){
       // validation finale
       await demandeModel.update_statut({
         iddemande: data.iddemande,
-        statut: 2 // VALIDÉE
+        statut: 3 // VALIDÉE
       });
     } else {
       // passer au niveau suivant
