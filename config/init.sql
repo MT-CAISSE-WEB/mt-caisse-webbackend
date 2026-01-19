@@ -1387,46 +1387,66 @@ END
 -- FIN INIT DENIS
 
 
--- IF NOT EXISTS (SELECT * FROM sys.procedure WHERE name = 'GenererNumeroOperation')
--- BEGIN
---     CREATE OR ALTER PROCEDURE GenererNumeroOperation
---         @prefixe NVARCHAR(10),
---         @annee INT,
---         @mois INT,
---         @jour INT,
---         @numero NVARCHAR(50) OUTPUT
---     AS
---     BEGIN
---         SET NOCOUNT ON;
---         DECLARE @compteur INT;
---         BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.procedures 
+    WHERE name = 'GenererNumeroOperation'
+)
+BEGIN
+    EXEC('
+        CREATE PROCEDURE GenererNumeroOperation
+            @prefixe NVARCHAR(10),
+            @annee INT,
+            @mois INT,
+            @jour INT,
+            @numero NVARCHAR(50) OUTPUT
+        AS
+        BEGIN
+            SET NOCOUNT ON;
 
---         -- Créer compteur si inexistant
---         IF NOT EXISTS (
---             SELECT 1 FROM Compteurs WHERE prefixe = @prefixe AND annee = @annee AND mois = @mois AND jour = @jour
---         )
---         BEGIN
---             INSERT INTO Compteurs(prefixe, annee, mois, jour, compteur)
---             VALUES(@prefixe, @annee, @mois, @jour, 0);
---         END
+            DECLARE @compteur INT;
 
---         -- Incrémenter
---         UPDATE Compteurs
---         SET compteur = compteur + 1
---         WHERE prefixe = @prefixe AND annee = @annee AND mois = @mois AND jour = @jour;
+            BEGIN TRANSACTION;
 
---         SELECT @compteur = compteur 
---         FROM Compteurs
---         WHERE prefixe = @prefixe AND annee = @annee AND mois = @mois AND jour = @jour;
+            -- Créer le compteur s''il n''existe pas
+            IF NOT EXISTS (
+                SELECT 1 
+                FROM Compteurs
+                WHERE prefixe = @prefixe
+                  AND annee   = @annee
+                  AND mois    = @mois
+                  AND jour    = @jour
+            )
+            BEGIN
+                INSERT INTO Compteurs(prefixe, annee, mois, jour, compteur)
+                VALUES (@prefixe, @annee, @mois, @jour, 0);
+            END
 
---         COMMIT TRANSACTION;
+            -- Incrémenter le compteur
+            UPDATE Compteurs
+            SET compteur = compteur + 1
+            WHERE prefixe = @prefixe
+              AND annee   = @annee
+              AND mois    = @mois
+              AND jour    = @jour;
 
---         -- Format final
---         SET @numero = 
---             @prefixe + '-' 
---             + CAST(@annee AS NVARCHAR) + '-' 
---             + CAST(@mois AS NVARCHAR) + '-' 
---             + CAST(@jour AS NVARCHAR) + '-' 
---             + RIGHT('000' + CAST(@compteur AS NVARCHAR), 3);
---     END
--- END
+            SELECT @compteur = compteur
+            FROM Compteurs
+            WHERE prefixe = @prefixe
+              AND annee   = @annee
+              AND mois    = @mois
+              AND jour    = @jour;
+
+            COMMIT TRANSACTION;
+
+            -- Génération du numéro final
+            SET @numero =
+                @prefixe + ''-'' +
+                CAST(@annee AS NVARCHAR) + ''-'' +
+                RIGHT(''00'' + CAST(@mois AS NVARCHAR), 2) + ''-'' +
+                RIGHT(''00'' + CAST(@jour AS NVARCHAR), 2) + ''-'' +
+                RIGHT(''000'' + CAST(@compteur AS NVARCHAR), 3);
+        END
+    ');
+END
+GO
