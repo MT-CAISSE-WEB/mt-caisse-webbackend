@@ -130,8 +130,6 @@ async function fermeture_periode(idutilisateur, data) {
     throw new Error("Erreur de donnée");
   }
 
-  console.log(data);
-
   if(!Array.isArray(data) || data.length === 0){
     throw new Error("Aucune période de caisse fournie.");
   }
@@ -203,8 +201,6 @@ async function open_periode(idutilisateur, data) {
     throw new Error("Erreur de donnée");
   }
 
-  console.log(data);
-  
   const results = [];
 
   if(!Array.isArray(data) || data.length === 0){

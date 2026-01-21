@@ -70,3 +70,15 @@ module.exports.delete_caisse = asyncHandler(async(req, res, next) => {
     res.status(404).json({ success: false, message: error.message });
   }
 });
+
+/**
+ * Get solde caisse
+ */
+module.exports.getSolde = asyncHandler(async(req, res, next) => {
+  try {
+    const caisse_ = await caisseservice.getSolde();
+    res.json({ success: true, data: caisse_ });
+  } catch (error) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+});

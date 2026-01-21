@@ -137,5 +137,28 @@ module.exports = {
 
     delete: `
         DELETE FROM Caisse WHERE idcaisse = @idcaisse
+    `,
+
+    solde: `
+        SELECT 
+            c.idcaisse,
+            c.codecaisse,
+            c.libelle,
+            c.idjournal,
+            c.idcompte,
+            c.iddevise,
+            d.codedevise,
+            c.seuilmnimal,
+			c.soldeinitialisation,
+            SUM(
+                CASE 
+                    WHEN codtypeoperation = 'encaissement' THEN montant
+                    ELSE -montant
+                END
+            ) AS solde
+        FROM Caisse c 
+        LEFT JOIN TypeOperation t ON t.idcaisse = c.idcaisse
+        LEFT JOIN Devise d ON d.iddevise = c.iddevise
+        GROUP BY c.idcaisse, c.codecaisse, c.libelle, c.idjournal, c.idcompte, c.iddevise, d.codedevise, c.seuilmnimal, c.soldeinitialisation;
     `
 };

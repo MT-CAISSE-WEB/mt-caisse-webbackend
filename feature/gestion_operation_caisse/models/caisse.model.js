@@ -197,6 +197,16 @@ class caisseModel {
             console.log(`Erreur de suppression: ${error}`.cyan.bold);
         }
     }
+
+    async getSolde(){
+        const pool = await connectDB();
+        try {
+            const result = await pool.request().query(caisseQueries.solde);
+            return result.recordset;
+        } catch (error) {
+            console.log(`Erreur de suppression: ${error}`.cyan.bold);
+        }
+    }
 }
 
 

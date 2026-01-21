@@ -22,9 +22,9 @@ async function get_all_utilisateurcaisses({page, limit , search, actif}) {
       item.createdby, 
       item.updatedat,  
       item.updatedby,
-      item.caisse ? new caisseModel(item.caisse_idcaisse, item.caisse_codecaisse,item.caisse_libelle,item.caisse_idjournal,item.caisse_iddevise,item.caisse_idsite,item.caisse_idsociete,item.caisse_idcompte,item.caisse_actif,item.caisse_createdat,item.caisse_createdby, null, null) : null,
-      item.utilisateur ? new utilisateurmodel(item.user_idutilisateur,item.user_codeutilisateur,item.user_idsociete,item.user_nom,item.user_prenom,item.user_adresse,item.user_telephone,item.user_email,null, null, item.user_typeentitesite,item.user_typeentitedepartement,item.user_typeentitesociete,item.user_acheteur, null, null, null, null) : null,
-      item.societe ? new societemodel(
+      item.caisse_idcaisse ? new caisseModel(item.caisse_idcaisse, item.caisse_codecaisse,item.caisse_libelle,item.caisse_idjournal,item.caisse_iddevise,item.caisse_idsite,item.caisse_idsociete,item.caisse_idcompte,item.caisse_actif,item.caisse_createdat,item.caisse_createdby, null, null) : null,
+      item.user_idutilisateur ? new utilisateurmodel(item.user_idutilisateur,item.user_codeutilisateur,item.user_idsociete,item.user_nom,item.user_prenom,item.user_adresse,item.user_telephone,item.user_email,null, null, item.user_typeentitesite,item.user_typeentitedepartement,item.user_typeentitesociete,item.user_acheteur, null, null, null, null) : null,
+      item.societe_idsociete ? new societemodel(
         item.societe_idsociete, item.societe_codesociete, item.societe_raisonsociale, item.societe_rccm, item.societe_numnui, item.societe_email, item.societe_telephone, item.societe_logo, item.societe_adresse, item.societe_suivibudgetaire, item.societe_createdat, item.societe_updatedat, item.societe_createdby, item.societe_updatedby
       ) : null,
     ));

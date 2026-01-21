@@ -3,20 +3,22 @@ const {db, sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 
  //upsert Site
-   async function upsertsite({idsociete,codesite,libelle ,email,telephone,adresse,estcentreanalytique,createdby, updatedby }) {
+   async function upsertsite({idsociete,codesite,idcentreanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdby, updatedby }) {
     try {
         const idsite = uuidv4();
 
         const query = `
             IF EXISTS (SELECT 1 FROM Site WHERE codesite = @codesite)
             BEGIN
-                UPDATE Site
+                UPDATE site
                 SET 
                     idsociete = @idsociete,
+                    idcentreanalytique = @idcentreanalytique,
                     libelle = @libelle,
                     email   = @email,
                     telephone = @telephone,
                     adresse = @adresse,
+                    estcentreanalytique = @estcentreanalytique,
                     updatedby = @updatedby,
                     updatedat = GETDATE()
                 OUTPUT INSERTED.*
@@ -24,9 +26,9 @@ const { v4: uuidv4 } = require('uuid');
             END
             ELSE
             BEGIN
-                INSERT INTO Site (idsite,idsociete,codesite,libelle ,email,telephone,adresse,createdby,createdat)
+                INSERT INTO Site (idsite,idsociete,codesite,idcentreanalytique,libelle ,email,telephone,adresse,estcentreanalytique,createdby,createdat)
                 OUTPUT INSERTED.*
-                VALUES (@idsite,@idsociete,@codesite,@libelle ,@email,@telephone,@adresse,@createdby,GETDATE())
+                VALUES (@idsite,@idsociete,@codesite,@idcentreanalytique,@libelle ,@email,@telephone,@adresse,@estcentreanalytique,@createdby,GETDATE())
             END
         `;
 
@@ -35,10 +37,12 @@ const { v4: uuidv4 } = require('uuid');
             .input("idsite", sql.UniqueIdentifier, idsite)
             .input("idsociete", sql.UniqueIdentifier,idsociete)
             .input("codesite", sql.NVarChar, codesite)
+            .input("idcentreanalytique", sql.UniqueIdentifier,idcentreanalytique)
             .input("libelle", sql.NVarChar,libelle)
             .input("email", sql.NVarChar,email)
             .input("telephone", sql.NVarChar,telephone)
             .input("adresse", sql.NVarChar,adresse)
+            .input("estcentreanalytique", sql.Int, estcentreanalytique)
             .input("createdby", sql.NVarChar, createdby)
             .input("updatedby", sql.NVarChar, updatedby)
             .query(query);
@@ -122,5 +126,3 @@ async function getonesite(idsite){
     getonesite,
     deletesite
   }
-
-  

@@ -166,10 +166,21 @@ async function delete_caisse(idcaisse) {
    }
 }
 
+async function getSolde() {
+   try {
+    const caisse_ = await caisse.getSolde();
+    return caisse_;
+   } catch (err) {
+    console.log(err);
+    throw err;
+   }
+}
+
 module.exports = {
   get_all_caisses,
   get_by_idcaisse,
   create_caisse,
   update_caisse,
-  delete_caisse
+  delete_caisse,
+  getSolde
 };

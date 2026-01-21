@@ -2,7 +2,6 @@ const { DateTime, UniqueIdentifier } = require('mssql');
 const {sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../../../config/db');
-const deviseservice = require("../../gestion_organisation/services/devise.service");
 
  //upsert Societe
    async function upsertsociete({codesociete,iddevisereference,iddevisereporting,raisonsociale,sigle, rccm, numnui, email, telephone, logo, adresse, suivibudgetaire,createdby, updatedby }) {
@@ -100,7 +99,7 @@ async function getallsociete(){
 async function getalldevisesactif(){
     try {
         const pool = await connectDB();
-        const query = `SELECT * FROM Devise WHERE ACTIF=1`;
+        const query = `SELECT * FROM DEVISE WHERE ACTIF=1`;
         const result = await pool.request().query(query);
 
         return {
@@ -122,23 +121,14 @@ async function getonesociete(idsociete){
         .input('idsociete', sql.UniqueIdentifier,idsociete)
         .query(query);
 
-        const data = result.recordset[0];
-        let devisereporting = null;
-        let devisereferentiel = null;
-        if(data.iddevisereporting){
-            devisereporting = await deviseservice.getonedevise(data.iddevisereporting);
-        }
-        if(data.iddevisereference){
-            devisereferentiel = await deviseservice.getonedevise(data.iddevisereference);
-        }
-
         if(!result){
             return {success:false,status:404,message:"Société non trouvée"};
         }
+
         return {
             success:true,
             status:200,
-            data: {...data, devisereporting: devisereporting.data, devisereference : devisereferentiel.data},
+            data:result.recordset[0],
             message : "Element trouvé avec succès!"}
     } catch (error) {
         return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};

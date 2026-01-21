@@ -8,6 +8,7 @@ const periodecaisse_controller = require("../controllers/caisseperiode.controlle
 router.get("/", caisse_controller.get_caisses);
 router.get("/actif", caisse_controller.get_caisses);
 router.get("/:id", caisse_controller.get_onecaisse);
+router.get("/solde/user", caisse_controller.getSolde);
 router.post("/create/", caisse_controller.create_caisse);
 router.put("/update/:id", caisse_controller.update_caisse);
 router.delete("/delete/:id", caisse_controller.delete_caisse);

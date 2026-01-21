@@ -11,9 +11,9 @@ const {connectInstance, connectDB} = require('../../../config/db');
         const iddepartement = uuidv4();
 
         const query = `
-            IF EXISTS (SELECT 1 FROM Departement WHERE codedept = @codedept)
+            IF EXISTS (SELECT 1 FROM departement WHERE codedept = @codedept)
             BEGIN
-                UPDATE Departement
+                UPDATE departement
                 SET idsociete = @idsociete,
                     idsite = @idsite,
                     responsable = @responsable,
@@ -28,7 +28,7 @@ const {connectInstance, connectDB} = require('../../../config/db');
             END
             ELSE
             BEGIN
-                INSERT INTO Departement (iddepartement,idsociete,idsite,responsable,codedept,libelle,email,telephone,adresse,createdby,createdat)
+                INSERT INTO departement (iddepartement,idsociete,idsite,responsable,codedept,libelle,email,telephone,adresse,createdby,createdat)
                 OUTPUT INSERTED.*
                 VALUES (@iddepartement,@idsociete,@idsite,@responsable,@codedept,@libelle,@email,@telephone,@adresse,@createdby,GETDATE())
             END
@@ -74,9 +74,9 @@ async function getalldepartement(){
         const pool = await connectDB()
         const query =`SELECT d.*,st.libelle as site,sc.raisonsociale,u.nom,u.prenom
         FROM Departement d
-        left join Site st on d.idsite = st.idsite
-        left join Societe sc on d.idsociete = sc.idsociete
-        left join Utilisateur u on d.responsable = u.idutilisateur`;
+        left join site st on d.idsite = st.idsite
+        left join societe sc on d.idsociete = sc.idsociete
+        left join utilisateur u on d.responsable = u.idutilisateur`;
 
         const result = await pool.request().query(query);
         return {

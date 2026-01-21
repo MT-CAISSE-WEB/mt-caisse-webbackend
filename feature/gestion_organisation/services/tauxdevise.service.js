@@ -2,7 +2,6 @@ const { DateTime, UniqueIdentifier } = require('mssql');
 const db = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const {connectInstance, connectDB} = require('../../../config/db');
-const entetedemandeQuery = require('../../gestion_demande_decaissement/queries/entetedemande.query');
 
 
 const today = new Date();
@@ -13,9 +12,9 @@ async function upserttauxdevise({iddeviseorigine,iddevisedestination,codetauxdev
         const idtauxdevise = uuidv4();
 
         const query = `
-            IF EXISTS (SELECT 1 FROM Tauxdevise WHERE codetauxdevise = @codetauxdevise)
+            IF EXISTS (SELECT 1 FROM tauxdevise WHERE codetauxdevise = @codetauxdevise)
             BEGIN
-                UPDATE Tauxdevise
+                UPDATE tauxdevise
                 SET  iddeviseorigine= @iddeviseorigine,
                      iddevisedestination = @iddevisedestination,
                      codetauxdevise = @codetauxdevise,
@@ -31,7 +30,7 @@ async function upserttauxdevise({iddeviseorigine,iddevisedestination,codetauxdev
             END
             ELSE
             BEGIN
-                INSERT INTO Tauxdevise (iddeviseorigine,iddevisedestination,codetauxdevise,intitule,typecours,datecours,coefficient,coefficientinverse,createdat,createdby)
+                INSERT INTO tauxdevise (iddeviseorigine,iddevisedestination,codetauxdevise,intitule,typecours,datecours,coefficient,coefficientinverse,createdat,createdby)
                 OUTPUT INSERTED.*
                 VALUES (@iddeviseorigine, @iddevisedestination, @codetauxdevise, @intitule, @typecours, @datecours, @coefficient,@coefficientinverse,GETDATE(),@createdby)
             END
@@ -99,7 +98,7 @@ async function getalltauxdevises(){
 async function getalldevisesactif(){
     try {
           const pool = await connectDB();
-          const query = "SELECT * FROM Devise where actif=1"; 
+          const query = "SELECT * FROM devise where actif=1"; 
           const result = await pool.request().query(query);
          return {
             success :true,
@@ -111,11 +110,12 @@ async function getalldevisesactif(){
     }
 }
 
+
 //Get one
 async function getonetauxdevise(idtauxdevise){
     try {
         const pool = await connectDB();
-        const query = "SELECT * FROM Tauxdevise where idtauxdevise = @idtauxdevise";
+        const query = "SELECT * FROM tauxDevise where idtauxdevise = @idtauxdevise";
         const result = await pool.request()
         .input('idtauxdevise',db.sql.UniqueIdentifier,idtauxdevise)
         .query(query);
@@ -140,7 +140,7 @@ async function deletetauxdevise(idtauxdevise)
     
     try {
         const pool = await connectDB();
-        const query = "DELETE FROM Tauxdevise where idtauxdevise = @idtauxdevise";
+        const query = "DELETE FROM tauxdevise where idtauxdevise = @idtauxdevise";
         const result = await pool.request()
         .input('idtauxdevise',db.sql.UniqueIdentifier,idtauxdevise)
         .query(query);
@@ -150,26 +150,10 @@ async function deletetauxdevise(idtauxdevise)
     }
 }
 
-async function getDernierTaux(deviseorigine, devisedestination, date){
-    const pool = await connectDB()
-    try {
-        const result = await pool.request()
-            .input('idDeviseDemande', db.sql.UniqueIdentifier, deviseorigine)
-            .input('idDeviseSociete', db.sql.UniqueIdentifier, devisedestination)
-            .input('date', db.sql.DateTime, date)
-            .query(entetedemandeQuery.dernierTaux)
-
-        return result.recordset
-    } catch (error) {
-        console.log(error);
-    }
-}
-
 module.exports = {
     upserttauxdevise,
     getalltauxdevises,
     getonetauxdevise,
     deletetauxdevise,
-    getalldevisesactif,
-    getDernierTaux
+    getalldevisesactif
 }

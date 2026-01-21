@@ -443,6 +443,33 @@ BEGIN
     );
 END
 
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'UQ_Circuit_Site_Action'
+      AND object_id = OBJECT_ID('CircuitValidation')
+)
+BEGIN
+    CREATE UNIQUE INDEX UQ_Circuit_Site_Action
+    ON CircuitValidation (idsite, typeaction)
+    WHERE typeentite = 'SITE'
+      AND idsite IS NOT NULL;
+END
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'UQ_Circuit_Societe_Action'
+      AND object_id = OBJECT_ID('CircuitValidation')
+)
+BEGIN
+    CREATE UNIQUE INDEX UQ_Circuit_Societe_Action
+    ON CircuitValidation (idsociete, typeaction)
+    WHERE typeentite = 'SOCIETE'
+      AND idsociete IS NOT NULL;
+END
+
 -- ============================================
 -- 17️⃣ EnteteDemande (dépend de Utilisateur, CircuitValidation, Sites, Departement, Societe, Devise)
 -- ============================================
@@ -1449,4 +1476,4 @@ BEGIN
         END
     ');
 END
-GO
+-- GO
