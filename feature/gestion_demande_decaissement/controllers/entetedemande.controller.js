@@ -52,6 +52,7 @@ module.exports.update = asyncHandler(async(req, res, next) => {
   try {
     const iddemande  = req.params.id;
     const demande_ = await demandeservice.update_demande(iddemande, req.body);
+    console.log(demande_);
     res.json({ success: true, data: demande_ });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
@@ -78,7 +79,7 @@ module.exports.validate = asyncHandler(async(req, res, next) => {
   try {
     const iddemande = req.params.id;
     const demande_ = await demandeservice.validate(iddemande, req.body);
-    res.json({ success: true, message: "Décision pris en compte" });
+    res.json({ success: true, data: demande_ , message: "Décision pris en compte" });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
   }

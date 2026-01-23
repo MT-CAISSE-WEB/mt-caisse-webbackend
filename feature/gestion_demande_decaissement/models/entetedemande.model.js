@@ -103,10 +103,12 @@ class enteteDemandeModel {
     const result = await pool.request()
       .input('iddemande', sql.UniqueIdentifier, iddemande)
       .input('devise', sql.UniqueIdentifier, data.devise)
-      .input('departement', sql.UniqueIdentifier, data.iddepartement)
+      .input('taux', sql.Decimal(22,9), data.taux || 1)
+      .input('departement', sql.UniqueIdentifier, data.departement)
       .input('datedemande', sql.DateTime, data.datedemande)
       .input('libelledemande', sql.NVarChar(200), data.libelledemande)
       .input('typedemande', sql.NVarChar(50), data.typedemande)
+      .input('niveauactuel', sql.Int, 1)
       .input('updatedat', sql.DateTime, new Date())
       .input('updatedby', sql.NVarChar(50), data.updatedby)
       .query(entetedemandeQuery.update);
@@ -130,6 +132,15 @@ class enteteDemandeModel {
     const result = await pool.request()
       .input('iddemande', sql.UniqueIdentifier, iddemande)
       .query(entetedemandeQuery.delete);
+
+    return { success: true, data: result }
+  }
+
+  async resetCircuitByDemande(iddemande){
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddemande', sql.UniqueIdentifier, iddemande)
+      .query(entetedemandeQuery.resetCircuit);
 
     return { success: true, data: result }
   }
@@ -213,7 +224,7 @@ class enteteDemandeModel {
     const result = await pool.request()
       .input('iddemande', sql.UniqueIdentifier, data.iddemande)
       .input('iduser', sql.UniqueIdentifier, data.iduser)
-      .input('motif', sql.NVarChar(255), data.motif)
+      .input('idmotif', sql.UniqueIdentifier, data.motif)
       .input('commentaire', sql.NVarChar(255), data.commentaire)
       .input('decision', sql.NVarChar(20), data.decision)
       .query(entetedemandeQuery.saveDecision)

@@ -54,7 +54,7 @@ async function initValidationBudget(data){
 }
 
 //Methode de creation du circuit validation du budget
-exports.initCircuitBudget = async (budget) => {
+async function initCircuitBudget(budget){
     let validateurs = [];
     //Récupérer les validateurs
     validateurs = await get_validateursCircuit(budget.idcircuitvalidation);
@@ -74,6 +74,8 @@ exports.initCircuitBudget = async (budget) => {
         }
     }
 }
+
+exports.initCircuitBudget =  initCircuitBudget;
 
 // Récupérer des validateurs du budget idbudget
 async function get_validateurCircuit(idbudget) {
@@ -237,8 +239,11 @@ async function validateBudget(idbudget, data){
                 valide : 0
             }
 
-            //Rattcher le circuit societe et renitialiser les variables de validation
-            await update_circuit(init_dataCircuit);
+            //Rattacher le circuit societe et renitialiser les variables de validation
+            const new_budget = await update_circuit(init_dataCircuit);
+           
+            //Initialiser le circuit avec le nouveau budget modifié
+            await initCircuitBudget(new_budget);
         } catch (error) {
             throw new Error(error);
         }
@@ -250,7 +255,7 @@ async function validateBudget(idbudget, data){
     }
 
     const payload = {idbudget: budget.idbudget, valide: upvalide};
-
+    
     if(circuit.typeentite == 'site'){
         await update_budgetSite(payload);
     }else{

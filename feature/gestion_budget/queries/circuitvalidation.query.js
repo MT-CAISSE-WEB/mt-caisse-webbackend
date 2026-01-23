@@ -58,7 +58,7 @@ module.exports = {
     updateCircuit : `
         UPDATE Budget
         SET valide = @valide, idcircuitvalidation = @idcircuit, niveauactuel = @niveauactuel
-        WHERE idbudget = @idbudget
+        OUTPUT INSERTED.* WHERE idbudget = @idbudget
     `,
     circuitBudget: `
         Select CV.*

@@ -312,6 +312,8 @@ module.exports = {
             typedemande = @typedemande,
             datedemande = @datedemande,
             iddevise = @devise,
+            niveauactuel = @niveauactuel,
+            taux = @taux,
             iddepartement = @departement,
             updatedat = @updatedat,
             updatedby = @updatedby
@@ -381,9 +383,12 @@ module.exports = {
             U.nom,
             U.prenom,
             CI.codecircuitvalidation,
-            D.codedemande
+            D.codedemande,
+            M.codemotif,
+            M.libellemotif
         from ValidationDemande VD
             LEFT JOIN EnteteDemande D ON D.iddemande = VD.iddemande
+            LEFT JOIN Motif M ON M.idmotif = VD.idmotif
             LEFT JOIN Utilisateur U ON U.idutilisateur = VD.idutilisateur
             LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = VD.idcircuitvalidation
         Where VD.iddemande = @iddemande
@@ -427,7 +432,7 @@ module.exports = {
         UPDATE ValidationDemande
         SET decision = @decision,
             commentaire = @commentaire,
-            motif = @motif,
+            idmotif = @idmotif,
             datevalidation = GETDATE()
         WHERE iddemande = @iddemande
         AND idutilisateur = @iduser
@@ -458,5 +463,9 @@ module.exports = {
             AND iddevisedestination = @idDeviseSociete
             AND datecours <= @date
         ORDER BY datecours DESC;
+    `,
+    resetCircuit : `
+        DELETE FROM ValidationDemande
+        WHERE iddemande = @iddemande
     `
 }

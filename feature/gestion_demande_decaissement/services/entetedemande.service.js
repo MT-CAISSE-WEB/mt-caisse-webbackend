@@ -57,7 +57,7 @@ async function create_demande(data) {
           iddepartement: data.departement, idnature: ligne.natureop, datedemande: data.datedemande
         });
 
-        //Si le budget inexistant
+        //Si le budget existe
         if(budgetsAll && budgetsAll.length != 0){
           const budgets = prioriserBudget(budgetsAll);
           try {
@@ -129,8 +129,10 @@ async function create_demande(data) {
         iddepartement: data.departement, idnature: ligne.natureop, datedemande: data.datedemande
       });
 
-      const budgets = prioriserBudget(budgetsAll);
-      budget_ = budgets.idbudget;
+      if(budgetsAll && budgetsAll.length != 0){
+        const budgets = prioriserBudget(budgetsAll);
+        budget_ = budgets.idbudget;
+      }
 
       //Calcule des valeurs budgetaires
       const preengages = await lignedemandemodel.get_preengageBynature(ligne.natureop) ;
@@ -142,7 +144,6 @@ async function create_demande(data) {
     }
 
     const montantref = (ligne.montantdemande * entetedemande.data.taux) || ligne.montantdemande;
-    console.log(montantref);
 
     const dataligne = {iddemande : entetedemande.data.iddemande, numligne: num, libellelignedemande: data.libelledemande, montantdemande: ligne.montantdemande, idnature: ligne.natureop, idcentre: ligne.centre, idtiers: ligne.tiers || null,
       idbudget: budget_ || null, montantref: montantref, preengage: preengage, engage: engage, realise : realise,  idsociete: data.societe || societe.data.idsociete, idsite: data.site || site.data.idsite, createdby: data.createdby || 'system'};
@@ -314,6 +315,7 @@ async function get_demande_by_id(iddemande){
           idsociete: row.idsociete,
           idsite: row.idsite,
           iddevise: row.iddevise,
+          idcircuit : row.circuit_idcircuit,
 
           demandeur: {
             idutilisateur: row.idutilisateur,
@@ -410,57 +412,114 @@ async function update_demande(iddemande, data) {
     throw new Error("Lignes invalides");
   }
 
-  const societe = data.societe ? await societeservice.getonesociete(data.societe) : null;
-  const site = data.site ? await siteservice.getonesite(data.site) : null;
+  //Récuperer la societe
+  let societe = null;
+  if(data.societe){
+    societe = await societeservice.getonesociete(data.societe);
+  }else{
+    throw new Error('Société utilisateur introuvable');
+  }
+
+  //Récuperer le site
+  let site = null;
+  if(data.site){
+    site = await siteservice.getonesite(data.site);
+  }else{
+    throw new Error('Site utilisateur introuvable');
+  }
+
+  //Récuperer la devise
+  let devise = null;
+  if(data.devise){
+    devise = await deviseservice.getonedevise(data.devise);
+  }else{
+    throw new Error('Dévise inexistante dans la base');
+  }
 
   /* =====================
       GET ENTÊTE
   ===================== */
   let demande = null
-  demande = await demandeModel.get_demande_by_id(iddemande);
+  demande = await get_demande_by_id(iddemande);
   if (!demande) {
     throw new Error("Demande introuvable");
   }
 
-  if(demande.statut == 2){
-    /* =====================
-        UPDATE ENTÊTE
-    ===================== */
-    await demandeModel.update_enteteDemande(iddemande, data);
+  if(demande.decaisse == 1){
+    throw new Error("Demande déja decaissée");
+  }
+  
+  if (demande.decaisse != 1 && Number(demande.statut) === 3) {
+    throw new Error(`Erreur modification sur une demande validée`);
+  }else{
+    // Update entete demande
+    await demandeModel.update_enteteDemande(iddemande, data); 
+
+    // Réinitialiser le circuit de validation
+    await demandeModel.resetCircuitByDemande(iddemande);
+    
+    //Recuperer le circuit de validation de la demande
+    let circt = null
+    const circuit = await demandeModel.get_circuitValidation(data.site);
+    if(circuit && circuit.length != 0){
+      circt = circuit[0].idcircuitvalidation;
+    }
+    
+    // Recreer le circuit de la demande
+    const validateur_circuits = await demandeModel.prepareValidateurCircuit(data.circuit)
+    if(validateur_circuits || validateur_circuits.length > 0){
+      for(const valid of validateur_circuits){
+        const dataValidation = {iddemande: iddemande, idcircuitvalidation: valid.idcircuitvalidation,
+          idcircuitetape : valid.idcircuitetape, user: valid.idutilisateur, rang: valid.rang
+        }
+        const init = await demandeModel.initValidationDemande(dataValidation);
+      }
+    }
 
     /* =====================
       LIGNES
     ===================== */
+    let num = 0;
     for (const ligne of data.lignes) {
-        const dataligne = {
-          iddemande,libellelignedemande: data.libelledemande,montantdemande: ligne.montantdemande,idnature: ligne.natureop,idcentre: ligne.centre, idtiers: ligne.tiers || null, idsociete: data.societe, idsite: data.site, updatedby: data.updatedby || 'system'
-        };
+      num = num + 1;
+      let preengage = 0;
+      let engage = 0;
+      let realise = 0;
 
-        let idlignedemande = ligne.idlignedemande;
+      const montantref = (ligne.montantdemande * data.taux) || ligne.montantdemande;
 
-        if (idlignedemande) {
+      const dataligne = {
+        iddemande,libellelignedemande: data.libelledemande, montantdemande: ligne.montantdemande, idnature: ligne.natureop,idcentre: ligne.centre, idtiers: ligne.tiers || null, 
+        montantref: montantref, preengage: preengage, engage: engage, realise : realise, idsociete: data.societe, idsite: data.site, updatedby: data.updatedby || 'system'
+      };
+
+      let idlignedemande = ligne.idlignedemande;
+
+      if(idlignedemande) {
+        try {
+          console.log(ligne);
           await lignedemandeservice.update_lignedemande(idlignedemande, dataligne);
-        } else {
-          const newLine = await lignedemandeservice.create_lignedemande(dataligne);
-          idlignedemande = newLine.idlignedemande;
+        } catch (error) {
+          throw new Error(error);
         }
+      } else {
+        const newLine = await lignedemandeservice.create_lignedemande(dataligne);
+        idlignedemande = newLine.idlignedemande;
+      }
 
-        if (Array.isArray(ligne.details) && ligne.details.length > 0) {
-          for (const detail of ligne.details) {
-            const detailLine = { iddemande, idlignedemande, description: detail.description, quantite: detail.quantite, montant: detail.montant, updatedby: data.updatedby || 'system'}
+      if (Array.isArray(ligne.details) && ligne.details.length > 0) {
+        for (const detail of ligne.details) {
+          const detailLine = { iddemande, idlignedemande, description: detail.description, quantite: detail.quantite, montant: detail.montant, updatedby: data.updatedby || 'system'}
 
-            let iddetailligne = detail.iddetailsdemande
-            if(iddetailligne){
-              await detaildemandeservice.update_detaildemande(iddetailligne, detailLine);
-            }else{
-              await detaildemandeservice.create_detaildemande(detailLine);
-            }
+          let iddetailligne = detail.iddetailsdemande
+          if(iddetailligne){
+            await detaildemandeservice.update_detaildemande(iddetailligne, detailLine);
+          }else{
+            await detaildemandeservice.create_detaildemande(detailLine);
           }
         }
+      }
     }
-    
-  }else{
-    throw new Error("Demandz déja validée");
   }
 
   return { success: true };
@@ -500,11 +559,11 @@ async function validate(iddemande, data){
     throw new Error("Aucune donnée reçue");
   }
 
-  if (data.decision === 'refuser' && !data.motif) {
+  if (data.decision === 'refuser' && !data.comment) {
     throw new Error("Motif requis");
   }
 
-  if (data.decision === 'complement' && !data.motif) {
+  if (data.decision === 'complement' && !data.comment) {
     throw new Error("Motif requis");
   }
 
@@ -514,7 +573,7 @@ async function validate(iddemande, data){
     throw new Error("Demande introuvable");
   }
 
-  if(demande[0].statut >= 3){
+  if(demande[0].statut == 3){
     throw new Error("Demande non validable");
   }else{
     const filtreData = {iddemande: demande[0].iddemande, iduser : data.userId, niveauactuel: demande[0].niveauactuel}
@@ -570,7 +629,7 @@ async function validate(iddemande, data){
     const { statut, niveauactuel } = demande[0];
 
     // première validation → EN COURS
-    if (statut === 0) {
+    if (statut === 0 || statut === 2) {
       await demandeModel.update_statut({
         iddemande: data.iddemande,
         statut: 1 // EN COURS

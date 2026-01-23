@@ -4,7 +4,9 @@ const devisemodel = require("../../gestion_organisation/models/devise.model");
 const societemodel = require("../../gestion_organisation/models/societe.model");
 const sitemodel = require("../../gestion_organisation/models/site.model");
 const periode = require("../models/caisseperiode.model");
-const periodeservice = require("../services/caisseperiode.service");
+const deviseservice = require("../../gestion_organisation/services/devise.service");
+const societeservice = require("../../gestion_organisation/services/societe.service");
+const siteservice = require("../../gestion_organisation/services/site.service");
 const { v4: uuidv4 } = require('uuid');
 const PaginationModel = require("../../../shared/utils/model");
 
@@ -60,8 +62,28 @@ async function get_all_caisses({ page, limit, search, actif}) {
 
 async function create_caisse(data) {
   //Recuperer la societe de l'utilisateur connecté si societe n'est pas renseigné
+  let societe = null;
+  if(data.idsociete){
+    try {
+      societe = await societeservice.getonesociete(data.idsociete);
+    } catch (error) {
+      throw new Error(error);
+    }
+  }else{
+    throw new Error("Societe de utilisateur invalide");
+  }
 
   // Verifier si societe, site, compte, devise existent
+  let site = null;
+  if(data.idsite){
+    try {
+      site = await siteservice.getonesite(data.idsite);
+    } catch (error) {
+      throw new Error(error);
+    }
+  }else{
+    throw new Error("Site de utilisateur invalide");
+  }
   // S'ils existent
   // Récuperer le code societe, le code site, le numero compte et le code devise
 
@@ -69,6 +91,8 @@ async function create_caisse(data) {
   let journaldata = null;
   if(data.idjournal){
     journaldata = await journal.get_onejournal(data.idjournal);
+  }else{
+    throw new Error("Journal invalide");
   }
 
   if (!data.codecaisse || !data.libelle) {
@@ -77,8 +101,8 @@ async function create_caisse(data) {
 
   const today = new Date();
   const newcaisse = new caissemodel(
-    uuidv4(), data.codecaisse, data.libelle, data.journal, data.devise,  
-    data.site, data.societe, data.compte, data.dateinitialisation, data.soldeinitialisation,
+    uuidv4(), data.codecaisse, data.libelle, data.idjournal, data.iddevise,  
+    data.idsite, data.idsociete, data.idcompte, data.dateinitialisation, data.soldeinitialisation,
     data.seuilminimal, data.actif, data.createdat || today, data.createdby || 'System', data.updatedat, data.updatedby);
   const recorded = await newcaisse.create_caissemodel(newcaisse);
 
@@ -121,10 +145,28 @@ async function update_caisse(idcaisse, data) {
   }
 
   //Recuperer la societe de l'utilisateur connecté si societe n'est pas renseigné
+  let societe = null;
+  if(data.idsociete){
+    try {
+      societe = await societeservice.getonesociete(data.idsociete);
+    } catch (error) {
+      throw new Error(error);
+    }
+  }else{
+    throw new Error("Societe de utilisateur invalide");
+  }
 
   // Verifier si societe, site, compte, devise existent
-  // S'ils existent
-  // Récuperer le code societe, le code site, le numero compte et le code devise
+  let site = null;
+  if(data.idsite){
+    try {
+      site = await siteservice.getonesite(data.idsite);
+    } catch (error) {
+      throw new Error(error);
+    }
+  }else{
+    throw new Error("Site de utilisateur invalide");
+  }
 
   //récuperer le code journal
   let journaldata = null;

@@ -74,12 +74,10 @@ module.exports.createworkflow = asyncHandler(async(req,res,next) => {
   const { etapes, ...circuit } = req.body;
   const pool = await db.connectDB();
   const transaction = await  pool.transaction();
-
+  
   try {
     await transaction.begin();
-
     const circuitId = await insertCircuit(circuit, transaction);
-
     for (const etape of etapes) {
       const etapeId = await insertEtape(circuitId, etape, transaction);
 

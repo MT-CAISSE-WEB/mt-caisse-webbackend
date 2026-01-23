@@ -814,6 +814,7 @@ BEGIN
         numligne INT,
         libellelignedemande NVARCHAR(255),
         montantdemande DECIMAL(22, 9),
+        montantref DECIMAL(22, 9),
         budgetconso DECIMAL(22, 9),
         preengage DECIMAL(22, 9),
         engage DECIMAL(22, 9),

@@ -109,6 +109,7 @@ class ligneDemandeModel {
       .input('idcentre', sql.UniqueIdentifier, data.idcentre)
       .input('libellelignedemande', sql.NVarChar(255), data.libellelignedemande)
       .input('montantdemande', sql.Decimal(22, 9), data.montantdemande)
+      .input('montantref', sql.Decimal(22, 9), data.montantref)
       .input('updatedat', sql.DateTime, new Date())
       .input('updatedby', sql.NVarChar(50), data.updatedby)
       .query(ligneDemandeQuery.update)

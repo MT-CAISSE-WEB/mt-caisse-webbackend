@@ -23,6 +23,7 @@ module.exports = {
         UPDATE LigneDemande
         SET libellelignedemande = @libellelignedemande,
             montantdemande = @montantdemande,
+            montantref = @montantref,
             idnature = @idnature,
             idcentre = @idcentre,
             idtiers = @idtiers,
