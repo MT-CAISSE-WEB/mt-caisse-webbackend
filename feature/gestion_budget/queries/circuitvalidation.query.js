@@ -15,8 +15,8 @@ module.exports = {
             LEFT JOIN Budget B ON B.idbudget = VB.idbudget
             LEFT JOIN Utilisateur U ON U.idutilisateur = VB.idutilisateur
             LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = VB.idcircuitvalidation
-        Where VD.idbudget = @idbudget
-        ORDER BY VD.rang ASC;
+        Where VB.idbudget = @idbudget
+        ORDER BY VB.rang ASC;
     `,
     getBudgetById: `
         Select * from Budget Where idbudget = @idbudget
@@ -58,7 +58,8 @@ module.exports = {
     updateCircuit : `
         UPDATE Budget
         SET valide = @valide, idcircuitvalidation = @idcircuit, niveauactuel = @niveauactuel
-        OUTPUT INSERTED.* WHERE idbudget = @idbudget
+        OUTPUT INSERTED.*
+        WHERE idbudget = @idbudget
     `,
     circuitBudget: `
         Select CV.*

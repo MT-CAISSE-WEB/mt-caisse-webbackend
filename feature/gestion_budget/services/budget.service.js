@@ -1,6 +1,6 @@
 const { v4: uuidv4, validate } = require('uuid');
 const db = require('../../../config/db');
-const {sql, connectInstance, connectDB} = require('../../../config/db');
+const { sql, connectInstance, connectDB } = require('../../../config/db');
 const config = db.config;
 const enteteDemandeModel = require("../../gestion_demande_decaissement/models/entetedemande.model");
 let modelcircuit = new enteteDemandeModel();
@@ -9,7 +9,7 @@ const budgetcontroller = require('../controllers/budget.controller');
 
 
 //Recuperer le budget par idbudget
-async function get_budgetByid(idbudget){
+async function get_budgetByid(idbudget) {
     const pool = await connectDB()
     const result = await pool.request()
         .input('idbudget', sql.UniqueIdentifier, idbudget)
@@ -19,9 +19,9 @@ async function get_budgetByid(idbudget){
 }
 
 //Récuperer les validateurs d'un circuit
-async function get_validateursCircuit(idcircuit){
+async function get_validateursCircuit(idcircuit) {
 
-    if(!idcircuit){
+    if (!idcircuit) {
         throw new Error('Identifiant du circuit inexistant');
     }
 
@@ -35,36 +35,37 @@ async function get_validateursCircuit(idcircuit){
 }
 
 //Creation || initialisation des validateurs dans la table ValidationBudget
-async function initValidationBudget(data){
+async function initValidationBudget(data) {
     const pool = await connectDB()
     try {
-      const result = await pool.request()
-      .input('idbudget', sql.UniqueIdentifier, data.idbudget)
-      .input('idcircuitvalidation', sql.UniqueIdentifier, data.idcircuitvalidation)
-      .input('idcircuitetape', sql.UniqueIdentifier, data.idcircuitetape)
-      .input('idutilisateur', sql.UniqueIdentifier, data.user)
-      .input('rang', sql.Int, data.rang)
-      .query(circuitquery.initvalidationBudget)
+        const result = await pool.request()
+            .input('idbudget', sql.UniqueIdentifier, data.idbudget)
+            .input('idcircuitvalidation', sql.UniqueIdentifier, data.idcircuitvalidation)
+            .input('idcircuitetape', sql.UniqueIdentifier, data.idcircuitetape)
+            .input('idutilisateur', sql.UniqueIdentifier, data.user)
+            .input('rang', sql.Int, data.rang)
+            .query(circuitquery.initvalidationBudget)
 
-      return result.recordset
-      
+        return result.recordset
+
     } catch (error) {
-      return error
+        return error
     }
 }
 
 //Methode de creation du circuit validation du budget
-async function initCircuitBudget(budget){
+const initCircuitBudget = async (budget) => {
     let validateurs = [];
     //Récupérer les validateurs
     validateurs = await get_validateursCircuit(budget.idcircuitvalidation);
+    // console.log("Validateur:", validateurs)
 
-    if(!validateurs || validateurs.lenght == 0){
+    if (!validateurs || validateurs.lenght == 0) {
         throw new Error('Aucun validateurs existant dans le circuit');
-    }else{
-        for(const valid of validateurs){
+    } else {
+        for (const valid of validateurs) {
             //Prépare data des validateurs 
-            const dataValidateurs = {idbudget: budget.idbudget, idcircuitvalidation: valid.idcircuitvalidation, idcircuitetape : valid.idcircuitetape, user: valid.idutilisateur, rang: valid.rang};
+            const dataValidateurs = { idbudget: budget.idbudget, idcircuitvalidation: valid.idcircuitvalidation, idcircuitetape: valid.idcircuitetape, user: valid.idutilisateur, rang: valid.rang };
             // Enregistrer
             try {
                 await initValidationBudget(dataValidateurs);
@@ -74,8 +75,6 @@ async function initCircuitBudget(budget){
         }
     }
 }
-
-exports.initCircuitBudget =  initCircuitBudget;
 
 // Récupérer des validateurs du budget idbudget
 async function get_validateurCircuit(idbudget) {
@@ -88,17 +87,17 @@ async function get_validateurCircuit(idbudget) {
 }
 
 // Récuperer le circuit de type entite societe
-async function get_circuitEntiteSociete(idsociete){
+async function get_circuitEntiteSociete(idsociete) {
     const pool = await connectDB()
     const result = await pool.request()
-      .input('idsociete', sql.UniqueIdentifier, idsociete)
-      .query(circuitquery.circuitBudget)
+        .input('idsociete', sql.UniqueIdentifier, idsociete)
+        .query(circuitquery.circuitBudget)
 
-    return result.recordset
+    return result.recordset[0]
 }
 
 //Envoyer idbudget pour récuperer les validateurs du circuit du budget
-exports.get_validateurBudget = async (req, res ) => {
+exports.get_validateurBudget = async (req, res) => {
     try {
         const idbudget = req.params.id;
         if (!idbudget) {
@@ -115,10 +114,10 @@ exports.get_validateurBudget = async (req, res ) => {
 async function check_rightUser(data) {
     const pool = await connectDB()
     const result = await pool.request()
-      .input('idbudget', sql.UniqueIdentifier, data.idbudget)
-      .input('iduser', sql.UniqueIdentifier, data.iduser)
-      .input('niveauactuel', sql.Int, data.niveauactuel)
-      .query(circuitquery.checkRight)
+        .input('idbudget', sql.UniqueIdentifier, data.idbudget)
+        .input('iduser', sql.UniqueIdentifier, data.iduser)
+        .input('niveauactuel', sql.Int, data.niveauactuel)
+        .query(circuitquery.checkRight)
 
     return result.recordset
 }
@@ -148,122 +147,127 @@ async function get_dernierniveau(idbudget, idcircuit) {
 }
 
 //Valider le budget
-async function validateBudget(idbudget, data){
-  if (!idbudget || !data.decision) {
-    throw new Error("Aucune donnée reçue");
-  }
-
-  if (data.decision === 'refuser' && !data.motif) {
-    throw new Error("Motif requis");
-  }
-
-  if (data.decision === 'complement' && !data.motif) {
-    throw new Error("Motif requis");
-  }
-
-  //Recuperer le budget par idbuget
-  let budget = null; 
-  budget = await get_budgetByid(idbudget);
-  if (!budget) {
-    throw new Error("Budget inexistant");
-  }
-
-  if(budget.valide > 1){
-    throw new Error("Budget non validable");
-  }else{
-    const filtreData = {idbudget: budget.idbudget, iduser : data.iduser, niveauactuel: budget.niveauactuel};
-    const rights = await check_rightUser(filtreData);
-    if(!rights.length){
-        throw new Error("Vous n'êtes pas autorisé à valider à ce niveau");
+async function validateBudget(idbudget, data) {
+    if (!idbudget || !data.decision) {
+        throw new Error("Aucune donnée reçue");
     }
 
-    //Mapper la décision utilisateur
-    let reponse = null;
-    if(data.decision == 'accepter'){
-        reponse = 'approuve';
-    }else if(data.decision == 'refuser'){
-        reponse = 'rejete';
-    }else{
-        reponse = 'revoir'
+    if (data.decision === 'refuser' && !data.motif) {
+        throw new Error("Motif requis");
     }
 
-    const decisionPayload = {
-      idbudget: data.idbudget,
-      iduser: data.iduser,
-      motif: data.motif ?? null,
-      commentaire: data.comment ?? null,
-      decision: reponse
-    };
+    if (data.decision === 'complement' && !data.motif) {
+        throw new Error("Motif requis");
+    }
 
-    //Enregistrer la décision
-    await save_decision(decisionPayload);
+    //Recuperer le budget par idbuget
+    let budget = null;
+    budget = await get_budgetByid(idbudget);
+    if (!budget) {
+        throw new Error("Budget inexistant");
+    }
 
-    //Cas REFUS → rejet immédiat
-    // if (!isAccepted) {
-    //   await update_statut({
-    //     idbudget: budget.idbudget,
-    //     statut: 3 // REJETÉE
-    //   });
-    //   return;
-    // }
-
-    // Get niveauactuel du budget
-    const { valide, niveauactuel } = budget;
-
-    // vérifier si dernier niveau atteint
-    const [{ dernierRang }] = await get_dernierniveau(budget.idbudget, budget.idcircuitvalidation);
-    //Si le budget a pour circuit type entite
-    const circuit = await get_circuitvalidation(budget.idcircuitvalidation);
-    
-    let upvalide = 0;
-    if (niveauactuel === dernierRang) {
-      // validation finale
-      await update_statut({
-        idbudget: idbudget,
-        valide: 1 // VALIDÉE
-      });
-
-      upvalide = 1;
-      if(circuit.typeentite == 'site'){
-        try {
-            //Récuperer le circuit de type entite societe
-            const circuit_societe = await get_circuitEntiteSociete(budget.idsociete);
-            if(!circuit_societe || circuit_societe.length == 0){
-                throw new Error("Circuit de type entite societé inexistant");
-            }
-
-            const init_dataCircuit = {
-                idcircuit: circuit_societe.idcircuitvalidation,
-                idbudget : budget.idbudget,
-                niveauactuel : 1,
-                valide : 0
-            }
-
-            //Rattacher le circuit societe et renitialiser les variables de validation
-            const new_budget = await update_circuit(init_dataCircuit);
-           
-            //Initialiser le circuit avec le nouveau budget modifié
-            await initCircuitBudget(new_budget);
-        } catch (error) {
-            throw new Error(error);
-        }
-      }
-
+    if (budget.valide > 1) {
+        throw new Error("Budget non validable");
     } else {
-      // passer au circuit etape suivant
-      await nextNiveauactuel(idbudget);
+        const filtreData = { idbudget: budget.idbudget, iduser: data.iduser, niveauactuel: budget.niveauactuel };
+        const rights = await check_rightUser(filtreData);
+        if (!rights.length) {
+            throw new Error("Vous n'êtes pas autorisé à valider à ce niveau");
+        }
+
+        //Mapper la décision utilisateur
+        let reponse = null;
+        if (data.decision == 'accepter') {
+            reponse = 'approuve';
+        } else if (data.decision == 'refuser') {
+            reponse = 'rejete';
+        } else {
+            reponse = 'revoir'
+        }
+
+        const decisionPayload = {
+            idbudget: data.idbudget,
+            iduser: data.iduser,
+            motif: data.motif ?? null,
+            commentaire: data.comment ?? null,
+            decision: reponse
+        };
+
+        //Enregistrer la décision
+        await save_decision(decisionPayload);
+
+        //Cas REFUS → rejet immédiat
+        // if (!isAccepted) {
+        //   await update_statut({
+        //     idbudget: budget.idbudget,
+        //     statut: 3 // REJETÉE
+        //   });
+        //   return;
+        // }
+
+        // Get niveauactuel du budget
+        const { valide, niveauactuel } = budget;
+
+        // vérifier si dernier niveau atteint
+        const [{ dernierRang }] = await get_dernierniveau(budget.idbudget, budget.idcircuitvalidation);
+        //Si le budget a pour circuit type entite
+        const circuit = await get_circuitvalidation(budget.idcircuitvalidation);
+        console.log('circuit:', circuit)
+
+        let upvalide = 0;
+        if (niveauactuel === dernierRang) {
+            // validation finale
+            await update_statut({
+                idbudget: idbudget,
+                valide: 1 // VALIDÉE
+            });
+
+            upvalide = 1;
+            if (circuit.typeentite == 'site') {
+                try {
+                    //Récuperer le circuit de type entite societe
+                    const circuit_societe = await get_circuitEntiteSociete(budget.idsociete);
+                    console.log("circuit_societe:", circuit_societe)
+                    if (!circuit_societe || circuit_societe.length == 0) {
+                        throw new Error("Circuit de type entite societé inexistant");
+                    }
+
+
+                    const init_dataCircuit = {
+                        idcircuit: circuit_societe.idcircuitvalidation,
+                        idbudget: budget.idbudget,
+                        niveauactuel: 1,
+                        valide: 0
+                    }
+
+                    console.log("init_dataCircuit:", init_dataCircuit)
+
+                    //Rattcher le circuit societe et renitialiser les variables de validation
+                    const new_budget = await update_circuit(init_dataCircuit);
+                    console.log("new_budget:", new_budget)
+                    await initCircuitBudget(new_budget)
+                } catch (error) {
+                    throw new Error(error);
+                }
+            }
+
+        } else {
+            // passer au circuit etape suivant
+            await nextNiveauactuel(idbudget);
+        }
+
+        const payload = { idbudget: budget.idbudget, valide: upvalide };
+        console.log("Payload:", payload)
+
+        if (circuit.typeentite == 'site') {
+            await update_budgetSite(payload);
+        } else {
+            await update_budgetSociete(payload);
+        }
     }
 
-    const payload = {idbudget: budget.idbudget, valide: upvalide};
-    
-    if(circuit.typeentite == 'site'){
-        await update_budgetSite(payload);
-    }else{
-        await update_budgetSociete(payload);
-    }
-  }
-
-  return {message: "Budget validée" };
+    return { message: "Budget validée" };
 }
 
 async function update_statut(data) {
@@ -286,7 +290,7 @@ async function nextNiveauactuel(idbudget) {
 }
 
 //Recuperer le circuit validation par idcircuit
-async function get_circuitvalidation(idcircuit){
+async function get_circuitvalidation(idcircuit) {
     const pool = await connectDB()
     const result = await pool.request()
         .input('idcircuit', sql.UniqueIdentifier, idcircuit)
@@ -305,7 +309,7 @@ async function update_circuit(data) {
         .input('valide', sql.Int, data.valide)
         .query(circuitquery.updateCircuit)
 
-    return result.recordset
+    return result.recordset[0]
 }
 
 // Mise a jour du budget les champs site
@@ -333,16 +337,17 @@ async function update_budgetSociete(data) {
 }
 
 //Envoyer idbudget pour récuperer les validateurs du circuit du budget
-exports.validerBudget = async (req, res ) => {
+exports.validerBudget = async (req, res) => {
     try {
         const idbudget = req.params.id;
         if (!idbudget) {
             throw new Error("ID Budget requis");
         }
         const validateurs = await validateBudget(idbudget, req.body);
-         res.json({ success: true, message: "Décision pris en compte" });
+        res.json({ success: true, message: "Décision pris en compte" });
     } catch (error) {
         res.status(404).json({ success: false, message: error.message });
     }
 }
 
+exports.initCircuitBudget = initCircuitBudget
