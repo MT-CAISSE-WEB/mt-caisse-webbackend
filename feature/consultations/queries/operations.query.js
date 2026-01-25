@@ -72,5 +72,109 @@ module.exports = {
         AND (@montantmax IS NULL OR L.montantoperation <= @montantmax)
 
         ORDER BY O.dateoperation, O.codeoperation;
+    `,
+    lastoperation : `
+        SELECT
+            C.codecaisse              AS codecaisse,
+            C.libelle                 AS caisse,
+            TOPE.montant              AS montant,
+            D.codedevise              AS devise_caisse,
+            TOPE.montantref           AS montant_ref,
+            TOPE.codtypeoperation     AS typeoperation,
+            EOC.codeoperation         AS operation,
+            EOC.dateoperation         AS date_operation,
+            EOC.montant               AS montant_op,
+            L.libelle                 AS commentaire,
+            CP.soldeouverture         AS solde_ouverture,
+            CP.soldefermeture         AS solde_fermeture,
+
+            COUNT(*) OVER()           AS total
+
+            FROM EnteteOperationCaisse EOC
+            INNER JOIN TypeOperation TOPE 
+                ON TOPE.idoperation = EOC.idoperation
+            INNER JOIN Caisse C 
+                ON C.idcaisse = TOPE.idcaisse
+            INNER JOIN Devise D 
+                ON D.iddevise = EOC.iddevise
+            LEFT JOIN CaissePeriode CP 
+                ON CP.idperiode = TOPE.idperiode
+            LEFT JOIN LigneoperationCaisse L
+                ON L.idoperation = EOC.idoperation
+            WHERE
+                EOC.dateoperation <= @date
+                AND TOPE.idcaisse IN (SELECT value FROM STRING_SPLIT(@caisses, ','))
+            ORDER BY
+                EOC.dateoperation DESC
+            OFFSET @offset ROWS
+            FETCH NEXT @limit ROWS ONLY;
+    `,
+    history : `
+        SELECT
+            C.codecaisse AS codecaisse,
+            C.libelle            AS caisse,
+            TOPE.montant               AS montant,
+            D.codedevise               AS devise_caisse,
+            TOPE.montantref            AS montant_ref,
+            TOPE.codtypeoperation      AS typeoperation,
+            EOC.codeoperation          AS operation,
+            EOC.dateoperation          AS date_operation,
+            EOC.montant          AS montant_op,
+            L.libelle  AS commentaire,
+            CP.soldeouverture          AS solde_ouverture,
+            CP.soldefermeture          AS solde_fermeture
+        FROM EnteteOperationCaisse EOC
+        INNER JOIN TypeOperation TOPE 
+            ON TOPE.idoperation = EOC.idoperation
+        INNER JOIN Caisse C 
+            ON C.idcaisse = TOPE.idcaisse
+        INNER JOIN Devise D 
+            ON D.iddevise = EOC.iddevise
+        LEFT JOIN CaissePeriode CP 
+            ON CP.idperiode = TOPE.idperiode
+        LEFT JOIN LigneoperationCaisse L
+            ON L.idoperation = EOC.idoperation
+        WHERE
+            EOC.dateoperation = @date
+            AND TOPE.idcaisse IN (
+                SELECT value FROM STRING_SPLIT(@caisses, ',')
+            )
+        ORDER BY
+            EOC.dateoperation;
+    `,
+    totalOperation : `
+        SELECT 
+            E.idoperation,
+            E.dateoperation,
+			t.idperiode,
+            c.idcaisse,
+            c.codecaisse,
+            c.libelle,
+            c.iddevise,
+            d.codedevise,
+            c.seuilmnimal,
+			c.soldeinitialisation,
+            SUM(
+                CASE 
+                    WHEN codtypeoperation = 'encaissement' THEN t.montant
+                END
+            ) AS encaissement,
+            SUM(
+                CASE 
+                    WHEN codtypeoperation = 'decaissement' THEN t.montant
+                END
+            ) AS decaissement,
+            SUM(
+                CASE 
+                    WHEN codtypeoperation = 'encaissement' THEN t.montant
+                    ELSE -t.montant
+                END
+            ) AS solde
+        FROM TypeOperation t 
+		LEFT JOIN EnteteOperationCaisse E ON E.idoperation = t.idoperation
+        LEFT JOIN Caisse c ON c.idcaisse = t.idcaisse
+        LEFT JOIN Devise d ON d.iddevise = c.iddevise
+       
+        GROUP BY E.idoperation, E.dateoperation, t.idperiode, c.idcaisse, c.codecaisse, c.libelle, c.iddevise, d.codedevise, c.seuilmnimal, c.soldeinitialisation;
     `
 }

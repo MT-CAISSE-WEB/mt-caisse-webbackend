@@ -153,6 +153,16 @@ module.exports = {
             SUM(
                 CASE 
                     WHEN codtypeoperation = 'encaissement' THEN montant
+                END
+            ) AS encaissement,
+            SUM(
+                CASE 
+                    WHEN codtypeoperation = 'decaissement' THEN montant
+                END
+            ) AS decaissement,
+            SUM(
+                CASE 
+                    WHEN codtypeoperation = 'encaissement' THEN montant
                     ELSE -montant
                 END
             ) AS solde
