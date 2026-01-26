@@ -12,7 +12,7 @@ module.exports.getallpermission = asyncHandler (async(req,res, next)=>{
     }
 });
 
- 
+
 module.exports.getonepermission = asyncHandler (async(req,res, next)=>{
     try {
         const idpermission = req.params.id

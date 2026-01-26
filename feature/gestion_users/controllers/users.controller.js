@@ -27,12 +27,13 @@ module.exports.getoneuser = asyncHandler (async(req,res, next)=>{
 
 module.exports.upsertuser = asyncHandler (async(req,res, next)=>{
     try {
-        const {codeutilisateur,idsociete,nom,prenom,adresse,
+        const {codeutilisateur,idsociete,idsite,nom,prenom,adresse,
             telephone,email,login,password,idrole,typeentitesite,
             typeentitedepartement,typeentitesociete,acheteur,
             createdby,updatedby} = req.body;
+            console.log(req.body);
 
-        const updateduser = await userservice.upsertuser({codeutilisateur,idsociete,nom,prenom,adresse,telephone,email,login,password,idrole,typeentitesite,typeentitedepartement,typeentitesociete,acheteur,createdby,updatedby})
+        const updateduser = await userservice.upsertuser({codeutilisateur,idsociete,idsite,nom,prenom,adresse,telephone,email,login,password,idrole,typeentitesite,typeentitedepartement,typeentitesociete,acheteur,createdby,updatedby})
         res.status(updateduser.status).json({success: updateduser.success,message:updateduser.message, data: updateduser.data});
     } catch (error) {
         res.status(500).json({ success: false, message: "Erreur serveur", error });
@@ -59,6 +60,32 @@ module.exports.login = asyncHandler (async(req,res, next)=>{
     }
     catch(error){
         res.status(500).json({ success: false, message: "Erreur serveur", error });
+    }
+});
+
+module.exports.changepassword = asyncHandler (async(req,res, next)=>{
+    try {
+        const userid = req.params['id'];
+        const {currentpassword,newpassword} = req.body;
+
+        if(!currentpassword || !newpassword)
+        {
+            return res.status(404).json({
+                success:false,
+                message : "Champs obligatoires manquants"
+            })
+        }
+
+        const changedpassword = await userservice.changepassword({userid,currentpassword,newpassword});
+        return res.status(changedpassword.status).json({
+            success: changedpassword.success,
+            message : changedpassword.message
+        })
+    } catch (error) {
+        return res.status(500).json({
+            status : false,
+            message : "Internal serveur erreur : "+error
+        })
     }
 });
 

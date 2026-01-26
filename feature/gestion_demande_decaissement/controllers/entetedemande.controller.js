@@ -123,3 +123,17 @@ module.exports.getDetailBudget = asyncHandler(async(req, res, next) => {
     res.status(404).json({ success: false, message: error.message });
   }
 });
+
+/**
+ * Dernier teux de devise
+ */
+module.exports.gettauxrecent = asyncHandler (async(req,res, next)=>{
+    try {
+        console.log(req.body);
+        const {iddeviseorigine,iddevisedestination, datepiece} = req.body;
+        const tauxrecents = await demandeservice.getDernierTaux(iddeviseorigine,iddevisedestination, datepiece);
+        res.json({success: true, data: tauxrecents[0]});
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Erreur serveur", error });
+    }
+});

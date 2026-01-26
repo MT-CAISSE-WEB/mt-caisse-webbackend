@@ -704,6 +704,7 @@ async function get_detailBudget(iddemande){
                 codedept: row.codedept,
                 codedevise : row.codedevise,
                 totaldemande : 0,
+                totalref : 0,
                 budget : {
                   idbudget : row.idbudget,
                   codebudget : row.codebudget,
@@ -743,6 +744,7 @@ async function get_detailBudget(iddemande){
 
                 dmd.details.push(demandes[row.idnature])
                 dmd.totaldemande += row.montant_demande || 0;
+                dmd.totalref += row.montant_ref || 0;
               }
             }
           }
@@ -755,6 +757,36 @@ async function get_detailBudget(iddemande){
     }
 }
 
+async function getDernierTaux(deviseorigine, devisedestination, date){
+  if(!deviseorigine || !devisedestination){
+    throw new Error('Données invalides');
+  }
+
+  //Récuperer la devise
+  let deviseOrigine = null;
+  if(deviseorigine){
+    deviseOrigine = await deviseservice.getonedevise(deviseorigine);
+  }else{
+    throw new Error('Dévise inexistante dans la base');
+  }
+
+  let deviseDestinat = null;
+  if(deviseorigine){
+    deviseDestinat = await deviseservice.getonedevise(deviseDestinat);
+  }else{
+    throw new Error('Dévise inexistante dans la base');
+  }
+
+  try {
+    const result = await demandeModel.getTauxRecent(deviseorigine, devisedestination, date);
+    return result;
+  } catch (error) {
+    throw error;
+  }
+
+
+}
+
 module.exports = {
   getAll,
   create_demande,
@@ -764,5 +796,6 @@ module.exports = {
   validate,
   get_demandeAvalider,
   get_validateurCircuit,
-  get_detailBudget
+  get_detailBudget,
+  getDernierTaux
 };

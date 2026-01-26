@@ -6,13 +6,75 @@ const argon2 = require('argon2');
 const jwt = require("jsonwebtoken");
 const db = require('../../../config/db');
 
+async function changepassword(params){
+    try {
+        const {userid,currentpassword,newpassword} = params;
+
+        const pool = await db.connectDB();
+        const user = await pool.request()
+        .input("idutilisateur",db.sql.UniqueIdentifier,userid)
+        .query(`select password 
+                from utilisateur where idutilisateur =@idutilisateur`);
+        if(user.recordset.length ===0)
+        {
+            return {
+                status : 400,
+                success: false,
+                message : "Utilisateur introuvable"
+            }
+        }
+
+        const hasedpassword = user.recordset[0].password;
+
+        if (await argon2.verify(hasedpassword, newpassword)) {
+            return {
+                status :400,
+                success: false,
+                message: 'Le nouveau mot de passe doit être différent'
+            }
+        };
+
+
+        const isvalid = await argon2.verify(hasedpassword,currentpassword);
+
+        if(!isvalid){
+            return {
+                status : 401,
+                success: false,
+                message : "Mot de passe incorrect"
+            }
+        }
+
+        const newhashpassword = await argon2.hash(newpassword);
+
+        await pool.request()
+        .input("idutilisateur",sql.UniqueIdentifier,userid)
+        .input("password",sql.VarChar,newhashpassword)
+        .query(`UPDATE Utilisateur 
+                set password =@password 
+                where idutilisateur = @idutilisateur`);
+        
+        return {
+            status : 200,
+            success: true,
+            message : "Mot de passe modfifié avec succès!"
+        }
+    } catch (error) {
+       return {
+        status : 500,
+        success : false,
+        message : "Erreur lors de la modification : "+error
+       } 
+    }
+}
+
 
 async function upsertuser(params){
     try {
         const {
             codeutilisateur, idsociete, idsite, nom, prenom, adresse, telephone, email,
             login, password,typeentitesite, typeentitedepartement, typeentitesociete,
-            acheteur, idrole, createdby, updatedby
+            acheteur, createdby, updatedby
         } = params;
 
         const idutilisateur = uuidv4();
@@ -34,7 +96,6 @@ async function upsertuser(params){
                 typeentitedepartement = @typeentitedepartement,
                 typeentitesociete = @typeentitesociete,
                 acheteur = @acheteur,
-                idrole = @idrole,
                 updatedby = @updatedby,
                 updatedat = GETDATE()
             OUTPUT 'update' AS action, INSERTED.*
@@ -45,12 +106,12 @@ async function upsertuser(params){
             INSERT INTO Utilisateur 
                 (idutilisateur, codeutilisateur, idsociete, idsite, nom, prenom, adresse, telephone, email, 
                  login, password, typeentitesite, typeentitedepartement, typeentitesociete, 
-                 acheteur, idrole, createdby, createdat)
+                 acheteur, createdby, createdat)
             OUTPUT 'insert' AS action, INSERTED.*
             VALUES  
                 (@idutilisateur, @codeutilisateur, @idsociete, @idsite, @nom, @prenom, @adresse, 
                  @telephone, @email, @login, @password, @typeentitesite, @typeentitedepartement, 
-                 @typeentitesociete, @acheteur, @idrole, @createdby, GETDATE())
+                 @typeentitesociete, @acheteur, @createdby, GETDATE())
         END`;
 
         
@@ -71,7 +132,6 @@ async function upsertuser(params){
             .input("typeentitedepartement", sql.Int, typeentitedepartement)
             .input("typeentitesociete", sql.Int, typeentitesociete)
             .input("acheteur", sql.Int, acheteur)
-            .input("idrole", sql.Int, idrole)
             .input("createdby", sql.NVarChar, createdby)
             .input("updatedby", sql.NVarChar, updatedby)
             .query(query);
@@ -98,6 +158,7 @@ async function upsertuser(params){
         };
 
     } catch (error) {
+        console.log(error);
         return {
             success: false,
             status: 500,
@@ -105,6 +166,7 @@ async function upsertuser(params){
         };
     }
 }
+
 
 async function getalluser(){
     try {
@@ -168,169 +230,181 @@ async function deleteuser(iduser)
 //login
 // LOGIN
 async function login(login, password) {
-    try{
-        const pool = await connectDB();
+try{
+    const pool = await connectDB();
 
-            const query =`SELECT u.*, 
-            s.idsociete,
-            s.codesociete,
-            s.raisonsociale,
-                  
-            dref.iddevise  AS devise_ref_id,
-            dref.codedevise      AS devise_ref_code,
-            dref.intitule  AS devise_ref_intitule,
-            
-            drep.iddevise  AS devise_rep_id,
-            drep.codedevise      AS devise_rep_code,
-            drep.intitule    AS devise_rep_intitule, 
-            r.idrole,
-            r.code,
-            r.libelle,
-            d.iddepartement,
-            d.codedept,
-            d.libelle as libelledept
+        const query =`SELECT u.*, 
+        s.idsociete AS societe_id,
+        s.codesociete,
+        s.raisonsociale,
 
-            FROM Utilisateur u
-            INNER JOIN Societe s 
-                ON s.idsociete = u.idsociete
+        st.idsite AS site_id,
+        st.codesite,
+        st.libelle as libellesite,
+        
+        dref.iddevise  AS devise_ref_id,
+        dref.codedevise      AS devise_ref_code,
+        dref.intitule  AS devise_ref_intitule ,
+        
+        drep.iddevise  AS devise_rep_id,
+        drep.codedevise      AS devise_rep_code,
+        drep.intitule    AS devise_rep_intitule, 
+        r.idrole,
+        r.code,
+        r.libelle,
+        d.iddepartement,
+        d.codedept,
+        d.libelle as libelledept
 
-            left join utilisateur_role ur 
-            on ur.idutilisateur=u.idutilisateur
+        FROM Utilisateur u
+        left JOIN Societe s 
+            ON s.idsociete = u.idsociete
+        
+        left join utilisateur_role ur 
+        on ur.idutilisateur=u.idutilisateur
 
-            left join role r on ur.idrole = r.idrole
+        left join role r on ur.idrole = r.idrole
 
-            left join UtilisateurDepartement ud
-            on ud.idutilisateur = u.idutilisateur
+        left join utilisateurdepartement ud
+        on ud.idutilisateur = u.idutilisateur
 
-            left join Departement d on ud.iddepartement = d.iddepartement
+        left join departement d on ud.iddepartement = d.iddepartement
 
-            LEFT JOIN Devise dref 
-                ON dref.iddevise = s.iddevisereference
+        LEFT JOIN Devise dref 
+            ON dref.iddevise = s.iddevisereference
 
-            LEFT JOIN Devise drep 
-                ON drep.iddevise = s.iddevisereporting
+        LEFT JOIN Devise drep 
+            ON drep.iddevise = s.iddevisereporting
+        left join site st
+            on st.idsite = u.idsite
 
-            WHERE u.login = @login`;
+        WHERE u.login = @login`;
 
-            const result = await pool.request()
-                .input("login", db.sql.NVarChar(50), login)
-                .query(query);
+        const result = await pool.request()
+            .input("login", db.sql.NVarChar(50), login)
+            .query(query);
 
+        if (result.recordset.length === 0) {
+            return {status:404, success: false, message: "Utilisateur introuvable" };
+        }
 
-            if (result.recordset.length === 0) {
-                return {status:404, success: false, message: "Utilisateur introuvable" };
+        const userdb = result.recordset[0];
+        //const user = result.recordset[0];
+        const user = {
+            idsociete : result.recordset[0].idsociete,
+            idsite : result.recordset[0].idsite,
+            codesite : result.recordset[0].codesite,
+            libellesite : result.recordset[0].libellesite,
+            codesociete :  result.recordset[0].codesociete,
+            raisonsociale : result.recordset[0].raisonsociale,
+            idutilisateur: result.recordset[0].idutilisateur,
+            login: result.recordset[0].login,
+            nom: result.recordset[0].nom,
+            prenom: result.recordset[0].prenom,
+            typeentitesociete: result.recordset[0].typeentitesociete,
+            typeentitesite : result.recordset[0].typeentitesite,
+            typeentitedepartement : result.recordset[0].typeentitedepartement,
+            acheteur : result.recordset[0].acheteur,
+            devise_ref_id : result.recordset[0].devise_ref_id,
+            devise_ref_code : result.recordset[0].devise_ref_code,
+            devise_ref_intitule : result.recordset[0].devise_ref_intitule,
+            devise_ref_id : result.recordset[0].devise_ref_id,
+            devise_rep_code : result.recordset[0].devise_ref_code,
+            devise_rep_intitule : result.recordset[0].devise_ref_intitule,
+            roles: [],
+            departements : []
+        };
+
+            const roles = {};
+            const departements = {};
+
+            result.recordset.forEach(row => {
+
+            if (row.idrole) {
+                roles[row.idrole] = {
+                idrole: row.idrole,
+                code: row.code,
+                libelle: row.libelle
+                };
             }
 
-            const userdb = result.recordset[0];
-            const user = {
-                idsociete :  result.recordset[0].idsociete[0],
-                idsite: result.recordset[0].idsite,
-                codesociete :  result.recordset[0].codesociete,
-                raisonsociale : result.recordset[0].raisonsociale,
-                idutilisateur: result.recordset[0].idutilisateur,
-                codeutilisateur: result.recordset[0].codeutilisateur,
-                login: result.recordset[0].login,
-                nom: result.recordset[0].nom,
-                prenom: result.recordset[0].prenom,
-                typeentitesociete: result.recordset[0].typeentitesociete,
-                typeentitesite : result.recordset[0].typeentitesite,
-                typeentitedepartement : result.recordset[0].typeentitedepartement,
-                acheteur : result.recordset[0].acheteur,
-                devise_ref_id : result.recordset[0].devise_ref_id,
-                devise_ref_code : result.recordset[0].devise_ref_code,
-                devise_ref_intitule : result.recordset[0].devise_ref_intitule,
-                devise_rep_id : result.recordset[0].devise_rep_id,
-                devise_rep_code : result.recordset[0].devise_rep_code,
-                devise_rep_intitule : result.recordset[0].devise_rep_intitule,
-                roles: [],
-                departements : []
-            };
-
-                const roles = {};
-                const departements = {};
-
-                result.recordset.forEach(row => {
-
-                if (row.idrole) {
-                    roles[row.idrole] = {
-                    idrole: row.idrole,
-                    code: row.code,
-                    libelle: row.libelle
-                    };
-                }
-
-                if (row.iddepartement) {
-                    departements[row.iddepartement] = {
-                    iddepartement: row.iddepartement,
-                    codedept: row.codedept,
-                    libelle: row.libelledept
-                    };
-                }
-                });
-
-                user.roles = Object.values(roles);
-                user.departements = Object.values(departements);
-
-
-
-
-
-
-            // Vérifier mot de passe
-            const isOk = await argon2.verify(userdb.password, password);
-            if (!isOk) {
-                return {status:500, success: false, message: "Mot de passe incorrect" };
+            if (row.iddepartement) {
+                departements[row.iddepartement] = {
+                iddepartement: row.iddepartement,
+                codedept: row.codedept,
+                libelle: row.libelledept
+                };
             }
+            });
+
+            user.roles = Object.values(roles);
+            user.departements = Object.values(departements);
 
 
 
-            // Payload du token
-            const payload = {
-                id: user.idutilisateur,
-                login: user.login,
-                roles : user.roles.map(r => r.coderole),
-                departements : user.departements.map(d=>d.codedept)
-            };
 
+
+
+        // Vérifier mot de passe
+        const isOk = await argon2.verify(userdb.password, password);
+        if (!isOk) {
+            return {status:500, success: false, message: "Mot de passe incorrect" };
+        }
+
+
+
+        // Payload du token
+        const payload = {
+            id: user.idutilisateur,
+            login: user.login,
+            roles : user.roles.map(r => r.coderole),
+            departements : user.departements.map(d=>d.codedept)
+        };
+
+
+    
+      
+        // Access Token : court
+        const token = jwt.sign(
+            payload,
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        );
         
-            // Access Token : court
-            const token = jwt.sign(
-                payload,
-                process.env.JWT_SECRET,
-                { expiresIn: "1d" }
-            );
+        // Refresh Token : long
+        const refreshToken = jwt.sign(
+            payload,
+            process.env.JWT_SECRET_REFRESH,
+            { expiresIn: "30d" }
+        );
+       
+        // Stockage du refresh token (hashé)
+        const hashedRefresh = await argon2.hash(refreshToken);
+
+             await pool.request()
+            .input("userid", db.sql.UniqueIdentifier, user.idutilisateur)
+            .input("token", db.sql.NVarChar(255), hashedRefresh)
+            .query(`
+                INSERT INTO REFRESH_TOKEN(idutilisateur, token)
+                VALUES (@userid, @token)
+            `);  
             
-            // Refresh Token : long
-            const refreshToken = jwt.sign(
-                payload,
-                process.env.JWT_SECRET_REFRESH,
-                { expiresIn: "30d" }
-            );
-        
-            // Stockage du refresh token (hashé)
-            const hashedRefresh = await argon2.hash(refreshToken);
+            console.log(user);
 
-                await pool.request()
-                .input("userid", db.sql.UniqueIdentifier, user.idutilisateur)
-                .input("token", db.sql.NVarChar(255), hashedRefresh)
-                .query(`
-                    INSERT INTO Refresh_token(idutilisateur, token)
-                    VALUES (@userid, @token)
-                `);  
+        return {
+            success: true,
+            status : 200,
+            message: "Connexion réussie",
+            data: user,
+            token: token,
+            refreshToken: refreshToken
+        };
 
-            return {
-                success: true,
-                status : 200,
-                message: "Connexion réussie",
-                data: user,
-                token: token,
-                refreshToken: refreshToken
-            };
-
-        } catch (error) {
-            return { status:500, success: false, message: "Erreur serveur : " + error };
-        }
+    } catch (error) {
+        return { status:500, success: false, message: "Erreur serveur : " + error };
+    }
 }
+
 
 async function refreshtoken (refreshToken){
     if (!refreshToken) {
@@ -343,7 +417,7 @@ async function refreshtoken (refreshToken){
         const pool = await connectDB();
 
         // Récupération liste
-        const result = await pool.request().query("SELECT * FROM Refresh_token");
+        const result = await pool.request().query("SELECT * FROM REFRESH_TOKEN");
 
         const found = result.recordset.find(rt =>
             argon2.verify(rt.token, refreshToken)
@@ -379,7 +453,7 @@ async function logout(refreshToken){
 
             // Supprimer le refresh token lié à l'utilisateur
             await pool.request()
-                .query("DELETE FROM Refresh_token");
+                .query("DELETE FROM REFRESH_TOKEN");
 
             return { status: 200, success: true, message: "Déconnexion réussie" };
 
@@ -397,7 +471,8 @@ module.exports = {
     deleteuser,
     login,
     refreshtoken,
-    logout
+    logout,
+    changepassword
 }
 
 

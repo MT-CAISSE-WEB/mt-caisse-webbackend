@@ -74,10 +74,12 @@ module.exports.createworkflow = asyncHandler(async(req,res,next) => {
   const { etapes, ...circuit } = req.body;
   const pool = await db.connectDB();
   const transaction = await  pool.transaction();
-  
+
   try {
     await transaction.begin();
+
     const circuitId = await insertCircuit(circuit, transaction);
+
     for (const etape of etapes) {
       const etapeId = await insertEtape(circuitId, etape, transaction);
 
@@ -107,7 +109,7 @@ async function insertCircuit(circuit, transaction) {
     .input('idsite', circuit.idsite)
     // Autres inputs selon tes colonnes
     .query(`
-      INSERT INTO CircuitValidation (codecircuitvalidation, typeentite, typeaction, idsociete, idsite)
+      INSERT INTO circuitvalidation (codecircuitvalidation, typeentite, typeaction, idsociete, idsite)
       OUTPUT INSERTED.idcircuitvalidation
       VALUES (@codecircuitvalidation, @typeentite, @typeaction, @idsociete, @idsite)
     `);
@@ -150,6 +152,7 @@ module.exports.updateworkflow = asyncHandler(async (req, res) => {
   const pool = await db.connectDB();
   const transaction = pool.transaction();
 
+
   try {
     await transaction.begin();
 
@@ -184,7 +187,7 @@ async function updateCircuit(id, circuit, transaction) {
     .input('idsociete', circuit.idsociete)
     .input('idsite', circuit.idsite)
     .query(`
-      UPDATE CircuitValidation
+      UPDATE circuitvalidation
       SET codecircuitvalidation = @codecircuitvalidation,
           typeentite = @typeentite,
           typeaction = @typeaction,
@@ -201,11 +204,11 @@ async function deleteCircuitEtapes(idcircuitvalidation) {
     .input('idcircuitvalidation', idcircuitvalidation)
     .query(`
       DELETE ev
-      FROM Etapevalidateur ev
-      JOIN Circuitetape ce ON ce.idcircuitetape = ev.idcircuitetape
+      FROM etapevalidateur ev
+      JOIN circuitetape ce ON ce.idcircuitetape = ev.idcircuitetape
       WHERE ce.idcircuitvalidation = @idcircuitvalidation;
 
-      DELETE FROM Circuitetape
+      DELETE FROM circuitetape
       WHERE idcircuitvalidation = @idcircuitvalidation;
     `);
   } catch (error) {

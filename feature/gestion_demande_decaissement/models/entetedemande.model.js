@@ -270,6 +270,21 @@ class enteteDemandeModel {
     return result.recordset
   }
 
+  async getTauxRecent(deviseorigine, devisedestination, date){
+    const pool = await connectDB()
+    try {
+        const result = await pool.request()
+            .input('idDeviseDemande', sql.UniqueIdentifier, deviseorigine)
+            .input('idDeviseSociete', sql.UniqueIdentifier, devisedestination)
+            .input('date', sql.DateTime, date)
+            .query(entetedemandeQuery.dernierTaux)
+
+        return result.recordset
+    } catch (error) {
+        console.log(error);
+    }
+  }
+
 }
 
 module.exports = enteteDemandeModel

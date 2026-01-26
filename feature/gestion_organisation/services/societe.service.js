@@ -125,6 +125,8 @@ async function getonesociete(idsociete){
             return {success:false,status:404,message:"Société non trouvée"};
         }
 
+        console.log(result.recordset[0]);
+
         return {
             success:true,
             status:200,

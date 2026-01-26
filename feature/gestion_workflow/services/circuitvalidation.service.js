@@ -115,7 +115,8 @@ async function update_circuitvalidation(idcircuitvalidation, data) {
   if (!idcircuitvalidation || !data.codecircuitvalidation) {
     throw new Error("Erreur de donnée");
   }
-
+  
+ 
   try {
     const circuitvalidation_ = await circuitvalidation.update_circuitvalidation(idcircuitvalidation, data);
     return circuitvalidation_;

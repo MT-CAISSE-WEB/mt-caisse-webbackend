@@ -56,8 +56,8 @@ module.exports = {
 		AND B.cloture = 0
 		AND @datedemande BETWEEN B.datedebut AND B.datefin
         AND (
-            (B.typebudget = 'Annuel' AND B.idsite = @idsite)
-            OR (B.typebudget = 'Mensuel' AND B.idsite = @idsite)
+            (B.typebudget = 'Annuel' AND B.idsociete = @idsociete)
+            OR (B.typebudget = 'Mensuel' AND B.idsociete = @idsociete)
         )
     `,
     checkBudgetSolde : `
