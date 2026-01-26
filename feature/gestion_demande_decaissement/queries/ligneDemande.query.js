@@ -159,7 +159,7 @@ module.exports = {
         from EnteteDemande E
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
             LEFT JOIN Budget B ON B.idbudget = LD.idbudget
-        Where E.statut = 2 AND E.decaisse = 0 
+        Where E.statut = 3 AND E.decaisse = 0 
                 and LD.idnature = @idnature 
                 AND LD.idbudget IS NOT NULL
     `,
@@ -168,7 +168,7 @@ module.exports = {
         from EnteteDemande E
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
             LEFT JOIN Budget B ON B.idbudget = LD.idbudget
-        Where E.statut = 2 AND E.decaisse = 1 
+        Where E.statut = 3 AND E.decaisse = 1 
                 and LD.idnature = @idnature 
                 AND LD.idbudget IS NOT NULL
     `

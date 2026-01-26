@@ -477,7 +477,7 @@ BEGIN
         datedemande DATETIME,
         decaisse INT DEFAULT 0,
         solde INT DEFAULT 0,
-        statut NVARCHAR(50),
+        statut INT DEFAULT 0,
         idcircuit UNIQUEIDENTIFIER,
         idsociete UNIQUEIDENTIFIER,
         idsite UNIQUEIDENTIFIER,
