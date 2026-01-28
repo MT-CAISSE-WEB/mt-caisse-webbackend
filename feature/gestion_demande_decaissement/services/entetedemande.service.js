@@ -304,6 +304,7 @@ async function get_demande_by_id(iddemande){
           codedemande: row.codedemande,
           typedemande: row.typedemande,
           libelledemande: row.libelledemande,
+          taux: row.taux,
           datedemande: row.datedemande,
           decaisse: row.decaisse,
           solde: row.solde,

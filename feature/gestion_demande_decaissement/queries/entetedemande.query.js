@@ -224,6 +224,7 @@ module.exports = {
             E.decaisse,
             E.solde,
             E.statut,
+            E.taux,
             E.niveauactuel,
             E.createdat AS entete_createdat,
 
