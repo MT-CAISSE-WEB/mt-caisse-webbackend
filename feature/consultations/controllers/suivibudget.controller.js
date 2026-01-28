@@ -7,7 +7,9 @@ const ErrorResponse = require("../../../shared/utils/errorResponse");
  */
 module.exports.suivibudgetController = asyncHandler(async(req, res, next) => {
   try {
-    const result = await suivibudgetservice.suivibudget();
+    // const {idbudget, idnature, iddepartement} = req.body;
+    const data = req.body;
+    const result = await suivibudgetservice.suivibudget(data);
     res.status(201).json({ success: true, data: result });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -17,10 +19,8 @@ module.exports.suivibudgetController = asyncHandler(async(req, res, next) => {
 
 module.exports.suiviByFiltreController = asyncHandler(async(req, res, next) => {
   try {
-    const {datedebut, datefin, nature, departement} = req.body;
-    
-    const result = await suivibudgetservice.suiviByFiltre(datedebut, datefin, nature, departement);
-    // console.log(result)
+    const {datedebut, datefin, budget, nature, departement} = req.body;
+    const result = await suivibudgetservice.suiviByFiltre(datedebut, datefin, budget, nature, departement);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
     console.log(error)

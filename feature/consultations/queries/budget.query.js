@@ -1,52 +1,67 @@
 module.exports = {
         // OK
     suivibudget : `
-        SELECT
-            B.idbudget,
-            B.codebudget,
-            B.libelle AS libellebudget,
-            B.typebudget,
-            B.datedebut,
-            B.datefin,
+    SELECT B.codebudget, B.libelle AS libellebudget, B.typebudget, B.datedebut, B.datefin
+	, DEPT.codedept, DEPT.libelle AS libelledept
+	, NO.codenature, NO.libelle AS libellenature
+	, BDN.montantprevisionsociete AS prevision
 
-            NO.codenature,
-            NO.libelle AS nature,
-
-            BDN.montantprevisionsociete AS budget_prevu,
-
-            ISNULL(SUM(CASE 
-                WHEN ED.statut IN (0,1) THEN LD.montantdemande
+	, ISNULL(SUM(CASE 
+            WHEN ED.statut IN (0,1) AND ED.decaisse = 0 
+                THEN LD.montantdemande
                 ELSE 0
-            END),0) AS montant_preengage,
+            END),0) AS preengage
 
-            ISNULL(SUM(CASE 
-                WHEN ED.statut = 2 THEN LD.montantdemande
+	, ISNULL(SUM(CASE 
+            WHEN ED.statut = 2 AND ED.decaisse = 0 
+                THEN LD.montantdemande
                 ELSE 0
-            END),0) AS montant_engage,
+            END),0) AS engage
 
-            BDN.montantprevisionsociete
-            - ISNULL(SUM(LD.montantdemande),0) AS solde
+	, ISNULL(SUM(CASE
+            WHEN ED.statut = 2 AND ED.decaisse = 1 
+                THEN LD.montantdemande
+                ELSE 0
+            END),0) AS realise
+
+	, BDN.montantprevisionsociete - 
+		ISNULL(SUM(CASE 
+			WHEN ED.statut IN (0,1) AND ED.decaisse = 0 
+			THEN LD.montantdemande
+			ELSE 0
+		END),0) - 
+		ISNULL(SUM(CASE 
+			WHEN ED.statut = 2 AND ED.decaisse = 0 
+			THEN LD.montantdemande
+			ELSE 0
+		END),0) -
+		ISNULL(SUM(CASE
+			WHEN ED.statut = 2 AND ED.decaisse = 1 
+			THEN LD.montantdemande
+			ELSE 0
+		END),0) AS solde
+
 
         FROM Budget B
-        JOIN BudgetDepartementNature BDN ON BDN.idbudget = B.idbudget
-        JOIN NatureOperation NO ON NO.idnature = BDN.idnature
+            JOIN BudgetDepartementNature BDN ON BDN.idbudget = B.idbudget
+            JOIN Departement DEPT ON DEPT.iddepartement = BDN.iddepartement
+            JOIN NatureOperation NO ON NO.idnature = BDN.idnature
+            LEFT JOIN EnteteDemande ED ON BDN.iddepartement = ED.iddepartement 
+            LEFT JOIN LigneDemande LD ON ED.iddemande = LD.iddemande
 
-        LEFT JOIN LigneDemande LD ON LD.idbudget = B.idbudget
-        LEFT JOIN EnteteDemande ED 
-            ON ED.iddemande = LD.iddemande
-            AND ED.statut < 3 -- annulé
+        WHERE B.actif = 1 AND B.valide = 1
+            AND (BDN.idbudget = @idbudget)
+            AND (BDN.iddepartement = @iddepartement)
+            AND (BDN.idnature = @idnature)
 
-        WHERE
-            B.actif = 1
-            AND B.valide = 1
-        GROUP BY
-            B.idbudget, B.codebudget, B.libelle, B.typebudget,
-            B.datedebut, B.datefin,
-            NO.codenature, NO.libelle,
-            BDN.montantprevisionsociete
-        ORDER BY
-            B.datedebut, B.codebudget;
 
+        GROUP BY B.codebudget, B.libelle , B.typebudget
+            , B.datedebut, B.datefin
+            , DEPT.codedept, DEPT.libelle
+            , NO.codenature, NO.libelle
+            , BDN.montantprevisionsociete
+
+        ORDER BY B.codebudget
     `,
 
     // OK
@@ -71,6 +86,7 @@ module.exports = {
     WHERE
         (@datedebut IS NULL OR ED.datedemande >= @datedebut)
         AND (@datefin IS NULL OR ED.datedemande <= @datefin)
+        AND (@idbudget IS NULL OR B.idbudget = @idbudget)
         AND (@idnature IS NULL OR NO.idnature = @idnature)
         AND (@iddepartement IS NULL OR DP.iddepartement = @iddepartement)
     ORDER BY ED.datedemande;
