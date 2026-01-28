@@ -14,7 +14,7 @@ module.exports.get_compteurs = asyncHandler(async(req, res, next) => {
     const compteurs = await compteurservice.getall({page, limit , search, actif});
     res.json({ success: true, data: compteurs });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Erreur serveur", error });
+    res.status(500).json({ success: false, message: error.message, error });
   }
 });
 
@@ -41,6 +41,7 @@ module.exports.createcompteur = asyncHandler(async(req, res, next) => {
     res.status(201).json({ success: true, data: compteur });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
+    console.log("error:", error.message);
   }
 });
 

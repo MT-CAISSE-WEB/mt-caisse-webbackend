@@ -8,7 +8,7 @@ class compteurModel {
         this.idmodelecompteur = idmodelecompteur;
         this.codemodelecompteur = codemodelecompteur;
         this.libelle = libelle;
-        this.typedocument = typedocument;
+        this.typedocument = typedocument; // demande ou opération de caisse
         this.sequence_1 = sequence_1;
         this.prefixe_1 = prefixe_1;
         this.sequence_2 = sequence_2;
@@ -30,7 +30,7 @@ class compteurModel {
             .input('prefixe_1', sql.NVarChar(100), this.prefixe_1)
             .input('sequence_2', sql.NVarChar(20), this.sequence_2)
             .input('prefixe_2', sql.NVarChar(100), this.prefixe_2)
-            .input('createdat', sql.DateTime, this.createdat)
+            .input('createdat', sql.DateTime, new Date())
             .input('createdby', sql.NVarChar(50), this.createdby)
             .query(compteurQueries.insert);
 
@@ -47,12 +47,13 @@ class compteurModel {
         const pool = await connectDB();
         try {
             const check = await pool.request()
-                .input('codemotif', sql.NVarChar(50), codemodelecompteur)
+                .input('codemodelecompteur', sql.NVarChar(50), codemodelecompteur)
                 .query(`SELECT COUNT(*) AS count FROM ModeleCompteur WHERE codemodelecompteur = @codemodelecompteur`);
 
             // S'il existe update
             if (check.recordset[0].count > 0) {
                 const result = await pool.request()
+                    .input('idmodelecompteur', sql.UniqueIdentifier, data.idmodelecompteur)
                     .input('libelle', sql.NVarChar(255), data.libelle)
                     .input('typedocument', sql.NVarChar(30), data.typedocument)
                     .input('sequence_1', sql.NVarChar(20), data.sequence_1)
@@ -61,7 +62,7 @@ class compteurModel {
                     .input('prefixe_2', sql.NVarChar(100), data.prefixe_2)
                     .input('updatedat', sql.DateTime, new Date())
                     .input('updatedby', sql.NVarChar(100), data.updatedby)
-                    .query(motifQueries.update);
+                    .query(compteurQueries.update);
                 return result;
             } else {
                 // 3️ Sinon → INSERT

@@ -59,7 +59,8 @@ module.exports.getLastOpController = asyncHandler(async(req, res, next) => {
  */
 module.exports.getAllpayment = asyncHandler(async(req, res, next) => {
   try {
-    const result = await consultationservice.getAllpayment();
+    console.log("Agir");
+    const result = await consultationservice.Allpaiement();
     res.status(201).json({ success: true, data: result });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });

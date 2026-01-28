@@ -156,24 +156,64 @@ module.exports = {
 			c.soldeinitialisation,
             SUM(
                 CASE 
-                    WHEN codtypeoperation = 'encaissement' THEN t.montant
+                    WHEN codtypeoperation = 'encaissement' THEN t.montantref
                 END
             ) AS encaissement,
             SUM(
                 CASE 
-                    WHEN codtypeoperation = 'decaissement' THEN t.montant
+                    WHEN codtypeoperation = 'decaissement' THEN t.montantref
                 END
             ) AS decaissement,
             SUM(
                 CASE 
-                    WHEN codtypeoperation = 'encaissement' THEN t.montant
-                    ELSE -t.montant
+                    WHEN codtypeoperation = 'encaissement' THEN t.montantref
+                    ELSE -t.montantref
                 END
             ) AS solde
         FROM TypeOperation t 
 		LEFT JOIN EnteteOperationCaisse E ON E.idoperation = t.idoperation
         LEFT JOIN Caisse c ON c.idcaisse = t.idcaisse
         LEFT JOIN Devise d ON d.iddevise = c.iddevise
+       
+        GROUP BY E.idoperation, E.dateoperation, t.idperiode, c.idcaisse, c.codecaisse, c.libelle, c.iddevise, d.codedevise, c.seuilmnimal, c.soldeinitialisation;
+    `,
+    totalOperationJour : `
+        SELECT 
+            E.idoperation,
+            E.dateoperation,
+			t.idperiode,
+            c.idcaisse,
+            c.codecaisse,
+            c.libelle,
+            c.iddevise,
+            d.codedevise,
+            c.seuilmnimal,
+			c.soldeinitialisation,
+            SUM(
+                CASE 
+                    WHEN codtypeoperation = 'encaissement' THEN t.montantref
+                END
+            ) AS encaissement,
+            SUM(
+                CASE 
+                    WHEN codtypeoperation = 'decaissement' THEN t.montantref
+                END
+            ) AS decaissement,
+            SUM(
+                CASE 
+                    WHEN codtypeoperation = 'encaissement' THEN t.montantref
+                    ELSE -t.montantref
+                END
+            ) AS solde
+        FROM TypeOperation t 
+		LEFT JOIN EnteteOperationCaisse E ON E.idoperation = t.idoperation
+        LEFT JOIN Caisse c ON c.idcaisse = t.idcaisse
+        LEFT JOIN Devise d ON d.iddevise = c.iddevise
+
+        E.dateoperation = @date
+            AND c.idcaisse IN (
+                SELECT value FROM STRING_SPLIT(@caisses, ',')
+            )
        
         GROUP BY E.idoperation, E.dateoperation, t.idperiode, c.idcaisse, c.codecaisse, c.libelle, c.iddevise, d.codedevise, c.seuilmnimal, c.soldeinitialisation;
     `

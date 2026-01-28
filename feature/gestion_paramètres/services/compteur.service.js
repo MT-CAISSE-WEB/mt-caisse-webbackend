@@ -11,16 +11,17 @@ async function create(data){
     const compteur = new CompteurModel( uuidv4(), data.codemodelecompteur ,data.libelle ,data.typedocument ,data.sequence_1 ,data.prefixe_1 ,data.sequence_2 ,data.prefixe_2, new Date(), data.createdby || 'System', null, null );
     const recorded = await compteur.create_compteur(compteur);
     // si le modèle renvoie une erreur
-    if (!recorded.success) {
-        throw new Error(recorded.message);
-    }
+    // if (!recorded.success) {
+    //     console.log("recorded error");
+    //     throw new Error(recorded.message);
+    // }
 
     return recorded.data;
 }
 
 async function getall(params){
     const result = await compteurmodel.get_allcompteurs(params);
-    compteurs = result.data.map(item => new CompteurModel(
+    compteurs = result.map(item => new CompteurModel(
         item.idmodelecompteur, item.codemodelecompteur, item.libelle ,item.typedocument ,item.sequence_1 ,item.prefixe_1 ,item.sequence_2 ,item.prefixe_2, item.createdat, item.createdby, item.updatedat, item.updatedby,
     ));
 

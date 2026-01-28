@@ -1,9 +1,10 @@
 module.exports = {
     insert : `
         INSERT INTO ModeleCompteur (idmodelecompteur, codemodelecompteur, libelle, typedocument, sequence_1,
-            prefixe_1, sequence_2, prefixe_2, createdby )
+            prefixe_1, sequence_2, prefixe_2, createdby, createdat )
+            OUTPUT INSERTED.*
         VALUES (@idmodelecompteur, @codemodelecompteur, @libelle, @typedocument, @sequence_1, @prefixe_1,
-            @sequence_2, @prefixe_2, @createdby) ;
+            @sequence_2, @prefixe_2, @createdby, @createdat) ;
     `,
     getall : ` SELECT * FROM ModeleCompteur ORDER BY createdat DESC; `,
     getone : `SELECT * FROM ModeleCompteur WHERE idmodelecompteur = @idmodelecompteur; `,
