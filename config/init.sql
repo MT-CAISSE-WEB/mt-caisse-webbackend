@@ -1406,6 +1406,48 @@ BEGIN
 END
 -- FIN INIT DENIS
 
+-- Justificatif opération
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'JustificatifOperation')
+BEGIN
+    CREATE TABLE JustificatifOperation (
+        idjustificatifoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codejustificatif NVARCHAR(24) UNIQUE,
+        idoperation UNIQUEIDENTIFIER,
+        iddevise UNIQUEIDENTIFIER,
+        taux DECIMAL(22, 9),
+        date DATETIME Default GETDATE(),
+        montantjustificatif DECIMAL(22, 9),
+        commentaire NVARCHAR(255),
+        createdat Datetime default GETDATE(),
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idoperation) REFERENCES EnteteOperationCaisse(idoperation) ON DELETE CASCADE,
+        FOREIGN KEY (iddevise) REFERENCES Devise(iddevise)
+    );
+END
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DetailsJustificatifOperation')
+BEGIN
+    CREATE TABLE DetailsJustificatifOperation (
+        iddetailsjustificatifoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idjustificatif UNIQUEIDENTIFIER,
+        idnature UNIQUEIDENTIFIER,
+        idcentreanalytique UNIQUEIDENTIFIER,
+        idtiers UNIQUEIDENTIFIER,
+        montantdetail DECIMAL(22, 9),
+        montantref DECIMAL(22, 9),
+        createdat Datetime default GETDATE(),
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idjustificatif) REFERENCES JustificatifOperation(idjustificatifoperation) ON DELETE CASCADE,
+        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
+        FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
+        FOREIGN KEY (idtiers) REFERENCES Tiers(idtiers)
+    );
+END
+
 
 IF NOT EXISTS (
     SELECT 1 

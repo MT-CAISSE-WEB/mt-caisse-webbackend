@@ -74,6 +74,11 @@ const journalpaiement = require("./feature/consultations/routes/operationConsult
 const motifsroutes = require("./feature/gestion_paramètres/routes/motif.route");
 const compteursroutes = require("./feature/gestion_paramètres/routes/compteur.route");
 
+// Justifacatif operation
+const justificatifoperationroute = require("./feature/gestion_paramètres/routes/justificatifOperation.routes");
+// Détails justificatif
+const detailsjustificatifroute = require("./feature/gestion_paramètres/routes/detailsJustificatifOperation.routes");
+
 
 const db = require('./config/db');
 
@@ -202,6 +207,10 @@ app.use("/API/consultation", journalpaiement);
 //Regrouper toutes les routes pour les paramètres
 app.use("/API/motif", motifsroutes);
 app.use("/API/modelecompteur", compteursroutes);
+
+// Regrouper toutes les routes pour les justificatifs
+app.use("/api/justificatifs", justificatifoperationroute);
+app.use("/api/details", detailsjustificatifroute);
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
