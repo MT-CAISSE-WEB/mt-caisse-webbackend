@@ -55,7 +55,7 @@ exports.findAll = async (req, res) => {
       ],
     });
 
-    res.status(200).json(details);
+    res.status(200).json({success: true, data: details});
   } catch (error) {
     res.status(500).json({
       message: "Erreur récupération détails",

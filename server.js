@@ -69,6 +69,7 @@ const validationdemanderoute = require("./feature/gestion_workflow/routes/valida
 // Declaration des routes pour les consultations
 const suivibudgetroute = require("./feature/consultations/routes/suivibudget.route");
 const journalpaiement = require("./feature/consultations/routes/operationConsultation.route");
+const decaissementaj = require("./feature/consultations/routes/decaissementAj.route");
 
 // Declaration des routes pour les paramètres
 const motifsroutes = require("./feature/gestion_paramètres/routes/motif.route");
@@ -203,6 +204,7 @@ app.use("/API/validationdemande", validationdemanderoute);
 //Regrouper toutes les routes pour les consultations
 app.use("/API/suivibudget", suivibudgetroute);
 app.use("/API/consultation", journalpaiement);
+app.use("/API/consultation", decaissementaj);
 
 //Regrouper toutes les routes pour les paramètres
 app.use("/API/motif", motifsroutes);
@@ -210,7 +212,7 @@ app.use("/API/modelecompteur", compteursroutes);
 
 // Regrouper toutes les routes pour les justificatifs
 app.use("/api/justificatifs", justificatifoperationroute);
-app.use("/api/details", detailsjustificatifroute);
+app.use("/api/justificatifs-details", detailsjustificatifroute);
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {

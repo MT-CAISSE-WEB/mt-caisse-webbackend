@@ -944,6 +944,7 @@ BEGIN
         iddevise UNIQUEIDENTIFIER,
         dateoperation DATETIME,
         montant DECIMAL(22,9),
+        justifiee INT DEFAULT 0,
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
@@ -1448,6 +1449,77 @@ BEGIN
     );
 END
 
+-- Index sur EnteteOperationCaisse(dateoperation)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_operation_date'
+    AND object_id = OBJECT_ID('EnteteOperationCaisse')
+)
+BEGIN
+    CREATE INDEX IX_operation_date
+    ON EnteteOperationCaisse(dateoperation);
+END
+
+-- Index sur TypeOperation(idoperation)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_typeoperation_operation'
+    AND object_id = OBJECT_ID('TypeOperation')
+)
+BEGIN
+    CREATE INDEX IX_typeoperation_operation
+    ON TypeOperation(idoperation);
+END
+
+-- Index sur JustificatifOperation(idoperation)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_justificatif_operation'
+    AND object_id = OBJECT_ID('JustificatifOperation')
+)
+BEGIN
+    CREATE INDEX IX_justificatif_operation
+    ON JustificatifOperation(idoperation);
+END
+
+-- Index sur DetailsJustificatifOperation(idjustificatif)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_detailjustificatif'
+    AND object_id = OBJECT_ID('DetailsJustificatifOperation')
+)
+BEGIN
+    CREATE INDEX IX_detailjustificatif
+    ON DetailsJustificatifOperation(idjustificatif);
+END
+
+-- Index sur ligneoperationCaisse(idoperation)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_ligneoperation'
+    AND object_id = OBJECT_ID('ligneoperationCaisse')
+)
+BEGIN
+    CREATE INDEX IX_ligneoperation
+    ON ligneoperationCaisse(idoperation);
+END
+
+-- Index sur typeoperation(idoperation, codtypeoperation)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_TypeOperation_operation_code'
+    AND object_id = OBJECT_ID('TypeOperation')
+)
+BEGIN
+    CREATE INDEX IX_TypeOperation_operation_code
+    ON TypeOperation(idoperation, codtypeoperation);
+END
 
 IF NOT EXISTS (
     SELECT 1 
