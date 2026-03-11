@@ -70,6 +70,16 @@ const validationdemanderoute = require("./feature/gestion_workflow/routes/valida
 const suivibudgetroute = require("./feature/consultations/routes/suivibudget.route");
 const journalpaiement = require("./feature/consultations/routes/operationConsultation.route");
 const decaissementaj = require("./feature/consultations/routes/decaissementAj.route");
+// Stats Nature par département route
+const statsnaturepardepartementroute = require("./feature/consultations/routes/statsNatureByDept.route");
+// Stats Demande par statut route
+const statsdemandeparstatutroute = require("./feature/consultations/routes/statsDemandeParStatut.route");
+// stats Budget validé
+const statsvalidatedbudgetroute = require("./feature/consultations/routes/statsBudgetValide.route");
+//
+const statsMontantByDeptRoute = require("./feature/consultations/routes/statsMontantByDept.route");
+// solde caisse
+const statsMontantByCaisseRoute = require("./feature/consultations/routes/soldeByCaisse.route");
 
 // Declaration des routes pour les paramètres
 const motifsroutes = require("./feature/gestion_paramètres/routes/motif.route");
@@ -213,6 +223,13 @@ app.use("/API/modelecompteur", compteursroutes);
 // Regrouper toutes les routes pour les justificatifs
 app.use("/api/justificatifs", justificatifoperationroute);
 app.use("/api/justificatifs-details", detailsjustificatifroute);
+
+// Stats nature par departement
+app.use("/api/stats", statsnaturepardepartementroute);
+app.use("/api/statsdemande", statsdemandeparstatutroute);
+app.use("/api/statsbudget", statsvalidatedbudgetroute);
+app.use("/api/statsmontant", statsMontantByDeptRoute);
+app.use("/api/statscaisse", statsMontantByCaisseRoute);
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {

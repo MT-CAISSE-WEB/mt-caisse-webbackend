@@ -246,3 +246,33 @@ module.exports.NatureOperation = sequelize.define(
     timestamps: false,
   }
 )
+
+// Affectation Département Nature
+module.exports.AffectationDepartementNature = sequelize.define(
+  "AffectationDepartementNature",
+    {
+      idaffdepartementnature: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+      },
+
+      iddepartement: {
+        type: DataTypes.UUID,
+        allowNull: false,
+      },
+
+      idnature: {
+        type: DataTypes.UUID,
+        allowNull: false,
+      },
+      createdat: DataTypes.DATE,
+    createdby: DataTypes.STRING(50),
+    updatedat: DataTypes.DATE,
+    updatedby: DataTypes.STRING(50),
+    },
+    {
+      tableName: "AffectationDepartementNature",
+      timestamps: false,
+    }
+)
