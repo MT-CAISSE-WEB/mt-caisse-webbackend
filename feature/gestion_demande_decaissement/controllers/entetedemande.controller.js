@@ -11,8 +11,9 @@ module.exports.getAll = asyncHandler(async(req, res, next) => {
     const search = req.query.search || null;
     const limit =  req.query.limit ? parseInt(req.query.limit) : 10;
     const status = req.query.status || null;
+    const user = req.query.user || null;
 
-    const demandes = await demandeservice.getAll({page, limit , search, status});
+    const demandes = await demandeservice.getAll({page, limit , search, status, user});
     res.json({ success: true, data: demandes });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur", error });

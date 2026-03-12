@@ -10,6 +10,7 @@ const siteservice = require("../../gestion_organisation/services/site.service");
 const enteteoperationmodel = require("../../gestion_operation_caisse/models/enteteoperation.model");
 const lignedemandeservice = require("../services/ligendemande.service");
 const detaildemandeservice = require("../services/detaildemande.service");
+const userservice = require("../../gestion_users/services/users.service")
 const lignedemandeModel = require("../models/lignedemande.model");
 
 let demandeModel = new enteteDemandeModel();
@@ -168,8 +169,12 @@ async function create_demande(data) {
   return data;
 }
 
-async function getAll({page, limit , search, status}) {
-  const result = await demandeModel.get_allDemandes({page, limit , search, status});
+async function getAll({page, limit , search, status, user}) {
+
+  //Récuperer les data de l'utilisateur connecté
+  const userconnect = await userservice.getoneuser(user);
+
+  const result = await demandeModel.get_allDemandes({page, limit , search, status}, userconnect.data);
   if (!result || result.length === 0) {
     throw new Error("Liste des demandes non chargée");
   }

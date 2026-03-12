@@ -3,11 +3,13 @@ const sql = require('mssql');
 const { operationQueries } = require('../queries/queryIndex');
 const PaginationModel = require('../../../shared/utils/model');
 
-async function journalPaiement(datedebut, datefin, caisse){
+async function journalPaiement(datedebut, datefin, caisse, idsite, typeentitesociete){
     const pool = await connectDB();
 
     try {
         const result = await pool.request()
+            .input('idsite', sql.UniqueIdentifier, idsite)
+            .input('typeentitesociete', sql.Int, typeentitesociete)
             .input('datedebut', sql.Date, datedebut || null)
             .input('datefin', sql.Date, datefin || null)
             .input('idcaisse', sql.UniqueIdentifier, caisse || null)
@@ -18,12 +20,16 @@ async function journalPaiement(datedebut, datefin, caisse){
         resultat.forEach(r => {
 
             const date = r.date_operation.toISOString().split('T')[0];
+            const site = r.site;
+            const codesite = r.codesite;
             const caisseKey = r.caisse;
 
             // Niveau DATE
             if (!map.has(date)) {
                 map.set(date, {
                     date,
+                    codesite,
+                    site,
                     caisses: new Map()
                 });
             }
@@ -55,6 +61,8 @@ async function journalPaiement(datedebut, datefin, caisse){
         // Conversion Map → Array
         const datasql = Array.from(map.values()).map(d => ({
             date: d.date,
+            site: d.site,
+            codesite: d.codesite,
             caisses: Array.from(d.caisses.values())
         }));
 
@@ -76,6 +84,8 @@ async function detailOperation(data){
 
     try {
         const result = await pool.request()
+        .input('idsite', sql.UniqueIdentifier, data.idsite)
+        .input('typeentitesociete', sql.Int, data.typeentitesociete)
         .input('datedebut', sql.Date, data.datedebut || null)
         .input('datefin', sql.Date, data.datefin || null)
         .input('idcentre', sql.UniqueIdentifier, data.centre || null)

@@ -89,6 +89,13 @@ module.exports = {
                 E.iddemande
             FROM EnteteDemande E
             WHERE 1 = 1
+
+            -- Sécurité utilisateur
+            AND (
+                @typeentitesociete = 1
+                OR e.idsite = @idsite
+            )
+
             AND (
                 @search IS NULL
                 OR E.codedemande LIKE @search
@@ -186,6 +193,13 @@ module.exports = {
         SELECT COUNT(*) AS total
         FROM EnteteDemande E
         WHERE 1 = 1
+
+        -- Sécurité utilisateur
+        AND (
+            @typeentitesociete = 1
+            OR e.idsite = @idsite
+        )
+            
         AND (
             @search IS NULL
             OR E.codedemande LIKE @search

@@ -12,9 +12,9 @@ module.exports.get_typeoperations = asyncHandler(async(req, res, next) => {
     const search = req.query.search || null;
     const date = req.query.date || null;
     const limit = req.query.limit ? parseInt(req.query.limit) : 5;      // Comptabilisé / Non comptabilisé / Tous
-    const status = req.query.statut;
+    const user = req.query.user;
 
-    const typeoperations = await typeoperationservice.get_all_typeoperations({page, limit, search, date});
+    const typeoperations = await typeoperationservice.get_all_typeoperations({page, limit, search, date, user});
     res.json({ success: true, data: typeoperations });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur", error });

@@ -66,7 +66,7 @@ class enteteDemandeModel {
     }
   }
 
-  async get_allDemandes({ page = 1, limit = 10, search = null, statut = null }) {
+  async get_allDemandes({ page = 1, limit = 10, search = null, statut = null }, user) {
     page = parseInt(page);
     limit = parseInt(limit);
     const offset = (page - 1) * limit;
@@ -75,6 +75,8 @@ class enteteDemandeModel {
     try {
       const result = await pool.request()
         .input('offset', sql.Int, offset)
+        .input('idsite', sql.UniqueIdentifier, user.idsite)
+        .input('typeentitesociete', sql.Int, user.typeentitesociete)
         .input('limit', sql.Int, limit)
         .input('search', sql.NVarChar, search ? `%${search}%` : null)
         .query(entetedemandeQuery.demandes);

@@ -1521,6 +1521,19 @@ BEGIN
     ON TypeOperation(idoperation, codtypeoperation);
 END
 
+-- Index sur EnteteOperationCaisse(idsociete, idsite, createdat)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_operation_societe_site'
+    AND object_id = OBJECT_ID('EnteteOperationCaisse')
+)
+BEGIN
+    CREATE INDEX IX_operation_societe_site
+    ON EnteteOperationCaisse(idsociete, idsite, createdat);
+END
+
+
 IF NOT EXISTS (
     SELECT 1 
     FROM sys.procedures 

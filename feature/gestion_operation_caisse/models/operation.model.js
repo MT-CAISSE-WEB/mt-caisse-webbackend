@@ -52,7 +52,7 @@ class typeoperationModel {
         }
     }
 
-    async get_alltypeoperations ({ page = 1, limit, search = null, date = null}) {
+    async get_alltypeoperations ({ page = 1, limit, search = null, date = null}, user) {
         page = parseInt(page) || 1;
         limit = parseInt(limit) || 5;
         
@@ -60,12 +60,21 @@ class typeoperationModel {
         const offset = (page - 1) * limit;
 
         try {
+            // const result = await pool.request()
+            //     .input('offset', sql.Int, offset)
+            //     .input('limit', sql.Int, limit)
+            //     .input('search', sql.NVarChar, search ? `%${search}%` : null)
+            //     .input('date', sql.Date, date || null)
+            //     .query(operationQueries.getOperations);
+
             const result = await pool.request()
-                .input('offset', sql.Int, offset)
-                .input('limit', sql.Int, limit)
+                .input('idsite', sql.UniqueIdentifier, user.idsite)
+                .input('typeentitesociete', sql.Int, user.typeentitesociete)
                 .input('search', sql.NVarChar, search ? `%${search}%` : null)
                 .input('date', sql.Date, date || null)
-                .query(operationQueries.getOperations);
+                .input('offset', sql.Int, offset)
+                .input('limit', sql.Int, limit)
+                .query(operationQueries.getAllOps);
 
             const operations = result.recordsets[0];
             const total = result.recordsets[1][0].total;

@@ -10,16 +10,21 @@ const siteservice = require("../../gestion_organisation/services/site.service");
 const enteteoperationservice = require("../services/enteteoperation.service");
 const ligneoperationservice = require("../services/ligneoperation.service");
 const caisseservice = require("../services/caisse.service");
+const userservice = require("../../gestion_users/services/users.service")
 const enteteDemandeModel = require("../../gestion_demande_decaissement/models/entetedemande.model");
 let demandemodel = new enteteDemandeModel();
 
 let typeoperation = new typeoperationmodel();
 let typeoperations = [];
 
-async function get_all_typeoperations({ page, limit, search, date}) {
+async function get_all_typeoperations({ page, limit, search, date, user}) {
+
+  //Récuperer les data de l'utilisateur connecté
+  const userconnect = await userservice.getoneuser(user);
+
   let soldes = [];
   soldes = await typeoperation.get_soldecaisse();
-  const result = await typeoperation.get_alltypeoperations({ page, limit, search, date});
+  const result = await typeoperation.get_alltypeoperations({ page, limit, search, date}, userconnect.data);
 
   try {
     const operations = {};

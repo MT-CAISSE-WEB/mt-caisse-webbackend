@@ -8,7 +8,7 @@ const consultationservice = require('../services/operationConsultation.service')
 module.exports.journalPaiementController = asyncHandler(async(req, res, next) => {
   try {
     const data = req.body;
-    const result = await consultationservice.journalPaiement(data.datedebut, data.datefin, data.caisse);
+    const result = await consultationservice.journalPaiement(data.datedebut, data.datefin, data.caisse, data.idsite, data.typeentitesociete);
     res.status(201).json({ success: true, data: result });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });

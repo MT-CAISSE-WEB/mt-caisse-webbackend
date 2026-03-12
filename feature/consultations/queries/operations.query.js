@@ -9,6 +9,8 @@ module.exports = {
             TOPE.codtypeoperation      AS typeoperation,
             EOC.codeoperation          AS operation,
             EOC.dateoperation          AS date_operation,
+            S.codesite,
+            S.libelle                  AS site,
             CP.soldeouverture          AS solde_ouverture,
             CP.soldefermeture          AS solde_fermeture
         FROM EnteteOperationCaisse EOC
@@ -18,6 +20,8 @@ module.exports = {
             ON C.idcaisse = TOPE.idcaisse
         INNER JOIN Devise D 
             ON D.iddevise = EOC.iddevise
+        INNER JOIN Site S
+            ON S.idsite = EOC.idsite
         LEFT JOIN CaissePeriode CP 
             ON CP.idperiode = TOPE.idperiode
         WHERE
@@ -25,6 +29,11 @@ module.exports = {
             AND (
                 @idcaisse IS NULL 
                 OR TOPE.idcaisse = @idcaisse
+            )
+            -- Sécurité utilisateur
+            AND (
+                @typeentitesociete = 1
+                OR EOC.idsite = @idsite
             )
         ORDER BY
             C.libelle,
@@ -42,9 +51,12 @@ module.exports = {
             L.montantoperation  AS montantligne,
             D.codedevise       AS devise,
             O.codeoperation    AS piece,
+            S.codesite,
+            S.libelle                  AS site,
             CAST(O.dateoperation AS DATE) AS date_operation
         FROM EnteteOperationCaisse O
         JOIN Devise D            ON D.iddevise = O.iddevise
+        LEFT JOIN Site S ON S.idsite = O.idsite
         LEFT JOIN ligneoperationCaisse L ON L.idoperation = O.idoperation
         LEFT JOIN NatureOperation NA ON NA.idnature = L.idnature
         LEFT JOIN CentreAnalytique CA ON CA.idcentreanalytique = L.idcentre
@@ -70,6 +82,12 @@ module.exports = {
             -- Intervalle montant
         AND (@montantmin IS NULL OR L.montantoperation >= @montantmin)
         AND (@montantmax IS NULL OR L.montantoperation <= @montantmax)
+
+        -- Sécurité utilisateur
+        AND (
+            @typeentitesociete = 1
+            OR O.idsite = @idsite
+        )
 
         ORDER BY O.dateoperation, O.codeoperation;
     `,
