@@ -1,5 +1,6 @@
 const { connectDB } = require('../../../config/db');
 const sql = require('mssql');
+const argon2 = require('argon2');
 const { operationQueries } = require('../queries/queryIndex');
 const PaginationModel = require('../../../shared/utils/model');
 
@@ -231,6 +232,8 @@ async function history(caisses, date, page, limit){
 
 async function Allpaiement(){
     const pool = await connectDB();
+    // const hash = await argon2.hash('dolimex@caisse');
+    // console.log(hash);
 
     try {
         const result = await pool.request().query(operationQueries.totalOperation);

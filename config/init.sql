@@ -260,8 +260,6 @@ END
 -- FIN INIT JUNIOR
 
 
-
-
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PlanComptable')
 BEGIN
     CREATE TABLE PlanComptable (
@@ -555,36 +553,6 @@ BEGIN
 END
 
 -- FIN INIT FERREOL
-
-
-
-
--- 1 AffectationAnalytique 
--- ================== XXXXXXX N'EST PLUS UTILISEE  XXXXXX =======================
-
--- IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Affectation')
--- BEGIN
---     CREATE TABLE Affectation (
---         idaffectation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
---         idsociete UNIQUEIDENTIFIER,
---         idsite UNIQUEIDENTIFIER,
---         iddepartement UNIQUEIDENTIFIER,
---         idcentreanalytique UNIQUEIDENTIFIER NULL,
---         idnature UNIQUEIDENTIFIER NULL,
---         actif INT DEFAULT 1,
---         createdat Datetime,
---         createdby NVARCHAR(50),
---         updatedat Datetime,
---         updatedby NVARCHAR(50),
---         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
---         FOREIGN KEY (idsite) REFERENCES Site(idsite),
---         FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
---         FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
---         FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature)
---     );
--- END
-
-
 
 -- AJOUT DE DEUX NOUVELLES TABLES POUR LES AFFECTATIONS
 -- =======================
@@ -943,7 +911,9 @@ BEGIN
         idsite UNIQUEIDENTIFIER,
         iddevise UNIQUEIDENTIFIER,
         dateoperation DATETIME,
+        dateoperation_date AS CAST(dateoperation AS DATE),
         montant DECIMAL(22,9),
+        montant_str AS CAST(montant AS NVARCHAR(50)),
         justifiee INT DEFAULT 0,
         createdat Datetime,
         createdby NVARCHAR(50),
@@ -1208,135 +1178,6 @@ BEGIN
     );
 END
 
-
--- ============================================
--- 21️⃣ EnteteOperationCaisse (dépend de EnteteDemande, Societe)
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'EnteteOperationCaisse')
-BEGIN
-    CREATE TABLE EnteteOperationCaisse (
-        idoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        codeoperation NVARCHAR(50) UNIQUE,
-        iddemande UNIQUEIDENTIFIER,
-        idsociete UNIQUEIDENTIFIER,
-        idsite UNIQUEIDENTIFIER,
-        iddevise UNIQUEIDENTIFIER,
-        dateoperation DATETIME,
-        montant DECIMAL(22,9),
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
-        FOREIGN KEY (iddevise) REFERENCES Devise(iddevise),
-        FOREIGN KEY (idsite) REFERENCES Site(idsite),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
-    );
-END
-
--- ============================================
--- 22️⃣ LigneOperationCaisse (dépend de EnteteOperationCaisse, NatureOperation, CentreAnalytique, Tiers, Societe)
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ligneoperationCaisse')
-BEGIN
-    CREATE TABLE ligneoperationCaisse (
-        idligneoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        idoperation UNIQUEIDENTIFIER,
-        idnature UNIQUEIDENTIFIER,
-        idcentre UNIQUEIDENTIFIER,
-        idsociete UNIQUEIDENTIFIER,
-        libelle NVARCHAR(255),
-        montantoperation DECIMAL(22,9),
-        comptabilise INT,
-        numpiececomptable NVARCHAR(50),
-        datecomptabilisation DATETIME,
-        idtiers UNIQUEIDENTIFIER,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (idoperation) REFERENCES EnteteOperationCaisse(idoperation) ON DELETE CASCADE,
-        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
-        FOREIGN KEY (idcentre) REFERENCES CentreAnalytique(idcentreanalytique),
-        FOREIGN KEY (idtiers) REFERENCES Tiers(idtiers),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
-    );
-END
-
--- ============================================
--- 62️ CaissePeriode (dépend de EnteteOperationCaisse, Caisse)
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CaissePeriode')
-BEGIN
-    CREATE TABLE CaissePeriode (
-        idperiode UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        idcaisse UNIQUEIDENTIFIER,
-        dateperiode DATETIME,
-        soldeouverture DECIMAL(22,9),
-        soldefermeture DECIMAL(22,9),
-        montantphysique DECIMAL(22,9),   -- comptage manuel
-        ecart DECIMAL(22,9),
-        statut NVARCHAR(20) DEFAULT 'non ouverte',            -- OUVERT / FERME / VALIDE
-        validatedat DATETIME,
-        validatedby NVARCHAR(50),
-        createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
-        FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
-    );
-END
-
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TypeOperation')
-BEGIN
-    CREATE TABLE TypeOperation (
-		idtypeoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-		codtypeoperation NVARCHAR(50),
-		idoperation UNIQUEIDENTIFIER,
-        idperiode UNIQUEIDENTIFIER,
-		idsociete UNIQUEIDENTIFIER,
-		idsite UNIQUEIDENTIFIER,
-		idcaisse UNIQUEIDENTIFIER,
-		montant DECIMAL(21,9),
-        taux DECIMAL(18,13),
-        montantref DECIMAL(21,9),
-        createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
-        FOREIGN KEY (idoperation) REFERENCES EnteteOperationCaisse(idoperation) ON DELETE CASCADE,
-		FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
-		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-		FOREIGN KEY (idsite) REFERENCES Site(idsite),
-        FOREIGN KEY (idperiode) REFERENCES CaissePeriode(idperiode),
-    );
-END
-
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Compteurs')
-BEGIN
-    CREATE TABLE Compteurs (
-		prefixe NVARCHAR(10) NOT NULL,
-		annee INT NOT NULL,
-		mois INT NOT NULL,
-		jour INT NOT NULL,
-		compteur INT NOT NULL DEFAULT 0,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-		PRIMARY KEY (prefixe, annee, mois, jour)
-	);
-END
-
--- FIN INIT CHADO
-
-
-
 -- ============================================
 -- 14️⃣ CircuitValidateur (dépend de Utilisateur, Societe)
 -- ============================================
@@ -1431,6 +1272,7 @@ BEGIN
         idoperation UNIQUEIDENTIFIER,
         iddevise UNIQUEIDENTIFIER,
         taux DECIMAL(22, 9),
+        tauxinverse DECIMAL(22, 9),
         date DATETIME Default GETDATE(),
         montantjustificatif DECIMAL(22, 9),
         commentaire NVARCHAR(255),
@@ -1462,6 +1304,146 @@ BEGIN
         FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
         FOREIGN KEY (idtiers) REFERENCES Tiers(idtiers)
     );
+END
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Appconfig')
+BEGIN
+    CREATE TABLE AppConfig (
+    code NVARCHAR(50) PRIMARY KEY,
+    valeur NVARCHAR(100) NOT NULL,
+    description NVARCHAR(255),
+    createdat Datetime DEFAULT GETDATE(),
+    createdby NVARCHAR(50),
+    updatedat Datetime,
+    updatedby NVARCHAR(50)
+    );
+END
+IF NOT EXISTS (
+    SELECT 1 
+    FROM AppConfig 
+    WHERE code = 'APP_INITIALIZED'
+)
+BEGIN
+    INSERT INTO AppConfig (code, valeur)
+    VALUES ('APP_INITIALIZED', '0');
+END
+
+-- Index sur CentreAnalytique(idcentreanalytique)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_CentreAnalytique_Id'
+    AND object_id = OBJECT_ID('CentreAnalytique')
+)
+BEGIN
+    CREATE INDEX IX_CentreAnalytique_Id
+    ON CentreAnalytique(idcentreanalytique);
+END
+
+-- Index sur Tiers(idtiers)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_Tiers_Id'
+    AND object_id = OBJECT_ID('Tiers')
+)
+BEGIN
+    CREATE INDEX IX_Tiers_Id
+    ON Tiers(idtiers);
+END
+
+-- Index sur Devise(codedevise)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_Devise_Code'
+    AND object_id = OBJECT_ID('Devise')
+)
+BEGIN
+    CREATE INDEX IX_Devise_Code
+    ON Devise(codedevise)
+    INCLUDE (iddevise);
+END
+
+-- Index sur NatureOperation(idnature)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_NatureOperation_Id'
+    AND object_id = OBJECT_ID('NatureOperation')
+)
+BEGIN
+    CREATE INDEX IX_NatureOperation_Id
+    ON NatureOperation(idnature);
+END
+
+-- Index sur TypeOperation(idoperation)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_TypeOperation_IdOperation'
+    AND object_id = OBJECT_ID('TypeOperation')
+)
+BEGIN
+    CREATE INDEX IX_TypeOperation_IdOperation
+    ON TypeOperation(idoperation);
+END
+
+-- Index sur LigneOperationCaisse(idoperation)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_LigneOperationCaisse_IdOperation'
+    AND object_id = OBJECT_ID('LigneOperationCaisse')
+)
+BEGIN
+    CREATE INDEX IX_LigneOperationCaisse_IdOperation
+    ON LigneOperationCaisse(idoperation)
+    INCLUDE (idligneoperation, idnature,idcentre,idtiers,montantoperation);
+END
+
+-- Index sur EnteteOperationCaisse(dateoperation_date)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_EnteteOperationCaisse_Date'
+    AND object_id = OBJECT_ID('EnteteOperationCaisse')
+)
+BEGIN
+    CREATE INDEX IX_EnteteOperationCaisse_Date
+    ON EnteteOperationCaisse(dateoperation_date);
+END
+
+-- Index sur EnteteOperationCaisse(createdat DESC, idsite)
+IF NOT EXISTS(
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_EnteteOperationCaisse_other'
+    AND object_id = OBJECT_ID('EnteteOperationCaisse')
+)
+BEGIN
+    CREATE INDEX IX_EnteteOperationCaisse_other
+    ON EnteteOperationCaisse(createdat DESC, idsite)
+    INCLUDE (
+        idoperation,
+        codeoperation,
+        montant,
+        iddevise,
+        idsociete,
+        dateoperation
+    );
+END
+
+-- Index sur EnteteOperationCaisse(codeoperation, montant_str);
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_EnteteOperationCaisse_Search'
+    AND object_id = OBJECT_ID('EnteteOperationCaisse')
+)
+BEGIN
+    CREATE INDEX IX_EnteteOperationCaisse_Search
+    ON EnteteOperationCaisse(codeoperation, montant_str);
 END
 
 -- Index sur EnteteOperationCaisse(dateoperation)
@@ -1548,6 +1530,56 @@ BEGIN
     ON EnteteOperationCaisse(idsociete, idsite, createdat);
 END
 
+-- Index sur LigneDemande(iddemande)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_LigneDemande_IdDemande'
+    AND object_id = OBJECT_ID('LigneDemande')
+)
+BEGIN
+    CREATE INDEX IX_LigneDemande_IdDemande
+    ON LigneDemande(iddemande)
+    INCLUDE (idlignedemande, numligne, idnature, idcentre, montantdemande);
+END
+
+-- Index sur EnteteDemande(createdat DESC, idsite)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_EnteteDemande_Main'
+    AND object_id = OBJECT_ID('EnteteDemande')
+)
+BEGIN
+    CREATE INDEX IX_EnteteDemande_Main
+    ON EnteteDemande(createdat DESC, idsite)
+    INCLUDE (iddemande, codedemande, libelledemande, idsociete, iddevise, iddepartement, idcircuit);
+END
+
+-- Index sur EnteteDemande(codedemande, libelledemande)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_EnteteDemande_Search'
+    AND object_id = OBJECT_ID('EnteteDemande')
+)
+BEGIN
+    CREATE INDEX IX_EnteteDemande_Search
+    ON EnteteDemande(codedemande, libelledemande);
+END
+
+-- Index sur DetailsDemande(idlignedemande)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'IX_DetailsDemande_Ligne'
+    AND object_id = OBJECT_ID('DetailsDemande ')
+)
+BEGIN
+    CREATE INDEX IX_DetailsDemande_Ligne
+    ON DetailsDemande(idlignedemande)
+    INCLUDE (quantite, montant, description);
+END
 
 IF NOT EXISTS (
     SELECT 1 
@@ -1612,3 +1644,207 @@ BEGIN
     ');
 END
 -- GO
+
+DECLARE @now DATETIME = GETDATE();
+DECLARE @user NVARCHAR(50) = 'SYSTEM';
+
+INSERT INTO Devise (codedevise, intitule, codeiso, actif, createdat, createdby)
+SELECT * FROM (
+    VALUES 
+    ('USD', 'Dollar américain', 'USD', 1, @now, @user),
+    ('CDF', 'Franc congolais', 'CDF', 1, @now, @user),
+    ('XAF', 'Franc CFA', 'XAF', 1, @now, @user)
+) AS d(codedevise, intitule, codeiso, actif, createdat, createdby)
+WHERE NOT EXISTS (
+    SELECT 1 FROM Devise dv WHERE dv.codedevise = d.codedevise
+);
+
+DECLARE @idDeviseCDF UNIQUEIDENTIFIER;
+DECLARE @idDeviseUSD UNIQUEIDENTIFIER;
+
+SELECT @idDeviseCDF = iddevise FROM Devise WHERE codedevise = 'CDF';
+SELECT @idDeviseUSD = iddevise FROM Devise WHERE codedevise = 'USD';
+
+INSERT INTO Societe (
+    iddevisereference,
+    iddevisereporting,
+    codesociete,
+    raisonsociale,
+    sigle,
+    email,
+    telephone,
+    adresse,
+    suivibudgetaire,
+    createdat,
+    createdby
+)
+SELECT 
+    @idDeviseCDF,
+    @idDeviseUSD,
+    'SOC001',
+    'Plantation et huilerie du congo',
+    'PHC',
+    'contactphc@phc-congo.com',
+    '000000000',
+    'Kinshasa Gombe sur le boulevard 30 juin',
+    1,
+    GETDATE(),
+    'SYSTEM'
+WHERE NOT EXISTS (
+    SELECT 1 FROM Societe WHERE codesociete = 'SOC001'
+);
+
+INSERT INTO Motif (codemotif, libellemotif, createdat, createdby)
+SELECT * FROM (
+    VALUES 
+    ('MOT001', 'Budget non autorisé', GETDATE(), 'SYSTEM'),
+    ('MOT002', 'Budget non défini ', GETDATE(), 'SYSTEM'),
+    ('MOT003', 'Ligne budgétaire clôtueré', GETDATE(), 'SYSTEM'),
+    ('MOT004', 'Demande incomplète', GETDATE(), 'SYSTEM'),
+    ('MOT005', 'Pièces justificatives manquantes', GETDATE(), 'SYSTEM'),
+    ('MOT006', 'Demande non conforme aux procédures', GETDATE(), 'SYSTEM'),
+    ('MOT007', 'Montant incohérent', GETDATE(), 'SYSTEM'),
+    ('MOT008', 'Hors périmètre budgétaire', GETDATE(), 'SYSTEM'),
+    ('MOT009', 'Demande non prioritaire', GETDATE(), 'SYSTEM')
+) AS m(codemotif, libellemotif, createdat, createdby)
+WHERE NOT EXISTS (
+    SELECT 1 FROM Motif mo WHERE mo.codemotif = m.codemotif
+);
+
+
+INSERT INTO role (code, libelle, createdat, createdby)
+SELECT * FROM (
+    VALUES 
+    ('00', 'Super administrateur', GETDATE(), 'SYSTEM'),
+    ('01', 'Administrateur system', GETDATE(), 'SYSTEM'),
+    ('04', 'Caissier', GETDATE(), 'SYSTEM'),
+    ('02', 'Superviseur caisse', GETDATE(), 'SYSTEM'),
+    ('05', 'Demandeur', GETDATE(), 'SYSTEM'),
+    ('03', 'Comptable', GETDATE(), 'SYSTEM')
+) AS r(code, libelle, createdat, createdby)
+WHERE NOT EXISTS (
+    SELECT 1 FROM role rl WHERE rl.code = r.code
+);
+
+
+INSERT INTO permission (code, description, createdat, createdby)
+SELECT * FROM (
+    VALUES 
+    ('CREATE_CAISSE', 'Créer une opération de caisse', GETDATE(), 'SYSTEM'),
+    ('VALIDATE_CAISSE', 'Valider une opération', GETDATE(), 'SYSTEM')
+) AS p(code, description, createdat, createdby)
+WHERE NOT EXISTS (
+    SELECT 1 FROM permission pe WHERE pe.code = p.code
+);
+
+INSERT INTO ModeleCompteur (
+    codemodelecompteur,
+    libelle,
+    typedocument,
+    sequence_1,
+    prefixe_1,
+    sequence_2,
+    prefixe_2,
+    createdat,
+    createdby
+)
+SELECT * FROM (
+    VALUES 
+    ('CPT00', 'Compteur des demandes', 'demande', 'constante', 'DEC', 'site', null, GETDATE(), 'SYSTEM'),
+    ('CPT01', 'Compteur des opérations', 'opération de caisse', 'site', null, 'constante', 'OPE', GETDATE(), 'SYSTEM')
+) AS mc(codemodelecompteur, libelle, typedocument, sequence_1, prefixe_1, sequence_2, prefixe_2, createdat, createdby)
+WHERE NOT EXISTS (
+    SELECT 1 FROM ModeleCompteur m WHERE m.codemodelecompteur = mc.codemodelecompteur
+);
+
+DECLARE @idSociete UNIQUEIDENTIFIER;
+SELECT @idSociete = idsociete  FROM Societe WHERE codesociete = 'SOC001';
+
+INSERT INTO Site (
+    idsociete,
+    codesite,
+    libelle,
+    email,
+    telephone,
+    adresse,
+    createdat,
+    createdby
+)
+SELECT * FROM (
+    VALUES 
+    (@idSociete, 'SIEGE', 'Siège kinshasa', 'kinshasa@phc-congo.com', null, 'Kinshasa - Gombe', @now, @user),
+    (@idSociete, 'LOKUTU', 'Lokutu', 'lokutu@phc-congo.com', null, 'Lokutu - RDC', @now, @user)
+) AS s(idsociete, codesite, libelle, email, telephone, adresse, createdat, createdby)
+WHERE NOT EXISTS (
+    SELECT 1 FROM Site st WHERE st.codesite = s.codesite
+);
+
+DECLARE @idSite UNIQUEIDENTIFIER;
+SELECT @idSite = idsite FROM Site WHERE codesite = 'SIEGE';
+
+DECLARE @password NVARCHAR(255);
+SET @password = CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'dolimex@caisse'), 2);
+-- mot de passe générique = dolimex@caisse,
+
+INSERT INTO Utilisateur (
+    codeutilisateur,
+    idsociete,
+    idsite,
+    nom,
+    prenom,
+    adresse,
+    telephone,
+    email,
+    login,
+    password,
+    typeentitesite,
+    typeentitedepartement,
+    typeentitesociete,
+    acheteur,
+    createdat,
+    createdby
+)
+SELECT 
+    'ADMIN001',
+    @idSociete,
+    @idSite,
+    'ADMIN',
+    'SYSTEM',
+    'Kinshasa',
+    null,
+    'admin@phc-congo.com',
+    'dolimex',
+    '$argon2id$v=19$m=65536,t=3,p=4$g1WSR4kLiWhMf++eCPxxQA$VgLI0gAU+spJ8A/7H9PVmcGg8UH3CPzgl/6Dqe+S0Zs',
+    1,
+    1,
+    1,
+    1,
+    @now,
+    @user
+WHERE NOT EXISTS (
+    SELECT 1 FROM Utilisateur WHERE login = 'dolimex'
+);
+
+DECLARE @idrole INT
+DECLARE @iduser UNIQUEIDENTIFIER
+
+SELECT @idrole = idrole FROM Role WHERE code = '00'
+SELECT @iduser = idutilisateur FROM Utilisateur WHERE login = 'dolimex'
+
+INSERT INTO Utilisateur_role (
+    idutilisateur,
+    idrole,
+    createdat,
+    createdby
+    )
+SELECT
+    @iduser,
+    @idrole,
+    @now,
+    @user
+WHERE NOT EXISTS (
+    SELECT 1 
+    FROM utilisateur_role ur
+    WHERE ur.idutilisateur = @iduser 
+    AND ur.idrole = @idrole
+);

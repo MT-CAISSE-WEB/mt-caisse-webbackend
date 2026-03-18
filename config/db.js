@@ -69,7 +69,6 @@ const poolPromise = new sql.ConnectionPool(config)
 
 
   const initdatabase = async () => {
-    
       try {
          const masterpool = await sql.connect(config);
           await masterpool.request().query(`
