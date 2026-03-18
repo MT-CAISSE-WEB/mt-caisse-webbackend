@@ -179,7 +179,7 @@ module.exports = {
             ) AS encaissement,
             SUM(
                 CASE 
-                    WHEN codtypeoperation = 'decaissement' THEN t.montantref
+                    WHEN codtypeoperation <> 'encaissement' THEN t.montantref
                 END
             ) AS decaissement,
             SUM(

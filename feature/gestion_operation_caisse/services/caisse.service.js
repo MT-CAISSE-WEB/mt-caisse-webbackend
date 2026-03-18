@@ -7,6 +7,7 @@ const periode = require("../models/caisseperiode.model");
 const deviseservice = require("../../gestion_organisation/services/devise.service");
 const societeservice = require("../../gestion_organisation/services/societe.service");
 const siteservice = require("../../gestion_organisation/services/site.service");
+const periodeservice = require("./caisseperiode.service");
 const { v4: uuidv4 } = require('uuid');
 const PaginationModel = require("../../../shared/utils/model");
 

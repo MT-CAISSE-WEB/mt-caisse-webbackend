@@ -81,7 +81,7 @@ function extraireDate(value) {
 
 async function detailOperation(data){
     const pool = await connectDB();
-
+    
     try {
         const result = await pool.request()
         .input('idsite', sql.UniqueIdentifier, data.idsite)

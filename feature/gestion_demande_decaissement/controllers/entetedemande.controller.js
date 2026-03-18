@@ -130,7 +130,6 @@ module.exports.getDetailBudget = asyncHandler(async(req, res, next) => {
  */
 module.exports.gettauxrecent = asyncHandler (async(req,res, next)=>{
     try {
-        console.log(req.body);
         const {iddeviseorigine,iddevisedestination, datepiece} = req.body;
         const tauxrecents = await demandeservice.getDernierTaux(iddeviseorigine,iddevisedestination, datepiece);
         res.json({success: true, data: tauxrecents[0]});

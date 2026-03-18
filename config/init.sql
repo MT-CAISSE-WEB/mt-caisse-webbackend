@@ -1052,6 +1052,21 @@ BEGIN
 	);
 END
 
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CaisseBilletage')
+BEGIN
+    CREATE TABLE CaisseBilletage (
+        idbilletage UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idperiode UNIQUEIDENTIFIER,
+        valeur DECIMAL(21,9),      -- valeur billet ou pièce
+        quantite INT,
+        montant DECIMAL(21,9),     -- valeur * quantite
+        type NVARCHAR(20),         -- BILLET / PIECE
+        createdat DATETIME,
+        createdby NVARCHAR(50),
+        FOREIGN KEY (idperiode) REFERENCES CaissePeriode(idperiode)
+    );
+END
+
 -- FIN INIT CHADO
 
 
