@@ -177,7 +177,7 @@ module.exports = {
             -- Total sorties
             ISNULL(SUM(
                 CASE
-                    WHEN tope.codtypeoperation = 'decaissement'
+                    WHEN tope.codtypeoperation <> 'encaissement'
                         THEN tope.montantref
                     ELSE 0
                 END
@@ -189,9 +189,9 @@ module.exports = {
             + ISNULL(SUM(
                 CASE
                     WHEN tope.codtypeoperation = 'encaissement'
-                        THEN tope.montantref
-                    WHEN tope.codtypeoperation = 'decaissement'
-                        THEN -tope.montantref
+                        THEN tope.montant
+                    WHEN tope.codtypeoperation <> 'encaissement'
+                        THEN -tope.montant
                     ELSE 0
                 END
             ), 0) AS soldedynamique,
@@ -205,7 +205,7 @@ module.exports = {
                 CASE
                     WHEN tope.codtypeoperation = 'encaissement'
                         THEN tope.montantref
-                    WHEN tope.codtypeoperation = 'decaissement'
+                    WHEN tope.codtypeoperation <> 'encaissement'
                         THEN -tope.montantref
                     ELSE 0
                 END

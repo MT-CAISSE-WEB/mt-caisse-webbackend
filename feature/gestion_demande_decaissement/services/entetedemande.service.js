@@ -12,6 +12,7 @@ const lignedemandeservice = require("../services/ligendemande.service");
 const detaildemandeservice = require("../services/detaildemande.service");
 const userservice = require("../../gestion_users/services/users.service")
 const lignedemandeModel = require("../models/lignedemande.model");
+const compteurservice = require("../../gestion_paramètres/services/compteur.service");
 
 let demandeModel = new enteteDemandeModel();
 let demandesArray = [];
@@ -77,9 +78,30 @@ async function create_demande(data) {
     }
   }
 
+  const compteur = await compteurservice.getall();
+  // Trouver le compteur "demande"
+  const demandeCompteur = compteur.data.find(c => c.typedocument === 'demande');
+
+  // Fonction pour résoudre une séquence
+  const resolveSequence = (sequence, prefixe) => {
+    switch (sequence) {
+      case 'site':
+        return site.data?.codesite || '';
+      case 'constante':
+        return prefixe || '';
+      default:
+        return '';
+    }
+  };
+
+  // Résolution des préfixes
+  const prefixe = [
+    resolveSequence(demandeCompteur?.sequence_1, demandeCompteur?.prefixe_1),
+    resolveSequence(demandeCompteur?.sequence_2, demandeCompteur?.prefixe_2)
+  ].join('');
+
   //Génération du code de la demande
-  const prefix = "DEC";
-  const numerogenere = await enteteoperation.create_numoperation(prefix, datePeriode);
+  const numerogenere = await enteteoperation.create_numoperation(prefixe, datePeriode);
 
   //Recuperer le circuit de validation de la demande
   let circt = null
@@ -92,7 +114,7 @@ async function create_demande(data) {
   const newentete = new enteteDemandeModel(uuidv4(), numerogenere, data.demandeur, data.typedemande, data.libelledemande, data.taux || 1,
   data.datedemande, data.decaisse || 0, data.solde || 0, data.statut || 0, circt || null, data.societe || societe.data.idsociete, data.site || site.data.idsite, 
   data.departement || null, data.devise || devise.iddevise, 1, data.createdat || today, data.createdby || 'systeme', data.updatedat || null, data.updatedby || null);
-
+  
   try {
     entetedemande = await newentete.create_enteteDemande();
   } catch (error) {
@@ -789,8 +811,6 @@ async function getDernierTaux(deviseorigine, devisedestination, date){
   } catch (error) {
     throw error;
   }
-
-
 }
 
 module.exports = {

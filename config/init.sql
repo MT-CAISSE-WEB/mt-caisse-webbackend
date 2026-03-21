@@ -339,8 +339,6 @@ BEGIN
 END
 
 -- FIN INIT RICHARD
-
-
 -- ============================================
 -- 13️⃣ CircuitValidation (dépend de Sites, Departement, Societe)
 -- ============================================
@@ -350,23 +348,56 @@ BEGIN
     CREATE TABLE CircuitValidation (
         idcircuitvalidation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codecircuitvalidation NVARCHAR(24) UNIQUE,
+        libelle NVARCHAR(100),
         typeentite NVARCHAR(100),
         typeaction NVARCHAR(100),
         idsociete UNIQUEIDENTIFIER,
         idsite UNIQUEIDENTIFIER,
-        iddepartement UNIQUEIDENTIFIER,
-        nombrevalidateur INT NOT NULL,
         actif INT DEFAULT 1,
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idsite) REFERENCES Site(idsite),
-        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement)
+        FOREIGN KEY (idsite) REFERENCES Site(idsite)
     );
 END
 
+-- ============================================
+--  CircuitEtape 
+-- ============================================
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Circuitetape')
+BEGIN
+    CREATE TABLE Circuitetape (
+        idcircuitetape UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idcircuitvalidation UNIQUEIDENTIFIER,
+        rang INT,
+        nombrevalidateur INT,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation)
+    );
+END
+
+-- ============================================
+--  EtapeValidateur 
+-- ============================================
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Etapevalidateur')
+BEGIN
+    CREATE TABLE Etapevalidateur (
+        idcircuitetape UNIQUEIDENTIFIER,
+        idutilisateur UNIQUEIDENTIFIER,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        PRIMARY KEY (idcircuitetape,idutilisateur)
+    );
+END
 
 -- ============================================
 -- 11️⃣ Budget (dépend de Sites, Societe, Budget parent)
@@ -385,6 +416,7 @@ BEGIN
         actif INT DEFAULT 0,
         cloture INT DEFAULT 0,
         valide INT DEFAULT 0,
+        entite NVARCHAR(20) DEFAULT NULL,
         idcircuitvalidation UNIQUEIDENTIFIER,
         dernierniveau INT,
         niveauactuel INT,
@@ -460,98 +492,6 @@ BEGIN
       AND idsociete IS NOT NULL;
 END
 
--- ============================================
--- 17️⃣ EnteteDemande (dépend de Utilisateur, CircuitValidation, Sites, Departement, Societe, Devise)
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'EnteteDemande')
-BEGIN
-    CREATE TABLE EnteteDemande (
-        iddemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        codedemande NVARCHAR(50) UNIQUE,
-        iddemandeur UNIQUEIDENTIFIER,
-        typedemande NVARCHAR(50),
-        libelledemande NVARCHAR(200),
-        datedemande DATETIME,
-        decaisse INT DEFAULT 0,
-        solde INT DEFAULT 0,
-        statut INT DEFAULT 0,
-        idcircuit UNIQUEIDENTIFIER,
-        idsociete UNIQUEIDENTIFIER,
-        idsite UNIQUEIDENTIFIER,
-        iddepartement UNIQUEIDENTIFIER,
-        iddevise UNIQUEIDENTIFIER,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (iddemandeur) REFERENCES Utilisateur(idutilisateur),
-        FOREIGN KEY (idcircuit) REFERENCES CircuitValidation(idcircuitvalidation),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idsite) REFERENCES Site(idsite),
-        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
-        FOREIGN KEY (iddevise) REFERENCES Devise(iddevise)
-    );
-END
-
--- ============================================
--- 18️⃣ LigneDemande (dépend de EnteteDemande, NatureOperation, Budget, CentreAnalytique, Sites, Societe)
--- ============================================
-
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'LigneDemande')
-BEGIN
-    CREATE TABLE LigneDemande (
-        idlignedemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        iddemande UNIQUEIDENTIFIER,
-        numligne INT,
-        libellelignedemande NVARCHAR(255),
-        montantdemande DECIMAL(22, 9),
-        montantref DECIMAL(22, 9),
-        idnature UNIQUEIDENTIFIER,
-        idbudget UNIQUEIDENTIFIER DEFAULT NULL,
-        idcentre UNIQUEIDENTIFIER,
-        idtiers UNIQUEIDENTIFIER,
-        idsociete UNIQUEIDENTIFIER,
-        idsite UNIQUEIDENTIFIER,
-        createdat Datetime DEFAULT GETDATE(),
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande) ON DELETE CASCADE,
-        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
-        FOREIGN KEY (idtiers) REFERENCES Tiers(idtiers),
-        FOREIGN KEY (idbudget) REFERENCES Budget(idbudget),
-        FOREIGN KEY (idcentre) REFERENCES CentreAnalytique(idcentreanalytique),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idsite) REFERENCES Site(idsite)
-    );
-END
-
--- ============================================
--- 19️⃣ DetailsDemande (dépend de LigneDemande, EnteteDemande, Societe)
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DetailsDemande')
-BEGIN
-    CREATE TABLE DetailsDemande (
-        iddetailsdemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        iddemande UNIQUEIDENTIFIER,
-        idlignedemande UNIQUEIDENTIFIER,
-        idsociete UNIQUEIDENTIFIER,
-        description NVARCHAR(255),
-        quantite DECIMAL(22, 9),
-        montant DECIMAL(22, 9),
-        createdat Datetime DEFAULT GETDATE(),
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande) ON DELETE CASCADE,
-        FOREIGN KEY (idlignedemande) REFERENCES LigneDemande(idlignedemande),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
-    );
-END
-
 -- FIN INIT FERREOL
 
 -- AJOUT DE DEUX NOUVELLES TABLES POUR LES AFFECTATIONS
@@ -595,108 +535,6 @@ BEGIN
     );
 END
 -- FIN INIT RICHARD
-
-
--- ============================================
--- 13️⃣ CircuitValidation (dépend de Sites, Departement, Societe)
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CircuitValidation')
-BEGIN
-    CREATE TABLE CircuitValidation (
-        idcircuitvalidation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        codecircuitvalidation NVARCHAR(24) UNIQUE,
-        libelle NVARCHAR(100),
-        typeentite NVARCHAR(100),
-        typeaction NVARCHAR(100),
-        idsociete UNIQUEIDENTIFIER,
-        idsite UNIQUEIDENTIFIER,
-        actif INT DEFAULT 1,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idsite) REFERENCES Site(idsite)
-    );
-END
-
--- ============================================
---  CircuitEtape 
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Circuitetape')
-BEGIN
-    CREATE TABLE Circuitetape (
-        idcircuitetape UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        idcircuitvalidation UNIQUEIDENTIFIER,
-        rang INT,
-        nombrevalidateur INT,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation)
-    );
-END
-
--- ============================================
---  EtapeValidateur 
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Etapevalidateur')
-BEGIN
-    CREATE TABLE Etapevalidateur (
-        idcircuitetape UNIQUEIDENTIFIER,
-        idutilisateur UNIQUEIDENTIFIER,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        PRIMARY KEY (idcircuitetape,idutilisateur)
-    );
-END
-
-
--- ============================================
--- 11️⃣ Budget (dépend de Sites, Societe, Budget parent)
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Budget')
-BEGIN
-    CREATE TABLE Budget (
-        idbudget UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        codebudget NVARCHAR(24) UNIQUE,
-        libelle NVARCHAR(150),
-        idbudgetparent UNIQUEIDENTIFIER NULL,
-        typebudget NVARCHAR(10),
-        datedebut DATETIME,
-        datefin DATETIME,
-        actif INT DEFAULT 0,
-        cloture INT DEFAULT 0,
-        valide INT DEFAULT 0,
-        entite NVARCHAR(20) DEFAULT NULL,
-        idcircuitvalidation UNIQUEIDENTIFIER,
-        dernierniveau INT,
-        niveauactuel INT,
-        validedept INT,
-        datevalidedept DATETIME,
-        validesite INT,
-        datevalidesite DATETIME,
-        validesociete INT,
-        datevalidesociete DATETIME,
-        idsite UNIQUEIDENTIFIER,
-        idsociete UNIQUEIDENTIFIER,
-        createdat DATETIME DEFAULT GETDATE(),
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (idsite) REFERENCES Site(idsite),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idbudgetparent) REFERENCES Budget(idbudget),
-        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation)
-    );
-END
 
 
 -- ============================================
@@ -1064,27 +902,6 @@ BEGIN
     );
 END
 
-
--- ============================================
--- 20️⃣ ValidationDemande (dépend de EnteteDemande, Societe)
--- ============================================
-
--- IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ValidationDemande')
--- BEGIN
---     CREATE TABLE ValidationDemande (
---         idvalidationdemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
---         iddemande UNIQUEIDENTIFIER,
---         idsociete UNIQUEIDENTIFIER,
---         datevalidation DATETIME,
---         createdat Datetime,
---         createdby NVARCHAR(50),
---         updatedat Datetime,
---         updatedby NVARCHAR(50),
---         FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
---         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
---     );
--- END
-
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ValidationDemande')
 BEGIN
     CREATE TABLE ValidationDemande (
@@ -1201,26 +1018,6 @@ BEGIN
     );
 END
 
-
--- ============================================
--- 20️⃣ ValidationDemande (dépend de EnteteDemande, Societe)
--- ============================================
-
--- IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ValidationDemande')
--- BEGIN
---     CREATE TABLE ValidationDemande (
---         idvalidationdemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
---         iddemande UNIQUEIDENTIFIER,
---         idsociete UNIQUEIDENTIFIER,
---         datevalidation DATETIME,
---         createdat Datetime,
---         createdby NVARCHAR(50),
---         updatedat Datetime,
---         updatedby NVARCHAR(50),
---         FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
---         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
---     );
--- END
 
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ValidationDemande')
 BEGIN

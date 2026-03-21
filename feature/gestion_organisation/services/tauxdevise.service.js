@@ -44,7 +44,7 @@ async function upserttauxdevise({iddeviseorigine,iddevisedestination,codetauxdev
             .input("codetauxdevise", db.sql.NVarChar,codetauxdevise)
             .input("intitule", db.sql.NVarChar, intitule)
             .input("typecours", db.sql.NVarChar, typecours)
-            .input("datecours", db.sql.DateTime,new Date())
+            .input("datecours", db.sql.DateTime, datecours)
             .input("coefficient", db.sql.Decimal(18,9), coefficient)
             .input("coefficientinverse", db.sql.Decimal(18,9), coefficientinverse)
             .input("createdby", db.sql.NVarChar, createdby)

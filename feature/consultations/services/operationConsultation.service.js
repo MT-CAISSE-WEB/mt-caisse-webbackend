@@ -232,7 +232,7 @@ async function history(caisses, date, page, limit){
 
 async function Allpaiement(){
     const pool = await connectDB();
-    // const hash = await argon2.hash('dolimex@caisse');
+    // const hash = await argon2.hash('paul@nollyson');
     // console.log(hash);
 
     try {
