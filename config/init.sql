@@ -864,11 +864,12 @@ IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CaisseBilletage')
 BEGIN
     CREATE TABLE CaisseBilletage (
         idbilletage UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        idperiode UNIQUEIDENTIFIER,
-        valeur DECIMAL(21,9),      -- valeur billet ou pièce
+        idperiode UNIQUEIDENTIFIER UNIQUE,
+        valeur DECIMAL(21,9),     
         quantite INT,
-        montant DECIMAL(21,9),     -- valeur * quantite
-        type NVARCHAR(20),         -- BILLET / PIECE
+        montant DECIMAL(21,9),
+        ecart DECIMAL(21,9),     
+        type NVARCHAR(20),         
         createdat DATETIME,
         createdby NVARCHAR(50),
         FOREIGN KEY (idperiode) REFERENCES CaissePeriode(idperiode)
@@ -1363,6 +1364,18 @@ IF NOT EXISTS (
 BEGIN
     CREATE INDEX IX_EnteteDemande_Search
     ON EnteteDemande(codedemande, libelledemande);
+END
+
+-- Index sur CaissePeriode(idcaisse, dateperiode)
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.indexes 
+    WHERE name = 'idx_caisseperiode_idcaisse_date'
+    AND object_id = OBJECT_ID('CaissePeriode')
+)
+BEGIN
+    CREATE INDEX idx_caisseperiode_idcaisse_date
+    ON CaissePeriode (idcaisse, dateperiode DESC);
 END
 
 -- Index sur DetailsDemande(idlignedemande)

@@ -197,7 +197,7 @@ async function get_caissePeriodeByUser(idutilisateur) {
 
   try {
     const rows = await utilisateurcaisse.get_caissePeriodeByUser(idutilisateur);
-    if (!rows || rows.length === 0) {
+    if (!Array.isArray(rows) || rows.length === 0) {
       return [];
     }
 

@@ -81,6 +81,19 @@ module.exports.fermeture_caisse = asyncHandler(async(req, res, next) => {
 });
 
 /**
+ * Billetage période caisse
+ */
+module.exports.create_billetage = asyncHandler(async(req, res, next) => {
+  try {
+    const data = req.body;
+    const new_caisse = await caisseperiodeservice.create_caisseBilletage(data);
+    res.status(201).json({ success: true, data: new_caisse });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+/**
  * Validation une periode caisse existante
  */
 module.exports.validate_caisse = asyncHandler(async(req, res, next) => {

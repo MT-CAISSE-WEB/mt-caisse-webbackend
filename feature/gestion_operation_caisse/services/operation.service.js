@@ -115,7 +115,12 @@ async function get_all_typeoperations({ page, limit, search, date, user}) {
                   idcaisse: row.type_idcaisse,
                   taux : row.type_taux,
                   montantref: row.type_montantref,
-                  solde : solde
+                  solde : solde,
+                  caisse: row.caisse_idcaisse ? {
+                      devise: row.devise_caisse,
+                      codecaisse: row.caisse_codecaisse,
+                      libelle: row.caisse_libelle
+                  } : null
               });
           }
       }

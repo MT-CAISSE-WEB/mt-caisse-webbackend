@@ -258,5 +258,49 @@ module.exports = {
             tx.coefficient
 
         ORDER BY c.libelle;
+    `,
+    getCaisseUserRecent : `
+        WITH DernierePeriode AS (
+            SELECT *,
+                ROW_NUMBER() OVER (PARTITION BY idcaisse ORDER BY dateperiode DESC) AS rn
+            FROM CaissePeriode
+        )
+
+        SELECT
+            UC.idutilisateurcaisse,
+            UC.idutilisateur,
+            UC.actif AS utilisateurcaisse_actif,
+
+            C.idcaisse,
+            C.codecaisse,
+            C.libelle AS libellecaisse,
+            C.iddevise,
+            C.idsite,
+            C.idsociete,
+            C.soldeinitialisation,
+            C.seuilmnimal,
+            C.actif AS caisse_actif,
+
+            D.codedevise,
+            D.intitule,
+            D.codeiso,
+
+            CP.idperiode,
+            CP.dateperiode,
+            CP.soldeouverture,
+            CP.soldefermeture,
+            CP.montantphysique,
+            CP.ecart,
+            CP.statut AS statutperiode
+
+        FROM UtilisateurCaisse UC
+        JOIN Caisse C ON C.idcaisse = UC.idcaisse AND C.actif = 1
+        LEFT JOIN Devise D ON D.iddevise = C.iddevise AND D.actif = 1
+
+        LEFT JOIN DernierePeriode CP 
+        ON CP.idcaisse = C.idcaisse AND CP.rn = 1
+
+        WHERE UC.idutilisateur = @idutilisateur
+        AND UC.actif = 1;
     `
 }

@@ -6,6 +6,8 @@ module.exports = {
             c.libelle AS caisse_libelle,
             c.idjournal AS caisse_idjournal,
             c.iddevise AS caisse_iddevise,
+			d.codedevise AS devise_code,
+            d.intitule AS devise_lib,
             c.idsite AS caisse_idsite,
             c.idsociete AS caisse_idsociete,
             c.idcompte AS caisse_idcompte,
@@ -13,7 +15,8 @@ module.exports = {
             c.createdat AS caisse_createdat,
             c.createdby AS caisse_createdby
         FROM caisseperiode cp
-        LEFT JOIN caisse c ON c.id = cp.caisse_id
+        LEFT JOIN caisse c ON c.idcaisse = cp.idcaisse
+        LEFT JOIN devise d ON d.iddevise = c.iddevise
 
         ORDER BY cp.date_ouverture DESC
         OFFSET @offset ROWS
@@ -47,6 +50,8 @@ module.exports = {
         UPDATE CaissePeriode
         SET 
             soldefermeture = @soldefermeture,
+            montantphysique = @montantphysique,
+            ecart = @ecart,
             statut = @statut
         OUTPUT INSERTED.* WHERE idperiode = @idperiode
     `,
@@ -117,5 +122,10 @@ module.exports = {
         FROM CaissePeriode
         WHERE idcaisse = @idcaisse
         ORDER BY dateperiode DESC;
-    `
+    `,
+    INSERTBILLET : `
+        INSERT INTO caisseBilletage(idbilletage, idperiode, valeur, quantite, montant,
+        ecart, createdat, createdby) OUTPUT INSERTED.*
+        VALUES(@idbilletage, @idperiode, @valeur, @quantite, @montant, @ecart, @createdat, @createdby)
+    `,
 }

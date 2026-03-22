@@ -18,5 +18,6 @@ router.get("/periode/:id", periodecaisse_controller.get_recentperiode);
 router.put("/open/:id", periodecaisse_controller.open_caisse);
 router.put("/close/:id", periodecaisse_controller.fermeture_caisse);
 router.post("/validate/:id", periodecaisse_controller.validate_caisse);
+router.post("/billetage", periodecaisse_controller.create_billetage);
 
 module.exports = router;

@@ -145,6 +145,8 @@ class caisseperiodeModel {
             const result = await pool.request()
                 .input('idperiode', sql.UniqueIdentifier, idperiode)
                 .input('soldefermeture', sql.Decimal(22, 9), data.soldefermeture)
+                .input('montantphysique', sql.Decimal(22, 9), data.montantphysique)
+                .input('ecart', sql.Decimal(22, 9), data.ecart)
                 .input('statut', sql.NVarChar(10), data.statut)
                 .query(caisseperiodeQueries.CLOSE_PERIODE);
             return result;
@@ -179,6 +181,26 @@ class caisseperiodeModel {
             return { success: true, data: result };
         } catch (error) {
             console.log(`Erreur de suppression: ${error}`.cyan.bold);
+        }
+    }
+
+    async create_caissebilletage(data) {
+        const pool = await connectDB();
+        try {
+            const result = await pool.request()
+            .input('idbilletage', sql.UniqueIdentifier, data.idbilletage)
+            .input('idperiode', sql.UniqueIdentifier, data.idperiode)
+            .input('valeur', sql.Decimal(22, 9), data.valeur)
+            .input('quantite', sql.Decimal(22, 9), data.quantite)
+            .input('montant', sql.Decimal(22, 9), data.montant)
+            .input('ecart', sql.Decimal(22, 9), data.ecart)
+            .input('createdat', sql.DateTime, data.createdat)
+            .input('createdby', sql.NVarChar(100), data.createdby)
+            .query(caisseperiodeQueries.INSERTBILLET);
+
+            return { success: true, data: result.recordset[0] };
+        } catch (error) {
+            return { success: false, message: error.message };
         }
     }
 }

@@ -17,11 +17,11 @@ const JustificatifOperation = sequelize.define(
     },
 
     idoperation: {
-      type: DataTypes.UUID
+      type: DataTypes.UUID,
     },
 
     iddevise: {
-      type: DataTypes.UUID
+      type: DataTypes.UUID,
     },
 
     taux: {
@@ -31,7 +31,7 @@ const JustificatifOperation = sequelize.define(
     date: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
-      allowNull: false
+      allowNull: false,
     },
 
     montantjustificatif: {
@@ -42,21 +42,24 @@ const JustificatifOperation = sequelize.define(
     commentaire: {
       type: DataTypes.STRING(255),
     },
+    tauxinverse: {
+      type: DataTypes.DECIMAL(22, 9),
+    },
     createdat: {
       type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
+      defaultValue: DataTypes.NOW,
     },
     createdby: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
     },
     updatedat: DataTypes.DATE,
-    updatedby: DataTypes.STRING
+    updatedby: DataTypes.STRING,
   },
   {
     tableName: "JustificatifOperation",
     timestamps: false,
-  }
+  },
 );
 
 module.exports = JustificatifOperation;
