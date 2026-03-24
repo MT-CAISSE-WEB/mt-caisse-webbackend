@@ -46,7 +46,7 @@ module.exports = {
                 T.codetiers,
                 T.designation AS designationtiers
 
-            FROM ligneoperationCaisse L
+            FROM LigneOperationCaisse L
 
             LEFT JOIN NatureOperation N 
                 ON N.idnature = L.idnature

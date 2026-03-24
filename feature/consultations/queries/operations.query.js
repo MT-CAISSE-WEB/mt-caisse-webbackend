@@ -4,11 +4,13 @@ module.exports = {
             C.codecaisse AS codecaisse,
             C.libelle            AS caisse,
             TOPE.montant               AS montant,
-            D.codedevise               AS devise_caisse,
+            D.codedevise               AS devise_operation,
             TOPE.montantref            AS montant_ref,
             TOPE.codtypeoperation      AS typeoperation,
             EOC.codeoperation          AS operation,
             EOC.dateoperation          AS date_operation,
+			Soc.codesociete AS codesociete,
+			Soc.raisonsociale AS raisonsociale,
             S.codesite,
             S.libelle                  AS site,
             CP.soldeouverture          AS solde_ouverture,
@@ -22,6 +24,8 @@ module.exports = {
             ON D.iddevise = EOC.iddevise
         INNER JOIN Site S
             ON S.idsite = EOC.idsite
+		INNER JOIN Societe Soc
+            ON Soc.idsociete = EOC.idsociete
         LEFT JOIN CaissePeriode CP 
             ON CP.idperiode = TOPE.idperiode
         WHERE
@@ -57,7 +61,7 @@ module.exports = {
         FROM EnteteOperationCaisse O
         JOIN Devise D            ON D.iddevise = O.iddevise
         LEFT JOIN Site S ON S.idsite = O.idsite
-        LEFT JOIN ligneoperationCaisse L ON L.idoperation = O.idoperation
+        LEFT JOIN LigneOperationCaisse L ON L.idoperation = O.idoperation
         LEFT JOIN NatureOperation NA ON NA.idnature = L.idnature
         LEFT JOIN CentreAnalytique CA ON CA.idcentreanalytique = L.idcentre
         LEFT JOIN Tiers T ON T.idtiers = L.idtiers
@@ -117,7 +121,7 @@ module.exports = {
                 ON D.iddevise = EOC.iddevise
             LEFT JOIN CaissePeriode CP 
                 ON CP.idperiode = TOPE.idperiode
-            LEFT JOIN LigneoperationCaisse L
+            LEFT JOIN LigneOperationCaisse L
                 ON L.idoperation = EOC.idoperation
             WHERE
                 EOC.dateoperation <= @date
@@ -150,7 +154,7 @@ module.exports = {
             ON D.iddevise = EOC.iddevise
         LEFT JOIN CaissePeriode CP 
             ON CP.idperiode = TOPE.idperiode
-        LEFT JOIN LigneoperationCaisse L
+        LEFT JOIN LigneOperationCaisse L
             ON L.idoperation = EOC.idoperation
         WHERE
             EOC.dateoperation = @date
@@ -179,7 +183,7 @@ module.exports = {
             ) AS encaissement,
             SUM(
                 CASE 
-                    WHEN codtypeoperation <> 'encaissement' THEN t.montantref
+                    WHEN codtypeoperation = 'decaissement' THEN t.montantref
                 END
             ) AS decaissement,
             SUM(
@@ -234,5 +238,40 @@ module.exports = {
             )
        
         GROUP BY E.idoperation, E.dateoperation, t.idperiode, c.idcaisse, c.codecaisse, c.libelle, c.iddevise, d.codedevise, c.seuilmnimal, c.soldeinitialisation;
+    `,
+
+    editionjournal : `
+        SELECT Soc.codesociete, Soc.raisonsociale,
+        Site.codesite, Site.libelle as lib_site,
+        C.codecaisse, C.libelle as lib_caisse, D.codedevise AS devise_caisse,
+        TOPE.codtypeoperation      AS typeoperation,
+        OPE.codeoperation, OPE.dateoperation,
+        NOP.codenature, NOP.libelle as lib_nature,
+        CAN.codecentreanalytique AS codecentre, CAN.libelle as lib_centre,
+        T.codetiers, T.designation AS nom_tiers,
+        OPL.libelle, OPL.montantoperation, DevO.codedevise,
+        OPE.montant AS total_ope,
+        CP.soldeouverture, CP.soldefermeture
+
+        FROM EnteteOperationCaisse OPE
+        INNER JOIN TypeOperation TOPE ON TOPE.idoperation = OPE.idoperation
+        INNER JOIN Caisse C ON TOPE.idcaisse = C.idcaisse
+        INNER JOIN Devise D ON D.iddevise = C.iddevise
+        INNER JOIN Devise DevO ON DevO.iddevise = OPE.iddevise
+        INNER JOIN Societe Soc ON C.idsociete = Soc.idsociete
+        INNER JOIN Site ON Site.idsite = C.idsite
+        INNER JOIN LigneOperationCaisse OPL ON OPE.idoperation = OPL.idoperation
+        LEFT JOIN NatureOperation NOP ON NOP.idnature = OPL.idnature
+        LEFT JOIN CentreAnalytique CAN ON CAN.idcentreanalytique = OPL.idcentre
+        LEFT JOIN Tiers T ON T.idtiers = OPL.idtiers
+        LEFT JOIN CaissePeriode CP ON CP.idperiode = TOPE.idperiode
+
+        WHERE OPE.dateoperation BETWEEN @datedebut AND @datefin 
+            AND ( @idcaisse IS NULL OR C.idcaisse = @idcaisse )
+            -- Sécurité utilisateur
+            --AND ( @typeentitesociete = 1 OR OPE.idsite = @idsite )
+            AND OPE.idsite = @idsite
+
+        ORDER BY OPE.dateoperation, C.libelle
     `
 }

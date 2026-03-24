@@ -1,6 +1,5 @@
 const { connectDB } = require('../../../config/db');
 const sql = require('mssql');
-const argon2 = require('argon2');
 const { operationQueries } = require('../queries/queryIndex');
 const PaginationModel = require('../../../shared/utils/model');
 
@@ -74,6 +73,82 @@ async function journalPaiement(datedebut, datefin, caisse, idsite, typeentitesoc
     }
 }
 
+// Autor : Richard
+async function editionjournal(datedebut, datefin, idcaisse, idsite) {
+    const pool = await connectDB();
+
+    try {
+        const result = await pool.request()
+            .input('datedebut', sql.Date, datedebut)
+            .input('datefin', sql.Date, datefin)
+            .input('idcaisse', sql.UniqueIdentifier, idcaisse)
+            .input('idsite', sql.UniqueIdentifier, idsite)
+            .query(operationQueries.editionjournal);
+
+        const resultat = result.recordset;
+
+        if (!resultat || resultat.length === 0) {
+            return { success: false, message: "Aucune donnée trouvée" };
+        }
+
+        const head = resultat[0];
+        const map = new Map();
+
+        resultat.forEach(r => {
+
+            const date = r.dateoperation.toISOString().split('T')[0];
+
+            // Niveau DATE
+            if (!map.has(date)) {
+                map.set(date, {
+                    date,
+                    solde_ouverture: r.soldeouverture,
+                    solde_fermeture: r.soldefermeture,
+                    operations: []
+                });
+            }
+
+            const dateGroup = map.get(date);
+
+
+            dateGroup.operations.push({
+                typeoperation: r.typeoperation,
+                codeoperation: r.codeoperation,
+                cnature: r.codenature,
+                nature: r.lib_nature,
+                ccentre: r.codecentre,
+                centre: r.lib_centre,
+                ctiers: r.codetiers,
+                tiers: r.nom_tiers,
+                libelle: r.libelle,
+                montant: r.montantoperation
+            });
+
+        });
+
+        const lignes = Array.from(map.values());
+
+        const data = {
+            codesociete: head.codesociete,
+            raisonsociale: head.raisonsociale,
+            codesite: head.codesite,
+            lib_site: head.lib_site,
+            codecaisse: head.codecaisse,
+            lib_caisse: head.lib_caisse,
+            devise_caisse: head.devise_caisse,
+            datedebut: new Date(datedebut).toLocaleDateString('fr-FR'),
+            datefin: new Date(datefin).toLocaleDateString('fr-FR'),
+            lignes
+        };
+
+        return { success: true, data : data };
+
+    } catch (error) {
+        console.log(`Erreur de récupération : ${error}`.cyan?.bold || error);
+        throw error;
+    }
+}
+
 function extraireDate(value) {
   return (typeof value === 'string' && value.includes('T'))
     ? value.split('T')[0]
@@ -82,7 +157,7 @@ function extraireDate(value) {
 
 async function detailOperation(data){
     const pool = await connectDB();
-    
+
     try {
         const result = await pool.request()
         .input('idsite', sql.UniqueIdentifier, data.idsite)
@@ -232,8 +307,6 @@ async function history(caisses, date, page, limit){
 
 async function Allpaiement(){
     const pool = await connectDB();
-    // const hash = await argon2.hash('paul@nollyson');
-    // console.log(hash);
 
     try {
         const result = await pool.request().query(operationQueries.totalOperation);
@@ -248,6 +321,7 @@ async function Allpaiement(){
 
 module.exports = {
     journalPaiement,
+    editionjournal,
     detailOperation,
     getLastOperation,
     history,
