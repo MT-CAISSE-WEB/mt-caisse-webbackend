@@ -7,7 +7,6 @@ const societeservice = require('../../gestion_organisation/services/societe.serv
 
 const lasociete = societeservice;
 
-
 const queryInsert = `
         INSERT INTO PlanComptable (idcompte, numcompte, libelle, ventillable,
         auxiliaire, actif, suivibudgetaire, suivibudgetairemensuel, idsociete,
@@ -18,11 +17,35 @@ const queryInsert = `
         @createdat, @updatedat, @createdby, @updatedby)
         `;
 
+const queryupsert = `
+    IF EXISTS (SELECT 1 FROM PlanComptable WHERE numcompte = @numcompte)
+    BEGIN
+        UPDATE PlanComptable SET libelle = @libelle, 
+        ventillable = @ventillable, auxiliaire = @auxiliaire, actif = @actif, 
+        suivibudgetaire = @suivibudgetaire, suivibudgetairemensuel = @suivibudgetairemensuel, 
+        idsociete = @idsociete, updatedat = @updatedat, updatedby = @updatedby 
+        OUTPUT INSERTED.*
+        WHERE numcompte = @numcompte
+    END
+    ELSE
+    BEGIN
+        INSERT INTO PlanComptable (idcompte, numcompte, libelle, ventillable,
+        auxiliaire, actif, suivibudgetaire, suivibudgetairemensuel, idsociete,
+        createdat, updatedat, createdby, updatedby)
+        OUTPUT INSERTED.*
+        VALUES (@idcompte, @numcompte, @libelle, @ventillable, @auxiliaire, 
+        @actif, @suivibudgetaire, @suivibudgetairemensuel, @idsociete,
+        @createdat, @updatedat, @createdby, @updatedby)
+    END
+    `;
+
+
 const queryUpdate = `UPDATE PlanComptable SET libelle = @libelle, 
 ventillable = @ventillable, auxiliaire = @auxiliaire, actif = @actif, 
 suivibudgetaire = @suivibudgetaire, suivibudgetairemensuel = @suivibudgetairemensuel, 
 idsociete = @idsociete, updatedat = @updatedat, updatedby = @updatedby 
 OUTPUT INSERTED.* WHERE idcompte = @idcompte`;
+
 
 const query = `
         SELECT c.*,
@@ -79,7 +102,7 @@ class PlanComptableModel {
             .input('updatedat', sql.DateTime, this.updatedat)
             .input('createdby', sql.NVarChar(50), this.createdby)
             .input('updatedby', sql.NVarChar(50), this.updatedby)
-            .query(queryInsert);
+            .query(queryupsert);
 
             return { success: true, data: result.recordset[0] };
         } catch (error) {
@@ -165,7 +188,7 @@ class PlanComptableModel {
                     .input('createdat', sql.DateTime, new Date())
                     .input('updatedat', sql.DateTime, null)
                     .input('createdby', sql.NVarChar(50), data.createdby)
-                    .input('updatedby', sql.NVarChar(50), null)
+                    .input('updatedby', sql.NVarChar(50), data.updatedby)
                     .query(queryInsert);
                 return result;
             }
@@ -199,6 +222,27 @@ class PlanComptableModel {
             console.log(`Erreur de suppression: ${error}`.cyan.bold);
             return {success: false, message: "Erreur de suppression : " + error.message };
         }
+    }
+
+    async exportComptes(debut, fin) {
+
+        const pool = await connectDB();
+
+        const result = await pool.request()
+            .input('debut', sql.VarChar, debut || null)
+            .input('fin', sql.VarChar, fin || null)
+            .query(`SELECT numcompte, libelle, actif 
+            FROM PlanComptable
+            WHERE 
+                (
+                    (@debut IS NULL OR @debut = '' OR numcompte >= @debut)
+                AND (@fin IS NULL OR @fin = '' OR numcompte <= @fin)
+                )
+            ORDER BY numcompte`);
+
+        const data = result.recordset;
+
+        return data;
     }
 }
 

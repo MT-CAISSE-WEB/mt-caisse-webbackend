@@ -1,5 +1,7 @@
 const centreanalytiquemodel = require("../models/centreanalytique.model");
 const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
+const { parse } = require("csv-parse");
 
 let centre = new centreanalytiquemodel();
 
@@ -95,10 +97,44 @@ async function delete_centre(idcentreanalytique) {
 }
 
 
+async function import_centre_analytique(filePath, info) {
+  const today = new Date();
+  const parser = fs
+    .createReadStream(filePath)
+    .pipe(parse({ delimiter: ";", from_line: 1 }));
+
+    try {
+      for await (const row of parser) {
+        // recupere les donnees
+        try{          
+          const data = {
+            codecentreanalytique: row[0]?.trim(),
+            libelle: row[1]?.trim(),
+            actif: Number(row[2]),
+            idsociete: info.idsociete,
+            createdby: info.createdby,
+            createdat: today
+          };
+
+        await create_centre(data);
+      
+        } catch (error) {
+        console.error("Error:", error.message);
+        throw error; }
+      }
+    }  catch (error) {
+        console.error("Error:", error.message);
+        throw error;
+    }
+}
+
+
+
 module.exports = {
   get_allcentres,
   get_by_idcentre,
   create_centre,
   update_centre,
-  delete_centre
+  delete_centre,
+  import_centre_analytique
 };

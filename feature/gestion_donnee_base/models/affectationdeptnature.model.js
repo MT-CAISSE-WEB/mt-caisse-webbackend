@@ -27,6 +27,7 @@ class AffectationDepartementNatureModel {
         this.updatedby = updatedby;
     }
 
+
     // ok 
     async getallNatures(iddepartement) {
 
@@ -40,16 +41,16 @@ class AffectationDepartementNatureModel {
                 FROM NatureOperation n INNER JOIN AffectationDepartementNature a
                 ON a.idnature = n.idnature
                 WHERE a.iddepartement = @iddepartement
-                ORDER BY n.codenature ASC`);
+                ORDER BY n.libelle ASC`);
 
         // Natures non affectées
         const resultNonAffectes = await pool.request()
             .input("iddepartement", sql.UniqueIdentifier, iddepartement)
             .query(`SELECT n.idnature, n.codenature, n.libelle, n.actif
-                FROM NatureOperation n WHERE NOT EXISTS (
+                FROM NatureOperation n WHERE n.actif = 1 AND NOT EXISTS (
                     SELECT 1 FROM AffectationDepartementNature a
                     WHERE a.idnature = n.idnature AND a.iddepartement = @iddepartement)
-                    ORDER BY n.codenature ASC`);
+                    ORDER BY n.libelle ASC`);
         const naturesaffectes = resultAffectes.recordset;
         const naturesnonaffectes = resultNonAffectes.recordset;
 
@@ -59,9 +60,8 @@ class AffectationDepartementNatureModel {
         return { success: false, message: error.message};}
     }
 
-
-
-    async saveAffectations(iddepartement, idsNatures) {
+    
+    async saveAffectations(iddepartement, data) {
 
         // console.log(iddepartement)
 
@@ -79,16 +79,16 @@ class AffectationDepartementNatureModel {
                 `);
 
             // 2️⃣ Insérer les nouvelles affectations
-            for (const idnature of idsNatures) {
+            for (const ligne of data) {
                 await transaction.request()
                     .input('idaffdepartementnature', sql.UniqueIdentifier, uuidv4())
-                    .input('idsociete', sql.UniqueIdentifier, idnature.idsociete)
+                    .input('idsociete', sql.UniqueIdentifier, data.idsociete)
                     .input('iddepartement', sql.UniqueIdentifier, iddepartement)
-                    .input('idnature', sql.UniqueIdentifier, idnature.idnature)
+                    .input('idnature', sql.UniqueIdentifier, ligne.idnature)
                     .input('createdat', sql.DateTime, new Date())
-                    .input('updatedat', sql.DateTime, null)
-                    .input('createdby', sql.NVarChar(50), this.createdby)
-                    .input('updatedby', sql.NVarChar(50), this.updatedby)
+                    .input('updatedat', sql.DateTime, new Date())
+                    .input('createdby', sql.NVarChar(50), data.createdby)
+                    .input('updatedby', sql.NVarChar(50), data.updatedby)
                     .query(queryInsert);
             }
 

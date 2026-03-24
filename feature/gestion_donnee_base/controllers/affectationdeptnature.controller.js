@@ -19,8 +19,8 @@ module.exports.getAllNatures = asyncHandler(async(req, res, next) => {
 module.exports.saveAffectations = asyncHandler(async(req, res, next) => {
   try {
     const iddepartement  = req.params.iddepartement;
-    const idsNatures  = req.body;
-    const affectation_ = await affectationdepartementnature.saveAffectations(iddepartement, idsNatures);
+    const data  = req.body;
+    const affectation_ = await affectationdepartementnature.saveAffectations(iddepartement, data);
     res.json({ success: true, data: affectation_ });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });

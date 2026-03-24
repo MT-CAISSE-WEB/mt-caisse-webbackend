@@ -4,6 +4,22 @@ const { v4: uuidv4 } = require('uuid');
 
 const societeservice = require('../../gestion_organisation/services/societe.service');
 
+const queryupsert = `IF EXISTS (SELECT 1 FROM Tiers WHERE codetiers = @codetiers)
+    BEGIN
+        UPDATE Tiers SET designation = @designation, typetiers = @typetiers, 
+        actif = @actif, idsociete = @idsociete, updatedat = @updatedat, updatedby = @updatedby 
+        OUTPUT INSERTED.* WHERE codetiers = @codetiers
+    END
+    ELSE
+    BEGIN
+        INSERT INTO Tiers (idtiers, codetiers, designation, typetiers, actif, idsociete,
+        createdat, updatedat, createdby, updatedby)
+        OUTPUT INSERTED.*
+        VALUES (@idtiers, @codetiers, @designation, @typetiers, @actif, @idsociete,
+        @createdat, @updatedat, @createdby, @updatedby)
+    END
+`;
+
 const queryInsert = `
         INSERT INTO Tiers (idtiers, codetiers, designation, typetiers, actif, idsociete,
         createdat, updatedat, createdby, updatedby)
@@ -68,7 +84,7 @@ class TiersModel {
             .input('updatedat', sql.DateTime, this.updatedat)
             .input('createdby', sql.NVarChar(50), this.createdby)
             .input('updatedby', sql.NVarChar(50), this.updatedby)
-            .query(queryInsert);
+            .query(queryupsert);
 
             console.log(result);
 

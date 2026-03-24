@@ -73,3 +73,16 @@ module.exports.delete_nature = asyncHandler(async(req, res, next) => {
     res.status(404).json({ success: false, message: error.message });
   }
 });
+
+
+/**
+ * Importer un plan comptable à partir d'un fichier CSV
+ */
+module.exports.import_nature = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({success: false, message: 'Aucun fichier reçu'});
+  }
+  const info = req.body;
+  const result = await natureoperationservice.import_nature(req.file.path, info);
+  res.status(201).json({success: true, data: result});
+});
