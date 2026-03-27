@@ -80,6 +80,8 @@ const statsvalidatedbudgetroute = require("./feature/consultations/routes/statsB
 const statsMontantByDeptRoute = require("./feature/consultations/routes/statsMontantByDept.route");
 // solde caisse
 const statsMontantByCaisseRoute = require("./feature/consultations/routes/soldeByCaisse.route");
+// mouvements caisse
+const mouvementsCaisseRoute = require("./feature/consultations/routes/mouvementcaisse.route");
 
 // Declaration des routes pour les paramètres
 const motifsroutes = require("./feature/gestion_paramètres/routes/motif.route");
@@ -231,6 +233,7 @@ app.use("/api/statsdemande", statsdemandeparstatutroute);
 app.use("/api/statsbudget", statsvalidatedbudgetroute);
 app.use("/api/statsmontant", statsMontantByDeptRoute);
 app.use("/api/statscaisse", statsMontantByCaisseRoute);
+app.use("/api/mouvements-caisse", mouvementsCaisseRoute);
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
