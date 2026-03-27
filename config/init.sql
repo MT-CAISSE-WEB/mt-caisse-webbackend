@@ -465,6 +465,32 @@ BEGIN
     );
 END
 
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'banque')
+BEGIN
+    CREATE TABLE banque (
+        idbanque UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codebanque VARCHAR(50) UNIQUE NOT NULL,
+        libelle VARCHAR(150) NOT NULL,
+        nombanque VARCHAR(150),
+        numerocompte VARCHAR(100),
+        iban VARCHAR(100),
+        swift VARCHAR(50),
+        iddevise UNIQUEIDENTIFIER,
+        idsite UNIQUEIDENTIFIER,
+        idsociete UNIQUEIDENTIFIER,
+        solde_initial DECIMAL(18,2) DEFAULT 0,
+        solde_actuel DECIMAL(18,2) DEFAULT 0,
+        actif BIT DEFAULT 1,
+        createdat Datetime DEFAULT GETDATE(),
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        FOREIGN KEY (iddevise) REFERENCES Devise(iddevise)
+    );
+END
+
 
 IF NOT EXISTS (
     SELECT 1
@@ -1104,6 +1130,32 @@ BEGIN
     );
 END
 
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Transfertfond')
+BEGIN
+    CREATE TABLE Transfertfond (
+        idtransfert UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codetransfert NVARCHAR(24) UNIQUE,
+        typesource NVARCHAR(20),
+        idsourcebanque UNIQUEIDENTIFIER,
+        idsourcecaisse UNIQUEIDENTIFIER,
+        typedestination NVARCHAR(20),
+        iddestination UNIQUEIDENTIFIER,
+        taux DECIMAL(22, 9),
+        montant DECIMAL(22, 9),
+        montantref DECIMAL(22, 9),
+        datetransfert DATETIME NOT NULL,
+        description NVARCHAR(100),
+        statut INT DEFAULT 0,
+        createdat Datetime default GETDATE(),
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (iddestination) REFERENCES Caisse(idcaisse),
+        FOREIGN KEY (idsourcebanque) REFERENCES banque(idbanque),
+        FOREIGN KEY (idsourcecaisse) REFERENCES Caisse(idcaisse)
+    );
+END
+
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Appconfig')
 BEGIN
     CREATE TABLE AppConfig (
@@ -1116,6 +1168,7 @@ BEGIN
     updatedby NVARCHAR(50)
     );
 END
+
 IF NOT EXISTS (
     SELECT 1 
     FROM AppConfig 

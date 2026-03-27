@@ -311,7 +311,6 @@ async function Allpaiement(){
     try {
         const result = await pool.request().query(operationQueries.totalOperation);
         const resultat = result.recordset;
-
         return { success: true, data: resultat };
     } catch (error) {
         console.log(`Erreur de recuperation: ${error}`.cyan.bold);

@@ -79,7 +79,7 @@ async function create_enteteoperation(data) {
   const newenteteoperation = new enteteoperationmodel(
     uuidv4(),   
     data.codeoperation || numerogenere, 
-    data.iddemande ? data.iddemande : null, 
+    data.demande ? data.demande : null, 
     data.societe,
     data.site,
     data.devise,

@@ -89,7 +89,8 @@ const compteursroutes = require("./feature/gestion_paramètres/routes/compteur.r
 const justificatifoperationroute = require("./feature/gestion_paramètres/routes/justificatifOperation.routes");
 // Détails justificatif
 const detailsjustificatifroute = require("./feature/gestion_paramètres/routes/detailsJustificatifOperation.routes");
-
+// Transfert fond
+const transfertroute = require("./feature/gestion_operation_caisse/routes/transfert.route");
 
 const db = require('./config/db');
 
@@ -201,7 +202,7 @@ app.use("/API/utilisateur_caisse", utilisateurcaisseRoutes);
 app.use("/API/entete_operation", enteteoperationRoutes);
 app.use("/API/ligne_operation", ligneoperationRoutes);
 app.use("/API/operation", typeoperationRoutes);
-
+app.use("/API/operation", transfertroute);
 
 //Regrouper toutes les routes
 app.use("/API/circuitvalidateur", circuitvalidateurroute);

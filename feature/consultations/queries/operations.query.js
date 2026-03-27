@@ -166,6 +166,7 @@ module.exports = {
     `,
     totalOperation : `
         SELECT 
+            E.iddemande,
             E.idoperation,
             E.dateoperation,
 			t.idperiode,
@@ -183,7 +184,7 @@ module.exports = {
             ) AS encaissement,
             SUM(
                 CASE 
-                    WHEN codtypeoperation = 'decaissement' THEN t.montantref
+                    WHEN codtypeoperation <> 'encaissement' THEN t.montantref
                 END
             ) AS decaissement,
             SUM(
@@ -197,7 +198,7 @@ module.exports = {
         LEFT JOIN Caisse c ON c.idcaisse = t.idcaisse
         LEFT JOIN Devise d ON d.iddevise = c.iddevise
        
-        GROUP BY E.idoperation, E.dateoperation, t.idperiode, c.idcaisse, c.codecaisse, c.libelle, c.iddevise, d.codedevise, c.seuilmnimal, c.soldeinitialisation;
+        GROUP BY E.iddemande, E.idoperation, E.dateoperation, t.idperiode, c.idcaisse, c.codecaisse, c.libelle, c.iddevise, d.codedevise, c.seuilmnimal, c.soldeinitialisation;
     `,
     totalOperationJour : `
         SELECT 
@@ -218,7 +219,7 @@ module.exports = {
             ) AS encaissement,
             SUM(
                 CASE 
-                    WHEN codtypeoperation = 'decaissement' THEN t.montantref
+                    WHEN codtypeoperation <> 'encaissement' THEN t.montantref
                 END
             ) AS decaissement,
             SUM(
