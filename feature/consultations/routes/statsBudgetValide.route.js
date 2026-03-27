@@ -3,7 +3,7 @@ const router = express.Router();
 const statsvalidatedBudgetController = require("../controllers/statsBudgetvalide.controller");
 
 router.get(
-  "/budget-valide/:idsociete",
+  "/budget-valide",
   statsvalidatedBudgetController.getBudgetAnnuelEnCours,
 );
 
