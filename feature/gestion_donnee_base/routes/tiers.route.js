@@ -16,5 +16,6 @@ router.post("/create/", tiers_controller.create_tiers); // OK
 router.put("/update/:idtiers", tiers_controller.update_tiers); // OK
 router.delete("/delete/:idtiers", tiers_controller.delete_tiers); // OK
 router.post('/import', upload.single('file'), tiers_controller.import_tiers);
+router.post('/export', tiers_controller.exportTiers);
 
 module.exports = router;

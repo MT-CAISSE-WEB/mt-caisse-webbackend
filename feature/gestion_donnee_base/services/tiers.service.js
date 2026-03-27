@@ -1,7 +1,7 @@
 const tiersmodel = require("../models/tiers.model");
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
-const { parse } = require('csv-parse');
+const { parse } = require("csv-parse");
 
 const societemodel = require("../../gestion_organisation/models/societe.model");
 
@@ -79,6 +79,7 @@ async function get_by_idtiers(idtiers) {
 }
 
 
+// OK
 async function update_tiers(idtiers, data) {
   if (!idtiers) {
     throw new Error("Erreur de donnée");
@@ -108,6 +109,7 @@ async function delete_tiers(idtiers) {
 }
 
 
+// OK
 async function import_tiers(filePath, info) {
   const today = new Date();
   const parser = fs
@@ -141,6 +143,19 @@ async function import_tiers(filePath, info) {
 }
 
 
+// OK
+async function exportTiers(debut, fin, typetiers) {
+  try {
+    const data = await tier.exportTiers(debut, fin, typetiers);
+
+    return data;
+    
+  } catch (err) {
+    console.log(`Aucune donnée: ${err.message}`);
+    throw err;
+  }
+}
+
 
 module.exports = {
   get_all_tiers,
@@ -148,5 +163,6 @@ module.exports = {
   create_tiers,
   update_tiers,
   delete_tiers,
-  import_tiers
+  import_tiers,
+  exportTiers
 };

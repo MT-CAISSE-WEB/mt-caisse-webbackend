@@ -10,6 +10,7 @@ const plancomptablemodel = new plancomptableModel();
 const societeservice = require('../../gestion_organisation/services/societe.service');
 const lasociete = societeservice;
 
+
 const queryupsert = `
     IF EXISTS (SELECT 1 FROM NatureOperation WHERE codenature = @codenature)
     BEGIN
@@ -45,7 +46,8 @@ const queryUpdate = `UPDATE NatureOperation SET libelle = @libelle, typeoperatio
  decajustifier = @decajustifier, imputationtiers = @imputationtiers,
   actif = @actif, demandedecaissement = @demandedecaissement, 
   idsociete = @idsociete, idcompte = @idcompte, 
-  updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE idnature = @idnature`;
+  updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE idnature = @idnature
+  `;
 
 
 const query = `
@@ -225,6 +227,25 @@ class NatureOperationModel {
             console.log(`Erreur de suppression: ${error}`.cyan.bold);
             return {success: false, message: "Erreur de suppression : " + error.message };
         }
+    }
+
+    async exportNatures(debut, fin) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input('debut', sql.VarChar, debut || null)
+            .input('fin', sql.VarChar, fin || null)
+            .query(`SELECT n.codenature, n.libelle, n.typeoperation, n.decajustifier, n.imputationtiers, 
+                n.demandedecaissement, c.numcompte, c.libelle AS compte_libelle, n.actif
+            FROM NatureOperation AS n
+            LEFT JOIN PlanComptable c ON n.idcompte = c.idcompte
+            WHERE 
+            (@debut IS NULL OR n.codenature >= @debut) AND
+            (@fin IS NULL OR n.codenature <= @fin)
+            ORDER BY n.codenature`);
+
+        const data = result.recordset;
+
+        return data;
     }
 }
 

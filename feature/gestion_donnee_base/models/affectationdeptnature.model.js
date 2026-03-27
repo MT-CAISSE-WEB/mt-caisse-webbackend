@@ -31,40 +31,37 @@ class AffectationDepartementNatureModel {
     // ok 
     async getallNatures(iddepartement) {
 
-    const pool = await connectDB();
+        const pool = await connectDB();
 
-    try {
-        // Natures affectées
-        const resultAffectes = await pool.request()
-            .input("iddepartement", sql.UniqueIdentifier, iddepartement)
-            .query(`SELECT n.idnature, n.codenature, n.libelle, n.actif, n.demandedecaissement, n.imputationtiers
-                FROM NatureOperation n INNER JOIN AffectationDepartementNature a
-                ON a.idnature = n.idnature
-                WHERE a.iddepartement = @iddepartement
-                ORDER BY n.libelle ASC`);
-
-        // Natures non affectées
-        const resultNonAffectes = await pool.request()
-            .input("iddepartement", sql.UniqueIdentifier, iddepartement)
-            .query(`SELECT n.idnature, n.codenature, n.libelle, n.actif
-                FROM NatureOperation n WHERE n.actif = 1 AND NOT EXISTS (
-                    SELECT 1 FROM AffectationDepartementNature a
-                    WHERE a.idnature = n.idnature AND a.iddepartement = @iddepartement)
+        try {
+            // Natures affectées
+            const resultAffectes = await pool.request()
+                .input("iddepartement", sql.UniqueIdentifier, iddepartement)
+                .query(`SELECT n.idnature, n.codenature, n.libelle, n.actif, n.demandedecaissement, n.imputationtiers
+                    FROM NatureOperation n INNER JOIN AffectationDepartementNature a
+                    ON a.idnature = n.idnature
+                    WHERE a.iddepartement = @iddepartement
                     ORDER BY n.libelle ASC`);
-        const naturesaffectes = resultAffectes.recordset;
-        const naturesnonaffectes = resultNonAffectes.recordset;
 
-        return {success: true, naturesaffectes, naturesnonaffectes};
+            // Natures non affectées
+            const resultNonAffectes = await pool.request()
+                .input("iddepartement", sql.UniqueIdentifier, iddepartement)
+                .query(`SELECT n.idnature, n.codenature, n.libelle, n.actif
+                    FROM NatureOperation n WHERE n.actif = 1 AND NOT EXISTS (
+                        SELECT 1 FROM AffectationDepartementNature a
+                        WHERE a.idnature = n.idnature AND a.iddepartement = @iddepartement)
+                        ORDER BY n.libelle ASC`);
+            const naturesaffectes = resultAffectes.recordset;
+            const naturesnonaffectes = resultNonAffectes.recordset;
 
-    } catch (error) {
-        return { success: false, message: error.message};}
+            return {success: true, naturesaffectes, naturesnonaffectes};
+
+        } catch (error) {
+            return { success: false, message: error.message};}
     }
 
     
-    async saveAffectations(iddepartement, data) {
-
-        // console.log(iddepartement)
-
+        async saveAffectations(iddepartement, data) {
         const pool = await connectDB();
         const transaction = new sql.Transaction(pool);
 
@@ -108,6 +105,26 @@ class AffectationDepartementNatureModel {
                 message: error.message
             };
         }
+    }
+
+    async exportAffDepartements(debut, fin) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input('debut', sql.NVarChar, debut || null)
+            .input('fin', sql.NVarChar, fin || null)
+            .query(`SELECT d.codedept, d.libelle, n.codenature, n.libelle as libellenature
+                    FROM NatureOperation n 
+                    INNER JOIN AffectationDepartementNature a ON a.idnature = n.idnature
+                    JOIN Departement d ON d.iddepartement = a.iddepartement
+                    WHERE (@debut IS NULL OR d.codedept >= @debut) 
+                    AND (@fin IS NULL OR d.codedept <= @fin)
+                    ORDER BY n.libelle ASC`);
+
+        console.log(result.recordset);
+
+        const data = result.recordset;
+
+        return data;
     }
 
 }

@@ -10,7 +10,7 @@ let nature = new natureoperationmodel();
 let natures = []; 
 
 
-
+// OK
 async function get_all_natures() {
     const result = await nature.get_allnatures();
     natures = result.data.map(item => new natureoperationmodel(
@@ -87,6 +87,7 @@ async function get_by_idnature(idnature) {
 }
 
 
+// OK
 async function update_nature(idnature, data) {
   if (!idnature) {
     throw new Error("Erreur de donnée");
@@ -115,7 +116,7 @@ async function delete_nature(idnature) {
    }
 }
 
-
+// OK
 async function import_nature(filePath, info) {
   const today = new Date();
   const parser = fs
@@ -136,7 +137,7 @@ async function import_nature(filePath, info) {
             actif: Number(row[6]),
             idsociete: info.idsociete,
             idcompte: info.idcompte,
-            createdby: info.createdby,
+            createdby: 'System',
             createdat: today
           };
 
@@ -152,6 +153,19 @@ async function import_nature(filePath, info) {
     }
 }
 
+// OK
+async function exportNatures(debut, fin) {
+  try {
+    const data = await nature.exportNatures(debut, fin);
+
+    return data;
+    
+  } catch (err) {
+    console.log(`Aucune donnée: ${err.message}`);
+    throw err;
+  }
+}
+
 
 module.exports = {
   get_all_natures,
@@ -159,5 +173,6 @@ module.exports = {
   create_nature,
   update_nature,
   delete_nature,
-  import_nature
+  import_nature,
+  exportNatures
 };

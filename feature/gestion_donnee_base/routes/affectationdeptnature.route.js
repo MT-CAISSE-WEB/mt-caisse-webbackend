@@ -8,5 +8,6 @@ const affectation_controller = require("../controllers/affectationdeptnature.con
 
 router.get("/:iddepartement", affectation_controller.getAllNatures); // OK
 router.post("/:iddepartement", affectation_controller.saveAffectations); // OK
+router.post("/export", affectation_controller.exportAffDepartements); // OK
 
 module.exports = router;

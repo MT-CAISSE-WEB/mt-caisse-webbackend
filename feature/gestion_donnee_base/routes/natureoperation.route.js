@@ -16,6 +16,8 @@ router.post("/create/", natureoperation_controller.create_nature); // OK
 router.put("/update/:idnature", natureoperation_controller.update_nature);
 router.delete("/delete/:idnature", natureoperation_controller.delete_nature);
 router.post('/import', upload.single('file'), natureoperation_controller.import_nature);
+router.post('/export', natureoperation_controller.exportNatures);
+
 
 
 module.exports = router;

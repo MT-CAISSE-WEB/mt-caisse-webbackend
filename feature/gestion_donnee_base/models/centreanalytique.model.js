@@ -184,6 +184,24 @@ class CentreAnalytiqueModel {
             return {success: false, message: "Erreur de suppression : " + error.message };
         }
     }
+
+
+    async exportCentres(debut, fin) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input('debut', sql.VarChar, debut || null)
+            .input('fin', sql.VarChar, fin || null)
+            .query(`SELECT codecentreanalytique, libelle, actif
+            FROM CentreAnalytique
+            WHERE 
+            (@debut IS NULL OR codecentreanalytique >= @debut) AND
+            (@fin IS NULL OR codecentreanalytique <= @fin)
+            ORDER BY codecentreanalytique`);
+
+        const data = result.recordset;
+
+        return data;
+    }
 }
 
 module.exports = CentreAnalytiqueModel;

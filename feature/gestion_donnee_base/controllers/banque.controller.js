@@ -1,18 +1,19 @@
-const centreanalytiqueservice = require("../services/centreanalytique.service");
+const banqueservice = require("../services/banque.service");
 const asyncHandler = require("../../../shared/middlewares/async");
 const ErrorResponse = require("../../../shared/utils/errorResponse");
+
 
 const ExcelJS = require('exceljs');
 const puppeteer = require('puppeteer');
 
 /**
- * Liste tous les centres analytiques
+ * Liste toutes les banques d'opération OK
  */
 // OK
-module.exports.get_allcentres = asyncHandler(async(req, res, next) => {
+module.exports.get_banques = asyncHandler(async(req, res, next) => {
   try {
-    const centres = await centreanalytiqueservice.get_allcentres();
-    res.json({ success: true, data: centres });
+    const banques = await banqueservice.get_all_banques();
+    res.json({ success: true, data: banques });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur", error });
   }
@@ -20,14 +21,14 @@ module.exports.get_allcentres = asyncHandler(async(req, res, next) => {
 
 
 /**
- * Un centre existant par son id
+ * Un banque existant par son id
  */ 
 // OK
-module.exports.get_onecentre = asyncHandler(async(req, res, next) => {
+module.exports.get_onebanque = asyncHandler(async(req, res, next) => {
   try {
-    const idcentre  = req.params.idcentre;
-    const centre_ = await centreanalytiqueservice.get_by_idcentre(idcentre);
-    res.json({ success: true, data: centre_ });
+    const idbanque  = req.params.idbanque;
+    const banque_ = await banqueservice.get_by_idbanque(idbanque);
+    res.json({ success: true, data: banque_ });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
   }
@@ -35,27 +36,29 @@ module.exports.get_onecentre = asyncHandler(async(req, res, next) => {
 
 
 /**
- * Crée un nouveau centre
+ * Crée un nouveau banque
  */
-module.exports.create_centre = asyncHandler(async(req, res, next) => {
+module.exports.create_banque = asyncHandler(async(req, res, next) => {
   try {
     const data = req.body;
-    const new_centre = await centreanalytiqueservice.create_centre(data);
-    res.status(201).json({ success: true, data: new_centre });
+    console.log(data);
+    const new_banque = await banqueservice.create_banque(data);
+    res.status(201).json({ success: true, data: new_banque });
   } catch (error) {
+    console.log(error)
     res.status(400).json({ success: false, message: error.message });
   }
 });
 
 
 /**
- * Met à jour un centre existant
+ * Met à jour un banque existant
  */
-module.exports.update_centre = asyncHandler(async(req, res, next) => {
+module.exports.update_banque = asyncHandler(async(req, res, next) => {
   try {
-    const idcentre  = req.params.idcentre;
-    const centre_ = await centreanalytiqueservice.update_centre(idcentre, req.body);
-    res.json({ success: true, data: centre_ });
+    const idbanque  = req.params.idbanque;
+    const banque_ = await banqueservice.update_banque(idbanque, req.body);
+    res.json({ success: true, data: banque_ });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
   }
@@ -64,13 +67,13 @@ module.exports.update_centre = asyncHandler(async(req, res, next) => {
 
 
 /**
- * Supprime un centre
+ * Supprime un banque
  */
-module.exports.delete_centre = asyncHandler(async(req, res, next) => {
+module.exports.delete_banque = asyncHandler(async(req, res, next) => {
   try {
-    const idcentre = req.params.idcentre;
-    const centre_ = await centreanalytiqueservice.delete_centre(idcentre);
-    res.json({ success: true, message: "Centre analytique supprimé avec succès." });
+    const idbanque = req.params.idbanque;
+    const banque_ = await banqueservice.delete_banque(idbanque);
+    res.json({ success: true, message: "Banque supprimée avec succès." });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
   }
@@ -80,24 +83,24 @@ module.exports.delete_centre = asyncHandler(async(req, res, next) => {
 /**
  * Importer un plan comptable à partir d'un fichier CSV
  */
-module.exports.import_centre_analytique = asyncHandler(async (req, res) => {
+module.exports.import_banque = asyncHandler(async (req, res) => {
   if (!req.file) {
     return res.status(400).json({success: false, message: 'Aucun fichier reçu'});
   }
   const info = req.body;
-  const result = await centreanalytiqueservice.import_centre_analytique(req.file.path, info);
+  const result = await banqueservice.import_banque(req.file.path, info);
   res.status(201).json({success: true, data: result});
 });
 
 
-module.exports.exportCentres = asyncHandler(async (req, res) => {
+
+
+module.exports.exportbanques = asyncHandler(async (req, res) => {
 
   const { debut, fin, format } = req.body;
 
   try {
-    const data = await centreanalytiqueservice.exportCentres(debut, fin);
-
-    // console.log(data);
+    const data = await banqueservice.exportbanques(debut, fin);
 
     if (format === 'excel') {
       return exportExcel(data, res);
@@ -117,18 +120,28 @@ async function exportPDF(data, res) {
 
   const rows = data.map(d => `
     <tr>
-      <td>${d.codecentreanalytique}</td>
+      <td>${d.codebanque}</td>
       <td>${d.libelle}</td>
+      <td>${d.numerocompte}</td>
+      <td>${d.iban}</td>
+      <td>${d.swift}</td>
+      <td>${d.devise_code}</td>
+      <td>${d.numcompte}</td>
       <td>${d.actif ? 'Actif' : 'Inactif'}</td>
     </tr>
   `).join('');
 
   const html = `
-    <h3>Liste des centres analytiques</h3>
+    <h3>Liste des banques</h3>
     <table border="1" cellspacing="0" cellpadding="5">
       <tr>
         <th>Code</th>
         <th>Libellé</th>
+        <th>Numéro de compte</th>
+        <th>IBAN</th>
+        <th>SWIFT</th>
+        <th>Devise</th>
+        <th>Compte</th>
         <th>Statut</th>
       </tr>
       ${rows}
@@ -151,18 +164,28 @@ async function exportPDF(data, res) {
 async function exportExcel(data, res) {
 
   const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet('Centres analytiques');
+  const sheet = workbook.addWorksheet('Banques');
 
   sheet.columns = [
-    { header: 'Code', key: 'codecentreanalytique' },
+    { header: 'Code', key: 'codebanque' },
     { header: 'Libellé', key: 'libelle' },
+    { header: 'Numéro de compte bancaire', key: 'numerocompte' },
+    { header: 'IBAN', key: 'iban' },
+    { header: 'SWIFT', key: 'swift' },
+    { header: 'Devise', key: 'devise_code' },
+    { header: 'Compte', key: 'numcompte' },
     { header: 'Statut', key: 'actif' }
   ];
 
   data.forEach(d => {
     sheet.addRow({
-      codecentreanalytique: d.codecentreanalytique,
+      codebanque: d.codebanque,
       libelle: d.libelle,
+      numerocompte: d.numerocompte,
+      iban: d.iban,
+      swift: d.swift,
+      devise_code: d.devise_code,
+      numcompte: d.numcompte,
       actif: d.actif ? 'Actif' : 'Inactif'
     });
   });

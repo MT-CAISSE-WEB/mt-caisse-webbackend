@@ -7,6 +7,7 @@ let centre = new centreanalytiquemodel();
 
 let centres = []; 
 
+// OK
 async function get_allcentres() {
     const result = await centre.get_allcentres();
     centres = result.data.map(item => new centreanalytiquemodel(
@@ -22,7 +23,6 @@ async function get_allcentres() {
     
   return centres;
 }
-
 
 // OK
 async function create_centre(data) {
@@ -51,7 +51,6 @@ async function create_centre(data) {
   return recorded.data;
 }
 
-
 // OK
 async function get_by_idcentre(idcentreanalytique) {
   if (!idcentreanalytique) {
@@ -67,7 +66,7 @@ async function get_by_idcentre(idcentreanalytique) {
   }
 }
 
-
+// OK
 async function update_centre(idcentreanalytique, data) {
   if (!idcentreanalytique) {
     throw new Error("Erreur de donnée");
@@ -82,7 +81,7 @@ async function update_centre(idcentreanalytique, data) {
   }
 }
 
-
+// OK
 async function delete_centre(idcentreanalytique) {
    try {
     const centre_ = await centre.delete_centre(idcentreanalytique);
@@ -96,7 +95,7 @@ async function delete_centre(idcentreanalytique) {
    }
 }
 
-
+// OK
 async function import_centre_analytique(filePath, info) {
   const today = new Date();
   const parser = fs
@@ -128,6 +127,20 @@ async function import_centre_analytique(filePath, info) {
     }
 }
 
+// OK
+async function exportCentres(debut, fin) {
+  try {
+    const data = await centre.exportCentres(debut, fin);
+
+    return data;
+    
+  } catch (err) {
+    console.log(`Aucune donnée: ${err.message}`);
+    throw err;
+  }
+}
+
+
 
 
 module.exports = {
@@ -136,5 +149,6 @@ module.exports = {
   create_centre,
   update_centre,
   delete_centre,
-  import_centre_analytique
+  import_centre_analytique,
+  exportCentres
 };

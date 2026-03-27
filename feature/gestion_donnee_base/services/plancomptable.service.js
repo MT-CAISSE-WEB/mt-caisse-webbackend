@@ -9,7 +9,7 @@ let compte = new plancomptablemodel();
 
 let comptes = []; 
 
-
+// OK
 async function get_all_comptes() {
     const result = await compte.get_allcomptes();
     comptes = result.data.map(item => new plancomptablemodel(
@@ -70,7 +70,6 @@ async function create_compte(data) {
   return recorded.data;
 }
 
-
 // OK
 async function get_by_idcompte(idcompte) {
   if (!idcompte) {
@@ -86,7 +85,7 @@ async function get_by_idcompte(idcompte) {
   }
 }
 
-
+// OK
 async function update_compte(idcompte, data) {
   if (!idcompte) {
     throw new Error("Erreur de donnée");
@@ -101,7 +100,7 @@ async function update_compte(idcompte, data) {
   }
 }
 
-
+// OK
 async function delete_compte(idcompte) {
    try {
     const compte_ = await compte.delete_compte(idcompte);
@@ -115,7 +114,7 @@ async function delete_compte(idcompte) {
    }
 }
 
-
+// OK
 async function import_plan_comptable(filePath, info) {
   const today = new Date();
   const parser = fs
@@ -151,7 +150,7 @@ async function import_plan_comptable(filePath, info) {
     }
 }
 
-// Exporter les comptes
+// OK
 async function exportComptes(debut, fin) {
   try {
     const data = await compte.exportComptes(debut, fin);

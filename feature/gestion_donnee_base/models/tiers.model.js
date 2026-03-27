@@ -68,7 +68,6 @@ class TiersModel {
         this.societe = societe;
     }
 
-
     // Créer un tiers OK
     async create_tiers() {
         const pool = await connectDB();
@@ -94,7 +93,6 @@ class TiersModel {
         }
     }
 
-
     // Rechercher tous les tiers OK
     async get_alltiers () {
         const pool = await connectDB();
@@ -110,7 +108,6 @@ class TiersModel {
             console.log(`Erreur ds de recuperation: ${error}`.cyan.bold);
         }
     }
-
 
     // Rechercher un tiers OK
     async get_onetiers(idtiers) {
@@ -141,7 +138,6 @@ class TiersModel {
             };
         }
     }
-
     
     // Met à jour un tiers OK
     async update_tiers (idtiers, data) {
@@ -210,6 +206,29 @@ class TiersModel {
             console.log(`Erreur de suppression: ${error}`.cyan.bold);
             return {success: false, message: "Erreur de suppression : " + error.message };
         }
+    }
+
+    async exportTiers(debut, fin, typetiers) {
+
+        const pool = await connectDB();
+
+        const result = await pool.request()
+            .input('debut', sql.VarChar, debut || null)
+            .input('fin', sql.VarChar, fin || null)
+            .input('typetiers', sql.VarChar, typetiers || null)
+            .query(`SELECT codetiers, designation, typetiers, actif 
+            FROM Tiers
+            WHERE 
+                (
+                    (@debut IS NULL OR @debut = '' OR codetiers >= @debut)
+                AND (@fin IS NULL OR @fin = '' OR codetiers <= @fin)
+                )
+            AND (@typetiers IS NULL OR @typetiers = '' OR typetiers = @typetiers)
+            ORDER BY codetiers`);
+
+        const data = result.recordset;
+
+        return data;
     }
 }
 
