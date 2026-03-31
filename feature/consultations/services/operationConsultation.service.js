@@ -210,29 +210,41 @@ async function getLastOperation(caisses, date, page, limit){
             if (!map.has(piece)) {
                 map.set(piece, {
                     piece,
-                    codecaisse: r.codecaisse,
-                    caisse: r.caisse,
                     date,
-                    devise: r.devise_caisse,
                     typeoperation: r.typeoperation,
                     piece: r.operation,
-                    montant: r.montant,
                     montantop: r.montant_op,
-                    montant_ref: r.montant_ref,
-                    solde_ouverture: r.solde_ouverture,
-                    solde_fermeture: r.solde_fermeture,
-                    libelles: []
+                    deviseop : r.devise_operation,
+                    caisses: new Map() // important
                 });
             }
-            const dateGroup = map.get(piece);
-            // Niveau CAISSE
-            dateGroup.libelles.push({libelle: r.commentaire })
+
+            const operation = map.get(piece);
+
+           // ================= NIVEAU CAISSE =================
+            const keyCaisse = r.codecaisse;
+
+            if (!operation.caisses.has(keyCaisse)) {
+                operation.caisses.set(keyCaisse, {
+                    codecaisse: r.codecaisse,
+                    devise: r.devise_caisse,
+                    caisse: r.caisse,
+                    montant: r.montant,
+                    libelle: r.commentaire,
+                    montant_ref: r.montant_ref,
+                    solde_ouverture: r.solde_ouverture,
+                    solde_fermeture: r.solde_fermeture
+                });
+            }
         });
 
         // Conversion Map → Array
-        const data = Array.from(map.values());
+        const data = Array.from(map.values()).map(op => ({
+            ...op,
+            caisses: Array.from(op.caisses.values())
+        }));
 
-        return new PaginationModel(page, limit, total, data);
+        return new PaginationModel(page, limit, totalPages, data);
     } catch (error) {
         console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         throw error;
@@ -240,7 +252,7 @@ async function getLastOperation(caisses, date, page, limit){
 }
 
 async function history(caisses, date, page, limit){
-     page = parseInt(page) || 1;
+    page = parseInt(page) || 1;
     limit = parseInt(limit) || 6;
     const offset = (page - 1) * limit;
 
@@ -287,6 +299,7 @@ async function history(caisses, date, page, limit){
                     typeoperation: r.typeoperation,
                     piece: r.operation,
                     montant: r.montant,
+                    deviseop: r.devise_operation,
                     montant_ref: r.montant_ref
                 });
             }
@@ -298,7 +311,7 @@ async function history(caisses, date, page, limit){
             operations: Array.from(d.operations.values())
         }));
 
-        return new PaginationModel(page, limit, total, data);;
+        return new PaginationModel(page, limit, totalPages, data);
     } catch (error) {
         console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         throw error;

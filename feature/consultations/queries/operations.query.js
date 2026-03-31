@@ -99,13 +99,14 @@ module.exports = {
         SELECT
             C.codecaisse              AS codecaisse,
             C.libelle                 AS caisse,
+			D.codedevise              AS devise_caisse,
             TOPE.montant              AS montant,
-            D.codedevise              AS devise_caisse,
             TOPE.montantref           AS montant_ref,
             TOPE.codtypeoperation     AS typeoperation,
             EOC.codeoperation         AS operation,
             EOC.dateoperation         AS date_operation,
             EOC.montant               AS montant_op,
+			DE.codedevise             AS devise_operation,
             L.libelle                 AS commentaire,
             CP.soldeouverture         AS solde_ouverture,
             CP.soldefermeture         AS solde_fermeture,
@@ -118,7 +119,9 @@ module.exports = {
             INNER JOIN Caisse C 
                 ON C.idcaisse = TOPE.idcaisse
             INNER JOIN Devise D 
-                ON D.iddevise = EOC.iddevise
+                ON D.iddevise = C.iddevise
+			INNER JOIN Devise DE 
+                ON DE.iddevise = EOC.iddevise
             LEFT JOIN CaissePeriode CP 
                 ON CP.idperiode = TOPE.idperiode
             LEFT JOIN LigneOperationCaisse L
@@ -142,6 +145,7 @@ module.exports = {
             EOC.codeoperation          AS operation,
             EOC.dateoperation          AS date_operation,
             EOC.montant          AS montant_op,
+            DE.codedevise               AS devise_operation,
             L.libelle  AS commentaire,
             CP.soldeouverture          AS solde_ouverture,
             CP.soldefermeture          AS solde_fermeture
@@ -151,7 +155,9 @@ module.exports = {
         INNER JOIN Caisse C 
             ON C.idcaisse = TOPE.idcaisse
         INNER JOIN Devise D 
-            ON D.iddevise = EOC.iddevise
+            ON D.iddevise = C.iddevise
+        INNER JOIN Devise DE 
+            ON DE.iddevise = EOC.iddevise
         LEFT JOIN CaissePeriode CP 
             ON CP.idperiode = TOPE.idperiode
         LEFT JOIN LigneOperationCaisse L

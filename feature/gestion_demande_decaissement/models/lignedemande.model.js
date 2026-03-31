@@ -126,29 +126,67 @@ class ligneDemandeModel {
     return { success: true, data: result }
   }
 
-  async resolveBudget({idsociete, idsite, iddepartement, idnature, datedemande}){
+  async checktypebudget(data){
     const pool = await connectDB()
     const result = await pool.request()
-      .input('idnature', sql.UniqueIdentifier, idnature)
-      .input('idsociete', sql.UniqueIdentifier, idsociete)
-      .input('idsite', sql.UniqueIdentifier, idsite)
-      .input('iddepartement', sql.UniqueIdentifier, iddepartement)
-      .input('datedemande', sql.DateTime, datedemande)
-      .query(ligneDemandeQuery.resoleveBudget);
+      .input('idsociete', sql.UniqueIdentifier, data.idsociete)
+      .input('idsite', sql.UniqueIdentifier, data.idsite)
+      .input('datedemande', sql.DateTime, data.datedemande)
+      .query(ligneDemandeQuery.checktypebudget);
 
       return result.recordset;
   }
 
-  async checkBudgetSolde({ idbudget, idnature, montant, iddepartement }){
+  async resoleveBudgetnature(data){
     const pool = await connectDB()
     const result = await pool.request()
-      .input('idnature', sql.UniqueIdentifier, idnature)
-      .input('idbudget', sql.UniqueIdentifier, idbudget)
-      .input('iddepartement', sql.UniqueIdentifier, iddepartement)
-      .input('montant', sql.Decimal(22,9), montant)
-      .query(ligneDemandeQuery.checkBudgetSolde);
+      .input('idnature', sql.UniqueIdentifier, data.idnature)
+      .input('idsociete', sql.UniqueIdentifier, data.idsociete)
+      .input('idsite', sql.UniqueIdentifier, data.idsite)
+      .input('iddepartement', sql.UniqueIdentifier, data.iddepartement)
+      .input('datedemande', sql.DateTime, data.datedemande)
+      .query(ligneDemandeQuery.resoleveBudgetnature);
 
-      if (!result.recordset.length || result.recordset[0].solde < montant) {
+      return result.recordset;
+  }
+
+  async resoleveBudgetcentre(data){
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('idcentre', sql.UniqueIdentifier, data.idcentre)
+      .input('idsociete', sql.UniqueIdentifier, data.idsociete)
+      .input('idsite', sql.UniqueIdentifier, data.idsite)
+      .input('datedemande', sql.DateTime, data.datedemande)
+      .query(ligneDemandeQuery.resoleveBudgetcentre);
+
+      return result.recordset;
+  }
+
+  async checkBudgetnatureSolde(data){
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('idnature', sql.UniqueIdentifier, data.idnature)
+      .input('idbudget', sql.UniqueIdentifier, data.idbudget)
+      .input('iddepartement', sql.UniqueIdentifier, data.iddepartement)
+      .input('montant', sql.Decimal(22,9), data.montant)
+      .query(ligneDemandeQuery.checkBudgetnatureSolde);
+
+      if (!result.recordset.length || result.recordset[0].solde < data.montant) {
+        throw new Error('Budget insuffisant');
+      }
+
+      return result.recordset;
+  }
+
+  async checkBudgetcentreSolde(data){
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('idcentre', sql.UniqueIdentifier, data.idcentre)
+      .input('idbudget', sql.UniqueIdentifier, data.idbudget)
+      .input('montant', sql.Decimal(22,9), data.montant)
+      .query(ligneDemandeQuery.checkBudgetcentreSolde);
+
+      if (!result.recordset.length || result.recordset[0].solde < data.montant) {
         throw new Error('Budget insuffisant');
       }
 
@@ -171,33 +209,66 @@ class ligneDemandeModel {
     return result.recordset
   }
 
-  async get_preengageBynature(idnature){
+  async get_preengageBynature(idnature, iddepartement){
     const pool = await connectDB()
     const result = await pool.request()
     .input('idnature', sql.UniqueIdentifier, idnature)
-    .query(ligneDemandeQuery.preengage)
+    .input('iddepartement', sql.UniqueIdentifier, iddepartement)
+    .query(ligneDemandeQuery.preengagebynature)
 
     return result.recordset
   }
 
-  async get_engageBynature(idnature){
+  async get_engageBynature(idnature, iddepartement){
     const pool = await connectDB()
     const result = await pool.request()
     .input('idnature', sql.UniqueIdentifier, idnature)
-    .query(ligneDemandeQuery.engage)
+    .input('iddepartement', sql.UniqueIdentifier, iddepartement)
+    .query(ligneDemandeQuery.engagebynature)
 
     return result.recordset
   }
 
-  async get_realiseBynature(idnature){
+  async get_realiseBynature(idnature, iddepartement){
     const pool = await connectDB()
     const result = await pool.request()
     .input('idnature', sql.UniqueIdentifier, idnature)
-    .query(ligneDemandeQuery.reel)
+    .input('iddepartement', sql.UniqueIdentifier, iddepartement)
+    .query(ligneDemandeQuery.reelbynature)
 
     return result.recordset
   }
-  
+
+  async get_preengageBycentre(idcentre){
+    const pool = await connectDB()
+    const result = await pool.request()
+    .input('idcentre', sql.UniqueIdentifier, idcentre)
+    .input('idsite', sql.UniqueIdentifier, idsite)
+    .query(ligneDemandeQuery.preengagebycentre)
+
+    return result.recordset
+  }
+
+  async get_engageBycentre(idcentre){
+    const pool = await connectDB()
+    const result = await pool.request()
+    .input('idcentre', sql.UniqueIdentifier, idcentre)
+    .input('idsite', sql.UniqueIdentifier, idsite)
+    .query(ligneDemandeQuery.engagebycentre)
+
+    return result.recordset
+  }
+
+  async get_realiseBycentre(idcentre){
+    const pool = await connectDB()
+    const result = await pool.request()
+    .input('idcentre', sql.UniqueIdentifier, idcentre)
+    .input('idsite', sql.UniqueIdentifier, idsite)
+    .query(ligneDemandeQuery.reelbycentre)
+
+    return result.recordset
+  }
+
 }
 
 
