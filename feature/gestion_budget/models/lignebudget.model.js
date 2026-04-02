@@ -8,7 +8,7 @@ const {
   CentreAnalytique,
 } = require("../../gestion_demande_decaissement/models/foreign_models");
 
-const Budget = require("../models/budget.model");
+const { Budget } = require("../models/index");
 
 const BudgetDepartementNature = sequelize.define(
   "BudgetDepartementNature",

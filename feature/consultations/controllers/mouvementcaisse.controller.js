@@ -1,147 +1,147 @@
 const { QueryTypes } = require("sequelize");
-const sequelize = require("../../../config/database"); // adapte ton path
+const sequelize = require("../../../config/database");
 
 exports.getStatsCaisseMensuelle = async (req, res) => {
   try {
     const { idsociete, idsite } = req.query;
 
-    if (!idsociete || !idsite) {
+    if (!idsociete) {
       return res.status(400).json({
         success: false,
-        message: "idsociete et idsite sont obligatoires",
+        message: "idsociete est obligatoire",
       });
     }
 
     const stats = await sequelize.query(
-      //   `
-      //   SELECT
-      //       c.idcaisse,
-      //       c.libelle AS libellecaisse,
-      //       DAY(e.dateoperation) AS jour,
-
-      //       SUM(CASE
-      //           WHEN t.codtypeoperation = 'encaissement' THEN t.montant
-      //           ELSE 0
-      //       END) AS total_entrees,
-
-      //       SUM(CASE
-      //           WHEN t.codtypeoperation = 'decaissement' THEN t.montant
-      //           ELSE 0
-      //       END) AS total_sorties,
-
-      //       SUM(
-      //         CASE
-      //             WHEN t.codtypeoperation IN ('encaissement', 'ENTREE') THEN t.montant
-      //             WHEN t.codtypeoperation IN ('decaissement', 'SORTIE') THEN -t.montant
-      //             ELSE 0
-      //         END
-      //         ) AS solde
-
-      //   FROM EnteteOperationCaisse e
-
-      //   INNER JOIN TypeOperation t
-      //       ON t.idoperation = e.idoperation
-
-      //   INNER JOIN Caisse c
-      //       ON c.idcaisse = t.idcaisse
-
-      //   WHERE
-      //       e.idsociete = :idsociete
-      //       AND e.idsite = :idsite
-      //       AND MONTH(e.dateoperation) = 12
-      //       AND YEAR(e.dateoperation) = 2025
-
-      //   GROUP BY
-      //       c.idcaisse,
-      //       c.libelle,
-      //       DAY(e.dateoperation)
-
-      //   ORDER BY
-      //       c.libelle,
-      //       jour
-      //   `,
       `
-    WITH jours AS (
-        SELECT 1 AS jour
-        UNION ALL
-        SELECT jour + 1
-        FROM jours
-        WHERE jour + 1 <= DAY(EOMONTH(GETDATE()))
-    ),
+WITH derniere_periode AS (
+    SELECT 
+        cp.idcaisse,
+        cp.dateperiode,
+        ROW_NUMBER() OVER (PARTITION BY cp.idcaisse ORDER BY cp.dateperiode DESC) AS rn
+    FROM CaissePeriode cp
+),
 
-      -- Toutes les caisses
-      caisses AS (
-          SELECT idcaisse, libelle, soldeinitialisation
-          FROM Caisse
-          WHERE idsociete = :idsociete AND idsite = idsite
-      ),
+-- ✅ Une période PAR caisse
+periode_active AS (
+    SELECT idcaisse, dateperiode
+    FROM derniere_periode
+    WHERE rn = 1
+),
 
-      -- Données réelles
-      data_ops AS (
-          SELECT 
-              t.idcaisse,
-              DAY(e.dateoperation) AS jour,
+caisses AS (
+    SELECT 
+        c.idcaisse,
+        c.libelle,
+        p.dateperiode
+    FROM Caisse c
+    INNER JOIN periode_active p ON p.idcaisse = c.idcaisse
+    WHERE 
+        c.idsociete = :idsociete
+        ${idsite ? "AND c.idsite = :idsite" : ""}
+),
 
-              SUM(CASE 
-                  WHEN t.codtypeoperation IN ('encaissement','ENTREE') THEN t.montant 
-                  ELSE 0 
-              END) AS total_entrees,
+-- ✅ Génération des 30 jours PAR caisse
+jours AS (
+    SELECT 
+        p.idcaisse,
+        CAST(DATEADD(DAY, -29, p.dateperiode) AS DATE) AS jour,
+        p.dateperiode AS date_ref
+    FROM periode_active p
 
-              SUM(CASE 
-                  WHEN t.codtypeoperation IN ('decaissement','SORTIE') THEN t.montant 
-                  ELSE 0 
-              END) AS total_sorties,
+    UNION ALL
 
-              SUM(
-                  CASE 
-                      WHEN t.codtypeoperation IN ('encaissement','ENTREE') THEN t.montant 
-                      WHEN t.codtypeoperation IN ('decaissement','SORTIE') THEN -t.montant
-                      ELSE 0
-                  END
-              ) AS mouvement
+    SELECT 
+        j.idcaisse,
+        DATEADD(DAY, 1, j.jour),
+        j.date_ref
+    FROM jours j
+    WHERE j.jour < j.date_ref
+),
 
-          FROM EnteteOperationCaisse e
-          INNER JOIN TypeOperation t ON t.idoperation = e.idoperation
+-- ✅ Mouvements limités à la période de CHAQUE caisse
+data_ops AS (
+    SELECT 
+        t.idcaisse,
+        CAST(e.dateoperation AS DATE) AS jour,
 
-          WHERE 
-              e.idsociete = :idsociete
-              AND e.idsite = :idsite
-              AND MONTH(e.dateoperation) = MONTH(GETDATE())
-              AND YEAR(e.dateoperation) = YEAR(GETDATE())
+        SUM(CASE 
+            WHEN t.codtypeoperation IN ('encaissement','ENTREE') THEN t.montant 
+            ELSE 0 
+        END) AS total_entrees,
 
-          GROUP BY 
-              t.idcaisse,
-              DAY(e.dateoperation)
-      )
+        SUM(CASE 
+            WHEN t.codtypeoperation IN ('decaissement','SORTIE') THEN t.montant 
+            ELSE 0 
+        END) AS total_sorties,
 
-      -- RESULTAT FINAL
-      SELECT 
-          c.idcaisse,
-          c.libelle AS libellecaisse,
-          j.jour,
+        SUM(
+            CASE 
+                WHEN t.codtypeoperation IN ('encaissement','ENTREE') THEN t.montant 
+                WHEN t.codtypeoperation IN ('decaissement','SORTIE') THEN -t.montant
+                ELSE 0
+            END
+        ) AS mouvement
 
-          ISNULL(d.total_entrees, 0) AS total_entrees,
-          ISNULL(d.total_sorties, 0) AS total_sorties,
+    FROM EnteteOperationCaisse e
+    INNER JOIN TypeOperation t ON t.idoperation = e.idoperation
+    INNER JOIN periode_active p ON p.idcaisse = t.idcaisse
 
-          -- SOLDE CUMULÉ
-          c.soldeinitialisation +
-          SUM(ISNULL(d.mouvement, 0)) OVER (
-              PARTITION BY c.idcaisse
-              ORDER BY j.jour
-              ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-          ) AS solde_reel
+    WHERE 
+        e.idsociete = :idsociete
+        ${idsite ? "AND e.idsite = :idsite" : ""}
+        AND e.dateoperation >= DATEADD(DAY, -30, p.dateperiode)
+        AND e.dateoperation <= p.dateperiode
 
-      FROM caisses c
-      CROSS JOIN jours j
+    GROUP BY 
+        t.idcaisse,
+        CAST(e.dateoperation AS DATE)
+),
 
-      LEFT JOIN data_ops d
-          ON d.idcaisse = c.idcaisse
-          AND d.jour = j.jour
+-- ✅ Soldes réels (source métier)
+soldes AS (
+    SELECT 
+        cp.idcaisse,
+        CAST(cp.dateperiode AS DATE) AS jour,
+        cp.soldefermeture
+    FROM CaissePeriode cp
+)
 
-      ORDER BY 
-          c.libelle,
-          j.jour
-    `,
+SELECT 
+    c.idcaisse,
+    c.libelle AS libellecaisse,
+    j.jour,
+
+    ISNULL(d.total_entrees, 0) AS total_entrees,
+    ISNULL(d.total_sorties, 0) AS total_sorties,
+
+    -- ✅ Solde robuste
+    ISNULL(s.soldefermeture,
+        SUM(ISNULL(d.mouvement, 0)) OVER (
+            PARTITION BY c.idcaisse
+            ORDER BY j.jour
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        )
+    ) AS solde
+
+FROM caisses c
+INNER JOIN jours j 
+    ON j.idcaisse = c.idcaisse
+
+LEFT JOIN data_ops d
+    ON d.idcaisse = c.idcaisse
+    AND d.jour = j.jour
+
+LEFT JOIN soldes s
+    ON s.idcaisse = c.idcaisse
+    AND s.jour = j.jour
+
+ORDER BY 
+    c.libelle,
+    j.jour
+
+OPTION (MAXRECURSION 30);
+      `,
       {
         replacements: { idsociete, idsite },
         type: QueryTypes.SELECT,
@@ -153,7 +153,7 @@ exports.getStatsCaisseMensuelle = async (req, res) => {
       data: stats,
     });
   } catch (error) {
-    console.error("Erreur stats journalières caisse :", error);
+    console.error("Erreur stats caisse 30 jours :", error);
     return res.status(500).json({
       success: false,
       message: "Erreur serveur",

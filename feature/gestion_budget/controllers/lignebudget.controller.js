@@ -1,4 +1,4 @@
-const Budget = require("../models/budget.model");
+const { Budget } = require("../models/index");
 const {
   Departement,
   NatureOperation,
@@ -6,6 +6,7 @@ const {
 } = require("../../gestion_demande_decaissement/models/foreign_models");
 
 const BudgetDepartementNature = require("../models/lignebudget.model");
+const sequelize = require("../../../config/database");
 
 // Clés étrangères pour inclusion
 const foreignIncludes = [
@@ -329,6 +330,152 @@ exports.duplicate = async (req, res) => {
     res.status(500).json({
       success: false,
       error: `Erreur lors de la duplication: ${error}`,
+    });
+  }
+};
+
+// obtenir toutes les lignes budgétaires d'un budget
+const { Op } = require("sequelize");
+
+/**
+ * Récupère les lignes budgétaires d'un budget spécifique avec pagination
+ * @param {Object} req - Requête Express
+ * @param {Object} res - Réponse Express
+ * @returns {Promise<void>}
+ */
+exports.getByBudgetId = async (req, res) => {
+  try {
+    const { idbudget } = req.params;
+
+    // Validation de l'ID du budget
+    if (!idbudget) {
+      return res.status(400).json({
+        success: false,
+        error: "L'ID du budget est requis",
+      });
+    }
+
+    // Paramètres de pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    // Paramètres de tri
+    const sortField = req.query.sort || "createdat";
+    const sortOrder = req.query.order || "DESC";
+    const validSortFields = [
+      "createdat",
+      "montantprevisiondept",
+      "montantprevisionsite",
+      "montantprevisionsociete",
+    ];
+    const orderField = validSortFields.includes(sortField)
+      ? sortField
+      : "createdat";
+    const orderDirection = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+
+    // Construction de la requête
+    const whereConditions = {
+      idbudget: idbudget,
+    };
+
+    // Filtres optionnels supplémentaires
+    if (req.query.iddepartement) {
+      whereConditions.iddepartement = req.query.iddepartement;
+    }
+
+    if (req.query.idnature) {
+      whereConditions.idnature = req.query.idnature;
+    }
+
+    if (req.query.idcentreanalytique) {
+      whereConditions.idcentreanalytique = req.query.idcentreanalytique;
+    }
+
+    // Récupération des lignes budgétaires avec pagination
+    const result = await BudgetDepartementNature.findAndCountAll({
+      where: whereConditions,
+      limit,
+      offset,
+      order: [[orderField, orderDirection]],
+      include: foreignIncludes,
+      distinct: true, // Important pour compter correctement avec les includes
+      subQuery: false, // Évite les sous-requêtes complexes
+    });
+
+    // Calcul des totaux pour le budget
+    const totals = await BudgetDepartementNature.findAll({
+      where: { idbudget: idbudget },
+      attributes: [
+        [
+          sequelize.fn("SUM", sequelize.col("montantprevisiondept")),
+          "totalDept",
+        ],
+        [
+          sequelize.fn("SUM", sequelize.col("montantprevisionsite")),
+          "totalSite",
+        ],
+        [
+          sequelize.fn("SUM", sequelize.col("montantprevisionsociete")),
+          "totalSociete",
+        ],
+      ],
+      raw: true,
+    });
+
+    // Récupération des informations du budget
+    const budget = await Budget.findByPk(idbudget, {
+      attributes: [
+        "idbudget",
+        "codebudget",
+        "libelle",
+        "entite",
+        "isanalytique",
+        "validedept",
+        "validesite",
+        "validesociete",
+        "datedebut",
+        "datefin",
+      ],
+    });
+
+    // Construction de la réponse
+    res.json({
+      success: true,
+      data: {
+        budget: budget,
+        lignes: result.rows,
+        pagination: {
+          currentPage: page,
+          limit: limit,
+          totalItems: result.count,
+          totalPages: Math.ceil(result.count / limit),
+          hasNext: page < Math.ceil(result.count / limit),
+          hasPrev: page > 1,
+        },
+        totals: {
+          montantprevisiondept: totals[0]?.totalDept || 0,
+          montantprevisionsite: totals[0]?.totalSite || 0,
+          montantprevisionsociete: totals[0]?.totalSociete || 0,
+        },
+        filters: {
+          iddepartement: req.query.iddepartement || null,
+          idnature: req.query.idnature || null,
+          idcentreanalytique: req.query.idcentreanalytique || null,
+        },
+        sort: {
+          field: orderField,
+          order: orderDirection,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Erreur dans getByBudgetId:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur lors de la récupération des lignes budgétaires",
+      details:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };

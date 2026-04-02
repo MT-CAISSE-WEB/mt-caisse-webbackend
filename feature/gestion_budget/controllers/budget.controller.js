@@ -1,11 +1,13 @@
 const budgetservice = require("../services/budget.service");
-const Budget = require("../models/budget.model");
+const { Budget } = require("../models/index");
+const sequelize = require("../../../config/database");
 
 const {
   CircuitValidation,
   Site,
   Societe,
 } = require("../../gestion_demande_decaissement/models/foreign_models");
+const { ValidationBudget } = require("../models/index");
 
 // Clés étrangères pour inclusion
 const foreignIncludes = [
@@ -267,22 +269,60 @@ exports.update = async (req, res) => {
 };
 
 // ========== DELETE ==========
-exports.delete = async (req, res) => {
-  try {
-    const item = await Budget.findByPk(req.params.id);
+// exports.delete = async (req, res) => {
+//   try {
+//     const item = await Budget.findByPk(req.params.id);
 
-    if (!item) {
+//     if (!item) {
+//       return res
+//         .status(404)
+//         .json({ success: false, error: "Élément non trouvé" });
+//     }
+
+//     await item.destroy();
+//     res.json({ success: true, message: "Supprimé avec succès." });
+//   } catch (error) {
+//     console.error("Erreur:", error);
+//     res
+//       .status(500)
+//       .json({ success: false, error: "Erreur lors de la suppression" });
+//   }
+// };
+
+exports.delete = async (req, res) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    const budget = await Budget.findByPk(req.params.id);
+
+    if (!budget) {
+      await transaction.rollback();
       return res
         .status(404)
         .json({ success: false, error: "Élément non trouvé" });
     }
 
-    await item.destroy();
-    res.json({ success: true, message: "Supprimé avec succès." });
+    // Supprimer toutes les validations liées
+    await ValidationBudget.destroy({
+      where: { idbudget: req.params.id },
+      transaction,
+    });
+
+    // Supprimer le budget
+    await budget.destroy({ transaction });
+    await transaction.commit();
+
+    res.json({
+      success: true,
+      message: "Budget et ses dépendances supprimés avec succès.",
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, error: "Erreur lors de la suppression" });
+    await transaction.rollback();
+    console.error("Erreur:", error);
+    res.status(500).json({
+      success: false,
+      error: "Erreur lors de la suppression forcée",
+    });
   }
 };
 
