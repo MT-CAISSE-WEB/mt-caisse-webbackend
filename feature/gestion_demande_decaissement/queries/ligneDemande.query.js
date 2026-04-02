@@ -103,7 +103,7 @@ module.exports = {
         FROM BudgetDepartementNature BDN
         LEFT JOIN LigneDemande LD ON LD.idbudget = BDN.idbudget
         LEFT JOIN EnteteDemande ED ON ED.iddemande = LD.iddemande AND ED.statut = 2
-        WHERE BDN.idbudget = @idbudget AND BDN.idcentre = @idcentre
+        WHERE BDN.idbudget = @idbudget AND BDN.idcentreanalytique = @idcentre
         GROUP BY BDN.idbudget, BDN.iddepartement, BDN.idnature, BDN.idcentre, BDN.montantprevisionsociete
     `,
     // OK
@@ -215,7 +215,7 @@ module.exports = {
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
             LEFT JOIN Budget B ON B.idbudget = LD.idbudget
         Where E.statut < 3 AND E.decaisse = 0 
-                AND LD.idcentre = @idcentre 
+                AND LD.idcentreanalytique = @idcentre 
                 AND E.idsite = @idsite
                 AND LD.idbudget IS NOT NULL
     `,
@@ -225,7 +225,7 @@ module.exports = {
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
             LEFT JOIN Budget B ON B.idbudget = LD.idbudget
         Where E.statut = 3 AND E.decaisse = 0 
-                AND LD.idcentre = @idcentre 
+                AND LD.idcentreanalytique = @idcentre 
                 AND E.idsite = @idsite
                 AND LD.idbudget IS NOT NULL
     `,
@@ -235,7 +235,7 @@ module.exports = {
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
             LEFT JOIN Budget B ON B.idbudget = LD.idbudget
         Where E.statut = 3 AND E.decaisse = 1 
-                and LD.idcentre = @idcentre 
+                and LD.idcentreanalytique = @idcentre 
                 AND E.idsite = @idsite
                 AND LD.idbudget IS NOT NULL
     `

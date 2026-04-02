@@ -60,13 +60,6 @@ class typeoperationModel {
         const offset = (page - 1) * limit;
 
         try {
-            // const result = await pool.request()
-            //     .input('offset', sql.Int, offset)
-            //     .input('limit', sql.Int, limit)
-            //     .input('search', sql.NVarChar, search ? `%${search}%` : null)
-            //     .input('date', sql.Date, date || null)
-            //     .query(operationQueries.getOperations);
-
             const result = await pool.request()
                 .input('idsite', sql.UniqueIdentifier, user.idsite)
                 .input('typeentitesociete', sql.Int, user.typeentitesociete)
@@ -99,15 +92,9 @@ class typeoperationModel {
             if(typeoperation.idoperation){
                 operation = await operationmodel.get_onetypeoperation(typeoperation.idoperation);
             }
-            // if(typeoperation.idsociete){
-            //     societe = await societemodel.get_onesociete(typeoperation.idsociete);
-            // }
             if(typeoperation.idcaisse){
                 caisse = await caissemodel.get_onecaisse(typeoperation.idcaisse);
             }
-            // if(typeoperation.idsite){
-            //     site = await sitemodel.get_onesite(typeoperation.idsite);
-            // }
             return {...typeoperation, societe : societe, site : site, caisse : caisse, operation : operation};
         } catch (error) {
             return { success: false, message: error.message };
@@ -152,7 +139,7 @@ class typeoperationModel {
             const result = await pool.request().query(typeoperationQueries.solde_calcul);
             return result.recordset;
         } catch (error) {
-            console.log(`Erreur de suppression: ${error}`.cyan.bold);
+            console.log(`Erreur de récupération du solde caisse: ${error}`.cyan.bold);
         }
     }
 
@@ -162,7 +149,7 @@ class typeoperationModel {
             const result = await pool.request().input("idperiode", idperiode).query(typeoperationQueries.solde_caisse_periode);
             return result.recordset;
         } catch (error) {
-            console.log(`Erreur de suppression: ${error}`.cyan.bold);
+            console.log(`Erreur de récupération du solde par période: ${error}`.cyan.bold);
         }
     }
 
@@ -172,7 +159,7 @@ class typeoperationModel {
             const result = await pool.request().query(typeoperationQueries.operation);
             return result.recordset;
         } catch (error) {
-            console.log(`Erreur de suppression: ${error}`.cyan.bold);
+            console.log(`Erreur de récupération des opérations: ${error}`.cyan.bold);
             throw new Error(error);
         }
     }
@@ -185,7 +172,7 @@ class typeoperationModel {
                 .query(typeoperationQueries.reçucaisse);
             return result.recordset;
         } catch (error) {
-            console.log(`Erreur de suppression: ${error}`.cyan.bold);
+            console.log(`Erreur de récupération du reçu: ${error}`.cyan.bold);
             throw new Error(error);
         }
     }

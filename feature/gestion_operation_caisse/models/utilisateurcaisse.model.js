@@ -170,7 +170,7 @@ class UtilisateurCaisseModel {
                 .input("idutilisateur", sql.UniqueIdentifier, idutilisateur)
                 .query(utilisateurcaisseQueries.getcaisseUser);
         } catch (error) {
-            console.log(error);
+            console.log(`Erreur de récupération de la caisse utilisateur: ${error}`.cyan.bold);
         }
     }
 }

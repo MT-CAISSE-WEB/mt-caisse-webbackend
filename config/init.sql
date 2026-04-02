@@ -414,6 +414,7 @@ BEGIN
         datedebut DATETIME,
         datefin DATETIME,
         actif INT DEFAULT 0,
+        isanalytique INT DEFAULT 0,
         cloture INT DEFAULT 0,
         valide INT DEFAULT 0,
         entite NVARCHAR(20) DEFAULT NULL,
@@ -449,7 +450,8 @@ BEGIN
         idbudgetdepartementnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idbudget UNIQUEIDENTIFIER,
         iddepartement UNIQUEIDENTIFIER,
-        idnature UNIQUEIDENTIFIER,
+        idnature UNIQUEIDENTIFIER NULL,
+        idcentreanalytique UNIQUEIDENTIFIER NULL,
         montantprevisiondept DECIMAL(22, 9),
         montantprevisionsite DECIMAL(22, 9),
         montantprevisionsociete DECIMAL(22, 9),
@@ -461,7 +463,8 @@ BEGIN
         updatedby NVARCHAR(50),
         FOREIGN KEY (idbudget) REFERENCES Budget(idbudget),
         FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
-        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature)
+        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
+        FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique)
     );
 END
 

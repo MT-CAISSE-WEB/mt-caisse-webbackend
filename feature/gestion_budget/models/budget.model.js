@@ -1,15 +1,15 @@
-const { DataTypes } = require('sequelize')
-const sequelize = require('../../../config/database')
+const { DataTypes } = require("sequelize");
+const sequelize = require("../../../config/database");
 
 // Import des autres modèles
 const {
   CircuitValidation,
   Site,
   Societe,
-} = require('../../gestion_demande_decaissement/models/foreign_models')
+} = require("../../gestion_demande_decaissement/models/foreign_models");
 
 const Budget = sequelize.define(
-  'Budget',
+  "Budget",
   {
     idbudget: {
       type: DataTypes.UUID,
@@ -24,6 +24,10 @@ const Budget = sequelize.define(
     datedebut: DataTypes.DATE,
     datefin: DataTypes.DATE,
     actif: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    isanalytique: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
@@ -52,40 +56,40 @@ const Budget = sequelize.define(
     updatedby: DataTypes.STRING(50),
   },
   {
-    tableName: 'Budget',
+    tableName: "Budget",
     timestamps: false,
-  }
-)
+  },
+);
 
 // ===== Associations =====
 
 // Budget
 Budget.belongsTo(Budget, {
-  foreignKey: 'idbudgetparent',
-  as: 'buget_parent',
-})
+  foreignKey: "idbudgetparent",
+  as: "buget_parent",
+});
 
 Budget.hasMany(Budget, {
-  foreignKey: 'idbudgetparent',
-  as: 'budget_enfant',
-})
+  foreignKey: "idbudgetparent",
+  as: "budget_enfant",
+});
 
 // Circuit de validation
 Budget.belongsTo(CircuitValidation, {
-  foreignKey: 'idcircuitvalidation',
-  as: 'circuit',
-})
+  foreignKey: "idcircuitvalidation",
+  as: "circuit",
+});
 
 // Société
 Budget.belongsTo(Societe, {
-  foreignKey: 'idsociete',
-  as: 'societe',
-})
+  foreignKey: "idsociete",
+  as: "societe",
+});
 
 // Site
 Budget.belongsTo(Site, {
-  foreignKey: 'idsite',
-  as: 'site',
-})
+  foreignKey: "idsite",
+  as: "site",
+});
 
-module.exports = Budget
+module.exports = Budget;

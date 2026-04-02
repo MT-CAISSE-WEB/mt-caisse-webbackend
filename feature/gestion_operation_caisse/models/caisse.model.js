@@ -204,7 +204,7 @@ class caisseModel {
             const result = await pool.request().query(caisseQueries.solde);
             return result.recordset;
         } catch (error) {
-            console.log(`Erreur de suppression: ${error}`.cyan.bold);
+            console.log(`Erreur de récupération du solde: ${error}`.cyan.bold);
         }
     }
 }
