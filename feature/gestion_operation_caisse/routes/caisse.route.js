@@ -2,22 +2,22 @@ const express = require('express');
 const router = express.Router();
 const caisse_controller = require("../controllers/caisse.controller");
 const periodecaisse_controller = require("../controllers/caisseperiode.controller")
-//const auth = require("../shared/middlewares/auth");
+const authmiddleware = require("../../../middlewares/auth.middlewre");
 
 // CRUD CAISSE
-router.get("/", caisse_controller.get_caisses);
-router.get("/actif", caisse_controller.get_caisses);
-router.get("/:id", caisse_controller.get_onecaisse);
-router.get("/solde/user", caisse_controller.getSolde);
-router.post("/create/", caisse_controller.create_caisse);
-router.put("/update/:id", caisse_controller.update_caisse);
-router.delete("/delete/:id", caisse_controller.delete_caisse);
+router.get("/", authmiddleware.authentificatetoken, caisse_controller.get_caisses);
+router.get("/actif", authmiddleware.authentificatetoken, caisse_controller.get_caisses);
+router.get("/:id", authmiddleware.authentificatetoken, caisse_controller.get_onecaisse);
+router.get("/solde/user", authmiddleware.authentificatetoken, caisse_controller.getSolde);
+router.post("/create/", authmiddleware.authentificatetoken, caisse_controller.create_caisse);
+router.put("/update/:id", authmiddleware.authentificatetoken, caisse_controller.update_caisse);
+router.delete("/delete/:id", authmiddleware.authentificatetoken, caisse_controller.delete_caisse);
 
 // Periode caisse
-router.get("/periode/:id", periodecaisse_controller.get_recentperiode);
-router.put("/open/:id", periodecaisse_controller.open_caisse);
-router.put("/close/:id", periodecaisse_controller.fermeture_caisse);
-router.post("/validate/:id", periodecaisse_controller.validate_caisse);
-router.post("/billetage", periodecaisse_controller.create_billetage);
+router.get("/periode/:id", authmiddleware.authentificatetoken, periodecaisse_controller.get_recentperiode);
+router.put("/open/:id", authmiddleware.authentificatetoken, periodecaisse_controller.open_caisse);
+router.put("/close/:id", authmiddleware.authentificatetoken, periodecaisse_controller.fermeture_caisse);
+router.post("/validate/:id", authmiddleware.authentificatetoken, periodecaisse_controller.validate_caisse);
+router.post("/billetage", authmiddleware.authentificatetoken, periodecaisse_controller.create_billetage);
 
 module.exports = router;

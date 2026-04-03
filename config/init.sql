@@ -1714,3 +1714,83 @@ WHERE NOT EXISTS (
     WHERE ur.idutilisateur = @iduser 
     AND ur.idrole = @idrole
 );
+
+
+-- ==========================================================================================
+--  Comptabilisation des opérations de caisse 
+-- ==========================================================================================
+-- ============================================
+--  Table Ecriture Comptable 
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'EcritureComptable')
+BEGIN
+    CREATE TABLE EcritureComptable (
+		idecriture UNIQUEIDENTIFIER,
+        ref_ecriture NVARCHAR(255),
+
+        idtypeoperation UNIQUEIDENTIFIER null,
+        typeoperation NVARCHAR(255) null,
+
+        idjournal UNIQUEIDENTIFIER,
+        journal NVARCHAR(255),
+
+        date_operation DATETIME,
+		createdby NVARCHAR(50),
+        createdat DATETIME,
+		updatedby NVARCHAR(50),
+        updatedat Datetime,
+        PRIMARY KEY (idecriture),
+    
+		FOREIGN KEY (idtypeoperation) references TypeOperation,
+		FOREIGN KEY (idjournal) references Journal
+	);
+END
+
+-- ============================================
+--  Ecriture Ligne Comptable 
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'EcritureLigneComptable')
+BEGIN
+    CREATE TABLE EcritureLigneComptable (
+        idligneecriture UNIQUEIDENTIFIER,
+		idecriture UNIQUEIDENTIFIER,
+
+        idnature uniqueidentifier null,
+        nature nvarchar(255) null,
+
+        idcentreanalytique UNIQUEIDENTIFIER null,
+        centreanalytique nvarchar (255) null,
+
+        idcompte UNIQUEIDENTIFIER,
+        compte nvarchar(255),
+
+        idtiers UNIQUEIDENTIFIER null,
+        tiers nvarchar(255) null,
+
+        numligne INT,
+        typeecriture NVARCHAR(50),
+        libelle NVARCHAR(255),
+        debit DECIMAL(22,9),
+        credit DECIMAL(22,9),
+        etat NVARCHAR(20), -- PROVISOIRE, VALIDE, ANNULE
+
+        iddevise UNIQUEIDENTIFIER,
+        devise nvarchar(50),
+        montantdevise DECIMAL(22,9),
+        taux DECIMAL(18,6),
+        montantbase DECIMAL(22,9),
+
+		createdby NVARCHAR(50),
+        createdat DATETIME,
+		updatedby NVARCHAR(50),
+        updatedat Datetime,
+        PRIMARY KEY ( idligneecriture ),
+		FOREIGN KEY (idecriture) references ecriturecomptable,
+        foreign key (iddevise) references Devise(iddevise),
+        foreign key (idcentreanalytique) references CentreAnalytique(idcentreanalytique),
+        foreign key (idcompte) references PlanComptable,
+        foreign key (idtiers) references tiers(idtiers),
+        foreign key (idnature) references NatureOperation(idnature)
+
+    );
+END
