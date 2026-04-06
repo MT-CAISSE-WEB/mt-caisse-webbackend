@@ -780,6 +780,7 @@ BEGIN
         dateoperation DATETIME,
         dateoperation_date AS CAST(dateoperation AS DATE),
         montant DECIMAL(22,9),
+        tauxoperation DECIMAL(22,9),
         montant_str AS CAST(montant AS NVARCHAR(50)),
         justifiee INT DEFAULT 0,
         createdat Datetime,

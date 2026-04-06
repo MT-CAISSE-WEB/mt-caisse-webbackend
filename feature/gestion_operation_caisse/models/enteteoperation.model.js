@@ -5,14 +5,14 @@ const societemodel = require('../../gestion_organisation/models/societe.model');
 //const demandemodel = require('');
 
 const queryInsert = `
-        INSERT INTO EnteteOperationCaisse (idoperation, codeoperation, iddemande, idsociete, idsite, iddevise, dateoperation, montant, createdat, createdby, updatedat, updatedby)
+        INSERT INTO EnteteOperationCaisse (idoperation, codeoperation, iddemande, idsociete, idsite, iddevise, dateoperation, montant, tauxoperation, createdat, createdby, updatedat, updatedby)
         OUTPUT INSERTED.*
-        VALUES (@idoperation,@codeoperation, @iddemande, @idsociete, @idsite, @iddevise, @dateoperation, @montant, @createdat, @createdby, @updatedat, @updatedby)
+        VALUES (@idoperation,@codeoperation, @iddemande, @idsociete, @idsite, @iddevise, @dateoperation, @montant, @tauxoperation, @createdat, @createdby, @updatedat, @updatedby)
         `;
 const queryUpdate = `UPDATE EnteteOperationCaisse SET iddemande = @iddemande, idsociete = @idsociete, idsite = @idsite, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE codeoperation = @codeoperation`;
 const querySequence = `SELECT NEXT VALUE FOR SeqNumeroOperation AS seq;`;
 class enteteOperationModel {
-    constructor(idoperation, codeoperation, iddemande, idsociete, idsite, iddevise, codedevise, dateoperation, montant, createdat,createdby,updatedat,updatedby)
+    constructor(idoperation, codeoperation, iddemande, idsociete, idsite, iddevise, codedevise, dateoperation, montant, tauxoperation, createdat,createdby,updatedat,updatedby)
     {
         this.idoperation = idoperation;
         this.codeoperation = codeoperation;
@@ -23,6 +23,7 @@ class enteteOperationModel {
         this.codedevise = codedevise;
         this.dateoperation = dateoperation;
         this.montant = montant;
+        this.tauxoperation = tauxoperation;
         this.createdat = createdat;
         this.createdby = createdby;
         this.updatedat = updatedat;
@@ -41,6 +42,7 @@ class enteteOperationModel {
             .input('iddevise', sql.UniqueIdentifier, this.iddevise)
             .input('dateoperation', sql.DateTime, this.dateoperation)
             .input('montant', sql.Decimal(21,9), this.montant)
+            .input('tauxoperation', sql.Decimal(22,9), this.tauxoperation)
             .input('createdat', sql.DateTime, this.createdat)
             .input('createdby', sql.NVarChar(100), this.createdby)
             .input('updatedat', sql.DateTime, this.updatedat)

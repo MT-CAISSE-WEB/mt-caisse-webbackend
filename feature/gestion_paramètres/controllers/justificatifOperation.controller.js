@@ -13,10 +13,9 @@ const { Op } = require("sequelize");
 exports.create = async (req, res) => {
   try {
     const justificatif = await JustificatifOperation.create(req.body);
-    res.status(201).json(justificatif);
+    res.status(201).json({ success: true, data: justificatif });
   } catch (error) {
-    res.status(500).json({ error: error.message });
-    console.log("error:", error.message);
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -32,7 +31,7 @@ exports.findAll = async (req, res) => {
 
     res.json({ success: true, data: data });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -43,11 +42,12 @@ exports.findOne = async (req, res) => {
       include: ["devise", "operation"],
     });
 
-    if (!justificatif) return res.status(404).json({ message: "Introuvable" });
+    if (!justificatif)
+      return res.status(404).json({ success: false, message: "Introuvable" });
 
-    res.json(justificatif);
+    res.json({ success: true, message: "Introuvable", data: justificatif });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -58,9 +58,9 @@ exports.update = async (req, res) => {
       where: { idjustificatifoperation: req.params.id },
     });
 
-    res.json({ message: "Mis à jour avec succès" });
+    res.json({ success: true, message: "Mis à jour avec succès" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -71,122 +71,263 @@ exports.delete = async (req, res) => {
       where: { idjustificatifoperation: req.params.id },
     });
 
-    res.json({ message: "Supprimé avec succès" });
+    res.json({ success: true, message: "Supprimé avec succès" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
+// Nouveau controller avec gestion création justificatif
 // exports.createFull = async (req, res) => {
 //   const transaction = await sequelize.transaction();
 
 //   try {
-//     /* ======================================================
-//        Données du body
-//     ====================================================== */
-//     const { details, retour_caisse, caisses, ...justificatifData } = req.body;
+//     const {
+//       details,
+//       idsite,
+//       idsociete,
+//       retour_caisse,
+//       caisses,
+//       ...justificatifData
+//     } = req.body;
 
 //     /* ======================================================
-//        Validation détails
+//        0. VALIDATIONS DE BASE
 //     ====================================================== */
-//     if (!details || details.length === 0) {
-//       return res.status(400).json({
-//         message: "Un justificatif doit contenir au moins un détail.",
+
+//     if (!justificatifData.idoperation) {
+//       throw new Error("idoperation est obligatoire.");
+//     }
+
+//     // 👉 Cas métier : pas de justificatif si pas de détails
+//     const isOnlyRetourCaisse =
+//       retour_caisse === false && (!details || details.length === 0);
+
+//     /* ======================================================
+//        1. GÉNÉRATION CODE (ANTI CONCURRENCE)
+//     ====================================================== */
+
+//     let codejustificatif = null;
+
+//     if (!isOnlyRetourCaisse) {
+//       const lastPiece = await JustificatifOperation.findOne({
+//         order: [["createdat", "DESC"]],
+//         lock: transaction.LOCK.UPDATE,
+//         transaction,
 //       });
-//     }
 
-//     /* ======================================================
-//        1. Génération du code PIECE-COMPTEUR
-//     ====================================================== */
-//     const lastPiece = await JustificatifOperation.findOne({
-//       order: [["createdAt", "DESC"]],
-//       transaction,
-//     });
+//       let compteur = 1;
 
-//     let compteur = 1;
-
-//     if (lastPiece && lastPiece.codejustificatif) {
-//       const lastNumber = parseInt(lastPiece.codejustificatif.split("-")[1]);
-//       compteur = lastNumber + 1;
-//     }
-
-//     const codejustificatif = `PIECE-${String(compteur).padStart(6, "0")}`;
-
-//     /* ======================================================
-//        2. Création du justificatif
-//     ====================================================== */
-//     const justificatif = await JustificatifOperation.create(
-//       {
-//         ...justificatifData,
-//         codejustificatif,
-//       },
-//       { transaction },
-//     );
-
-//     /* ======================================================
-//        3. Création des détails (montantref = montantdetail * taux)
-//     ====================================================== */
-//     const detailsToInsert = details.map((d) => ({
-//       iddetail: uuidv4(),
-//       idjustificatif: justificatif.idjustificatifoperation,
-//       idnature: d.idnature,
-//       idcentreanalytique: d.idcentreanalytique,
-//       montantdetail: d.montantdetail,
-//       montantref: d.montantdetail * justificatif.taux,
-//     }));
-
-//     await DetailsJustificatifOperation.bulkCreate(detailsToInsert, {
-//       transaction,
-//     });
-
-//     /* ======================================================
-//        4. Création des caisses si retour_caisse = true
-//     ====================================================== */
-//     if (retour_caisse === true) {
-//       if (!caisses || caisses.length === 0) {
-//         return res.status(400).json({
-//           message:
-//             "Le tableau caisses est obligatoire lorsque retour_caisse=true",
-//         });
+//       if (lastPiece && lastPiece.codejustificatif) {
+//         const lastNumber = parseInt(
+//           lastPiece.codejustificatif.split("-")[1],
+//           10,
+//         );
+//         compteur = isNaN(lastNumber) ? 1 : lastNumber + 1;
 //       }
 
-//       const caissesToInsert = caisses.map((c) => ({
-//         idtypeoperation: uuidv4(),
-//         codtypeoperation: c.codtypeoperation,
-//         idperiode: c.idperiode,
-//         idsociete: c.idsociete,
-//         idsite: c.idsite,
-//         idcaisse: c.idcaisse,
+//       codejustificatif = `PIECE-${String(compteur).padStart(6, "0")}`;
+//     }
 
-//         /* FK */
-//         idoperation: justificatif.idoperation,
+//     /* ======================================================
+//        2. CRÉATION JUSTIFICATIF (CONDITIONNELLE)
+//     ====================================================== */
 
-//         montant: c.montant,
-//         taux: c.taux,
-//         montantref: c.montant * c.taux,
+//     let justificatif = null;
+//     let taux = 1;
 
-//         createdby: justificatif.createdby,
-//       }));
+//     if (!isOnlyRetourCaisse) {
+//       justificatif = await JustificatifOperation.create(
+//         {
+//           ...justificatifData,
+//           codejustificatif,
+//         },
+//         { transaction },
+//       );
 
-//       await TypeOperation.bulkCreate(caissesToInsert, {
+//       taux = justificatif.taux || 1;
+//     }
+
+//     /* ======================================================
+//        3. DÉTAILS (SI JUSTIFICATIF)
+//     ====================================================== */
+
+//     let totalDetails = 0;
+
+//     if (justificatif && details && details.length > 0) {
+//       const detailsToInsert = details.map((d) => {
+//         if (!d.idnature) {
+//           throw new Error("Chaque détail doit contenir idnature.");
+//         }
+
+//         if (!d.montantdetail || d.montantdetail <= 0) {
+//           throw new Error("Montant détail invalide.");
+//         }
+
+//         const montantref = d.montantdetail * taux;
+//         totalDetails += montantref;
+
+//         return {
+//           iddetailsjustificatifoperation: uuidv4(),
+//           idjustificatif: justificatif.idjustificatifoperation,
+//           idnature: d.idnature,
+//           idcentreanalytique: d.idcentreanalytique || null,
+//           idtiers: d.idtiers || null,
+//           montantdetail: d.montantdetail,
+//           montantref,
+//           createdby: justificatif.createdby,
+//         };
+//       });
+
+//       await DetailsJustificatifOperation.bulkCreate(detailsToInsert, {
 //         transaction,
 //       });
 //     }
 
 //     /* ======================================================
-//        Commit
+//        4. RETOUR CAISSE (INDÉPENDANT)
 //     ====================================================== */
+
+//     if (retour_caisse === true) {
+//       if (!caisses || caisses.length === 0) {
+//         throw new Error(
+//           "Le tableau caisses est obligatoire lorsque retour_caisse=true",
+//         );
+//       }
+
+//       let totalCaisses = 0;
+
+//       const operationId = justificatif
+//         ? justificatif.idoperation
+//         : justificatifData.idoperation;
+
+//       const createdBy = justificatif
+//         ? justificatif.createdby
+//         : justificatifData.createdby;
+
+//       const caissesToInsert = caisses.map((c) => {
+//         if (!c.idcaisse || c.montantcaisse === undefined || !c.taux) {
+//           throw new Error("Données caisse invalides.");
+//         }
+
+//         if (c.montantcaisse > 0) {
+//           const montantref = c.montantcaisse * c.taux;
+//           totalCaisses += montantref;
+
+//           return {
+//             idtypeoperation: uuidv4(),
+//             codtypeoperation: c.codtypeoperation,
+//             idperiode: c.idperiode,
+//             idsociete: idsociete,
+//             idsite: idsite,
+//             idcaisse: c.idcaisse,
+//             idoperation: operationId,
+//             montant: c.montantcaisse,
+//             taux: c.taux,
+//             montantref,
+//             createdby: createdBy,
+//           };
+//         } else {
+//           return null;
+//         }
+//       });
+
+//       await TypeOperation.bulkCreate(caissesToInsert, { transaction });
+//     }
+
+//     /* ======================================================
+//        5. TOTAL JUSTIFIÉ (SI JUSTIFICATIF)
+//     ====================================================== */
+
+//     let totalJustifie = 0;
+
+//     if (justificatif) {
+//       const totalJustifieRaw =
+//         (await DetailsJustificatifOperation.sum("montantref", {
+//           where: {
+//             idjustificatif: {
+//               [Op.in]: sequelize.literal(`(
+//                 SELECT idjustificatifoperation
+//                 FROM JustificatifOperation
+//                 WHERE idoperation = '${justificatif.idoperation}'
+//               )`),
+//             },
+//           },
+//           transaction,
+//         })) || 0;
+
+//       totalJustifie = Number(totalJustifieRaw);
+//     }
+
+//     /* ======================================================
+//        6. RÉCUP OPÉRATION
+//     ====================================================== */
+
+//     const operation = await EnteteOperationCaisse.findByPk(
+//       justificatif ? justificatif.idoperation : justificatifData.idoperation,
+//       { transaction },
+//     );
+
+//     if (!operation) {
+//       throw new Error("Opération introuvable.");
+//     }
+
+//     /* ======================================================
+//        7. CALCUL STATUT
+//     ====================================================== */
+
+//     let statut = 0;
+
+//     if (justificatif) {
+//       if (totalJustifie > 0 && totalJustifie < operation.montant) {
+//         statut = 1;
+//       } else if (totalJustifie >= operation.montant) {
+//         statut = 2;
+//       }
+//     }
+
+//     /* ======================================================
+//        8. UPDATE STATUT
+//     ====================================================== */
+
+//     await EnteteOperationCaisse.update(
+//       { justifiee: statut },
+//       {
+//         where: {
+//           idoperation: justificatif
+//             ? justificatif.idoperation
+//             : justificatifData.idoperation,
+//         },
+//         transaction,
+//       },
+//     );
+
 //     await transaction.commit();
 
+//     /* ======================================================
+//        9. RÉPONSE
+//     ====================================================== */
+
+//     const statut_en_lettre =
+//       statut === 0
+//         ? "Non justifiée"
+//         : statut === 1
+//         ? "Partiellement justifiée"
+//         : "Justifiée";
+
 //     return res.status(201).json({
-//       message: "Création complète réussie",
+//       success: true,
+//       message: "Opération traitée avec succès",
+//       statut_justification: statut,
+//       statut_en_lettre,
 //       justificatif,
 //     });
 //   } catch (error) {
 //     await transaction.rollback();
 
 //     return res.status(500).json({
-//       message: "Erreur lors de la création complète",
+//       success: false,
+//       message: "Erreur lors du traitement",
 //       error: error.message,
 //     });
 //   }
@@ -196,92 +337,110 @@ exports.createFull = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const { idsociete, idsite, details, retour_caisse, caisses, ...justificatifData } = req.body;
+    const {
+      details,
+      idsite,
+      idsociete,
+      retour_caisse,
+      caisses,
+      ...justificatifData
+    } = req.body;
 
     /* ======================================================
        0. VALIDATIONS DE BASE
     ====================================================== */
-
-    if ((retour_caisse == false) && (!details || details.length === 0)) {
-      throw new Error("Un justificatif doit contenir au moins un détail.");
-    }
 
     if (!justificatifData.idoperation) {
       throw new Error("idoperation est obligatoire.");
     }
 
     /* ======================================================
-       1. GÉNÉRATION CODE (ANTI CONCURRENCE)
+       1. GÉNÉRATION CODE
     ====================================================== */
 
-    // ⚠️ Lock pessimiste pour éviter doublons
-    const lastPiece = await JustificatifOperation.findOne({
-      order: [["createdat", "DESC"]],
-      lock: transaction.LOCK.UPDATE,
-      transaction,
-    });
+    let codejustificatif = null;
 
-    let compteur = 1;
+    if (!retour_caisse) {
+      const lastPiece = await JustificatifOperation.findOne({
+        order: [["createdat", "DESC"]],
+        lock: transaction.LOCK.UPDATE,
+        transaction,
+      });
 
-    if (lastPiece && lastPiece.codejustificatif) {
-      const lastNumber = parseInt(lastPiece.codejustificatif.split("-")[1], 10);
-      compteur = isNaN(lastNumber) ? 1 : lastNumber + 1;
+      let compteur = 1;
+
+      if (lastPiece && lastPiece.codejustificatif) {
+        const lastNumber = parseInt(
+          lastPiece.codejustificatif.split("-")[1],
+          10,
+        );
+        compteur = isNaN(lastNumber) ? 1 : lastNumber + 1;
+      }
+
+      codejustificatif = `PIECE-${String(compteur).padStart(6, "0")}`;
     }
-
-    const codejustificatif = `PIECE-${String(compteur).padStart(6, "0")}`;
 
     /* ======================================================
        2. CRÉATION JUSTIFICATIF
     ====================================================== */
 
-    const justificatif = await JustificatifOperation.create(
-      {
-        ...justificatifData,
-        codejustificatif,
-      },
-      { transaction },
-    );
+    let justificatif = null;
+    let taux = 1;
 
-    const taux = justificatif.taux || 1;
+    // ✔️ INTERDICTION si retour caisse
+    if (!retour_caisse) {
+      justificatif = await JustificatifOperation.create(
+        {
+          ...justificatifData,
+          codejustificatif,
+        },
+        { transaction },
+      );
+
+      taux = justificatif.taux || 1;
+    }
 
     /* ======================================================
-       3. VALIDATION + PRÉPARATION DÉTAILS
+       3. DÉTAILS
     ====================================================== */
 
     let totalDetails = 0;
 
-    const detailsToInsert = details.map((d) => {
-      if (!d.idnature) {
-        throw new Error("Chaque détail doit contenir idnature.");
-      }
+    if (!retour_caisse && justificatif && details?.length > 0) {
+      const detailsToInsert = details.map((d) => {
+        if (!d.idnature) {
+          throw new Error("Chaque détail doit contenir idnature.");
+        }
 
-      if (!d.montantdetail || d.montantdetail <= 0) {
-        throw new Error("Montant détail invalide.");
-      }
+        if (!d.montantdetail || d.montantdetail <= 0) {
+          throw new Error("Montant détail invalide.");
+        }
 
-      const montantref = d.montantdetail * taux;
+        const montantref = d.montantdetail * taux;
+        totalDetails += montantref;
 
-      totalDetails += montantref;
+        return {
+          iddetailsjustificatifoperation: uuidv4(),
+          idjustificatif: justificatif.idjustificatifoperation,
+          idnature: d.idnature,
+          idcentreanalytique: d.idcentreanalytique || null,
+          idtiers: d.idtiers || null,
+          montantdetail: d.montantdetail,
+          montantref,
+          createdby: justificatif.createdby,
+        };
+      });
 
-      return {
-        iddetailsjustificatifoperation: uuidv4(),
-        idjustificatif: justificatif.idjustificatifoperation,
-        idnature: d.idnature,
-        idcentreanalytique: d.idcentreanalytique || null,
-        idtiers: d.idtiers || null,
-        montantdetail: d.montantdetail,
-        montantref,
-        createdby: justificatif.createdby,
-      };
-    });
-
-    await DetailsJustificatifOperation.bulkCreate(detailsToInsert, {
-      transaction,
-    });
+      await DetailsJustificatifOperation.bulkCreate(detailsToInsert, {
+        transaction,
+      });
+    }
 
     /* ======================================================
-       4. RETOUR CAISSE (VALIDATION MÉTIER)
+       4. RETOUR CAISSE
     ====================================================== */
+
+    let totalCaisses = 0;
 
     if (retour_caisse === true) {
       if (!caisses || caisses.length === 0) {
@@ -290,11 +449,19 @@ exports.createFull = async (req, res) => {
         );
       }
 
-      let totalCaisses = 0;
+      const operationId = justificatif
+        ? justificatif.idoperation
+        : justificatifData.idoperation;
 
-      const caissesToInsert = caisses.map((c) => {
-        console.log(c);
-        if (!c.idcaisse || c.montantcaisse == undefined || !c.taux) {
+      const createdBy = justificatif
+        ? justificatif.createdby
+        : justificatifData.createdby;
+
+      // ✔️ FILTRAGE montant > 0
+      const caissesValides = caisses.filter((c) => c.montantcaisse > 0);
+
+      const caissesToInsert = caissesValides.map((c) => {
+        if (!c.idcaisse || c.montantcaisse === undefined || !c.taux) {
           throw new Error("Données caisse invalides.");
         }
 
@@ -305,38 +472,39 @@ exports.createFull = async (req, res) => {
           idtypeoperation: uuidv4(),
           codtypeoperation: "encaissement",
           idperiode: c.idperiode,
-          idsociete: idsociete,
-          idsite: idsite,
+          idsociete,
+          idsite,
           idcaisse: c.idcaisse,
-          idoperation: justificatif.idoperation,
+          idoperation: operationId,
           montant: c.montantcaisse,
           taux: c.taux,
           montantref,
-          createdby: justificatif.createdby,
+          createdby: createdBy,
         };
       });
-      // if (Math.abs(totalCaisses - totalDetails) > 0.001) {
-      //   throw new Error(
-      //     "Incohérence entre le total justificatif et le retour caisse.",
-      //   );
-      // }
 
-      await TypeOperation.bulkCreate(caissesToInsert, { transaction });
+      if (caissesToInsert.length > 0) {
+        await TypeOperation.bulkCreate(caissesToInsert, { transaction });
+      }
     }
 
     /* ======================================================
        5. TOTAL JUSTIFIÉ GLOBAL
     ====================================================== */
 
+    const operationId = justificatif
+      ? justificatif.idoperation
+      : justificatifData.idoperation;
+
     const totalJustifieRaw =
       (await DetailsJustificatifOperation.sum("montantref", {
         where: {
           idjustificatif: {
             [Op.in]: sequelize.literal(`(
-          SELECT idjustificatifoperation
-          FROM JustificatifOperation
-          WHERE idoperation = '${justificatif.idoperation}'
-        )`),
+              SELECT idjustificatifoperation
+              FROM JustificatifOperation
+              WHERE idoperation = '${operationId}'
+            )`),
           },
         },
         transaction,
@@ -345,38 +513,39 @@ exports.createFull = async (req, res) => {
     const totalJustifie = Number(totalJustifieRaw);
 
     /* ======================================================
-       6. RÉCUP OPÉRATION
+       6. OPÉRATION
     ====================================================== */
 
-    const operation = await EnteteOperationCaisse.findByPk(
-      justificatif.idoperation,
-      { transaction },
-    );
+    const operation = await EnteteOperationCaisse.findByPk(operationId, {
+      transaction,
+    });
 
     if (!operation) {
       throw new Error("Opération introuvable.");
     }
 
     /* ======================================================
-       7. CALCUL STATUT
+       7. STATUT (LOGIQUE MÉTIER CORRIGÉE)
     ====================================================== */
 
     let statut = 0;
 
-    if (totalJustifie > 0 && totalJustifie < operation.montant) {
+    const totalGlobal = totalJustifie + totalCaisses;
+
+    if (totalGlobal > 0 && totalGlobal < operation.montant) {
       statut = 1;
-    } else if (totalJustifie >= operation.montant) {
+    } else if (totalGlobal === Number(operation.montant)) {
       statut = 2;
     }
 
     /* ======================================================
-       8. UPDATE STATUT
+       8. UPDATE
     ====================================================== */
 
     await EnteteOperationCaisse.update(
       { justifiee: statut },
       {
-        where: { idoperation: justificatif.idoperation },
+        where: { idoperation: operationId },
         transaction,
       },
     );
@@ -395,18 +564,18 @@ exports.createFull = async (req, res) => {
         : "Justifiée";
 
     return res.status(201).json({
-      success : true,
-      message: "Création complète réussie",
+      success: true,
+      message: "Opération traitée avec succès",
       statut_justification: statut,
       statut_en_lettre,
       justificatif,
     });
   } catch (error) {
     await transaction.rollback();
-    console.log(error);
+
     return res.status(500).json({
       success: false,
-      message: "Erreur lors de la création complète",
+      message: "Erreur lors du traitement",
       error: error.message,
     });
   }

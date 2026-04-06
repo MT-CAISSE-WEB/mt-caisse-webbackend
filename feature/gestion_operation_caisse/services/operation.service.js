@@ -40,6 +40,7 @@ async function get_all_typeoperations({ page, limit, search, date, user}) {
               idsite : row.idsite,
               iddevise : row.iddevise,
               montant : row.montant,
+              tauxoperation : row.tauxoperation,
               justifiee : row.justifiee,
               createdat: row.createdat,
               createdby: row.createdby,

@@ -86,6 +86,7 @@ async function create_enteteoperation(data) {
     devise.data.codedevise,
     datePeriode,
     data.montant,
+    data.tauxoperation || 1,
     data.createdat || today,
     data.createdby || 'System');
   const recorded = await newenteteoperation.create_enteteoperationmodel(newenteteoperation);
