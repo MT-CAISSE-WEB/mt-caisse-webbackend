@@ -149,7 +149,6 @@ async function validateBudgetsForLines(societe, lignes, filterData) {
     }
 
     const budgetPriorise = prioriserBudget(selectBudget);
-    console.log("Budget priorisé pour validation:", budgetPriorise);
 
     //Si le budget priorisé est analytique, on ne fait pas le contrôle budgétaire sur la nature mais sur le centre
     if (budgetPriorise.isanalytique && budgetPriorise.isanalytique === 1) {

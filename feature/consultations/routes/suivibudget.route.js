@@ -8,5 +8,6 @@ const suivibudget_controller = require("../../consultations/controllers/suivibud
 
 router.get("/", suivibudget_controller.suivibudgetController); // OK
 router.post("/recherche", suivibudget_controller.suiviByFiltreController); // OK
+router.post("/evolution", suivibudget_controller.evolutionBudgetaire); // OK
 
 module.exports = router;
