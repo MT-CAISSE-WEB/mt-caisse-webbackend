@@ -57,6 +57,7 @@ const { v4: uuidv4 } = require('uuid');
         };
 
     } catch (error) {
+        console.log(`Erreur lors de l'opération : ${error}`.red.bold);
         return {
             success: false,
             status: 500,

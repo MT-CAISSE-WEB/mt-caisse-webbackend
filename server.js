@@ -86,6 +86,7 @@ const mouvementsCaisseRoute = require("./feature/consultations/routes/mouvementc
 // Declaration des routes pour les paramètres
 const motifsroutes = require("./feature/gestion_paramètres/routes/motif.route");
 const compteursroutes = require("./feature/gestion_paramètres/routes/compteur.route");
+const parametresroutes = require("./feature/gestion_paramètres/routes/parametrecomptable.routes");
 
 // Justifacatif operation
 const justificatifoperationroute = require("./feature/gestion_paramètres/routes/justificatifOperation.routes");
@@ -98,7 +99,6 @@ const ecritureRoutes = require("./feature/gestion_comptabilisation/routes/ecritu
 
 
 const db = require('./config/db');
-
 //connexion db Richard
 const {connectInstance} = require('./config/db')
 
@@ -225,6 +225,7 @@ app.use("/API/consultation", decaissementaj);
 //Regrouper toutes les routes pour les paramètres
 app.use("/API/motif", motifsroutes);
 app.use("/API/modelecompteur", compteursroutes);
+app.use("/API/parametrecomptable", parametresroutes);
 
 // Regrouper toutes les routes pour les justificatifs
 app.use("/api/justificatifs", justificatifoperationroute);

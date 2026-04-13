@@ -129,9 +129,9 @@ BEGIN
 		createdby NVARCHAR(50),
 		updatedat Datetime,
 		updatedby NVARCHAR(50),
-		-- idcentreanalytique UNIQUEIDENTIFIER NULL,
-		-- estcentreanalytique INT DEFAULT 0,
-		-- FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
+		idcentreanalytique UNIQUEIDENTIFIER NULL,
+		estcentreanalytique INT DEFAULT 0,
+		FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
 		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );
 END
@@ -1157,6 +1157,24 @@ BEGIN
         FOREIGN KEY (iddestination) REFERENCES Caisse(idcaisse),
         FOREIGN KEY (idsourcebanque) REFERENCES banque(idbanque),
         FOREIGN KEY (idsourcecaisse) REFERENCES Caisse(idcaisse)
+    );
+END
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ParametreComptable')
+BEGIN
+    CREATE TABLE ParametreComptable (
+        idparametrecomptable UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idsociete UNIQUEIDENTIFIER UNIQUE,
+        idjournal UNIQUEIDENTIFIER NULL,
+        idcompte UNIQUEIDENTIFIER NULL,
+        urldossier NVARCHAR(255),
+        createdat Datetime default GETDATE(),
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        FOREIGN KEY (idjournal) REFERENCES Journal(idjournal),
+        FOREIGN KEY (idcompte) REFERENCES PlanComptable(idcompte)
     );
 END
 
