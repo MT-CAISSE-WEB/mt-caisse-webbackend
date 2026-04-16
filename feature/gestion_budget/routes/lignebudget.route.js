@@ -5,16 +5,15 @@ const BudgetDepartementNature = require("../models/lignebudget.model");
 const { v4: uuidv4 } = require("uuid");
 const { Op, Sequelize } = require("sequelize");
 const sequelize = require("../../../config/database");
-const authmiddleware = require("../../../middlewares/auth.middlewre");
 
-router.post("/create", authmiddleware.authentificatetoken, controller.create); // CREATE
-router.get("/", authmiddleware.authentificatetoken, controller.getAll); // READ ALL
-router.get("/:id", authmiddleware.authentificatetoken, controller.getById); // READ ONE BY ID
-router.patch("/update/:id", authmiddleware.authentificatetoken, controller.update); // UPDATE
-router.delete("/delete/:id", authmiddleware.authentificatetoken, controller.delete); // DELETE
-router.post("/duplicate/:id", authmiddleware.authentificatetoken, controller.duplicate); // DUPLICATE
+router.post("/create", controller.create); // CREATE
+router.get("/", controller.getAll); // READ ALL
+router.get("/:id", controller.getById); // READ ONE BY ID
+router.patch("/update/:id", controller.update); // UPDATE
+router.delete("/delete/:id", controller.delete); // DELETE
+router.post("/duplicate/:id", controller.duplicate); // DUPLICATE
 // getByBudgetId
-router.get("/budget/:idbudget", authmiddleware.authentificatetoken, controller.getByBudgetId);
+router.get("/budget/:idbudget", controller.getByBudgetId);
 
 // ==========================
 // Créer plusieurs lignes de budget
@@ -32,6 +31,7 @@ router.post("/bulk", async (req, res) => {
     // Ajouter les UUID et timestamps
     const payload = lignes.map((l) => ({
       idbudgetdepartementnature: uuidv4(),
+      codebudgetaire: l.codebudgetaire,
       idbudget: l.idbudget,
       iddepartement: l.iddepartement,
       idcentreanalytique: l.idcentreanalytique,

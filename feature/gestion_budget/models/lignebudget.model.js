@@ -18,6 +18,10 @@ const BudgetDepartementNature = sequelize.define(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
+    codebudgetaire: {
+      type: DataTypes.STRING(8),
+      unique: true,
+    },
     idbudget: DataTypes.UUID,
     iddepartement: DataTypes.UUID,
     idnature: DataTypes.UUID,

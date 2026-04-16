@@ -180,7 +180,6 @@ exports.getAll = async (req, res) => {
       data: items.rows,
     });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -197,6 +196,7 @@ exports.getById = async (req, res) => {
         .json({ success: false, error: "Élément non trouvé." });
     res.json({ success: true, data: item });
   } catch (error) {
+    console.error(error);
     res
       .status(500)
       .json({ success: false, error: "Erreur lors de la récupération par ID" });
@@ -374,6 +374,57 @@ exports.duplicate = async (req, res) => {
     res.status(500).json({
       success: false,
       error: `Erreur lors de la duplication: ${error}`,
+    });
+  }
+};
+
+exports.getAnnualBudgetsWithMonthly = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const offset = (page - 1) * limit;
+
+    // Récupérer les budgets annuels paginés
+    const { count, rows: annualBudgets } = await Budget.findAndCountAll({
+      where: {
+        typebudget: "Annuel",
+        idbudgetparent: null,
+      },
+      limit,
+      offset,
+      order: [["datedebut", "DESC"]],
+    });
+
+    // Pour chaque budget annuel, récupérer ses budgets mensuels
+    const annualBudgetsWithMonthly = await Promise.all(
+      annualBudgets.map(async (annual) => {
+        const monthlyBudgets = await Budget.findAll({
+          where: {
+            typebudget: "Mensuel",
+            idbudgetparent: annual.idbudget,
+          },
+          order: [["datedebut", "DESC"]],
+        });
+
+        return {
+          ...annual.toJSON(),
+          budgetsMensuels: monthlyBudgets,
+        };
+      }),
+    );
+
+    res.json({
+      success: true,
+      total: count,
+      page,
+      totalPages: Math.ceil(count / limit),
+      data: annualBudgetsWithMonthly,
+    });
+  } catch (error) {
+    console.log("Erreur:", error);
+    res.status(500).json({
+      success: false,
+      error: error,
     });
   }
 };

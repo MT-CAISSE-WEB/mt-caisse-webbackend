@@ -12,11 +12,11 @@ module.exports = {
     insert : `
         INSERT INTO LigneDemande (
             idlignedemande, iddemande, numligne, libellelignedemande, montantdemande, montantref, budgetconso, preengage, engage, realise,
-            idnature, idbudget, idcentre, idtiers, idsociete, idsite, createdat, createdby
+            idnature, idbudget, idlignebudget, codebudgetaire, idcentre, idtiers, idsociete, idsite, createdat, createdby
         )
         OUTPUT INSERTED.*
         VALUES ( @idlignedemande, @iddemande, @numligne, @libellelignedemande, @montantdemande, @montantref, @budgetconso, @preengage, @engage, @realise,
-            @idnature, @idbudget, @idcentre, @idtiers, @idsociete, @idsite, @createdat, @createdby
+            @idnature, @idbudget, @idlignebudget, @codebudget, @idcentre, @idtiers, @idsociete, @idsite, @createdat, @createdby
         )
     `,
     update : `
@@ -25,6 +25,8 @@ module.exports = {
             montantdemande = @montantdemande,
             montantref = @montantref,
             idnature = @idnature,
+            codebudgetaire = @codebudget,
+            idlignebudget = @idlignebudget,
             idcentre = @idcentre,
             idtiers = @idtiers,
             updatedat = @updatedat,

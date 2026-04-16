@@ -1,17 +1,22 @@
-const express = require('express')
-const router = express.Router()
-const controller = require('../controllers/budget.controller')
-const circuitValidateurcontroller = require('../services/budget.service');
-const authmiddleware = require("../../../middlewares/auth.middlewre");
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers/budget.controller");
+const circuitValidateurcontroller = require("../services/budget.service");
 
-router.post('/create', authmiddleware.authentificatetoken, controller.create) // CREATE
-router.get('/', authmiddleware.authentificatetoken, controller.getAll) // READ ALL
-router.get('/:id', authmiddleware.authentificatetoken, controller.getById) // READ ONE BY ID
-router.patch('/update/:id', authmiddleware.authentificatetoken, controller.update) // UPDATE
-router.delete('/delete/:id', authmiddleware.authentificatetoken, controller.delete) // DELETE
-router.post('/duplicate/:id', authmiddleware.authentificatetoken, controller.duplicate) // DUPLICATE
+router.post("/create", controller.create); // CREATE
+router.get("/", controller.getAll); // READ ALL
+router.get("/:id", controller.getById); // READ ONE BY ID
+router.patch("/update/:id", controller.update); // UPDATE
+router.delete("/delete/:id", controller.delete); // DELETE
+router.post("/duplicate/:id", controller.duplicate); // DUPLICATE
 
-router.get('/validateurs/:id', authmiddleware.authentificatetoken, circuitValidateurcontroller.get_validateurBudget) // READ VALIDATEURS
-router.post('/validate/:id', authmiddleware.authentificatetoken, circuitValidateurcontroller.validerBudget) // UPDATE
+router.get(
+  "/validateurs/:id",
+  circuitValidateurcontroller.get_validateurBudget,
+); // READ VALIDATEURS
+router.post("/validate/:id", circuitValidateurcontroller.validerBudget); // UPDATE
 
-module.exports = router
+// Budgets annuels et ses budgets mensuels
+router.get("/mensuels/budgets-annuels", controller.getAnnualBudgetsWithMonthly);
+
+module.exports = router;

@@ -185,7 +185,9 @@ async function validateBudgetsAnalytique(lignes, filterData) {
     try {
       const budgetsAll = await lignedemandemodel.resoleveBudgetcentre({
         ...filterData,
-        idcentre: ligne.centre
+        idcentre: ligne.centre,
+        codebudgetaire: ligne.codebudget.codebudgetaire || null, // Passer le code budgetaire si disponible pour affiner la recherche du budget analytique 
+        idlignebudget : ligne.codebudget.idbudgetdepartementnature 
       });
 
       if (budgetsAll && budgetsAll.length > 0) {
@@ -419,7 +421,9 @@ async function resolveBudgetDataForLine(ligne, societe, filterData) {
           if (ligne.centre) {
             const budgetsAll = await lignedemandemodel.resoleveBudgetcentre({
               ...filterData,
-              idcentre: ligne.centre
+              idcentre: ligne.centre,
+              codebudgetaire : ligne.codebudget.codebudgetaire,
+              idlignebudget : ligne.codebudget.idbudgetdepartementnature
             });
 
             if (budgetsAll && budgetsAll.length > 0) {
@@ -442,7 +446,9 @@ async function resolveBudgetDataForLine(ligne, societe, filterData) {
           // Budget par nature d'opération
           const budgetsAll = await lignedemandemodel.resoleveBudgetnature({
             ...filterData,
-            idnature: ligne.natureop
+            idnature: ligne.natureop,
+            codebudgetaire: ligne.codebudget.codebudgetaire,
+            idlignebudget : ligne.codebudget.idbudgetdepartementnature
           });
 
           if (budgetsAll && budgetsAll.length > 0) {
@@ -510,6 +516,8 @@ async function createDemandeLines(idDemande, lignes, resources, taux, societe, d
         idtiers: ligne.tiers || null,
         idbudget: budgetData.budget_ || null,
         montantref,
+        codebudget: ligne.codebudget.codebudgetaire,
+        idlignebudget: ligne.codebudget.idbudgetdepartementnature,
         preengage: budgetData.preengage,
         engage: budgetData.engage,
         realise: budgetData.realise,

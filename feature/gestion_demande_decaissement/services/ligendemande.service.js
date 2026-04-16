@@ -31,7 +31,7 @@ async function create_lignedemande(data) {
     }
 
     const newLignedemande = new ligneDemandeModel(uuidv4(), data.iddemande || entetedemande.data.iddemande, data.numligne, data.libellelignedemande, data.montantref, data.montantdemande, data.engage, data.preengage, data.engage, data.realise,
-    data.idnature, data.idbudget || null, data.idcentre, data.idtiers, data.idsociete, data.idsite, data.createdat, data.createdby);
+    data.idnature, data.idbudget || null, data.codebudget || null, data.idlignebudget || null, data.idcentre, data.idtiers, data.idsociete, data.idsite, data.createdat, data.createdby);
 
     const recorded = await newLignedemande.create_ligneDemande(newLignedemande);
     if(!recorded.success){

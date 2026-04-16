@@ -648,7 +648,9 @@ BEGIN
         realise DECIMAL(22, 9),
         idnature UNIQUEIDENTIFIER,
         idbudget UNIQUEIDENTIFIER DEFAULT NULL,
-        idcentre UNIQUEIDENTIFIER,
+        idlignebudget UNIQUEIDENTIFIER DEFAULT NULL,
+        codebudgetaire NVARCHAR(100) DEFAULT NULL,
+        idcentre UNIQUEIDENTIFIER DEFAULT NULL,
         idtiers UNIQUEIDENTIFIER,
         idsociete UNIQUEIDENTIFIER,
         idsite UNIQUEIDENTIFIER,
@@ -660,6 +662,7 @@ BEGIN
         FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
         FOREIGN KEY (idtiers) REFERENCES Tiers(idtiers),
         FOREIGN KEY (idbudget) REFERENCES Budget(idbudget),
+        FOREIGN KEY (idlignebudget) REFERENCES BudgetDepartementNature(idbudgetdepartementnature),
         FOREIGN KEY (idcentre) REFERENCES CentreAnalytique(idcentreanalytique),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
         FOREIGN KEY (idsite) REFERENCES Site(idsite)
@@ -1046,28 +1049,6 @@ BEGIN
         FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
         FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation) ON DELETE CASCADE
-    );
-END
-
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ValidationDemande')
-BEGIN
-    CREATE TABLE ValidationDemande (
-        idvalidationdemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        iddemande UNIQUEIDENTIFIER,
-        idcircuitvalidation UNIQUEIDENTIFIER,
-        idcircuitetape UNIQUEIDENTIFIER,
-        idutilisateur UNIQUEIDENTIFIER,
-        decision NVARCHAR(20), -- APPROUVE | REJETE | EN_ATTENTE
-        commentaire NVARCHAR(255),
-        datevalidation DATETIME,
-        rang INT NOT NULL,
-        createdat DATETIME DEFAULT GETDATE(),
-        createdby NVARCHAR(50),
-        FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
-        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation),
-        FOREIGN KEY (idcircuitetape) REFERENCES Circuitetape(idcircuitetape),
-        FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur)
     );
 END
 

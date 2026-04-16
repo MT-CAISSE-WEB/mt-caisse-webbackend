@@ -408,4 +408,3 @@ exports.validerBudget = async (req, res) => {
 };
 
 exports.initCircuitBudget = initCircuitBudget;
-exports.get_budgetByid = get_budgetByid;
