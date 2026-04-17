@@ -19,10 +19,10 @@ async function get_all_caisseperiodes(page = 1, limit = 5) {
       item.updatedat, item.updatedby,
       item.caisse ? new caisseModel(
         item.caisse_idcaisse, item.caisse_codecaisse, item.caisse_libelle,  item.caisse_idjournal,  item.caisse_iddevise, item.caisse_idsite, item.caisse_idsociete, item.caisse_idcompte ,
-        item.caisse_actif, item.caisse_createdat, item.caisse_createdby,) : null,
+        item.caisse_actif, item.caisse_createdat, item.caisse_createdby,) : null
     ));
   } catch (error) {
-    console.log(error);
+    throw new Error("Aucune donnée trouvée");
   }
   return new PaginationModel(result.page, result.limit, result.total, caisseperiodes);
 }
@@ -261,6 +261,46 @@ async function validate_periode(idperiode, data) {
   
 }
 
+async function create_caisseBilletage(data) {
+  let dataresponse = [];
+
+  if(!Array.isArray(data)){
+    throw new Error("Aucun élément fourni.");
+  }
+
+  for (const billetage of data){
+    //récuperer le code caisse
+    let billetagedata = null;
+    if(billetage.idcaisse){
+      try {
+        billetagedata = await caissemodel.get_onecaisse(billetage.idcaisse);
+      } catch (error) {
+        throw new Error("Cette caisse n'existe pas");
+      }
+    }
+
+    if (!billetage.idperiode) {
+      throw new Error("Tous les champs (caisse, idperiode) sont requis.");
+    }
+
+    const today = new Date();
+    billetage.idbilletage = uuidv4();
+    billetage.montant = billetage.totalPhysique
+    billetage.createdat = today;
+    billetage.createdby = billetage.createdby || 'System';
+    const newperiode = new periodeModel();
+    const recorded = await newperiode.create_caissebilletage(billetage);
+    // si le modèle renvoie une erreur
+    if (!recorded.success) {
+      throw new Error(recorded.message);
+    }
+
+    dataresponse.push(recorded.data)
+  }
+
+  return {success: true, data: dataresponse};
+}
+
 module.exports = {
   get_all_caisseperiodes,
   get_by_idperiode,
@@ -270,5 +310,6 @@ module.exports = {
   validate_periode,
   open_periode,
   get_recentperiode,
-  delete_caisse
+  delete_caisse,
+  create_caisseBilletage
 };

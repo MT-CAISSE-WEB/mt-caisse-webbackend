@@ -201,11 +201,20 @@ class enteteDemandeModel {
     return result.recordset
   }
 
-  async get_detailBudget(iddemande) {
+  async get_detailBudgetnature(iddemande) {
     const pool = await connectDB()
     const result = await pool.request()
       .input('iddemande', sql.UniqueIdentifier, iddemande)
-      .query(entetedemandeQuery.bydetailLigneBudget)
+      .query(entetedemandeQuery.bydetailLigneBudgetnature)
+
+    return result.recordset
+  }
+
+  async get_detailBudgetcentre(iddemande) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddemande', sql.UniqueIdentifier, iddemande)
+      .query(entetedemandeQuery.bydetailLigneBudgetcentre)
 
     return result.recordset
   }

@@ -4,6 +4,22 @@ const { v4: uuidv4 } = require('uuid');
 
 const societeservice = require('../../gestion_organisation/services/societe.service');
 
+const queryupsert = `IF EXISTS (SELECT 1 FROM Tiers WHERE codetiers = @codetiers)
+    BEGIN
+        UPDATE Tiers SET designation = @designation, typetiers = @typetiers, 
+        actif = @actif, idsociete = @idsociete, updatedat = @updatedat, updatedby = @updatedby 
+        OUTPUT INSERTED.* WHERE codetiers = @codetiers
+    END
+    ELSE
+    BEGIN
+        INSERT INTO Tiers (idtiers, codetiers, designation, typetiers, actif, idsociete,
+        createdat, updatedat, createdby, updatedby)
+        OUTPUT INSERTED.*
+        VALUES (@idtiers, @codetiers, @designation, @typetiers, @actif, @idsociete,
+        @createdat, @updatedat, @createdby, @updatedby)
+    END
+`;
+
 const queryInsert = `
         INSERT INTO Tiers (idtiers, codetiers, designation, typetiers, actif, idsociete,
         createdat, updatedat, createdby, updatedby)
@@ -52,7 +68,6 @@ class TiersModel {
         this.societe = societe;
     }
 
-
     // Créer un tiers OK
     async create_tiers() {
         const pool = await connectDB();
@@ -68,7 +83,7 @@ class TiersModel {
             .input('updatedat', sql.DateTime, this.updatedat)
             .input('createdby', sql.NVarChar(50), this.createdby)
             .input('updatedby', sql.NVarChar(50), this.updatedby)
-            .query(queryInsert);
+            .query(queryupsert);
 
             console.log(result);
 
@@ -77,7 +92,6 @@ class TiersModel {
             return { success: false, message: error.message };
         }
     }
-
 
     // Rechercher tous les tiers OK
     async get_alltiers () {
@@ -94,7 +108,6 @@ class TiersModel {
             console.log(`Erreur ds de recuperation: ${error}`.cyan.bold);
         }
     }
-
 
     // Rechercher un tiers OK
     async get_onetiers(idtiers) {
@@ -125,7 +138,6 @@ class TiersModel {
             };
         }
     }
-
     
     // Met à jour un tiers OK
     async update_tiers (idtiers, data) {
@@ -194,6 +206,29 @@ class TiersModel {
             console.log(`Erreur de suppression: ${error}`.cyan.bold);
             return {success: false, message: "Erreur de suppression : " + error.message };
         }
+    }
+
+    async exportTiers(debut, fin, typetiers) {
+
+        const pool = await connectDB();
+
+        const result = await pool.request()
+            .input('debut', sql.VarChar, debut || null)
+            .input('fin', sql.VarChar, fin || null)
+            .input('typetiers', sql.VarChar, typetiers || null)
+            .query(`SELECT codetiers, designation, typetiers, actif 
+            FROM Tiers
+            WHERE 
+                (
+                    (@debut IS NULL OR @debut = '' OR codetiers >= @debut)
+                AND (@fin IS NULL OR @fin = '' OR codetiers <= @fin)
+                )
+            AND (@typetiers IS NULL OR @typetiers = '' OR typetiers = @typetiers)
+            ORDER BY codetiers`);
+
+        const data = result.recordset;
+
+        return data;
     }
 }
 

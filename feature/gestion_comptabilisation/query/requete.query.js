@@ -60,6 +60,41 @@ inner join devise d on c.iddevise = d.iddevise
 
 WHERE t.idoperation = @idoperation`;
 
+queryjustificatifdetailsbyid = `select
+    j.iddetailsjustificatifoperation,
+    j.idjustificatif,
+    j.idnature,
+    j.idcentreanalytique,
+    j.idtiers,
+    j.montantdetail,
+    j.montantref,
+
+    n.idnature AS nature_id,
+    n.codenature AS nature_code,
+    n.libelle AS nature_libelle,
+    n.idcompte AS nature_idcompte,
+
+    p.idcompte AS compte_id,
+    p.numcompte,
+
+    ca.idcentreanalytique AS centre_id,
+    ca.codecentreanalytique,
+    ca.libelle AS centre_libelle,
+
+    t.idtiers AS tiers_id,
+    t.codetiers,
+    t.designation AS tiers_designation
+
+    from DetailsJustificatifOperation j
+    left join tiers t on j.idtiers = t.idtiers
+    left join natureoperation n on j.idnature = n.idnature
+    left join centreanalytique ca on j.idcentreanalytique = ca.idcentreanalytique
+    inner join PlanComptable p on n.idcompte = p.idcompte
+    where j.idjustificatif = @idjustificatif`; 
+
+
+    
+
 queryligneoperationbyidoperation =`select 
     l.idligneoperation,
     l.idoperation,
@@ -146,5 +181,6 @@ createligneecriture = ` INSERT INTO EcritureLigneComptable
 module.exports = {
     querytypeoperation,
     queryligneoperationbyidoperation,
-    createligneecriture
+    createligneecriture,
+    queryjustificatifdetailsbyid
 };

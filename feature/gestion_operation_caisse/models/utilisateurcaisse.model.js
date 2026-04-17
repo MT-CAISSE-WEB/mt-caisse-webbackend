@@ -123,7 +123,7 @@ class UtilisateurCaisseModel {
     async get_caissePeriodeByUser(idutilisateur){
         const pool = await connectDB();
         try {
-            const result = await pool.request().input("idutilisateur", idutilisateur).query(utilisateurcaisseQueries.getRecentCaisseUser);
+            const result = await pool.request().input("idutilisateur", idutilisateur).query(utilisateurcaisseQueries.getCaisseUserRecent);
             const utilsateurcaisse = result.recordset;
             return utilsateurcaisse;
         } catch (error) {
@@ -170,7 +170,7 @@ class UtilisateurCaisseModel {
                 .input("idutilisateur", sql.UniqueIdentifier, idutilisateur)
                 .query(utilisateurcaisseQueries.getcaisseUser);
         } catch (error) {
-            console.log(error);
+            console.log(`Erreur de récupération de la caisse utilisateur: ${error}`.cyan.bold);
         }
     }
 }

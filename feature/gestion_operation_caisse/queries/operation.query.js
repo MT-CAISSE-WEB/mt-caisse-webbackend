@@ -455,7 +455,11 @@ module.exports = {
             t.createdat AS type_createdat,
             t.createdby AS type_createdby,
             t.updatedat AS type_updatedat,
-            t.updatedby AS type_updatedby
+            t.updatedby AS type_updatedby,
+            ca.idcaisse AS caisse_idcaisse,
+            ca.codecaisse AS caisse_codecaisse,
+            ca.libelle AS caisse_libelle,
+            dca.codedevise AS devise_caisse
 
         FROM Ops o
             JOIN EnteteOperationCaisse e ON e.idoperation = o.idoperation
@@ -482,6 +486,12 @@ module.exports = {
             -- Jointure sur TypeOperation
             LEFT JOIN TypeOperation t
             ON t.idoperation = e.idoperation
+
+            LEFT JOIN Caisse ca 
+            ON ca.idcaisse = t.idcaisse
+
+            LEFT JOIN Devise dca 
+            ON dca.iddevise = ca.iddevise
 
             ORDER BY e.createdat DESC;
 

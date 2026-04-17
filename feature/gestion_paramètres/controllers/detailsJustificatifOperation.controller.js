@@ -14,11 +14,13 @@ exports.create = async (req, res) => {
     const detail = await DetailsJustificatifOperation.create(req.body);
 
     res.status(201).json({
+      success: true,
       message: "Détail justificatif créé avec succès",
       data: detail,
     });
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: "Erreur lors de la création",
       error: error.message,
     });
@@ -55,9 +57,14 @@ exports.findAll = async (req, res) => {
       ],
     });
 
-    res.status(200).json({success: true, data: details});
+    res.status(200).json({
+      success: true,
+      message: "Détail justificatif créé avec succès",
+      data: details,
+    });
   } catch (error) {
     res.status(500).json({
+      success: false,
       message: "Erreur récupération détails",
       error: error.message,
     });

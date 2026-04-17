@@ -80,23 +80,26 @@ const statsvalidatedbudgetroute = require("./feature/consultations/routes/statsB
 const statsMontantByDeptRoute = require("./feature/consultations/routes/statsMontantByDept.route");
 // solde caisse
 const statsMontantByCaisseRoute = require("./feature/consultations/routes/soldeByCaisse.route");
+// mouvements caisse
+const mouvementsCaisseRoute = require("./feature/consultations/routes/mouvementcaisse.route");
 
 // Declaration des routes pour les paramètres
 const motifsroutes = require("./feature/gestion_paramètres/routes/motif.route");
 const compteursroutes = require("./feature/gestion_paramètres/routes/compteur.route");
+const parametresroutes = require("./feature/gestion_paramètres/routes/parametrecomptable.routes");
 
 // Justifacatif operation
 const justificatifoperationroute = require("./feature/gestion_paramètres/routes/justificatifOperation.routes");
 // Détails justificatif
 const detailsjustificatifroute = require("./feature/gestion_paramètres/routes/detailsJustificatifOperation.routes");
-
+// Transfert fond
+const transfertroute = require("./feature/gestion_operation_caisse/routes/transfert.route");
 //comptabilisation
 const ecritureRoutes = require("./feature/gestion_comptabilisation/routes/ecriture.route");
-
+const ligneecritureRoutes = require("./feature/gestion_comptabilisation/routes/ligneecriture.route");
 
 
 const db = require('./config/db');
-
 //connexion db Richard
 const {connectInstance} = require('./config/db')
 
@@ -205,7 +208,7 @@ app.use("/API/utilisateur_caisse", utilisateurcaisseRoutes);
 app.use("/API/entete_operation", enteteoperationRoutes);
 app.use("/API/ligne_operation", ligneoperationRoutes);
 app.use("/API/operation", typeoperationRoutes);
-
+app.use("/API/operation", transfertroute);
 
 //Regrouper toutes les routes
 app.use("/API/circuitvalidateur", circuitvalidateurroute);
@@ -223,6 +226,7 @@ app.use("/API/consultation", decaissementaj);
 //Regrouper toutes les routes pour les paramètres
 app.use("/API/motif", motifsroutes);
 app.use("/API/modelecompteur", compteursroutes);
+app.use("/API/parametrecomptable", parametresroutes);
 
 // Regrouper toutes les routes pour les justificatifs
 app.use("/api/justificatifs", justificatifoperationroute);
@@ -234,9 +238,12 @@ app.use("/api/statsdemande", statsdemandeparstatutroute);
 app.use("/api/statsbudget", statsvalidatedbudgetroute);
 app.use("/api/statsmontant", statsMontantByDeptRoute);
 app.use("/api/statscaisse", statsMontantByCaisseRoute);
+app.use("/api/mouvements-caisse", mouvementsCaisseRoute);
 
 //comptabilisation
 app.use("/api/comptabilisation", ecritureRoutes);
+app.use("/api/comptabilisation", ligneecritureRoutes);
+
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
     console.log(`Error: ${err.message}`.red);

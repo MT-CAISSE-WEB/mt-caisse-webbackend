@@ -55,7 +55,12 @@ async function createligneEcriture(data){
     async function getallLigneEcriture(){
         try {
             const pool = await connectDB();
-            const query = "SELECT * FROM ligneEcritureComptable";
+            const query = `select elc.idligneecriture,elc.numligne,ec.ref_ecriture,ec.journal,ec.date_operation,
+                            elc.idcentreanalytique,elc.centreanalytique,elc.typeecriture,elc.idcompte,elc.idcompte,elc.idtiers,elc.tiers,
+                            elc.libelle,elc.debit,elc.credit,elc.debit + elc.credit as 'montant',elc.iddevise,elc.devise,elc.idcentreanalytique,elc.centreanalytique
+                            from EcritureLigneComptable elc 
+                            inner join EcritureComptable ec on ec.idecriture = elc.idecriture
+                            order by ec.ref_ecriture,elc.numligne`;
             const result = await pool.request().query(query);
             return {
                 success :true,
@@ -65,4 +70,8 @@ async function createligneEcriture(data){
         } catch (error) {
             return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
         }
+    }
+
+    module.exports = {
+        getallLigneEcriture
     }

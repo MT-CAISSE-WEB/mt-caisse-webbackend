@@ -1,25 +1,31 @@
-const { DataTypes } = require('sequelize')
-const sequelize = require('../../../config/database')
+const { DataTypes } = require("sequelize");
+const sequelize = require("../../../config/database");
 
 // Import des autres modèles
 const {
   Departement,
   NatureOperation,
-} = require('../../gestion_demande_decaissement/models/foreign_models')
+  CentreAnalytique,
+} = require("../../gestion_demande_decaissement/models/foreign_models");
 
-const Budget = require('../models/budget.model')
+const { Budget } = require("../models/index");
 
 const BudgetDepartementNature = sequelize.define(
-  'BudgetDepartementNature',
+  "BudgetDepartementNature",
   {
     idbudgetdepartementnature: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
+    codebudgetaire: {
+      type: DataTypes.STRING(8),
+      unique: true,
+    },
     idbudget: DataTypes.UUID,
     iddepartement: DataTypes.UUID,
     idnature: DataTypes.UUID,
+    idcentreanalytique: DataTypes.UUID,
     montantprevisiondept: DataTypes.DECIMAL(22, 9),
     montantprevisionsite: DataTypes.DECIMAL(22, 9),
     montantprevisionsociete: DataTypes.DECIMAL(22, 9),
@@ -31,29 +37,35 @@ const BudgetDepartementNature = sequelize.define(
     updatedby: DataTypes.STRING(50),
   },
   {
-    tableName: 'BudgetDepartementNature',
+    tableName: "BudgetDepartementNature",
     timestamps: false,
-  }
-)
+  },
+);
 
 // ===== Associations =====
 
 // Budget
 BudgetDepartementNature.belongsTo(Budget, {
-  foreignKey: 'idbudget',
-  as: 'budget',
-})
+  foreignKey: "idbudget",
+  as: "budget",
+});
 
 // Département
 BudgetDepartementNature.belongsTo(Departement, {
-  foreignKey: 'iddepartement',
-  as: 'departement',
-})
+  foreignKey: "iddepartement",
+  as: "departement",
+});
 
 // Société
 BudgetDepartementNature.belongsTo(NatureOperation, {
-  foreignKey: 'idnature',
-  as: 'nature_operation',
-})
+  foreignKey: "idnature",
+  as: "nature_operation",
+});
 
-module.exports = BudgetDepartementNature
+// Centre analytique
+BudgetDepartementNature.belongsTo(CentreAnalytique, {
+  foreignKey: "idcentreanalytique",
+  as: "centre_analytique",
+});
+
+module.exports = BudgetDepartementNature;

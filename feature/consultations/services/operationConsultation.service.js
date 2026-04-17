@@ -1,6 +1,5 @@
 const { connectDB } = require('../../../config/db');
 const sql = require('mssql');
-const argon2 = require('argon2');
 const { operationQueries } = require('../queries/queryIndex');
 const PaginationModel = require('../../../shared/utils/model');
 
@@ -74,6 +73,82 @@ async function journalPaiement(datedebut, datefin, caisse, idsite, typeentitesoc
     }
 }
 
+// Autor : Richard
+async function editionjournal(datedebut, datefin, idcaisse, idsite) {
+    const pool = await connectDB();
+
+    try {
+        const result = await pool.request()
+            .input('datedebut', sql.Date, datedebut)
+            .input('datefin', sql.Date, datefin)
+            .input('idcaisse', sql.UniqueIdentifier, idcaisse)
+            .input('idsite', sql.UniqueIdentifier, idsite)
+            .query(operationQueries.editionjournal);
+
+        const resultat = result.recordset;
+
+        if (!resultat || resultat.length === 0) {
+            return { success: false, message: "Aucune donnée trouvée" };
+        }
+
+        const head = resultat[0];
+        const map = new Map();
+
+        resultat.forEach(r => {
+
+            const date = r.dateoperation.toISOString().split('T')[0];
+
+            // Niveau DATE
+            if (!map.has(date)) {
+                map.set(date, {
+                    date,
+                    solde_ouverture: r.soldeouverture,
+                    solde_fermeture: r.soldefermeture,
+                    operations: []
+                });
+            }
+
+            const dateGroup = map.get(date);
+
+
+            dateGroup.operations.push({
+                typeoperation: r.typeoperation,
+                codeoperation: r.codeoperation,
+                cnature: r.codenature,
+                nature: r.lib_nature,
+                ccentre: r.codecentre,
+                centre: r.lib_centre,
+                ctiers: r.codetiers,
+                tiers: r.nom_tiers,
+                libelle: r.libelle,
+                montant: r.montantoperation
+            });
+
+        });
+
+        const lignes = Array.from(map.values());
+
+        const data = {
+            codesociete: head.codesociete,
+            raisonsociale: head.raisonsociale,
+            codesite: head.codesite,
+            lib_site: head.lib_site,
+            codecaisse: head.codecaisse,
+            lib_caisse: head.lib_caisse,
+            devise_caisse: head.devise_caisse,
+            datedebut: new Date(datedebut).toLocaleDateString('fr-FR'),
+            datefin: new Date(datefin).toLocaleDateString('fr-FR'),
+            lignes
+        };
+
+        return { success: true, data : data };
+
+    } catch (error) {
+        console.log(`Erreur de récupération : ${error}`.cyan?.bold || error);
+        throw error;
+    }
+}
+
 function extraireDate(value) {
   return (typeof value === 'string' && value.includes('T'))
     ? value.split('T')[0]
@@ -82,7 +157,7 @@ function extraireDate(value) {
 
 async function detailOperation(data){
     const pool = await connectDB();
-    
+
     try {
         const result = await pool.request()
         .input('idsite', sql.UniqueIdentifier, data.idsite)
@@ -135,29 +210,41 @@ async function getLastOperation(caisses, date, page, limit){
             if (!map.has(piece)) {
                 map.set(piece, {
                     piece,
-                    codecaisse: r.codecaisse,
-                    caisse: r.caisse,
                     date,
-                    devise: r.devise_caisse,
                     typeoperation: r.typeoperation,
                     piece: r.operation,
-                    montant: r.montant,
                     montantop: r.montant_op,
-                    montant_ref: r.montant_ref,
-                    solde_ouverture: r.solde_ouverture,
-                    solde_fermeture: r.solde_fermeture,
-                    libelles: []
+                    deviseop : r.devise_operation,
+                    caisses: new Map() // important
                 });
             }
-            const dateGroup = map.get(piece);
-            // Niveau CAISSE
-            dateGroup.libelles.push({libelle: r.commentaire })
+
+            const operation = map.get(piece);
+
+           // ================= NIVEAU CAISSE =================
+            const keyCaisse = r.codecaisse;
+
+            if (!operation.caisses.has(keyCaisse)) {
+                operation.caisses.set(keyCaisse, {
+                    codecaisse: r.codecaisse,
+                    devise: r.devise_caisse,
+                    caisse: r.caisse,
+                    montant: r.montant,
+                    libelle: r.commentaire,
+                    montant_ref: r.montant_ref,
+                    solde_ouverture: r.solde_ouverture,
+                    solde_fermeture: r.solde_fermeture
+                });
+            }
         });
 
         // Conversion Map → Array
-        const data = Array.from(map.values());
+        const data = Array.from(map.values()).map(op => ({
+            ...op,
+            caisses: Array.from(op.caisses.values())
+        }));
 
-        return new PaginationModel(page, limit, total, data);
+        return new PaginationModel(page, limit, totalPages, data);
     } catch (error) {
         console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         throw error;
@@ -165,7 +252,7 @@ async function getLastOperation(caisses, date, page, limit){
 }
 
 async function history(caisses, date, page, limit){
-     page = parseInt(page) || 1;
+    page = parseInt(page) || 1;
     limit = parseInt(limit) || 6;
     const offset = (page - 1) * limit;
 
@@ -212,6 +299,7 @@ async function history(caisses, date, page, limit){
                     typeoperation: r.typeoperation,
                     piece: r.operation,
                     montant: r.montant,
+                    deviseop: r.devise_operation,
                     montant_ref: r.montant_ref
                 });
             }
@@ -223,7 +311,7 @@ async function history(caisses, date, page, limit){
             operations: Array.from(d.operations.values())
         }));
 
-        return new PaginationModel(page, limit, total, data);;
+        return new PaginationModel(page, limit, totalPages, data);
     } catch (error) {
         console.log(`Erreur de recuperation: ${error}`.cyan.bold);
         throw error;
@@ -232,13 +320,10 @@ async function history(caisses, date, page, limit){
 
 async function Allpaiement(){
     const pool = await connectDB();
-    // const hash = await argon2.hash('dolimex@caisse');
-    // console.log(hash);
 
     try {
         const result = await pool.request().query(operationQueries.totalOperation);
         const resultat = result.recordset;
-
         return { success: true, data: resultat };
     } catch (error) {
         console.log(`Erreur de recuperation: ${error}`.cyan.bold);
@@ -248,6 +333,7 @@ async function Allpaiement(){
 
 module.exports = {
     journalPaiement,
+    editionjournal,
     detailOperation,
     getLastOperation,
     history,

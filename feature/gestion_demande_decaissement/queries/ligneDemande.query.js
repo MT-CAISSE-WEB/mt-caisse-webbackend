@@ -12,11 +12,11 @@ module.exports = {
     insert : `
         INSERT INTO LigneDemande (
             idlignedemande, iddemande, numligne, libellelignedemande, montantdemande, montantref, budgetconso, preengage, engage, realise,
-            idnature, idbudget, idcentre, idtiers, idsociete, idsite, createdat, createdby
+            idnature, idbudget, idlignebudget, codebudgetaire, idcentre, idtiers, idsociete, idsite, createdat, createdby
         )
         OUTPUT INSERTED.*
         VALUES ( @idlignedemande, @iddemande, @numligne, @libellelignedemande, @montantdemande, @montantref, @budgetconso, @preengage, @engage, @realise,
-            @idnature, @idbudget, @idcentre, @idtiers, @idsociete, @idsite, @createdat, @createdby
+            @idnature, @idbudget, @idlignebudget, @codebudget, @idcentre, @idtiers, @idsociete, @idsite, @createdat, @createdby
         )
     `,
     update : `
@@ -25,6 +25,8 @@ module.exports = {
             montantdemande = @montantdemande,
             montantref = @montantref,
             idnature = @idnature,
+            codebudgetaire = @codebudget,
+            idlignebudget = @idlignebudget,
             idcentre = @idcentre,
             idtiers = @idtiers,
             updatedat = @updatedat,
@@ -44,7 +46,19 @@ module.exports = {
     getOne : `
      SELECT * FROM LigneDemande WHERE idlignedemande = @idlignedemande
     `,
-    resoleveBudget : `
+    checktypebudget : `
+        SELECT B.*
+        FROM Budget B
+        WHERE 
+        B.idsociete = @idsociete
+        AND B.idsite = @idsite
+        AND B.actif = 1
+        AND B.valide = 1
+        AND B.cloture = 0
+		AND @datedemande BETWEEN B.datedebut AND B.datefin
+        AND B.typebudget = 'Annuel' OR B.typebudget = 'Mensuel'
+    `,
+    resoleveBudgetnature : `
         SELECT B.*
         FROM Budget B
         JOIN BudgetDepartementNature BDN ON B.idbudget = BDN.idbudget
@@ -60,7 +74,22 @@ module.exports = {
             OR (B.typebudget = 'Mensuel' AND B.idsociete = @idsociete)
         )
     `,
-    checkBudgetSolde : `
+    resoleveBudgetcentre : `
+        SELECT B.*
+        FROM Budget B
+        JOIN BudgetDepartementNature BDN ON B.idbudget = BDN.idbudget
+        WHERE 
+        BDN.idcentreanalytique = @idcentre
+        AND B.actif = 1
+		AND B.valide = 1
+		AND B.cloture = 0
+		AND @datedemande BETWEEN B.datedebut AND B.datefin
+        AND (
+            (B.typebudget = 'Annuel' AND B.idsociete = @idsociete)
+            OR (B.typebudget = 'Mensuel' AND B.idsociete = @idsociete)
+        )
+    `,
+    checkBudgetnatureSolde : `
         SELECT 
         BDN.idbudget, BDN.iddepartement, BDN.idnature, BDN.montantprevisionsociete - ISNULL(SUM(LD.montantdemande),0) AS solde
         FROM BudgetDepartementNature BDN
@@ -70,7 +99,15 @@ module.exports = {
 		AND (BDN.iddepartement = @iddepartement OR BDN.iddepartement IS NULL ) 
         GROUP BY BDN.idbudget, BDN.iddepartement, BDN.idnature, BDN.montantprevisionsociete
     `,
-
+    checkBudgetcentreSolde : `
+        SELECT 
+        BDN.idbudget, BDN.iddepartement, BDN.idnature, BDN.idcentre, BDN.montantprevisionsociete - ISNULL(SUM(LD.montantdemande),0) AS solde
+        FROM BudgetDepartementNature BDN
+        LEFT JOIN LigneDemande LD ON LD.idbudget = BDN.idbudget
+        LEFT JOIN EnteteDemande ED ON ED.iddemande = LD.iddemande AND ED.statut = 2
+        WHERE BDN.idbudget = @idbudget AND BDN.idcentreanalytique = @idcentre
+        GROUP BY BDN.idbudget, BDN.iddepartement, BDN.idnature, BDN.idcentre, BDN.montantprevisionsociete
+    `,
     // OK
     suivibudget : `
         SELECT
@@ -120,7 +157,6 @@ module.exports = {
             B.datedebut, B.codebudget;
 
     `,
-
     // OK
     suiviBydemande : `
         SELECT
@@ -145,31 +181,64 @@ module.exports = {
             B.idbudget = @idbudget
         ORDER BY ED.datedemande;
     `,
-    preengage: `
+    preengagebynature: `
         Select SUM(LD.montantref) AS preengage
         from EnteteDemande E
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
             LEFT JOIN Budget B ON B.idbudget = LD.idbudget
-        Where E.statut < 2 AND E.decaisse = 0 
-                and LD.idnature = @idnature 
+        Where E.statut < 3 AND E.decaisse = 0 
+                AND LD.idnature = @idnature 
+                AND E.iddepartement = @iddepartement
                 AND LD.idbudget IS NOT NULL
     `,
-    engage : `
+    engagebynature : `
         Select SUM(LD.montantref) AS engage
         from EnteteDemande E
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
             LEFT JOIN Budget B ON B.idbudget = LD.idbudget
         Where E.statut = 3 AND E.decaisse = 0 
-                and LD.idnature = @idnature 
+                AND LD.idnature = @idnature 
+                AND E.iddepartement = @iddepartement
                 AND LD.idbudget IS NOT NULL
     `,
-    reel : `
+    reelbynature : `
         Select SUM(LD.montantref) AS realise
         from EnteteDemande E
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
             LEFT JOIN Budget B ON B.idbudget = LD.idbudget
         Where E.statut = 3 AND E.decaisse = 1 
                 and LD.idnature = @idnature 
+                AND E.iddepartement = @iddepartement
+                AND LD.idbudget IS NOT NULL
+    `,
+    preengagebycentre: `
+        Select SUM(LD.montantref) AS preengage
+        from EnteteDemande E
+            LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
+            LEFT JOIN Budget B ON B.idbudget = LD.idbudget
+        Where E.statut < 3 AND E.decaisse = 0 
+                AND LD.idcentreanalytique = @idcentre 
+                AND E.idsite = @idsite
+                AND LD.idbudget IS NOT NULL
+    `,
+    engagebycentre : `
+        Select SUM(LD.montantref) AS engage
+        from EnteteDemande E
+            LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
+            LEFT JOIN Budget B ON B.idbudget = LD.idbudget
+        Where E.statut = 3 AND E.decaisse = 0 
+                AND LD.idcentreanalytique = @idcentre 
+                AND E.idsite = @idsite
+                AND LD.idbudget IS NOT NULL
+    `,
+    reelbycentre : `
+        Select SUM(LD.montantref) AS realise
+        from EnteteDemande E
+            LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
+            LEFT JOIN Budget B ON B.idbudget = LD.idbudget
+        Where E.statut = 3 AND E.decaisse = 1 
+                and LD.idcentreanalytique = @idcentre 
+                AND E.idsite = @idsite
                 AND LD.idbudget IS NOT NULL
     `
 }

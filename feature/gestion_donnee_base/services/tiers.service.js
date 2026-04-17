@@ -1,5 +1,8 @@
 const tiersmodel = require("../models/tiers.model");
 const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
+const { parse } = require("csv-parse");
+
 const societemodel = require("../../gestion_organisation/models/societe.model");
 
 let tier = new tiersmodel();
@@ -76,6 +79,7 @@ async function get_by_idtiers(idtiers) {
 }
 
 
+// OK
 async function update_tiers(idtiers, data) {
   if (!idtiers) {
     throw new Error("Erreur de donnée");
@@ -105,10 +109,60 @@ async function delete_tiers(idtiers) {
 }
 
 
+// OK
+async function import_tiers(filePath, info) {
+  const today = new Date();
+  const parser = fs
+    .createReadStream(filePath)
+    .pipe(parse({ delimiter: ";", from_line: 1 }));
+
+    try {
+      for await (const row of parser) {
+        // recupere les donnees
+        try{          
+          const data = {
+            codetiers: row[0]?.trim(),
+            designation: row[1]?.trim(),
+            typetiers: row[2]?.trim(),
+            actif: Number(row[3]),
+            idsociete: info.idsociete,
+            createdby: info.createdby,
+            createdat: today
+          };
+
+        await create_tiers(data);
+      
+        } catch (error) {
+        console.error("Error:", error.message);
+        throw error; }
+      }
+    }  catch (error) {
+        console.error("Error:", error.message);
+        throw error;
+    }
+}
+
+
+// OK
+async function exportTiers(debut, fin, typetiers) {
+  try {
+    const data = await tier.exportTiers(debut, fin, typetiers);
+
+    return data;
+    
+  } catch (err) {
+    console.log(`Aucune donnée: ${err.message}`);
+    throw err;
+  }
+}
+
+
 module.exports = {
   get_all_tiers,
   get_by_idtiers,
   create_tiers,
   update_tiers,
-  delete_tiers
+  delete_tiers,
+  import_tiers,
+  exportTiers
 };

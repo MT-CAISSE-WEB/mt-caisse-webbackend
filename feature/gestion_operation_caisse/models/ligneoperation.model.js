@@ -81,17 +81,6 @@ class ligneoperationModel {
         }
     }
 
-        async get_allligneoperationsbytypeoperation(idtypeoperation) {
-        const pool = await connectDB();
-        const query = "SELECT * FROM ligneoperationCaisse WHERE idtypeoperation = @idtypeoperation"
-        try {
-            const result = await pool.request().input('idtypeoperation', sql.UniqueIdentifier, idtypeoperation).query(query);
-            return result;
-        } catch (error) {
-            console.log(`Erreur de recuperation: ${error}`.cyan.bold);
-        }
-    }
-
     async get_oneligneoperation(idligneoperation){
         const pool = await connectDB();
         try {

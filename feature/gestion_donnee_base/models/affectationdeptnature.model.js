@@ -27,44 +27,41 @@ class AffectationDepartementNatureModel {
         this.updatedby = updatedby;
     }
 
+
     // ok 
     async getallNatures(iddepartement) {
 
-    const pool = await connectDB();
+        const pool = await connectDB();
 
-    try {
-        // Natures affectées
-        const resultAffectes = await pool.request()
-            .input("iddepartement", sql.UniqueIdentifier, iddepartement)
-            .query(`SELECT n.idnature, n.codenature, n.libelle, n.actif, n.demandedecaissement, n.imputationtiers
-                FROM NatureOperation n INNER JOIN AffectationDepartementNature a
-                ON a.idnature = n.idnature
-                WHERE a.iddepartement = @iddepartement
-                ORDER BY n.codenature ASC`);
+        try {
+            // Natures affectées
+            const resultAffectes = await pool.request()
+                .input("iddepartement", sql.UniqueIdentifier, iddepartement)
+                .query(`SELECT n.idnature, n.decajustifier, n.codenature, n.libelle, n.actif, n.demandedecaissement, n.imputationtiers
+                    FROM NatureOperation n INNER JOIN AffectationDepartementNature a
+                    ON a.idnature = n.idnature
+                    WHERE a.iddepartement = @iddepartement
+                    ORDER BY n.libelle ASC`);
 
-        // Natures non affectées
-        const resultNonAffectes = await pool.request()
-            .input("iddepartement", sql.UniqueIdentifier, iddepartement)
-            .query(`SELECT n.idnature, n.codenature, n.libelle, n.actif
-                FROM NatureOperation n WHERE NOT EXISTS (
-                    SELECT 1 FROM AffectationDepartementNature a
-                    WHERE a.idnature = n.idnature AND a.iddepartement = @iddepartement)
-                    ORDER BY n.codenature ASC`);
-        const naturesaffectes = resultAffectes.recordset;
-        const naturesnonaffectes = resultNonAffectes.recordset;
+            // Natures non affectées
+            const resultNonAffectes = await pool.request()
+                .input("iddepartement", sql.UniqueIdentifier, iddepartement)
+                .query(`SELECT n.idnature, n.decajustifier, n.codenature, n.libelle, n.actif
+                    FROM NatureOperation n WHERE n.actif = 1 AND NOT EXISTS (
+                        SELECT 1 FROM AffectationDepartementNature a
+                        WHERE a.idnature = n.idnature AND a.iddepartement = @iddepartement)
+                        ORDER BY n.libelle ASC`);
+            const naturesaffectes = resultAffectes.recordset;
+            const naturesnonaffectes = resultNonAffectes.recordset;
 
-        return {success: true, naturesaffectes, naturesnonaffectes};
+            return {success: true, naturesaffectes, naturesnonaffectes};
 
-    } catch (error) {
-        return { success: false, message: error.message};}
+        } catch (error) {
+            return { success: false, message: error.message};}
     }
 
-
-
-    async saveAffectations(iddepartement, idsNatures) {
-
-        // console.log(iddepartement)
-
+    
+        async saveAffectations(iddepartement, data) {
         const pool = await connectDB();
         const transaction = new sql.Transaction(pool);
 
@@ -79,16 +76,16 @@ class AffectationDepartementNatureModel {
                 `);
 
             // 2️⃣ Insérer les nouvelles affectations
-            for (const idnature of idsNatures) {
+            for (const ligne of data) {
                 await transaction.request()
                     .input('idaffdepartementnature', sql.UniqueIdentifier, uuidv4())
-                    .input('idsociete', sql.UniqueIdentifier, idnature.idsociete)
+                    .input('idsociete', sql.UniqueIdentifier, data.idsociete)
                     .input('iddepartement', sql.UniqueIdentifier, iddepartement)
-                    .input('idnature', sql.UniqueIdentifier, idnature.idnature)
+                    .input('idnature', sql.UniqueIdentifier, ligne.idnature)
                     .input('createdat', sql.DateTime, new Date())
-                    .input('updatedat', sql.DateTime, null)
-                    .input('createdby', sql.NVarChar(50), this.createdby)
-                    .input('updatedby', sql.NVarChar(50), this.updatedby)
+                    .input('updatedat', sql.DateTime, new Date())
+                    .input('createdby', sql.NVarChar(50), data.createdby)
+                    .input('updatedby', sql.NVarChar(50), data.updatedby)
                     .query(queryInsert);
             }
 
@@ -108,6 +105,26 @@ class AffectationDepartementNatureModel {
                 message: error.message
             };
         }
+    }
+
+    async exportAffDepartements(debut, fin) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input('debut', sql.NVarChar, debut || null)
+            .input('fin', sql.NVarChar, fin || null)
+            .query(`SELECT d.codedept, d.libelle, n.codenature, n.libelle as libellenature
+                    FROM NatureOperation n 
+                    INNER JOIN AffectationDepartementNature a ON a.idnature = n.idnature
+                    JOIN Departement d ON d.iddepartement = a.iddepartement
+                    WHERE (@debut IS NULL OR d.codedept >= @debut) 
+                    AND (@fin IS NULL OR d.codedept <= @fin)
+                    ORDER BY n.libelle ASC`);
+
+        console.log(result.recordset);
+
+        const data = result.recordset;
+
+        return data;
     }
 
 }

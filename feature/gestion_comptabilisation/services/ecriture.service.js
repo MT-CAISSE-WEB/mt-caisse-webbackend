@@ -7,6 +7,7 @@ const rules = require("../../gestion_comptabilisation/rules/index.rule");
 const { stat } = require('fs');
 const { Console } = require('console');
 const queries = require("../query/requete.query");
+const piecegenerate = require('../utils/ecritures.utils');
 
 // Génère une référence unique pour l'écriture
 function generateRef(operation) {
@@ -33,6 +34,7 @@ function getCommonFields(arr) {
     return common;
 }
 
+
 async function GenererEcriture(idoperation) {   
     const pool = await connectDB();
     const transaction = new sql.Transaction(pool);
@@ -45,6 +47,9 @@ async function GenererEcriture(idoperation) {
         const enteteoperation = await alloperationservice.getenteteoperationbyid(idoperation)
         const typeoperation = await alloperationservice.gettypeoperationbyid(idoperation);
         const ligneoperation  = await alloperationservice.getligneoperationbyidoperation(idoperation);
+        const paramcomptable = await alloperationservice.getparamcomptable();
+
+        //const justificatifoperation = await alloperationservice.
 
         if (!enteteoperation.data || !typeoperation.data || !ligneoperation.data.length) throw new Error("Opération ou lignes introuvables");
 
@@ -52,9 +57,6 @@ async function GenererEcriture(idoperation) {
         const caisses = [...new Set(typeoperation.data.flat().map(t => t.idcaisse))];
 
         const devises = [...new Set(typeoperation.data.flat().map(t => t.caisse_iddevise))];
-
-        console.log("Caisses impliquées :", caisses);
-        console.log("Devises impliquées :", devises);
         
         let rule;
 
@@ -64,16 +66,15 @@ async function GenererEcriture(idoperation) {
             rule = rules.conversion;
         } else if (typeoperation.data.flat().map(t => t.codtypeoperation).includes('encaissement')) {
             rule = rules.encaissement;
-        } else if (typeoperation.data.flat().map(t => t.codtypeoperation).includes('decaissement')) {
+        } else if (typeoperation.data.flat().map(t => t.codtypeoperation).includes('decaissement') || typeoperation.data.flat().map(t => t.codtypeoperation).includes('decaissementaj')) {
             rule = rules.decaissement;
-        } else if (typeoperation.data.flat().map(t => t.codtypeoperation).includes('decaissementaj')) {
-            rule = rules.decaissementaj;
         } else {
             throw new Error("Règle non définie pour ce type d'opération");
         }
 
         //Génération des lignes via la règle
-        const lignesjournal = rule(enteteoperation.data,typeoperation.data, ligneoperation.data);
+        const lignesjournal = rule(enteteoperation.data,typeoperation.data, ligneoperation.data, paramcomptable.data[0]);
+
 
         //Groupes les lignes par journaux 
         const groupes = {};
@@ -98,19 +99,22 @@ async function GenererEcriture(idoperation) {
                 const typeData = lignesJournal.find(l => l.idtypeoperation);
 
                 const headers = getCommonFields(lignesJournal);
-                
+
+                const pieceNumber = await piecegenerate.generatePieceNumber(transaction, headers.journal);
+              
                 await transaction.request()
                     .input("idecriture", sql.UniqueIdentifier, idecriture)
+                    .input("ref_ecriture", sql.NVarChar, pieceNumber)
+                    .input("idtypeoperation", sql.NVarChar, typeData.idtypeoperation)
+                    .input("codtypeoperation", sql.UniqueIdentifier, typeData.codtypeoperation)
                     .input("idjournal", sql.UniqueIdentifier, headers.idjournal)
-                    .input("typeoperation", sql.NVarChar, typeData.codtypeoperation)
-                    .input("idtypeoperation", sql.UniqueIdentifier, typeData.idtypeoperation)
                     .input("journal", sql.NVarChar, headers.journal)
                     .input("date", sql.DateTime, new Date())
                     .input("createdby", sql.NVarChar, 'SYSTEM')
                     .query(`
                         INSERT INTO EcritureComptable
-                        (idecriture, idjournal, idtypeoperation,typeoperation, journal, date_operation, createdby, createdat)
-                        VALUES (@idecriture, @idjournal, @idtypeoperation, @typeoperation, @journal, @date, @createdby, GETDATE())
+                        (idecriture,ref_ecriture, idjournal, idtypeoperation,codtypeoperation, journal, date_operation, createdby, createdat)
+                        VALUES (@idecriture, @ref_ecriture, @idjournal, @idtypeoperation, @codtypeoperation, @journal, @date, @createdby, GETDATE())
                     `);
 
             // Insertion des lignes comptables
@@ -156,9 +160,10 @@ async function GenererEcriture(idoperation) {
 
                 await transaction.request()
                 .input("idligneoperation", sql.UniqueIdentifier, l.idligneoperation)
+                .input("numpiececomptable", sql.NVarChar,pieceNumber)
                 .query(`
                 UPDATE ligneoperationCaisse
-                SET comptabilise = 1
+                SET comptabilise = 1,numpiececomptable=@numpiececomptable,datecomptabilisation = GETDATE()
                 WHERE idligneoperation = @idligneoperation
                 `);
 
@@ -186,7 +191,102 @@ async function GenererEcriture(idoperation) {
     }
 }
 
-module.exports = { GenererEcriture };
+async function GenererJustificatif(idjustificatif) {
+    const pool = await connectDB();
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+    let result = [];
+
+    try {
+         const justificatif = await alloperationservice.getjustificatifbyid(idjustificatif);
+         const justificatifdetails = await alloperationservice.getjustificatifdetailsbyid(idjustificatif);
+         const typeoperation = await alloperationservice.gettypeoperationbyid(justificatif.data[0].idoperation);
+         const paramcomptable = await alloperationservice.getparamcomptable();
+         const Natureoperationdecaj = await alloperationservice.getnatureoperationdecaj();
+
+
+         if (!justificatif.data) throw new Error("Justificatif introuvable");
+         const base = typeoperation.data.flat().find(m => m.taux === 1);
+         if (!base) throw new Error("Aucune caisse de référence (taux=1)");
+
+         const ecriturecomptable = await alloperationservice.getecriturecomptablebyid(base.idtypeoperation);
+
+         const result = rules.justificatif(paramcomptable.data[0],Natureoperationdecaj.data[0],justificatif,justificatifdetails,typeoperation.data[0],ecriturecomptable.data[0]);
+
+         const idecriture = uuidv4();
+
+        await transaction.request()
+                    .input("idecriture", sql.UniqueIdentifier, idecriture)
+                    .input("ref_ecriture", sql.NVarChar, ecriturecomptable.data[0][0].ref_ecriture) // à revoir
+                    .input("idtypeoperation", sql.NVarChar, ecriturecomptable.data[0][0].idtypeoperation)
+                    .input("codtypeoperation", sql.UniqueIdentifier, ecriturecomptable.data[0][0].typeoperation)
+                    .input("idjournal", sql.UniqueIdentifier, ecriturecomptable.data[0][0].idjournal)
+                    .input("journal", sql.NVarChar, ecriturecomptable.data[0][0].journal)
+                    .input("date", sql.DateTime, new Date())
+                    .input("createdby", sql.NVarChar, 'SYSTEM')
+                    .query(`
+                        INSERT INTO EcritureComptable
+                        (idecriture,ref_ecriture, idjournal, idtypeoperation,codtypeoperation, journal, date_operation, createdby, createdat)
+                        VALUES (@idecriture, @ref_ecriture, @idjournal, @idtypeoperation, @codtypeoperation, @journal, @date, @createdby, GETDATE())
+                    `);
+         
+         let totalDebit = 0, totalCredit = 0;
+         let num = 1;
+    for (const r of result) {
+        //insertion des écritures
+        totalDebit += r.debit || 0;
+        totalCredit += r.credit || 0;
+
+        await transaction.request()
+                    .input("idligneecriture", sql.UniqueIdentifier, uuidv4())
+                    .input("idecriture", sql.UniqueIdentifier, idecriture)
+                    .input("numligne", sql.Int,num++) 
+                    .input("idcompte", sql.UniqueIdentifier, r.idcompte)
+                    .input("compte", sql.NVarChar, r.compte)
+                    .input("idnature", sql.UniqueIdentifier, r.idnature || null)
+                    .input("nature", sql.NVarChar, r.libellenature || null)
+                    .input("idcentreanalytique", sql.UniqueIdentifier, r.idcentreanalytique || null)
+                    .input("centreanalytique", sql.NVarChar, r.centreanalytique || null)
+                    .input("idtiers", sql.UniqueIdentifier, r.idtiers || null)
+                    .input("tiers", sql.NVarChar, r.tiers || null)
+                    .input("debit", sql.Decimal(22,9), r.debit || 0)
+                    .input("credit", sql.Decimal(22,9), r.credit || 0)
+                    .input("etat", sql.NVarChar, r.etat || 'validee')
+                    .input("iddevise", sql.UniqueIdentifier, r.iddevise)
+                    .input("devise", sql.NVarChar, r.devise)
+                    .input("montantdevise", sql.Decimal(22,9), r.montantdevise)
+                    .input("taux", sql.Decimal(18,6), r.taux || 1)
+                    .input("montantbase", sql.Decimal(22,9),r.montantref )
+                    .input("typeecriture", sql.NVarChar, r.typeecriture || 'normale')
+                    .query(queries.createligneecriture);
+                 
+                await transaction.request()
+                .input("iddetailsjustificatifoperation", sql.UniqueIdentifier, justificatifdetails.data[0][0].iddetailsjustificatifoperation)
+                .input("numpiececomptable", sql.NVarChar,ecriturecomptable.data[0][0].ref_ecriture)
+                .query(`
+                UPDATE DetailsJustificatifOperation
+                SET comptabilise =1,numpiececomptable=@numpiececomptable,datecomptabilisation = GETDATE()
+                WHERE iddetailsjustificatifoperation= @iddetailsjustificatifoperation
+                `);
+
+    }
+    if (totalDebit !== totalCredit) {
+         throw new Error(`Écriture déséquilibrée : D=${totalDebit} C=${totalCredit}`);
+    }
+
+     await transaction.commit();
+
+    return { success: true  , message: "Justificatif généré avec succès" };
+
+    } catch (error) {
+        await transaction.rollback();
+        return { success: false, message: error.message };
+    }
+}
+
+module.exports = {
+    GenererJustificatif,
+    GenererEcriture };
 
 
 

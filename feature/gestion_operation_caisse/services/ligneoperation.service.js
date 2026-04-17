@@ -8,38 +8,6 @@ let ligneoperation = new ligneoperationmodel();
 let operation = new enteteOperationModel();
 let ligneoperations = [];
 
-async function get_all_ligneoperationsbytypeoperation(idtypeoperation) {
-  const result = await ligneoperation.get_allligneoperationsbytypeoperation(idtypeoperation);
-  ligneoperations = result.recordset.map(item => new ligneoperationmodel(
-    item.idligneoperation,
-    item.idoperation, 
-    item.codeoperation, 
-    item.idsociete,
-    item.codesociete, 
-    item.idsite,
-    item.codesite,
-    item.idtiers,
-    item.codetiers, 
-    item.idnature, 
-    item.codenature,
-    item.idcentre, 
-    item.codecentre,
-    item.iddevise,
-    item.codedevise,
-    item.libelle, 
-    item.montantoperation, 
-    item.comptabilise,
-    item.numpiececomptable, 
-    item.datecomptabilisation,
-    item.createdat, 
-    item.createdby, 
-    item.updatedat,  
-    item.updatedby));
-  return ligneoperations;
-}
-
-//Requete pour la comptabilisation des lignes d'opération de caisse
-
 async function get_all_ligneoperations() {
   const result = await ligneoperation.get_allligneoperations();
   ligneoperations = result.recordset.map(item => new ligneoperationmodel(

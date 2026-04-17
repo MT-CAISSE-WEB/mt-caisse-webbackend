@@ -1,11 +1,15 @@
 const plancomptablemodel = require("../models/plancomptable.model");
 const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
+const { parse } = require("csv-parse");
+
 const societemodel = require("../../gestion_organisation/models/societe.model");
 
 let compte = new plancomptablemodel();
 
 let comptes = []; 
 
+// OK
 async function get_all_comptes() {
     const result = await compte.get_allcomptes();
     comptes = result.data.map(item => new plancomptablemodel(
@@ -66,7 +70,6 @@ async function create_compte(data) {
   return recorded.data;
 }
 
-
 // OK
 async function get_by_idcompte(idcompte) {
   if (!idcompte) {
@@ -82,7 +85,7 @@ async function get_by_idcompte(idcompte) {
   }
 }
 
-
+// OK
 async function update_compte(idcompte, data) {
   if (!idcompte) {
     throw new Error("Erreur de donnée");
@@ -97,7 +100,7 @@ async function update_compte(idcompte, data) {
   }
 }
 
-
+// OK
 async function delete_compte(idcompte) {
    try {
     const compte_ = await compte.delete_compte(idcompte);
@@ -111,11 +114,63 @@ async function delete_compte(idcompte) {
    }
 }
 
+// OK
+async function import_plan_comptable(filePath, info) {
+  const today = new Date();
+  const parser = fs
+    .createReadStream(filePath)
+    .pipe(parse({ delimiter: ";", from_line: 1 }));
+
+    try {
+      for await (const row of parser) {
+        // recupere les donnees
+        try{          
+          const data = {
+            numcompte: row[0]?.trim(),
+            libelle: row[1]?.trim(),
+            ventillable: Number(row[2]),
+            auxiliaire: Number(row[3]),
+            actif: Number(row[4]),
+            suivibudgetaire: Number(row[5]),
+            suivibudgetairemensuel: Number(row[6]),
+            idsociete: info.idsociete,
+            createdby: info.createdby,
+            createdat: today
+          };
+
+        await create_compte(data);
+      
+        } catch (error) {
+        console.error("Error:", error.message);
+        throw error; }
+      }
+    }  catch (error) {
+        console.error("Error:", error.message);
+        throw error;
+    }
+}
+
+// OK
+async function exportComptes(debut, fin) {
+  try {
+    const data = await compte.exportComptes(debut, fin);
+
+    return data;
+    
+  } catch (err) {
+    console.log(`Aucune donnée: ${err.message}`);
+    throw err;
+  }
+}
+
+
 
 module.exports = {
   get_all_comptes,
   get_by_idcompte,
   create_compte,
   update_compte,
-  delete_compte
+  delete_compte,
+  import_plan_comptable,
+  exportComptes
 };

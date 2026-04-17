@@ -19,10 +19,10 @@ async function getAllNatures(iddepartement) {
 }
 
 
-async function saveAffectations(iddepartement, idsNatures) {
+async function saveAffectations(iddepartement, data) {
 
   try {
-    const affectation_ = await affectation.saveAffectations(iddepartement, idsNatures);
+    const affectation_ = await affectation.saveAffectations(iddepartement, data);
     return affectation_;
   } catch (err) {
     console.log(`Aucune donnée: ${err}`.cyan.bold);
@@ -31,7 +31,23 @@ async function saveAffectations(iddepartement, idsNatures) {
 }
 
 
+async function exportAffDepartements(debut, fin) {
+  try {
+    const data = await affectation.exportAffDepartements(debut, fin);
+
+    return data;
+    
+  } catch (err) {
+    console.log(`Aucune donnée: ${err.message}`);
+    throw err;
+  }
+}
+
+
+
+
 module.exports = {
   getAllNatures,
-  saveAffectations
+  saveAffectations,
+  exportAffDepartements
 };

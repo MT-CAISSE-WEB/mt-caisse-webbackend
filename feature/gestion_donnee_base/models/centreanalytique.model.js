@@ -7,6 +7,23 @@ const { v4: uuidv4 } = require('uuid');
 const societeservice = require('../../gestion_organisation/services/societe.service');
 const lasociete = societeservice;
 
+const queryupsert = `
+    IF EXISTS (SELECT 1 FROM CentreAnalytique WHERE codecentreanalytique = @codecentreanalytique)
+    BEGIN
+        UPDATE CentreAnalytique SET libelle = @libelle, actif = @actif,
+        idsociete = @idsociete, updatedat = @updatedat, updatedby = @updatedby 
+        OUTPUT INSERTED.* WHERE codecentreanalytique = @codecentreanalytique
+    END
+    ELSE
+    BEGIN
+        INSERT INTO CentreAnalytique (idcentreanalytique, codecentreanalytique, libelle, actif, idsociete,
+        createdat, updatedat, createdby, updatedby)
+        OUTPUT INSERTED.*
+        VALUES (@idcentreanalytique, @codecentreanalytique, @libelle, @actif, @idsociete,
+        @createdat, @updatedat, @createdby, @updatedby)
+    END
+    `;
+
 
 const queryInsert = `
         INSERT INTO CentreAnalytique (idcentreanalytique, codecentreanalytique, libelle, actif, idsociete,
@@ -58,7 +75,7 @@ class CentreAnalytiqueModel {
             .input('updatedat', sql.DateTime, this.updatedat)
             .input('createdby', sql.NVarChar(50), this.createdby)
             .input('updatedby', sql.NVarChar(50), this.updatedby)
-            .query(queryInsert);
+            .query(queryupsert);
             return { success: true, data: result.recordset[0] };
         } catch (error) {
             return { success: false, message: error.message };
@@ -166,6 +183,24 @@ class CentreAnalytiqueModel {
             console.log(`Erreur de suppression: ${error}`.cyan.bold);
             return {success: false, message: "Erreur de suppression : " + error.message };
         }
+    }
+
+
+    async exportCentres(debut, fin) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input('debut', sql.VarChar, debut || null)
+            .input('fin', sql.VarChar, fin || null)
+            .query(`SELECT codecentreanalytique, libelle, actif
+            FROM CentreAnalytique
+            WHERE 
+            (@debut IS NULL OR codecentreanalytique >= @debut) AND
+            (@fin IS NULL OR codecentreanalytique <= @fin)
+            ORDER BY codecentreanalytique`);
+
+        const data = result.recordset;
+
+        return data;
     }
 }
 

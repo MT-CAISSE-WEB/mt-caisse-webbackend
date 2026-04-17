@@ -129,9 +129,9 @@ BEGIN
 		createdby NVARCHAR(50),
 		updatedat Datetime,
 		updatedby NVARCHAR(50),
-		-- idcentreanalytique UNIQUEIDENTIFIER NULL,
-		-- estcentreanalytique INT DEFAULT 0,
-		-- FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
+		idcentreanalytique UNIQUEIDENTIFIER NULL,
+		estcentreanalytique INT DEFAULT 0,
+		FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
 		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );
 END
@@ -339,265 +339,6 @@ BEGIN
 END
 
 -- FIN INIT RICHARD
-
-
--- ============================================
--- 13️⃣ CircuitValidation (dépend de Sites, Departement, Societe)
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CircuitValidation')
-BEGIN
-    CREATE TABLE CircuitValidation (
-        idcircuitvalidation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        codecircuitvalidation NVARCHAR(24) UNIQUE,
-        typeentite NVARCHAR(100),
-        typeaction NVARCHAR(100),
-        idsociete UNIQUEIDENTIFIER,
-        idsite UNIQUEIDENTIFIER,
-        iddepartement UNIQUEIDENTIFIER,
-        nombrevalidateur INT NOT NULL,
-        actif INT DEFAULT 1,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idsite) REFERENCES Site(idsite),
-        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement)
-    );
-END
-
-
--- ============================================
--- 11️⃣ Budget (dépend de Sites, Societe, Budget parent)
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Budget')
-BEGIN
-    CREATE TABLE Budget (
-        idbudget UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        codebudget NVARCHAR(24) UNIQUE,
-        libelle NVARCHAR(150),
-        idbudgetparent UNIQUEIDENTIFIER NULL,
-        typebudget NVARCHAR(10),
-        datedebut DATETIME,
-        datefin DATETIME,
-        actif INT DEFAULT 0,
-        cloture INT DEFAULT 0,
-        valide INT DEFAULT 0,
-        entite NVARCHAR(20) DEFAULT NULL,
-        idcircuitvalidation UNIQUEIDENTIFIER,
-        dernierniveau INT,
-        niveauactuel INT,
-        validedept INT,
-        datevalidedept DATETIME,
-        validesite INT,
-        datevalidesite DATETIME,
-        validesociete INT,
-        datevalidesociete DATETIME,
-        idsite UNIQUEIDENTIFIER,
-        idsociete UNIQUEIDENTIFIER,
-        createdat DATETIME DEFAULT GETDATE(),
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (idsite) REFERENCES Site(idsite),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idbudgetparent) REFERENCES Budget(idbudget),
-        FOREIGN KEY (idcircuitvalidation) REFERENCES CircuitValidation(idcircuitvalidation)
-    );
-END
-
--- ============================================
--- 12️⃣ BudgetDepartementNature (dépend de Budget, Departement, NatureOperation)
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'BudgetDepartementNature')
-BEGIN
-    CREATE TABLE BudgetDepartementNature (
-        idbudgetdepartementnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        idbudget UNIQUEIDENTIFIER,
-        iddepartement UNIQUEIDENTIFIER,
-        idnature UNIQUEIDENTIFIER,
-        montantprevisiondept DECIMAL(22, 9),
-        montantprevisionsite DECIMAL(22, 9),
-        montantprevisionsociete DECIMAL(22, 9),
-        totalconsocloture DECIMAL(22, 9),
-        soldecloture DECIMAL(22, 9),
-        createdat Datetime DEFAULT GETDATE(),
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (idbudget) REFERENCES Budget(idbudget),
-        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
-        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature)
-    );
-END
-
-
-IF NOT EXISTS (
-    SELECT 1
-    FROM sys.indexes
-    WHERE name = 'UQ_Circuit_Site_Action'
-      AND object_id = OBJECT_ID('CircuitValidation')
-)
-BEGIN
-    CREATE UNIQUE INDEX UQ_Circuit_Site_Action
-    ON CircuitValidation (idsite, typeaction)
-    WHERE typeentite = 'SITE'
-      AND idsite IS NOT NULL;
-END
-
-IF NOT EXISTS (
-    SELECT 1
-    FROM sys.indexes
-    WHERE name = 'UQ_Circuit_Societe_Action'
-      AND object_id = OBJECT_ID('CircuitValidation')
-)
-BEGIN
-    CREATE UNIQUE INDEX UQ_Circuit_Societe_Action
-    ON CircuitValidation (idsociete, typeaction)
-    WHERE typeentite = 'SOCIETE'
-      AND idsociete IS NOT NULL;
-END
-
--- ============================================
--- 17️⃣ EnteteDemande (dépend de Utilisateur, CircuitValidation, Sites, Departement, Societe, Devise)
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'EnteteDemande')
-BEGIN
-    CREATE TABLE EnteteDemande (
-        iddemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        codedemande NVARCHAR(50) UNIQUE,
-        iddemandeur UNIQUEIDENTIFIER,
-        typedemande NVARCHAR(50),
-        libelledemande NVARCHAR(200),
-        datedemande DATETIME,
-        decaisse INT DEFAULT 0,
-        solde INT DEFAULT 0,
-        statut INT DEFAULT 0,
-        idcircuit UNIQUEIDENTIFIER,
-        idsociete UNIQUEIDENTIFIER,
-        idsite UNIQUEIDENTIFIER,
-        iddepartement UNIQUEIDENTIFIER,
-        iddevise UNIQUEIDENTIFIER,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (iddemandeur) REFERENCES Utilisateur(idutilisateur),
-        FOREIGN KEY (idcircuit) REFERENCES CircuitValidation(idcircuitvalidation),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idsite) REFERENCES Site(idsite),
-        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
-        FOREIGN KEY (iddevise) REFERENCES Devise(iddevise)
-    );
-END
-
--- ============================================
--- 18️⃣ LigneDemande (dépend de EnteteDemande, NatureOperation, Budget, CentreAnalytique, Sites, Societe)
--- ============================================
-
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'LigneDemande')
-BEGIN
-    CREATE TABLE LigneDemande (
-        idlignedemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        iddemande UNIQUEIDENTIFIER,
-        numligne INT,
-        libellelignedemande NVARCHAR(255),
-        montantdemande DECIMAL(22, 9),
-        montantref DECIMAL(22, 9),
-        idnature UNIQUEIDENTIFIER,
-        idbudget UNIQUEIDENTIFIER DEFAULT NULL,
-        idcentre UNIQUEIDENTIFIER,
-        idtiers UNIQUEIDENTIFIER,
-        idsociete UNIQUEIDENTIFIER,
-        idsite UNIQUEIDENTIFIER,
-        createdat Datetime DEFAULT GETDATE(),
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande) ON DELETE CASCADE,
-        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
-        FOREIGN KEY (idtiers) REFERENCES Tiers(idtiers),
-        FOREIGN KEY (idbudget) REFERENCES Budget(idbudget),
-        FOREIGN KEY (idcentre) REFERENCES CentreAnalytique(idcentreanalytique),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-        FOREIGN KEY (idsite) REFERENCES Site(idsite)
-    );
-END
-
--- ============================================
--- 19️⃣ DetailsDemande (dépend de LigneDemande, EnteteDemande, Societe)
--- ============================================
-
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DetailsDemande')
-BEGIN
-    CREATE TABLE DetailsDemande (
-        iddetailsdemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        iddemande UNIQUEIDENTIFIER,
-        idlignedemande UNIQUEIDENTIFIER,
-        idsociete UNIQUEIDENTIFIER,
-        description NVARCHAR(255),
-        quantite DECIMAL(22, 9),
-        montant DECIMAL(22, 9),
-        createdat Datetime DEFAULT GETDATE(),
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande) ON DELETE CASCADE,
-        FOREIGN KEY (idlignedemande) REFERENCES LigneDemande(idlignedemande),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
-    );
-END
-
--- FIN INIT FERREOL
-
--- AJOUT DE DEUX NOUVELLES TABLES POUR LES AFFECTATIONS
--- =======================
-
--- AffectationNatureCentre
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AffectationNatureCentre')
-BEGIN
-    CREATE TABLE AffectationNatureCentre (
-        idaffnaturecentre UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        idsociete UNIQUEIDENTIFIER,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        idnature UNIQUEIDENTIFIER,
-        idcentreanalytique UNIQUEIDENTIFIER,
-        CONSTRAINT UQ_Nature_Centre UNIQUE (idnature, idcentreanalytique),
-        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
-        FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
-    );
-END
-
--- AffectationDepartementNature
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AffectationDepartementNature')
-BEGIN
-    CREATE TABLE AffectationDepartementNature (
-        idaffdepartementnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        idsociete UNIQUEIDENTIFIER,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        iddepartement UNIQUEIDENTIFIER,
-        idnature UNIQUEIDENTIFIER,
-        CONSTRAINT UQ_Dept_Nature UNIQUE (iddepartement, idnature),
-        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
-        FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
-    );
-END
--- FIN INIT RICHARD
-
-
 -- ============================================
 -- 13️⃣ CircuitValidation (dépend de Sites, Departement, Societe)
 -- ============================================
@@ -657,7 +398,6 @@ BEGIN
         PRIMARY KEY (idcircuitetape,idutilisateur)
     );
 END
-
 
 
 
@@ -1257,6 +997,9 @@ BEGIN
         idtiers UNIQUEIDENTIFIER,
         montantdetail DECIMAL(22, 9),
         montantref DECIMAL(22, 9),
+        comptabilise INT,
+        numpiececomptable NVARCHAR(50),
+        datecomptabilisation DATETIME,
         createdat Datetime default GETDATE(),
         createdby NVARCHAR(50),
         updatedat Datetime,
@@ -1265,6 +1008,50 @@ BEGIN
         FOREIGN KEY (idnature) REFERENCES NatureOperation(idnature),
         FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
         FOREIGN KEY (idtiers) REFERENCES Tiers(idtiers)
+    );
+END
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Transfertfond')
+BEGIN
+    CREATE TABLE Transfertfond (
+        idtransfert UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codetransfert NVARCHAR(24) UNIQUE,
+        typesource NVARCHAR(20),
+        idsourcebanque UNIQUEIDENTIFIER,
+        idsourcecaisse UNIQUEIDENTIFIER,
+        typedestination NVARCHAR(20),
+        iddestination UNIQUEIDENTIFIER,
+        taux DECIMAL(22, 9),
+        montant DECIMAL(22, 9),
+        montantref DECIMAL(22, 9),
+        datetransfert DATETIME NOT NULL,
+        description NVARCHAR(100),
+        statut INT DEFAULT 0,
+        createdat Datetime default GETDATE(),
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (iddestination) REFERENCES Caisse(idcaisse),
+        FOREIGN KEY (idsourcebanque) REFERENCES banque(idbanque),
+        FOREIGN KEY (idsourcecaisse) REFERENCES Caisse(idcaisse)
+    );
+END
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ParametreComptable')
+BEGIN
+    CREATE TABLE ParametreComptable (
+        idparametrecomptable UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idsociete UNIQUEIDENTIFIER UNIQUE,
+        idjournal UNIQUEIDENTIFIER NULL,
+        idcompte UNIQUEIDENTIFIER NULL,
+        urldossier NVARCHAR(255),
+        createdat Datetime default GETDATE(),
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        FOREIGN KEY (idjournal) REFERENCES Journal(idjournal),
+        FOREIGN KEY (idcompte) REFERENCES PlanComptable(idcompte)
     );
 END
 
@@ -1824,7 +1611,7 @@ BEGIN
         ref_ecriture NVARCHAR(255),
 
         idtypeoperation UNIQUEIDENTIFIER null,
-        typeoperation NVARCHAR(255) null,
+        codtypeoperation NVARCHAR(255) null,
 
         idjournal UNIQUEIDENTIFIER,
         journal NVARCHAR(255),
@@ -1890,3 +1677,12 @@ BEGIN
     );
 END
 
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PieceComptableSequence')
+BEGIN
+CREATE TABLE PieceComptableSequence (
+    id INT IDENTITY PRIMARY KEY,
+    journal NVARCHAR(10),
+    datepiece NVARCHAR(10),
+    sequence INT
+);
+END

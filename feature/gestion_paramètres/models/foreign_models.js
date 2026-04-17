@@ -14,7 +14,7 @@ module.exports.Devise = sequelize.define(
   {
     tableName: "Devise",
     timestamps: false,
-  }
+  },
 );
 
 module.exports.EnteteOperationCaisse = sequelize.define(
@@ -26,11 +26,12 @@ module.exports.EnteteOperationCaisse = sequelize.define(
     },
     codeoperation: DataTypes.STRING,
     montant: DataTypes.DECIMAL,
+    justifiee: DataTypes.INTEGER,
   },
   {
     tableName: "EnteteOperationCaisse",
     timestamps: false,
-  }
+  },
 );
 
 module.exports.NatureOperation = sequelize.define(
@@ -46,7 +47,7 @@ module.exports.NatureOperation = sequelize.define(
   {
     tableName: "NatureOperation",
     timestamps: false,
-  }
+  },
 );
 
 module.exports.CentreAnalytique = sequelize.define(
@@ -62,7 +63,7 @@ module.exports.CentreAnalytique = sequelize.define(
   {
     tableName: "CentreAnalytique",
     timestamps: false,
-  }
+  },
 );
 
 module.exports.Tiers = sequelize.define(
@@ -78,7 +79,7 @@ module.exports.Tiers = sequelize.define(
   {
     tableName: "Tiers",
     timestamps: false,
-  }
+  },
 );
 
 module.exports.TypeOperation = sequelize.define(
@@ -109,5 +110,5 @@ module.exports.TypeOperation = sequelize.define(
   {
     tableName: "TypeOperation",
     timestamps: false,
-  }
+  },
 );

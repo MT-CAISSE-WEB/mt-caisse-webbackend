@@ -1,7 +1,9 @@
 const societeservice = require("../../gestion_organisation/services/societe.service");
+const siteservice = require("../../gestion_organisation/services/site.service");
 const deviseservice = require("../../gestion_organisation/services/devise.service");
 const enteteoperationmodel = require("../models/enteteoperation.model");
 const { v4: uuidv4 } = require('uuid');
+const compteurservice = require("../../gestion_paramètres/services/compteur.service");
 
 let enteteoperation = new enteteoperationmodel();
 let enteteoperations = [];
@@ -28,7 +30,13 @@ async function create_enteteoperation(data) {
     throw new Error("Tous les champs (dateoperation) est requis.");
   }
 
-  //Récuperer la societe sur l'utilisateur connecté
+  //Récuperer le site sur l'utilisateur connecté
+  let site = null;
+  if(data.site){
+    site = await siteservice.getonesite(data.site);
+  }else{
+    throw new Error('Site utilisateur introuvable');
+  }
 
   //Récuperer la devise
   let devise = null;
@@ -43,19 +51,42 @@ async function create_enteteoperation(data) {
     throw new Error("La date operation ne peut pas être supérieure à la date du jour");
   }
 
+  const compteur = await compteurservice.getall();
+  // Trouver le compteur "operation"
+  const demandeCompteur = compteur.data.find(c => c.typedocument != 'demande');
+
+  // Fonction pour résoudre une séquence
+  const resolveSequence = (sequence, prefixe) => {
+    switch (sequence) {
+      case 'site':
+        return site.data?.codesite || '';
+      case 'constante':
+        return prefixe || '';
+      default:
+        return '';
+    }
+  };
+
+  // Résolution des préfixes
+  const prefixe = [
+    resolveSequence(demandeCompteur?.sequence_1, demandeCompteur?.prefixe_1),
+    resolveSequence(demandeCompteur?.sequence_2, demandeCompteur?.prefixe_2)
+  ].join('');
+
   //Générer le numero d'operation
-  const prefix = "NUM";
-  const numerogenere = await enteteoperation.create_numoperation(prefix, datePeriode);
+  //const prefix = "NUM";
+  const numerogenere = await enteteoperation.create_numoperation(prefixe, datePeriode);
   const newenteteoperation = new enteteoperationmodel(
     uuidv4(),   
     data.codeoperation || numerogenere, 
-    data.iddemande ? data.iddemande : null, 
+    data.demande ? data.demande : null, 
     data.societe,
     data.site,
     data.devise,
     devise.data.codedevise,
     datePeriode,
     data.montant,
+    data.tauxoperation || 1,
     data.createdat || today,
     data.createdby || 'System');
   const recorded = await newenteteoperation.create_enteteoperationmodel(newenteteoperation);

@@ -1,145 +1,123 @@
-module.exports = function transfertRule(enteteoperation,typeoperation, ligneoperation) {
+module.exports = function multiCaisseRule(
+    enteteoperation,
+    typeoperation,
+    ligneoperation,
+    paramcomptable
+) {
+
     let result = [];
-    let total = 0;
 
-     const lignes = ligneoperation[0].filter(l => l && l.montantoperation > 0 && (l.comptabilise === 0 || l.comptabilise === null));
+    const lignes = ligneoperation[0].filter(l =>
+        l && l.montantoperation > 0 &&
+        (l.comptabilise === 0 || l.comptabilise === null)
+    );
 
-    if (lignes.length === 0) {
-        throw new Error("Aucune ligne valide à comptabiliser");
+    if (!lignes.length) {
+        throw new Error("Aucune ligne valide");
     }
 
-    const mouvement = typeoperation.flat();
-    if (!mouvement.length) {
-        throw new Error("Aucun mouvement de caisse");
+    const mouvements = typeoperation.flat();
+    if (!mouvements.length) {
+        throw new Error("Aucun mouvement");
     }
 
-    const totalcharge = lignes.reduce((sum, l) => sum + l.montantoperation, 0);
+    const type = mouvements[0].codtypeoperation;
 
-    //lignes de charges 
-      for (const l of lignes) {
-        result.push({
-            idtypeoperation : l.idtypeoperation,
-            typeoperation : l.codtypeoperation,
-            idcompte : l.idcompte,
-            compte : l.numcompte,
+    const isDecaissement = type.includes('decaissement');
+    const isEncaissement = type.includes('encaissement');
 
-            idjournal : mouvement[0].idjournal,
-            journal : mouvement.codejournal,
-
-            idcentreanalytique : l.centre_id,
-            centreanalytique : l.numcompte,
-
-            idtiers : l.idtiers,
-            tiers : l.tiers,
-
-            credit :0, 
-            debit : l.montantoperation,
-            etat : 'en attente',
-            
-            iddevise: mouvement[0].caisse_iddevise,
-            devise: mouvement[0].codedevise,
-
-            montantdevise: l.montantoperation,
-            taux: 1,
-            montantref: l.montantoperation,
-
-            numligne: result.length + 1,
-            typeecriture: 'simulation'
-
-    })
-}
-
-//lignes de caises 
- let totalSortie = 0;
- let totalEntree = 0;
-
- for (const m of mouvement) {
-    const montant = m.montant;
-
-    if (!montant || montant <= 0) continue;
-
-    if (m.codtypeoperation === 'decaissement') {
-         totalSortie += montant;
-          result.push({
-                idcompte: m.idcompte,
-                compte: m.numcompte,
-
-                idjournal: m.idjournal,
-                journal: m.codejournal,
-
-                debit: 0,
-                credit: montant,
-
-                iddevise: m.caisse_iddevise,
-                devise: m.codedevise,
-
-                montantdevise: montant,
-                taux: m.taux || 1,
-                montantref: montant * (m.taux || 1),
-
-                etat: 'en attente',
-
-                numligne: result.length + 1,
-                typeecriture: 'normale'
-            });
+    if (!isDecaissement && !isEncaissement) {
+        throw new Error("Type d'opération non supporté");
     }
-    else if (m.codtypeoperation === 'encaissement') {
-         totalEntree += montant;
-          result.push({
-                idcompte: m.idcompte,
-                compte: m.numcompte,
 
-                idjournal: m.idjournal,
-                journal: m.codejournal,
+    // ==============================
+    // TOTAL GLOBAL
+    // ==============================
+    const total = lignes.reduce((sum, l) => sum + l.montantoperation, 0);
 
-                debit: montant,
-                credit: 0,
+    // ==============================
+    // CHARGE / PRODUIT (UNE SEULE LIGNE)
+    // ==============================
+    const ref = lignes[0];
 
-                iddevise: m.caisse_iddevise,
-                devise: m.codedevise,
+    result.push({
+        idcompte: ref.compte_id,
+        compte: ref.numcompte,
 
-                montantdevise: montant,
-                taux: m.taux || 1,
-                montantref: montant * (m.taux || 1),
+        idnature: ref.nature_id,
+        libellenature: ref.nature_libelle,
 
-                etat: 'en attente',
+        idjournal: mouvements[0].idjournal,
+        journal: mouvements[0].codejournal,
 
-                numligne: result.length + 1,
-                typeecriture: 'normale'
-            });
- }
+        debit: isDecaissement ? total : 0,
+        credit: isEncaissement ? total : 0,
 
-}
+        idcentreanalytique: ref.centre_id,
+        centreanalytique: ref.codecentreanalytique,
 
- const totalDebit = result.reduce((s, l) => s + (l.debit || 0), 0);
- const totalCredit = result.reduce((s, l) => s + (l.credit || 0), 0);
+        idtiers: ref.tiers_id,
+        tiers: ref.codetiers,
 
-  const ecart = totalDebit - totalCredit;
+        iddevise: mouvements[0].caisse_iddevise,
+        devise: mouvements[0].codedevise,
 
-  if (ecart !== 0) {
+        montantdevise: total,
+        taux: 1,
+        montantref: total,
+
+        etat: 'en attente',
+        numligne: result.length + 1,
+        typeecriture: 'charge'
+    });
+
+    // ==============================
+    // CAISSES (RÉPARTITION)
+    // ==============================
+    let totalCaisses = 0;
+
+    for (const m of mouvements) {
+
+        if (!m.montant || m.montant <= 0) continue;
+
+        totalCaisses += m.montant;
 
         result.push({
-            idcompte: "COMPTE_ECART", // à configurer
-            compte: "471000",
+            idcompte: m.idcompte,
+            compte: m.numcompte,
 
-            idjournal: mouvements[0].idjournal,
-            journal: mouvements[0].codejournal,
+            idjournal: m.idjournal,
+            journal: m.codejournal,
 
-            debit: ecart < 0 ? Math.abs(ecart) : 0,
-            credit: ecart > 0 ? ecart : 0,
+            debit: isEncaissement ? m.montant : 0,
+            credit: isDecaissement ? m.montant : 0,
 
-            iddevise: mouvements[0].caisse_iddevise,
-            devise: mouvements[0].codedevise,
+            idcentreanalytique: m.centre_id,
+            centreanalytique: m.codecentreanalytique,
 
-            montantdevise: Math.abs(ecart),
+            idtiers: m.tiers_id,
+            tiers: m.codetiers,
+
+            iddevise: m.caisse_iddevise,
+            devise: m.codedevise,
+
+            montantdevise: m.montant,
             taux: 1,
-            montantref: Math.abs(ecart),
+            montantref: m.montant,
 
-            etat: 'validee',
-
+            etat: 'en attente',
             numligne: result.length + 1,
-            typeecriture: 'ecart'
+            typeecriture: 'caisse'
         });
+    }
+
+    // ==============================
+    // CONTRÔLE
+    // ==============================
+    if (totalCaisses !== total) {
+        throw new Error(
+            `Déséquilibre : total charges = ${total}, total caisses = ${totalCaisses}`
+        );
     }
 
     return result;

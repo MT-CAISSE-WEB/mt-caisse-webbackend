@@ -420,8 +420,8 @@ module.exports = {
         Group By E.iddemande, E.codedemande, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
                 LD.idbudget
     `,
-    bydetailLigneBudget : `
-        Select E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle as dept_libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
+    bydetailLigneBudgetnature : `
+        Select E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle as dept_libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide, BU.isanalytique,
 			LD.idbudget,BDN.idnature, N.codenature, N.libelle AS nature_lib, LD.budgetconso, LD.preengage, LD.engage, LD.realise, BDN.montantprevisionsociete, SUM(LD.montantdemande) AS montant_demande, SUM(LD.montantref) AS montant_ref
         From EnteteDemande E
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
@@ -432,8 +432,24 @@ module.exports = {
             LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
             LEFT JOIN Departement DP ON DP.iddepartement = E.iddepartement
         Where E.iddemande = @iddemande
-        Group By E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
+        Group By E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide, BU.isanalytique,
 			LD.idbudget,BDN.idnature, N.codenature, N.libelle, LD.budgetconso, LD.budgetconso, LD.preengage, LD.engage, LD.realise, BDN.montantprevisionsociete
+    `,
+    bydetailLigneBudgetcentre : `
+        Select E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle as dept_libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
+			LD.idbudget,BDN.idcentre, CA.codecentre, CA.libelle as centre_lib, BDN.idnature, N.codenature, N.libelle AS nature_lib, LD.budgetconso, LD.preengage, LD.engage, LD.realise, BDN.montantprevisionsociete, SUM(LD.montantdemande) AS montant_demande, SUM(LD.montantref) AS montant_ref
+        From EnteteDemande E
+            LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
+            LEFT JOIN Budget BU ON BU.idbudget = LD.idbudget
+			LEFT JOIN BudgetDepartementNature BDN ON BDN.iddepartement = E.iddepartement AND BDN.idbudget = BU.idbudget
+			AND BDN.idcentre = LD.idcentre
+            LEFT JOIN CentreAnalytique CA ON CA.idcentre = LD.idcentre
+			LEFT JOIN NatureOperation N ON N.idnature = LD.idnature
+            LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
+            LEFT JOIN Departement DP ON DP.iddepartement = E.iddepartement
+        Where E.iddemande = @iddemande
+        Group By E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
+			LD.idbudget, BDN.idcentre, CA.codecentre, CA.libelle, BDN.idnature, N.codenature, N.libelle, LD.budgetconso, LD.budgetconso, LD.preengage, LD.engage, LD.realise, BDN.montantprevisionsociete
     `,
     checkDroit : `
         SELECT 1
