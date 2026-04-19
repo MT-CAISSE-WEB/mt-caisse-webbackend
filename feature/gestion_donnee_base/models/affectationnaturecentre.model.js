@@ -62,7 +62,7 @@ class AffectationNatureCentreModel {
     }
 
 
-    async saveAffectations(idnature, idsCentres) {
+    async saveAffectations(idnature, idsCentres, info) {
 
         const pool = await connectDB();
         const transaction = new sql.Transaction(pool);
@@ -82,13 +82,13 @@ class AffectationNatureCentreModel {
             for (const idcentre of idsCentres) {
                 await transaction.request()
                     .input('idaffnaturecentre', sql.UniqueIdentifier, uuidv4())
-                    .input('idsociete', sql.UniqueIdentifier, idcentre.idsociete)
+                    .input('idsociete', sql.UniqueIdentifier, info.idsociete)
                     .input('idnature', sql.UniqueIdentifier, idnature)
                     .input('idcentreanalytique', sql.UniqueIdentifier, idcentre.idcentreanalytique)
                     .input('createdat', sql.DateTime, new Date())
-                    .input('updatedat', sql.DateTime, null)
-                    .input('createdby', sql.NVarChar(50), this.createdby)
-                    .input('updatedby', sql.NVarChar(50), this.updatedby)
+                    .input('updatedat', sql.DateTime, new Date())
+                    .input('createdby', sql.NVarChar(50), info.createdby)
+                    .input('updatedby', sql.NVarChar(50), info.createdby)
                     .query(queryInsert);
             }
 
@@ -108,6 +108,24 @@ class AffectationNatureCentreModel {
                 message: error.message
             };
         }
+    }
+
+    async exportAffCentres(debut, fin) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input('debut', sql.NVarChar, debut || null)
+            .input('fin', sql.NVarChar, fin || null)
+            .query(`SELECT n.codenature, n.libelle as libellenature, c.codecentreanalytique, c.libelle as libellecentre
+                    FROM NatureOperation n 
+                    INNER JOIN AffectationNatureCentre a ON a.idnature = n.idnature
+                    JOIN CentreAnalytique c ON c.idcentreanalytique = a.idcentreanalytique
+                    WHERE (@debut IS NULL OR n.codenature >= @debut) 
+                    AND (@fin IS NULL OR n.codenature <= @fin)
+                    ORDER BY n.codenature ASC`);
+
+        const data = result.recordset;
+
+        return data;
     }
 
 }

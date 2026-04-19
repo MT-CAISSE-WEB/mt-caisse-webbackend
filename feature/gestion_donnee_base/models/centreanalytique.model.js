@@ -17,10 +17,10 @@ const queryupsert = `
     ELSE
     BEGIN
         INSERT INTO CentreAnalytique (idcentreanalytique, codecentreanalytique, libelle, actif, idsociete,
-        createdat, updatedat, createdby, updatedby)
+        createdat, createdby)
         OUTPUT INSERTED.*
         VALUES (@idcentreanalytique, @codecentreanalytique, @libelle, @actif, @idsociete,
-        @createdat, @updatedat, @createdby, @updatedby)
+        @createdat, @createdby)
     END
     `;
 
@@ -30,7 +30,7 @@ const queryInsert = `
         createdat, updatedat, createdby, updatedby)
         OUTPUT INSERTED.*
         VALUES (@idcentreanalytique, @codecentreanalytique, @libelle, @actif, @idsociete,
-        @createdat, @updatedat, @createdby, @updatedby)
+        @createdat, @createdby)
         `;
 
 const queryUpdate = `UPDATE CentreAnalytique SET libelle = @libelle, actif = @actif,

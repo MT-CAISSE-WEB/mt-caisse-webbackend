@@ -197,7 +197,8 @@ async function validateBudgetsAnalytique(lignes, filterData) {
         await lignedemandemodel.checkBudgetcentreSolde({
           idbudget: budgets.idbudget,
           idcentre: ligne.centre,
-          montant: ligne.montantdemande
+          montant: ligne.montantdemande,
+          idlignebudget: ligne.codebudget.idbudgetdepartementnature,
         });
       } else {
         throw new Error(`Aucun budget trouvé pour le centre ${ligne.centre}`);
@@ -225,17 +226,19 @@ async function validateBudgetsNature(lignes, filterData) {
     try {
       const budgetsAll = await lignedemandemodel.resoleveBudgetnature({
         ...filterData,
-        idnature: ligne.natureop
+        idnature: ligne.natureop,
+        codebudgetaire: ligne.codebudget.codebudgetaire || null, 
+        idlignebudget: ligne.codebudget.idbudgetdepartementnature,
       });
 
       if (budgetsAll && budgetsAll.length > 0) {
         const budgets = prioriserBudget(budgetsAll);
-
         // Vérifier le solde du budget
         await lignedemandemodel.checkBudgetnatureSolde({
           idbudget: budgets.idbudget,
           idnature: ligne.natureop,
           montant: ligne.montantdemande,
+          idlignebudget: ligne.codebudget.idbudgetdepartementnature,
           iddepartement: filterData.iddepartement
         });
       } else {
@@ -433,9 +436,9 @@ async function resolveBudgetDataForLine(ligne, societe, filterData) {
 
             // Récupérer les valeurs budgétaires en parallèle (toujours par nature pour les calculs)
             const [preengages, engages, realises] = await Promise.all([
-              lignedemandemodel.get_engageBycentre(ligne.centre, filterData.iddepartement),
-              lignedemandemodel.get_engageBycentre(ligne.centre, filterData.iddepartement),
-              lignedemandemodel.get_realiseBycentre(ligne.centre, filterData.iddepartement)
+              lignedemandemodel.get_engageBycentre(ligne.centre, filterData.idsite, ligne.codebudget.idbudgetdepartementnature),
+              lignedemandemodel.get_engageBycentre(ligne.centre, filterData.idsite, ligne.codebudget.idbudgetdepartementnature),
+              lignedemandemodel.get_realiseBycentre(ligne.centre, filterData.idsite, ligne.codebudget.idbudgetdepartementnature)
             ]);
 
             budgetData.preengage = preengages?.[0]?.preengage || 0;
@@ -450,22 +453,22 @@ async function resolveBudgetDataForLine(ligne, societe, filterData) {
             codebudgetaire: ligne.codebudget.codebudgetaire,
             idlignebudget : ligne.codebudget.idbudgetdepartementnature
           });
-
+          
           if (budgetsAll && budgetsAll.length > 0) {
             const budgets = prioriserBudget(budgetsAll);
             budgetData.budget_ = budgets.idbudget;
           }
 
           // Récupérer les valeurs budgétaires en parallèle (toujours par nature pour les calculs)
-          const [preengages, engages, realises] = await Promise.all([
-            lignedemandemodel.get_preengageBynature(ligne.natureop, filterData.iddepartement),
-            lignedemandemodel.get_engageBynature(ligne.natureop, filterData.iddepartement),
-            lignedemandemodel.get_realiseBynature(ligne.natureop, filterData.iddepartement)
+          const [preengage, engage, realise] = await Promise.all([
+            lignedemandemodel.get_preengageBynature(ligne.natureop, filterData.iddepartement, ligne.codebudget.idbudgetdepartementnature),
+            lignedemandemodel.get_engageBynature(ligne.natureop, filterData.iddepartement, ligne.codebudget.idbudgetdepartementnature),
+            lignedemandemodel.get_realiseBynature(ligne.natureop, filterData.iddepartement, ligne.codebudget.idbudgetdepartementnature)
           ]);
 
-          budgetData.preengage = preengages?.[0]?.preengage || 0;
-          budgetData.engage = engages?.[0]?.engage || 0;
-          budgetData.realise = realises?.[0]?.realise || 0;
+          budgetData.preengage = preengage?.[0]?.preengage || 0;
+          budgetData.engage = engage?.[0]?.engage || 0;
+          budgetData.realise = realise?.[0]?.realise || 0;
         }
       }
     } catch (error) {
@@ -583,6 +586,7 @@ async function create_demande(data) {
       iddepartement: data.departement,
       datedemande: data.datedemande
     };
+    
     await validateBudgetsForLines(societe, data.lignes, filterData);
 
     // 4. Vérifier si budget analytique et centres requis avant création entête
@@ -847,6 +851,10 @@ async function get_demande_by_id(iddemande){
             centreanalytique: {
               idcentreanalytique: row.idcentreana,
               libelle: row.centreanalytique
+            },
+            codebudget : {
+              idbudgetdepartementnature : row.idlignebudget,
+              codebudgetaire : row.codebudgetaire
             },
             tiers: {
               idtiers: row.idtiers,
@@ -1166,121 +1174,143 @@ async function get_detailBudget(iddemande){
     }
 
     let dmd = null;
+    let budget_ = 0;
+
     try {
-        const demande_ = await demandeModel.get_detailBudgetnature(iddemande);
-        try {
-          const demandes = {};
-          for(const row of demande_){
-            if(!dmd){
-              // Déterminer le type de budget : analytique ou par nature d'opération
-              const budgetType = (row.isanalytique && row.isanalytique === 1) ? 'analytique' : 'nature';
-              
-              dmd = {
-                iddemande: row.iddemande,
-                codedemande: row.codedemande,
-                datedemande: row.datedemande,
-                decaisse : row.decaisse,
-                solde : row.solde,
-                statut : row.statut,
-                idsite : row.idsite,
-                iddepartement : row.iddepartement,
-                dept_lib : row.dept_libelle,
-                codedept: row.codedept,
-                codedevise : row.codedevise,
-                totaldemande : 0,
-                totalref : 0,
-                budget : {
-                  idbudget : row.idbudget,
-                  codebudget : row.codebudget,
-                  libelle : row.libelle,
-                  typebudget: row.typebudget,
-                  isanalytique: row.isanalytique,
-                  budgetType: budgetType,
-                  cloture : row.cloture,
-                  valide : row.valide,
-                  datedebut: row.datedebut,
-                  datefin : row.datefin,
-                },
-                details : []
-              }
-            }
+      const typeBudget_ = await demandeModel.get_demandeBudget(iddemande);
+      for(const e of typeBudget_){
+        budget_ = (e.isanalytique && e.isanalytique === 1) ? 1 : 0;
+      }
+    } catch (error) {
+      throw error;
+    }
 
-            //Calcule des valeurs budgetaires basées sur le type de budget
-            let preengage, engage, realise;
+    try {
+      let demande_ = null ;
+
+      if(budget_ === 0){
+        demande_ = await demandeModel.get_detailBudgetnature(iddemande);
+      }
+      else{
+        demande_ = await demandeModel.get_detailBudgetcentre(iddemande);
+      }
+
+      try {
+        const demandes = {};
+        for(const row of demande_){
+          if(!dmd){
+            // Déterminer le type de budget : analytique ou par nature d'opération
+            const budgetType = (row.isanalytique && row.isanalytique === 1) ? 'analytique' : 'nature';
             
-            // Si budget analytique, utiliser les méthodes par centre
-            if (dmd.budget.isanalytique === 1) {
-              const preengages = await lignedemandemodel.get_preengageBycentre(row.idcentre);
-              preengage = preengages?.[0]?.preengage || 0;
-              const engages = await lignedemandemodel.get_engageBycentre(row.idcentre);
-              engage = engages?.[0]?.engage || 0;
-              const realises = await lignedemandemodel.get_realiseBycentre(row.idcentre);
-              realise = realises?.[0]?.realise || 0;
-            } else {
-              // Si budget par nature, utiliser les méthodes par nature
-              const preengages = await lignedemandemodel.get_preengageBynature(row.idnature, row.iddepartement);
-              preengage = preengages?.[0]?.preengage || 0;
-              const engages = await lignedemandemodel.get_engageBynature(row.idnature, row.iddepartement);
-              engage = engages?.[0]?.engage || 0;
-              const realises = await lignedemandemodel.get_realiseBynature(row.idnature, row.iddepartement);
-              realise = realises?.[0]?.realise || 0;
+            dmd = {
+              iddemande: row.iddemande,
+              codedemande: row.codedemande,
+              datedemande: row.datedemande,
+              decaisse : row.decaisse,
+              solde : row.solde,
+              statut : row.statut,
+              idsite : row.idsite,
+              iddepartement : row.iddepartement,
+              dept_lib : row.dept_libelle,
+              codedept: row.codedept,
+              codedevise : row.codedevise,
+              totaldemande : 0,
+              totalref : 0,
+              budget : {
+                idbudget : row.idbudget,
+                codebudget : row.codebudget,
+                libelle : row.libelle,
+                typebudget: row.typebudget,
+                isanalytique: row.isanalytique,
+                budgetType: budgetType,
+                cloture : row.cloture,
+                valide : row.valide,
+                datedebut: row.datedebut,
+                datefin : row.datefin,
+              },
+              details : []
             }
+          }
 
-            // Organiser les détails en fonction du type de budget
-            if (dmd.budget.isanalytique === 1) {
-              // Pour budget analytique, grouper par centre
-              if (row.idcentre) {
-                if (!demandes[row.idcentre]) {
-                  demandes[row.idcentre] = {
-                    idcentre: row.idcentre,
-                    codecentre: row.codecentre,
-                    centre_lib: row.centre_lib,
-                    idnature: row.idnature,
-                    codenature: row.codenature,
-                    nature_lib: row.nature_lib,
-                    conso: row.budgetconso,
-                    preengage: preengage,
-                    engage: engage,
-                    realise: realise,
-                    prevision: row.montantprevisionsociete,
-                    montant_demande: row.montant_demande,
-                    montant_ref: row.montant_ref,
-                  };
-                  dmd.details.push(demandes[row.idcentre]);
-                  dmd.totaldemande += row.montant_demande || 0;
-                  dmd.totalref += row.montant_ref || 0;
-                }
+          //Calcule des valeurs budgetaires basées sur le type de budget
+          let preengage, engage, realise;
+          
+          // Si budget analytique, utiliser les méthodes par centre
+          if (dmd.budget.isanalytique === 1) {
+            const preengages = await lignedemandemodel.get_preengageBycentre(row.idcentre, row.idsite, row.idlignebudget);
+            preengage = preengages?.[0]?.preengage || 0;
+            const engages = await lignedemandemodel.get_engageBycentre(row.idcentre, row.idsite, row.idlignebudget);
+            engage = engages?.[0]?.engage || 0;
+            const realises = await lignedemandemodel.get_realiseBycentre(row.idcentre, row.idsite, row.idlignebudget);
+            realise = realises?.[0]?.realise || 0;
+          } else {
+            // Si budget par nature, utiliser les méthodes par nature
+            const preengages = await lignedemandemodel.get_preengageBynature(row.idnature, row.iddepartement, row.idlignebudget);
+            preengage = preengages?.[0]?.preengage || 0;
+            const engages = await lignedemandemodel.get_engageBynature(row.idnature, row.iddepartement, row.idlignebudget);
+            engage = engages?.[0]?.engage || 0;
+            const realises = await lignedemandemodel.get_realiseBynature(row.idnature, row.iddepartement, row.idlignebudget);
+            realise = realises?.[0]?.realise || 0;
+          }
+
+          // Organiser les détails en fonction du type de budget
+          if (dmd.budget.isanalytique === 1) {
+            // Pour budget analytique, grouper par centre
+            if (row.idcentre) {
+              if (!demandes[row.idcentre]) {
+                demandes[row.idcentre] = {
+                  idcentre: row.idcentre,
+                  codecentre: row.codecentre,
+                  centre_lib: row.centre_lib,
+                  idnature: row.idnature,
+                  codenature: row.codenature,
+                  nature_lib: row.nature_lib,
+                  codebudgetaire: row.codebudgetaire,
+                  conso: row.budgetconso,
+                  preengage: preengage,
+                  engage: engage,
+                  realise: realise,
+                  prevision: row.montantprevisionsociete,
+                  montant_demande: row.montant_demande,
+                  montant_ref: row.montant_ref,
+                };
+                dmd.details.push(demandes[row.idcentre]);
+                dmd.totaldemande += row.montant_demande || 0;
+                dmd.totalref += row.montant_ref || 0;
               }
-            } else {
-              // Pour budget par nature, grouper par nature
-              if (row.idnature) {
-                if (!demandes[row.idnature]) {
-                  demandes[row.idnature] = {
-                    idnature : row.idnature,
-                    codenature : row.codenature,
-                    nature_lib : row.nature_lib,
-                    idcentre: row.idcentre,
-                    codecentre: row.codecentre,
-                    centre_lib: row.centre_lib,
-                    conso : row.budgetconso,
-                    preengage : preengage,
-                    engage : engage,
-                    realise : realise,
-                    prevision : row.montantprevisionsociete,
-                    montant_demande : row.montant_demande,
-                    montant_ref : row.montant_ref,
-                  }
-                  dmd.details.push(demandes[row.idnature])
-                  dmd.totaldemande += row.montant_demande || 0;
-                  dmd.totalref += row.montant_ref || 0;
+            }
+          } else {
+            // Pour budget par nature, grouper par nature
+            if (row.idnature) {
+              if (!demandes[row.idnature]) {
+                demandes[row.idnature] = {
+                  idnature : row.idnature,
+                  codenature : row.codenature,
+                  nature_lib : row.nature_lib,
+                  idcentre: row.idcentre,
+                  codecentre: row.codecentre,
+                  centre_lib: row.centre_lib,
+                  codebudgetaire: row.codebudgetaire,
+                  conso : row.budgetconso,
+                  preengage : preengage,
+                  engage : engage,
+                  realise : realise,
+                  prevision : row.montantprevisionsociete,
+                  montant_demande : row.montant_demande,
+                  montant_ref : row.montant_ref,
                 }
+                dmd.details.push(demandes[row.idnature])
+                dmd.totaldemande += row.montant_demande || 0;
+                dmd.totalref += row.montant_ref || 0;
               }
             }
           }
-        } catch (error) {
-          throw error;
         }
-        return dmd;
+      } catch (error) {
+        throw error;
+      }
+
+      return dmd;
     } catch (err) {
         throw err;
     }

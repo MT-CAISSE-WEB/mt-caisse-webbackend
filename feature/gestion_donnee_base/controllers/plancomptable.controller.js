@@ -84,6 +84,7 @@ module.exports.import_plan_comptable = asyncHandler(async (req, res) => {
     return res.status(400).json({success: false, message: 'Aucun fichier reçu'});
   }
   const info = req.body;
+  console.log(info);
   const result = await plancomptableservice.import_plan_comptable(req.file.path, info);
   res.status(201).json({success: true, data: result});
 });

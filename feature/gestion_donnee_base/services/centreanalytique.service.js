@@ -112,7 +112,9 @@ async function import_centre_analytique(filePath, info) {
             actif: Number(row[2]),
             idsociete: info.idsociete,
             createdby: info.createdby,
-            createdat: today
+            updatedby: info.createdby,
+            createdat: today,
+            updatedat: today
           };
 
         await create_centre(data);

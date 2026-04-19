@@ -22,8 +22,8 @@ module.exports.getAllNatures = asyncHandler(async(req, res, next) => {
 module.exports.saveAffectations = asyncHandler(async(req, res, next) => {
   try {
     const iddepartement  = req.params.iddepartement;
-    const data  = req.body;
-    const affectation_ = await affectationdepartementnature.saveAffectations(iddepartement, data);
+    const { idsNatures, info } = req.body;
+    const affectation_ = await affectationdepartementnature.saveAffectations(iddepartement, idsNatures, info);
     res.json({ success: true, data: affectation_ });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
@@ -35,12 +35,8 @@ module.exports.exportAffDepartements = asyncHandler(async (req, res) => {
 
   const { debut, fin, format } = req.body;
 
-  console.log(debut, fin, format);
-
   try {
     const data = await affectationdepartementnature.exportAffDepartements(debut, fin);
-
-    console.log(data);
 
     if (format === 'excel') {
       return exportExcel(data, res);
@@ -122,3 +118,18 @@ async function exportExcel(data, res) {
   await workbook.xlsx.write(res);
   res.end();
 }
+
+
+module.exports.import_affectations = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({success: false, message: 'Aucun fichier reçu'});
+  }
+  try {
+    const info = req.body;
+    const result = await affectationdepartementnature.import_affectations(req.file.path, info);
+    res.status(201).json({success: true, data: result});
+  } catch (err) {
+    console.log(err.message);
+    res.status(500).json({success: false, message: err.message});
+  }
+});

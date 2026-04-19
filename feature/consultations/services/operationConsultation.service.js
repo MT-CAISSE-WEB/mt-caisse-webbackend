@@ -52,7 +52,9 @@ async function journalPaiement(datedebut, datefin, caisse, idsite, typeentitesoc
             dateGroup.caisses.get(caisseKey).operations.push({
                 typeoperation: r.typeoperation,
                 piece: r.operation,
+                description: r.libelle_op,
                 montant: r.montant,
+                deviseop: r.devise_operation,
                 montant_ref: r.montant_ref
             });
 

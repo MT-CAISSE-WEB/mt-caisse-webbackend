@@ -24,22 +24,22 @@ const queryupsert = `
     BEGIN
         INSERT INTO NatureOperation (idnature, codenature, libelle, typeoperation, decajustifier, 
         imputationtiers, actif, demandedecaissement, idsociete, idcompte,
-        createdat, updatedat, createdby, updatedby)
+        createdat, createdby)
         OUTPUT INSERTED.*
         VALUES (@idnature, @codenature, @libelle, @typeoperation, @decajustifier, @imputationtiers,
         @actif, @demandedecaissement, @idsociete, @idcompte,
-        @createdat, @updatedat, @createdby, @updatedby)
+        @createdat, @createdby)
     END
 `;
 
 const queryInsert = `
         INSERT INTO NatureOperation (idnature, codenature, libelle, typeoperation, decajustifier, 
         imputationtiers, actif, demandedecaissement, idsociete, idcompte,
-        createdat, updatedat, createdby, updatedby)
+        createdat, createdby)
         OUTPUT INSERTED.*
         VALUES (@idnature, @codenature, @libelle, @typeoperation, @decajustifier, @imputationtiers,
         @actif, @demandedecaissement, @idsociete, @idcompte,
-        @createdat, @updatedat, @createdby, @updatedby)
+        @createdat, @createdby)
         `;
 
 const queryUpdate = `UPDATE NatureOperation SET libelle = @libelle, typeoperation = @typeoperation,
@@ -228,6 +228,20 @@ class NatureOperationModel {
             return {success: false, message: "Erreur de suppression : " + error.message };
         }
     }
+
+    async getIdCompteByNumero(numcompte) {
+        const pool = await connectDB();
+
+        const result = await pool.request()
+            .input('numcompte', sql.NVarChar(50), numcompte)
+            .query(`
+            SELECT idcompte 
+            FROM PlanComptable 
+            WHERE numcompte = @numcompte
+            `);
+        return result.recordset[0]?.idcompte || null;
+    }
+
 
     async exportNatures(debut, fin) {
         const pool = await connectDB();

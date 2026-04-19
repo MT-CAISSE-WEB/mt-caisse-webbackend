@@ -296,6 +296,15 @@ class enteteDemandeModel {
     }
   }
 
+  async get_demandeBudget(iddemande) {
+    const pool = await connectDB()
+    const result = await pool.request()
+      .input('iddemande', sql.UniqueIdentifier, iddemande)
+      .query(entetedemandeQuery.getbudget)
+
+    return result.recordset
+  }
+
 }
 
 module.exports = enteteDemandeModel

@@ -57,6 +57,14 @@ router.post("/bulk", async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    // Si on enregistre deux codebudgetaire identiques
+    if (err.original) {
+      return res.status(500).json({
+        success: false,
+        message: "Erreur serveur.",
+        error: err.original.message,
+      });
+    }
     return res
       .status(500)
       .json({ success: false, message: "Erreur serveur.", error: err.message });

@@ -3,6 +3,8 @@ module.exports = {
         SELECT
             C.codecaisse AS codecaisse,
             C.libelle            AS caisse,
+            DC.codedevise        AS devise_caisse,
+            L.libelle            AS libelle_op,
             TOPE.montant               AS montant,
             D.codedevise               AS devise_operation,
             TOPE.montantref            AS montant_ref,
@@ -18,8 +20,15 @@ module.exports = {
         FROM EnteteOperationCaisse EOC
         INNER JOIN TypeOperation TOPE 
             ON TOPE.idoperation = EOC.idoperation
+        OUTER APPLY (
+			SELECT TOP 1 libelle
+			FROM ligneoperationCaisse L
+			WHERE L.idoperation = TOPE.idoperation
+		) L
         INNER JOIN Caisse C 
             ON C.idcaisse = TOPE.idcaisse
+        INNER JOIN Devise DC 
+            ON DC.iddevise = C.iddevise
         INNER JOIN Devise D 
             ON D.iddevise = EOC.iddevise
         INNER JOIN Site S

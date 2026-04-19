@@ -46,7 +46,6 @@ suivibudgetaire = @suivibudgetaire, suivibudgetairemensuel = @suivibudgetairemen
 idsociete = @idsociete, updatedat = @updatedat, updatedby = @updatedby 
 OUTPUT INSERTED.* WHERE idcompte = @idcompte`;
 
-
 const query = `
         SELECT c.*,
             so.idsociete AS societe_idsociete,
