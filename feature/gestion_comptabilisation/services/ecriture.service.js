@@ -8,6 +8,7 @@ const { stat } = require('fs');
 const { Console } = require('console');
 const queries = require("../query/requete.query");
 const piecegenerate = require('../utils/ecritures.utils');
+const { type } = require('os');
 
 // Génère une référence unique pour l'écriture
 function generateRef(operation) {
@@ -101,15 +102,19 @@ async function GenererEcriture(idoperation) {
                 const headers = getCommonFields(lignesJournal);
 
                 const pieceNumber = await piecegenerate.generatePieceNumber(transaction, headers.journal);
+
+                console.log("typedata",typeData);
+                console.log("headers",headers);
+                con;
               
                 await transaction.request()
                     .input("idecriture", sql.UniqueIdentifier, idecriture)
                     .input("ref_ecriture", sql.NVarChar, pieceNumber)
                     .input("idtypeoperation", sql.NVarChar, typeData.idtypeoperation)
-                    .input("codtypeoperation", sql.UniqueIdentifier, typeData.codtypeoperation)
+                    .input("codtypeoperation", sql.UniqueIdentifier, typeData.typeoperation)
                     .input("idjournal", sql.UniqueIdentifier, headers.idjournal)
                     .input("journal", sql.NVarChar, headers.journal)
-                    .input("date", sql.DateTime, new Date())
+                    .input("date", sql.DateTime, typeData.date)
                     .input("createdby", sql.NVarChar, 'SYSTEM')
                     .query(`
                         INSERT INTO EcritureComptable
@@ -222,7 +227,7 @@ async function GenererJustificatif(idjustificatif) {
                     .input("codtypeoperation", sql.UniqueIdentifier, ecriturecomptable.data[0][0].typeoperation)
                     .input("idjournal", sql.UniqueIdentifier, ecriturecomptable.data[0][0].idjournal)
                     .input("journal", sql.NVarChar, ecriturecomptable.data[0][0].journal)
-                    .input("date", sql.DateTime, new Date())
+                    .input("date", sql.DateTime, ecriturecomptable.data[0][0].date)
                     .input("createdby", sql.NVarChar, 'SYSTEM')
                     .query(`
                         INSERT INTO EcritureComptable

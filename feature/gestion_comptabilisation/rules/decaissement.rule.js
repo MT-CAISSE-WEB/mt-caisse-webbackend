@@ -37,7 +37,8 @@ module.exports = function decaissementRule(enteteoperation,typeoperation, ligneo
         taux : typeoperation[0][0].taux,
         montantref : typeoperation[0][0].montantref,
         numligne : 1,
-        typeecriture : 'simulation'
+        typeecriture : 'caisse',
+        date : enteteoperation.dateoperation
 
     })
 
@@ -61,10 +62,10 @@ module.exports = function decaissementRule(enteteoperation,typeoperation, ligneo
         journal : typeoperation[0][0].codejournal,
 
         idcentreanalytique : l.centre_id,
-        centreanalytique : l.centre_libelle,
+        centreanalytique : l.codecentreanalytique,
 
-        idtiers : l.idtiers,
-        tiers : l.tiers,
+        idtiers : l.tiers_id,
+        tiers : l.codetiers,
 
         credit : 0,
         debit : l.montantoperation,
@@ -76,7 +77,8 @@ module.exports = function decaissementRule(enteteoperation,typeoperation, ligneo
         taux : null,
         montantref :null,
         numligne : result.length + 1,
-        typeecriture : 'simulation'
+        typeecriture : 'caisse',
+        date : enteteoperation.dateoperation
          
         })
     }

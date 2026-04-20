@@ -33,7 +33,8 @@ module.exports = function justificatifRule(paramcomptable,natureoperationdecaj,j
         taux : justificatif.data[0].taux,
         montantref : justificatif.data[0].montantjustificatif,
         numligne : 1,
-        typeecriture : 'simulation'
+        typeecriture : 'caisse',
+        date : justificatif.data[0].datejustificatif
     })
 
 
@@ -69,7 +70,8 @@ module.exports = function justificatifRule(paramcomptable,natureoperationdecaj,j
         taux : justificatif.data[0].taux,
         montantref : d.montantref,
         numligne : 1,
-        typeecriture : 'simulation' 
+        typeecriture : 'caisse',
+        date : justificatif.data[0].datejustificatif
         });
     }
 
