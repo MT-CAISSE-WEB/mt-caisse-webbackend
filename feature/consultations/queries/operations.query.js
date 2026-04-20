@@ -259,14 +259,14 @@ module.exports = {
     editionjournal : `
         SELECT Soc.codesociete, Soc.raisonsociale,
         Site.codesite, Site.libelle as lib_site,
-        C.codecaisse, C.libelle as lib_caisse, D.codedevise AS devise_caisse,
+        C.codecaisse, C.libelle as lib_caisse,
         TOPE.codtypeoperation      AS typeoperation,
         OPE.codeoperation, OPE.dateoperation,
         NOP.codenature, NOP.libelle as lib_nature,
         CAN.codecentreanalytique AS codecentre, CAN.libelle as lib_centre,
         T.codetiers, T.designation AS nom_tiers,
-        OPL.libelle, OPL.montantoperation, DevO.codedevise,
-        OPE.montant AS total_ope,
+        OPL.libelle, TOPE.montant,  D.codedevise AS devise_caisse,
+        OPE.montant AS total_ope, DevO.codedevise,
         CP.soldeouverture, CP.soldefermeture
 
         FROM EnteteOperationCaisse OPE

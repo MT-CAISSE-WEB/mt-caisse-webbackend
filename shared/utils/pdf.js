@@ -2,58 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
 
-// async function genererPdfRecu(data) {
-
-//     const templatePath = path.join(__dirname, '../../views/templates/recu-caisse.html');
-//     let html = fs.readFileSync(templatePath, 'utf8');
-
-//     // Générer lignes HTML
-
-//     // lignes d'opérations
-//     const lignesHtml = data.lignes.map(l => `
-//         <tr>
-//             <td>${l.libelle || ''}</td>
-//             <td class="right">${l.montant.toLocaleString()}</td>
-//         </tr>
-//     `).join('');
-
-//     // caisses payeuses
-//     const caissesHtml = data.caisses.map(c => `
-//         <tr>
-//             <td>${c.libelle}</td>
-//             <td class="right">${c.montant.toLocaleString()} ${c.devise || ''}</td>
-//         </tr>
-//     `).join('');
-
-//     html = html
-//         .replace('{{societe}}', data.societe)
-//         .replace('{{site}}', data.site)
-//         .replace('{{date}}', data.date)
-//         .replace('{{numero}}', data.numero)
-//         .replace('{{type}}', data.type)
-//         .replace('{{devise}}', data.devise)
-//         .replace('{{description}}', data.description)
-//         .replace('{{total}}', data.total.toLocaleString())
-//         .replace('{{soldeouverture}}', data.soldeouverture.toLocaleString())
-//         .replace('{{soldefermeture}}', data.soldefermeture.toLocaleString())
-//         .replace('{{lignes}}', lignesHtml)
-//         .replace('{{caisses}}', caissesHtml);
-
-
-//     const browser = await puppeteer.launch();
-//     const page = await browser.newPage();
-
-//     await page.setContent(html, { waitUntil: 'networkidle0' });
-
-//     const buffer = await page.pdf({
-//         width: '100mm',
-//         margin: { top: '5mm', bottom: '5mm' }
-//     });
-
-//     await browser.close();
-
-//     return buffer;
-// }
 
 async function genererPdfRecu(data, copies = 2) {
 
@@ -192,7 +140,7 @@ async function genererPdfRecu(data, copies = 2) {
     return buffer;
 }
 
-async function genererPdfJournal(data, datedebut, datefin) {
+async function genererPdfJournal(data, datedebut, datefin, utilisateur){
 
     const donnees = data.data;
     const today = new Date();
@@ -218,7 +166,8 @@ async function genererPdfJournal(data, datedebut, datefin) {
         .replace('{{dateimp}}', today.toLocaleDateString('fr-FR'))
         .replace('{{heureimp}}', today.toLocaleTimeString('fr-FR'))
         .replace('{{soldeouverture}}', soldeOuverture)
-        .replace('{{soldefermeture}}', soldeFermeture);
+        .replace('{{soldefermeture}}', soldeFermeture)
+        .replace('{{utilisateur}}', utilisateur || '');
 
 
     // Sécurité si aucune ligne
@@ -241,8 +190,10 @@ async function genererPdfJournal(data, datedebut, datefin) {
         <tr>
             <td>${op.codeoperation || ''}</td>
                 <td>${op.nature || ''}</td>
+                <td>${op.libelle || ''}</td>
+                <td>${op.centre || ''}</td>
                 <td>${op.tiers || ''}</td>
-            <td class="right">${Number(op.montant || 0).toLocaleString('fr-FR')} ${donnees.devise_caisse}</td>
+            <td class="right">${Number(op.montant || 0).toLocaleString('fr-FR')}</td>
         </tr>
     `).join('');
 
@@ -250,14 +201,14 @@ async function genererPdfJournal(data, datedebut, datefin) {
         <tr>
             <td colspan="3" class="left">
                 <strong>Total encaissement : </strong>
-                ${Number(totalEncaissement || 0).toLocaleString('fr-FR')} ${donnees.devise_caisse}
+                ${Number(totalEncaissement || 0).toLocaleString('fr-FR')}
             </td>
             <td class="left"></td>
         </tr>
         <tr>
             <td colspan="3" class="left">
                 <strong>Total encaissement : </strong>
-                ${Number(totalDecaissement || 0).toLocaleString('fr-FR')} ${donnees.devise_caisse}
+                ${Number(totalDecaissement || 0).toLocaleString('fr-FR')}
             </td>
             <td class="left"></td>
         </tr>
@@ -272,14 +223,16 @@ async function genererPdfJournal(data, datedebut, datefin) {
 
             <div class="solde">
                 Solde ouverture : 
-                <strong>${Number(jour.solde_ouverture || 0).toLocaleString('fr-FR')} ${donnees.devise_caisse}</strong>
+                <strong>${Number(jour.solde_ouverture || 0).toLocaleString('fr-FR')}</strong>
             </div>
 
             <table>
                 <thead>
                     <tr>
                         <th>Pièce</th>
+                        <th>Libellé</th>
                         <th>Nature</th>
+                        <th>Centre</th>
                         <th>Tiers</th>
                         <th class="right">Montant</th>
                     </tr>
@@ -294,7 +247,7 @@ async function genererPdfJournal(data, datedebut, datefin) {
 
             <div class="solde right">
                 Solde fermeture :
-                <strong>${Number(jour.solde_fermeture || 0).toLocaleString('fr-FR')} ${donnees.devise_caisse}</strong>
+                <strong>${Number(jour.solde_fermeture || 0).toLocaleString('fr-FR')}</strong>
             </div>
 
             <div class="line"></div>
@@ -306,7 +259,7 @@ async function genererPdfJournal(data, datedebut, datefin) {
 
     html = html.replace('{{lignes}}', lignesHtml);
 
-    const browser = await puppeteer.launch({
+     const browser = await puppeteer.launch({
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 

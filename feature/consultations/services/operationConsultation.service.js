@@ -123,7 +123,8 @@ async function editionjournal(datedebut, datefin, idcaisse, idsite) {
                 ctiers: r.codetiers,
                 tiers: r.nom_tiers,
                 libelle: r.libelle,
-                montant: r.montantoperation
+                montant: r.montant || 0,
+                montant_ope: r.total_ope || 0,
             });
 
         });
