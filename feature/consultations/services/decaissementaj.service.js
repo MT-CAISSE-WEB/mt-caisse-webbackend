@@ -10,6 +10,7 @@ async function getAllDecaissementAj(data){
         const result = await pool.request()
             .input('typeoperation', sql.NVarChar, data.typeoperation)
             .input('codeoperation', sql.NVarChar, data.codeoperation)
+            .input('tiers', sql.NVarChar, data.tiers)
             .input('datedebut', sql.DateTime, data.datedebut)
             .input('datefin', sql.DateTime, data.datefin)
             .query(decaissementajQueries.getall);

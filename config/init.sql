@@ -1729,7 +1729,7 @@ BEGIN
         ref_ecriture NVARCHAR(255),
 
         idtypeoperation UNIQUEIDENTIFIER null,
-        typeoperation NVARCHAR(255) null,
+        codtypeoperation NVARCHAR(255) null,
 
         idjournal UNIQUEIDENTIFIER,
         journal NVARCHAR(255),
@@ -1793,4 +1793,14 @@ BEGIN
         foreign key (idnature) references NatureOperation(idnature)
 
     );
+END
+
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PieceComptableSequence')
+BEGIN
+CREATE TABLE PieceComptableSequence (
+    id INT IDENTITY PRIMARY KEY,
+    journal NVARCHAR(10),
+    datepiece NVARCHAR(10),
+    sequence INT
+);
 END

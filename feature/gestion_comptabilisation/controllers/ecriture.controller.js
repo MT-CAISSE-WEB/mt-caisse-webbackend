@@ -16,3 +16,19 @@ module.exports.GenererEcriture = asyncHandler (async(req,res, next)=>{
         res.status(500).json({success:false, message:"Erreur serveur", error});
     }
 });
+
+module.exports.GenererJustificatif = asyncHandler (async(req,res, next)=>{
+    try {
+         const { idjustificatif } = req.params;
+         console.log("ID du justificatif pour générer le justificatif :", idjustificatif);
+         const result = await ecritureservice.GenererJustificatif(idjustificatif);  
+
+            if (!result.success) {  
+                return res.status(400).json(result);
+            }
+        res.status(200).json({success:true,message:"Justificatif généré avec succès",data:result});
+    } catch (error) {
+        res.status(500).json({success:false, message:"Erreur serveur", error});
+    }
+
+});

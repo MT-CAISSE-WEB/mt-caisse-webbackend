@@ -1,6 +1,7 @@
-module.exports = function conversionRule(enteteoperation, typeoperation, ligneoperation) {
+module.exports = function conversionRule(enteteoperation, typeoperation, ligneoperation,paramcomptable) {
 
     let result = [];
+
 
     const lignes = ligneoperation[0].filter(l =>
         l && l.montantoperation > 0 &&
@@ -19,6 +20,7 @@ module.exports = function conversionRule(enteteoperation, typeoperation, ligneop
     // Total charges
     const totalCharges = lignes.reduce((s, l) => s + l.montantoperation, 0);
 
+
     // ==============================
     // CHARGES
     // ==============================
@@ -28,6 +30,10 @@ module.exports = function conversionRule(enteteoperation, typeoperation, ligneop
             idligneoperation : l.idligneoperation,
             idcompte: l.compte_id,
             compte: l.numcompte,
+
+            idnature : l.nature_id,
+            codenature : l.nature_code,
+            libellenature : l.nature_libelle,
 
             idjournal: base.idjournal,
             journal: base.codejournal,
@@ -97,8 +103,8 @@ module.exports = function conversionRule(enteteoperation, typeoperation, ligneop
 
         //Sortie en devise de base (CDF)
         result.push({
-           idcompte:'C989A725-F587-4AD1-A6B7-FF820CF4FF09',
-            compte:'580000',
+           idcompte:paramcomptable.idcompte,
+            compte:paramcomptable.numcompte,
 
             idjournal: base.idjournal,
             journal: base.codejournal,
@@ -127,19 +133,25 @@ module.exports = function conversionRule(enteteoperation, typeoperation, ligneop
             typeecriture: 'transit'
         });
 
+
         // ==============================
         // AUTRES CAISSES (conversion)
         // ==============================
         const autres = mouvements.filter(m => m.taux !== 1);
 
+  
+
         for (const m of autres) {
 
             const montantDevise = reste / m.taux;
 
+            console.log(m);
+            con;
+
             // Entrée transit en devise cible
             result.push({
-                idcompte:'C989A725-F587-4AD1-A6B7-FF820CF4FF09',
-                compte:'580000',
+                idcompte:paramcomptable.idcompte,
+                compte:paramcomptable.numcompte,
 
                 idjournal: m.idjournal,
                 journal: m.codejournal,

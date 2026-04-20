@@ -2,43 +2,180 @@ const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
 
-async function genererPdfRecu(data) {
+// async function genererPdfRecu(data) {
+
+//     const templatePath = path.join(__dirname, '../../views/templates/recu-caisse.html');
+//     let html = fs.readFileSync(templatePath, 'utf8');
+
+//     // Générer lignes HTML
+
+//     // lignes d'opérations
+//     const lignesHtml = data.lignes.map(l => `
+//         <tr>
+//             <td>${l.libelle || ''}</td>
+//             <td class="right">${l.montant.toLocaleString()}</td>
+//         </tr>
+//     `).join('');
+
+//     // caisses payeuses
+//     const caissesHtml = data.caisses.map(c => `
+//         <tr>
+//             <td>${c.libelle}</td>
+//             <td class="right">${c.montant.toLocaleString()} ${c.devise || ''}</td>
+//         </tr>
+//     `).join('');
+
+//     html = html
+//         .replace('{{societe}}', data.societe)
+//         .replace('{{site}}', data.site)
+//         .replace('{{date}}', data.date)
+//         .replace('{{numero}}', data.numero)
+//         .replace('{{type}}', data.type)
+//         .replace('{{devise}}', data.devise)
+//         .replace('{{description}}', data.description)
+//         .replace('{{total}}', data.total.toLocaleString())
+//         .replace('{{soldeouverture}}', data.soldeouverture.toLocaleString())
+//         .replace('{{soldefermeture}}', data.soldefermeture.toLocaleString())
+//         .replace('{{lignes}}', lignesHtml)
+//         .replace('{{caisses}}', caissesHtml);
+
+
+//     const browser = await puppeteer.launch();
+//     const page = await browser.newPage();
+
+//     await page.setContent(html, { waitUntil: 'networkidle0' });
+
+//     const buffer = await page.pdf({
+//         width: '100mm',
+//         margin: { top: '5mm', bottom: '5mm' }
+//     });
+
+//     await browser.close();
+
+//     return buffer;
+// }
+
+async function genererPdfRecu(data, copies = 2) {
 
     const templatePath = path.join(__dirname, '../../views/templates/recu-caisse.html');
     let html = fs.readFileSync(templatePath, 'utf8');
 
-    // Générer lignes HTML
+    // =========================
+    // TABLES HTML
+    // =========================
 
-    // lignes d'opérations
     const lignesHtml = data.lignes.map(l => `
         <tr>
             <td>${l.libelle || ''}</td>
-            <td class="right">${l.montant.toLocaleString()}</td>
+            <td class="right">${(l.montant || 0).toLocaleString()}</td>
         </tr>
     `).join('');
 
-    // caisses payeuses
     const caissesHtml = data.caisses.map(c => `
         <tr>
-            <td>${c.libelle}</td>
-            <td class="right">${c.montant.toLocaleString()} ${c.devise || ''}</td>
+            <td>${c.libelle || ''}</td>
+            <td class="right">${(c.montant || 0).toLocaleString()} ${c.devise || ''}</td>
         </tr>
     `).join('');
 
-    html = html
-        .replace('{{societe}}', data.societe)
-        .replace('{{site}}', data.site)
-        .replace('{{date}}', data.date)
-        .replace('{{numero}}', data.numero)
-        .replace('{{type}}', data.type)
-        .replace('{{devise}}', data.devise)
-        .replace('{{description}}', data.description)
-        .replace('{{total}}', data.total.toLocaleString())
-        .replace('{{soldeouverture}}', data.soldeouverture.toLocaleString())
-        .replace('{{soldefermeture}}', data.soldefermeture.toLocaleString())
-        .replace('{{lignes}}', lignesHtml)
-        .replace('{{caisses}}', caissesHtml);
+    // =========================
+    // TEMPLATE D’UN TICKET
+    // =========================
 
+    const ticketTemplate = `
+        <div class="ticket">
+
+            <div class="center bold">REÇU DE CAISSE</div>
+            <div class="center">${data.societe}</div>
+            <div class="center small">${data.site}</div>
+
+            <div class="line"></div>
+
+            <div>Date : ${data.date}</div>
+            <div>N° opération : ${data.numero}</div>
+            <div>Type : ${data.type}</div>
+
+            <div class="line"></div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>${data.description || ''}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="line"></div>
+
+            <div class="bold right">
+                Total : ${(data.total || 0).toLocaleString()} ${data.devise}
+            </div>
+
+            <div class="line"></div>
+
+            <br><br>
+
+            <div class="bold center">PAIEMENT</div>
+
+            <br>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Caisse</th>
+                        <th class="right">Montant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${caissesHtml}
+                </tbody>
+            </table>
+
+            <div class="line"></div>
+
+            <br><br><br>
+
+            <table>
+                <tr>
+                    <td>
+                        <div class="bold">Le caissier</div>
+                        <br><br><br>
+                        <div class="small">Signature</div>
+                    </td>
+                    <td class="right">
+                        <div class="bold">Le bénéficiaire</div>
+                        <br><br><br>
+                        <div class="small">Signature</div>
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+    `;
+
+    // =========================
+    // DUPLICATION
+    // =========================
+
+    const ticketsHtml = Array.from({ length: copies }, (_, i) => `
+        ${ticketTemplate}
+        ${i < copies - 1 ? '<div class="separator"></div>' : ''}
+    `).join('');
+
+    // =========================
+    // INJECTION
+    // =========================
+
+    html = html.replace('{{tickets}}', ticketsHtml);
+
+    // =========================
+    // PDF
+    // =========================
 
     const browser = await puppeteer.launch();
     const page = await browser.newPage();

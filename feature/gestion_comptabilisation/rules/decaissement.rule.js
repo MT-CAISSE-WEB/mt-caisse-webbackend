@@ -1,4 +1,4 @@
-module.exports = function decaissementRule(enteteoperation,typeoperation, ligneoperation) {
+module.exports = function decaissementRule(enteteoperation,typeoperation, ligneoperation,paramcomptable) {
     let result = [];
     let total = 0; 
  
@@ -16,6 +16,10 @@ module.exports = function decaissementRule(enteteoperation,typeoperation, ligneo
 
         idjournal : typeoperation[0][0].idjournal,
         journal : typeoperation[0][0].codejournal,
+
+        idnature : null,
+        codenature : null,
+        libellenature : null,
 
         idcentreanalytique : null,
         centreanalytique : null,
@@ -43,9 +47,12 @@ module.exports = function decaissementRule(enteteoperation,typeoperation, ligneo
 
         result.push({
         idligneoperation : l.idligneoperation,
+        idtypeoperation : typeoperation[0][0].idtypeoperation,
+        typeoperation : typeoperation[0][0].codtypeoperation,
 
         idnature : l.idnature,
-        libellenature : l.libelle,
+        codenature : l.nature_code,
+        libellenature : l.nature_libelle,
 
         idcompte : l.compte_id,
         compte : l.numcompte,

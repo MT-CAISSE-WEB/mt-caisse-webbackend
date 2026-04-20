@@ -96,6 +96,7 @@ const detailsjustificatifroute = require("./feature/gestion_paramètres/routes/d
 const transfertroute = require("./feature/gestion_operation_caisse/routes/transfert.route");
 //comptabilisation
 const ecritureRoutes = require("./feature/gestion_comptabilisation/routes/ecriture.route");
+const ligneecritureRoutes = require("./feature/gestion_comptabilisation/routes/ligneecriture.route");
 
 
 const db = require('./config/db');
@@ -241,6 +242,7 @@ app.use("/api/mouvements-caisse", mouvementsCaisseRoute);
 
 //comptabilisation
 app.use("/api/comptabilisation", ecritureRoutes);
+app.use("/api/comptabilisation", ligneecritureRoutes);
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {

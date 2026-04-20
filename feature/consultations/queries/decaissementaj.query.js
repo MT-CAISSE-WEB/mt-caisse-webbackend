@@ -174,6 +174,16 @@ module.exports = {
                 WHERE TOF.idoperation = E.idoperation
                 AND (@typeoperation IS NULL OR TOF.codtypeoperation = @typeoperation)
             )
+            
+            AND (
+                @tiers IS NULL
+                OR EXISTS (
+                    SELECT 1
+                    FROM LigneOperationCaisse Lf
+                    WHERE Lf.idoperation = E.idoperation
+                    AND Lf.idtiers = @tiers
+                )
+            )
 
         FOR JSON PATH;
     `
