@@ -5,6 +5,8 @@ module.exports = function encaissementRule(enteteoperation,typeoperation, ligneo
  
     const lignes = ligneoperation[0].filter(l => l && l.montantoperation > 0 && (l.comptabilise === 0 || l.comptabilise === null));
 
+
+
     if (lignes.length === 0) {
         throw new Error("Aucune ligne valide à comptabiliser");
     }
@@ -40,11 +42,11 @@ module.exports = function encaissementRule(enteteoperation,typeoperation, ligneo
         taux : typeoperation[0][0].taux,
         montantref : typeoperation[0][0].montantref,
         numligne : 1,
-        typeecriture : 'simulation'
+        typeecriture : 'caisse',
+        date : enteteoperation.dateoperation
 
     })
-
-
+    
     for (const l of ligneoperation[0]){
         total += l.montantoperation;
 
@@ -65,10 +67,10 @@ module.exports = function encaissementRule(enteteoperation,typeoperation, ligneo
         journal : typeoperation[0][0].codejournal,
 
         idcentreanalytique : l.centre_id,
-        centreanalytique : l.centre_libelle,
+        centreanalytique : l.codecentreanalytique,
 
-        idtiers : l.idtiers,
-        tiers : l.tiers,
+        idtiers : l.tiers_id,
+        tiers : l.codetiers,
 
         credit : l.montantoperation,
         debit : 0,
@@ -80,8 +82,8 @@ module.exports = function encaissementRule(enteteoperation,typeoperation, ligneo
         taux : null,
         montantref :null,
         numligne : result.length + 1,
-        typeecriture : 'simulation'
-         
+        typeecriture : 'caisse',
+        date : enteteoperation.dateoperation 
         })
     }
 

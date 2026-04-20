@@ -8,6 +8,7 @@ const { stat } = require('fs');
 const { Console } = require('console');
 const queries = require("../query/requete.query");
 const piecegenerate = require('../utils/ecritures.utils');
+const { type } = require('os');
 
 // Génère une référence unique pour l'écriture
 function generateRef(operation) {
@@ -41,6 +42,8 @@ async function GenererEcriture(idoperation) {
     await transaction.begin();
 
     try {
+        
+
         // Récupération opération et lignes
         const enteteoperation = await alloperationservice.getenteteoperationbyid(idoperation)
         const typeoperation = await alloperationservice.gettypeoperationbyid(idoperation);
@@ -73,7 +76,7 @@ async function GenererEcriture(idoperation) {
         //Génération des lignes via la règle
         const lignesjournal = rule(enteteoperation.data,typeoperation.data, ligneoperation.data, paramcomptable.data[0]);
 
-        console.log(lignesjournal);
+
         //Groupes les lignes par journaux 
         const groupes = {};
 
@@ -99,15 +102,19 @@ async function GenererEcriture(idoperation) {
                 const headers = getCommonFields(lignesJournal);
 
                 const pieceNumber = await piecegenerate.generatePieceNumber(transaction, headers.journal);
+
+                console.log("typedata",typeData);
+                console.log("headers",headers);
+                con;
               
                 await transaction.request()
                     .input("idecriture", sql.UniqueIdentifier, idecriture)
                     .input("ref_ecriture", sql.NVarChar, pieceNumber)
                     .input("idtypeoperation", sql.NVarChar, typeData.idtypeoperation)
-                    .input("codtypeoperation", sql.UniqueIdentifier, typeData.codtypeoperation)
+                    .input("codtypeoperation", sql.UniqueIdentifier, typeData.typeoperation)
                     .input("idjournal", sql.UniqueIdentifier, headers.idjournal)
                     .input("journal", sql.NVarChar, headers.journal)
-                    .input("date", sql.DateTime, new Date())
+                    .input("date", sql.DateTime, typeData.date)
                     .input("createdby", sql.NVarChar, 'SYSTEM')
                     .query(`
                         INSERT INTO EcritureComptable
@@ -184,7 +191,6 @@ async function GenererEcriture(idoperation) {
         return { success: true  , message: "Écriture générée avec succès" };
 
     } catch (error) {
-        console.log(error);
         await transaction.rollback();
         return { success: false, message: error.message };
     }
@@ -221,7 +227,7 @@ async function GenererJustificatif(idjustificatif) {
                     .input("codtypeoperation", sql.UniqueIdentifier, ecriturecomptable.data[0][0].typeoperation)
                     .input("idjournal", sql.UniqueIdentifier, ecriturecomptable.data[0][0].idjournal)
                     .input("journal", sql.NVarChar, ecriturecomptable.data[0][0].journal)
-                    .input("date", sql.DateTime, new Date())
+                    .input("date", sql.DateTime, ecriturecomptable.data[0][0].date)
                     .input("createdby", sql.NVarChar, 'SYSTEM')
                     .query(`
                         INSERT INTO EcritureComptable

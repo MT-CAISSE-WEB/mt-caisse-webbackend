@@ -144,8 +144,10 @@ async function validateBudgetsForLines(societe, lignes, filterData) {
     const selectBudget = await lignedemandemodel.checktypebudget(filterData);
 
     if (!selectBudget || selectBudget.length === 0) {
-      throw new DemandeError("Aucun budget valide trouvé pour prioriser le budget mensuel si plusieurs budgets sont retournés"
-        , "NO_VALID_BUDGETS", { filterData });
+      console.warn("Aucun budget trouvé → pas de contrôle budgétaire", filterData);
+      return; 
+      // throw new DemandeError("Aucun budget valide trouvé pour prioriser le budget mensuel si plusieurs budgets sont retournés"
+      //   , "NO_VALID_BUDGETS", { filterData });
     }
 
     const budgetPriorise = prioriserBudget(selectBudget);

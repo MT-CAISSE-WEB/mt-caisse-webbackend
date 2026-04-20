@@ -68,7 +68,8 @@ module.exports = function multiCaisseRule(
 
         etat: 'en attente',
         numligne: result.length + 1,
-        typeecriture: 'charge'
+        typeecriture: 'charge',
+        date : enteteoperation.dateoperation
     });
 
     // ==============================
@@ -107,7 +108,8 @@ module.exports = function multiCaisseRule(
 
             etat: 'en attente',
             numligne: result.length + 1,
-            typeecriture: 'caisse'
+            typeecriture: 'caisse',
+            date : enteteoperation.dateoperation
         });
     }
 
