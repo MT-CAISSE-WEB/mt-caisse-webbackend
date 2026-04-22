@@ -64,7 +64,9 @@ async function createligneEcriture(data){
     elc.idcentreanalytique,
     elc.centreanalytique,
     elc.typeecriture,
+    elc.etat,
     elc.idcompte,
+    elc.compte,
     elc.idtiers,
     elc.tiers,
     elc.libelle,
@@ -74,6 +76,7 @@ async function createligneEcriture(data){
     elc.iddevise,
     elc.devise,
     st.idsite,
+    st.codesite,
     st.libelle as site_libelle
 FROM EcritureLigneComptable elc
 INNER JOIN EcritureComptable ec 
@@ -87,7 +90,8 @@ AND (@datedebut IS NULL OR ec.date_operation >= @datedebut)
 AND (@datefin IS NULL OR ec.date_operation < DATEADD(DAY, 1, @datefin))
 AND (@etat is null or @etat ='' or elc.etat=@etat)
 AND (@journal is null or @journal='' or ec.journal=@journal)
-AND (@typeecriture is null or @typeecriture='' or elc.typeecriture=@typeecriture)`;
+AND (@typeecriture is null or @typeecriture='' or elc.typeecriture=@typeecriture)
+order by ec.date_operation desc, ec.ref_ecriture desc, elc.numligne asc`;
             const result = await pool.request()
             .input('idsite', sql.UniqueIdentifier, idsite || null)
             .input('datedebut', sql.DateTime, datedebut || null)

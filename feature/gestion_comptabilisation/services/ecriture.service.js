@@ -46,9 +46,10 @@ async function GenererEcriture(idoperation) {
 
         // Récupération opération et lignes
         const enteteoperation = await alloperationservice.getenteteoperationbyid(idoperation)
-        const typeoperation = await alloperationservice.gettypeoperationbyid(idoperation);
+        const typeoperation = await alloperationservice.gettypeoperwationbyid(idoperation);
         const ligneoperation  = await alloperationservice.getligneoperationbyidoperation(idoperation);
         const paramcomptable = await alloperationservice.getparamcomptable();
+
 
         //const justificatifoperation = await alloperationservice.
 
@@ -58,6 +59,7 @@ async function GenererEcriture(idoperation) {
         const caisses = [...new Set(typeoperation.data.flat().map(t => t.idcaisse))];
 
         const devises = [...new Set(typeoperation.data.flat().map(t => t.caisse_iddevise))];
+
         
         let rule;
 
@@ -102,10 +104,6 @@ async function GenererEcriture(idoperation) {
                 const headers = getCommonFields(lignesJournal);
 
                 const pieceNumber = await piecegenerate.generatePieceNumber(transaction, headers.journal);
-
-                console.log("typedata",typeData);
-                console.log("headers",headers);
-                con;
               
                 await transaction.request()
                     .input("idecriture", sql.UniqueIdentifier, idecriture)
@@ -121,6 +119,8 @@ async function GenererEcriture(idoperation) {
                         (idecriture,ref_ecriture, idjournal, idtypeoperation,codtypeoperation, journal, date_operation, createdby, createdat)
                         VALUES (@idecriture, @ref_ecriture, @idjournal, @idtypeoperation, @codtypeoperation, @journal, @date, @createdby, GETDATE())
                     `);
+
+
 
             // Insertion des lignes comptables
             let totalDebit = 0, totalCredit = 0;
@@ -289,9 +289,21 @@ async function GenererJustificatif(idjustificatif) {
     }
 }
 
+// async function GenererEcritureMultiple(ids) {
+//     const results = [];
+
+//     for (const id of ids) {
+//         const res = await GenererEcriture(id);
+//         results.push({ id, ...res });
+//     }
+//     return results;
+// }
+
 module.exports = {
     GenererJustificatif,
-    GenererEcriture };
+    GenererEcriture,
+    //GenererEcritureMultiple
+ };
 
 
 
