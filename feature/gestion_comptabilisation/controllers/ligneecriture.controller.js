@@ -5,6 +5,7 @@ const ligneecritureservice = require ("../services/ligneecriture.service");
 module.exports.getallLigneEcriture = asyncHandler (async(req,res, next)=>{
     try {
          const {idsite, datedebut, datefin, etat, journal,typeecriture} = req.body;
+         console.log(req.body);
          const result = await ligneecritureservice.getallLigneEcriture(idsite, datedebut, datefin, etat, journal,typeecriture);
          res.status(200).json(result);
     } catch (error) {

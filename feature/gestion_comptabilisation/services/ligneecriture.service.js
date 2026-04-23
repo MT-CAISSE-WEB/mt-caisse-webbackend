@@ -51,7 +51,7 @@ const queryinsert = `
         }
     }
 
-      // Get all
+   // Get all
     async function getallLigneEcriture(idsite, datedebut, datefin, etat, journal,typeecriture){
         try {
             const pool = await connectDB();
@@ -64,6 +64,7 @@ const queryinsert = `
     elc.idcentreanalytique,
     elc.centreanalytique,
     elc.typeecriture,
+    elc.etat,
     elc.idcompte,
     elc.compte,
     elc.idtiers,
@@ -75,6 +76,7 @@ const queryinsert = `
     elc.iddevise,
     elc.devise,
     st.idsite,
+    st.codesite,
     st.libelle as site_libelle
 FROM EcritureLigneComptable elc
 INNER JOIN EcritureComptable ec 
@@ -89,9 +91,7 @@ AND (@datefin IS NULL OR ec.date_operation < DATEADD(DAY, 1, @datefin))
 AND (@etat is null or @etat ='' or elc.etat=@etat)
 AND (@journal is null or @journal='' or ec.journal=@journal)
 AND (@typeecriture is null or @typeecriture='' or elc.typeecriture=@typeecriture)
-
-Order by ref_ecriture , numligne;
-`;
+order by ec.date_operation desc, ec.ref_ecriture desc, elc.numligne asc`;
             const result = await pool.request()
             .input('idsite', sql.UniqueIdentifier, idsite || null)
             .input('datedebut', sql.DateTime, datedebut || null)
@@ -110,6 +110,7 @@ Order by ref_ecriture , numligne;
             return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
         }
     }
+
 
     async function comptabilisationEcriture (idoperation,idsite, datedebut, datefin, journal){
         const pool = await connectDB();
