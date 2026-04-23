@@ -11,8 +11,8 @@ const queryinsert = `
         VALUES (@idligneecriture, @idecriture, @idcentreanalytique, @centreanalytique, @idcompte, @compte, @idtiers, @tiers, @numligne, @typeecriture, @libelle, @debit, @credit, @etat, @iddevise, @devise, @montantdevise, @taux, @montantbase, @createdby, @createdat)
         `;
 
-//Create Ecriture
-async function createligneEcriture(data){
+    //Create Ecriture
+    async function createligneEcriture(data){
         try {
             const pool = await connectDB()
             const idligneecriture = uuidv4();
@@ -65,6 +65,7 @@ async function createligneEcriture(data){
     elc.centreanalytique,
     elc.typeecriture,
     elc.idcompte,
+    elc.compte,
     elc.idtiers,
     elc.tiers,
     elc.libelle,
@@ -87,7 +88,10 @@ AND (@datedebut IS NULL OR ec.date_operation >= @datedebut)
 AND (@datefin IS NULL OR ec.date_operation < DATEADD(DAY, 1, @datefin))
 AND (@etat is null or @etat ='' or elc.etat=@etat)
 AND (@journal is null or @journal='' or ec.journal=@journal)
-AND (@typeecriture is null or @typeecriture='' or elc.typeecriture=@typeecriture)`;
+AND (@typeecriture is null or @typeecriture='' or elc.typeecriture=@typeecriture)
+
+Order by ref_ecriture , numligne;
+`;
             const result = await pool.request()
             .input('idsite', sql.UniqueIdentifier, idsite || null)
             .input('datedebut', sql.DateTime, datedebut || null)
@@ -107,92 +111,92 @@ AND (@typeecriture is null or @typeecriture='' or elc.typeecriture=@typeecriture
         }
     }
 
-async function comptabilisationEcriture (idoperation,idsite, datedebut, datefin, journal){
-      const pool = await connectDB();
-      const transaction = new sql.Transaction(pool);
-    try {
-        await transaction.begin();
+    async function comptabilisationEcriture (idoperation,idsite, datedebut, datefin, journal){
+        const pool = await connectDB();
+        const transaction = new sql.Transaction(pool);
+        try {
+            await transaction.begin();
 
-        const request = transaction.request();
+            const request = transaction.request();
 
-        // ==============================
-        // PARAMÈTRES
-        // ==============================
-        request.input("idoperation", sql.UniqueIdentifier, idoperation || null);
-        request.input("idsite", sql.UniqueIdentifier, idsite || null);
-        request.input("datedebut", sql.DateTime, datedebut || null);
-        request.input("datefin", sql.DateTime, datefin || null);
-        request.input("journal", sql.NVarChar, journal || null);
+            // ==============================
+            // PARAMÈTRES
+            // ==============================
+            request.input("idoperation", sql.UniqueIdentifier, idoperation || null);
+            request.input("idsite", sql.UniqueIdentifier, idsite || null);
+            request.input("datedebut", sql.DateTime, datedebut || null);
+            request.input("datefin", sql.DateTime, datefin || null);
+            request.input("journal", sql.NVarChar, journal || null);
 
-        const ecritures = await request.query(`SELECT 
-         ec.idecriture,
-         SUM(elc.debit) AS totalDebit,
-         SUM(elc.credit) AS totalCredit
-        FROM EcritureComptable ec
-        INNER JOIN EcritureLigneComptable elc on elc.idecriture = ec.idecriture
-        inner join TypeOperation ty on ty.idtypeoperation=ec.idtypeoperation
-        inner join site st on st.idsite = ty.idsite
-        WHERE
-         (@idoperation IS NULL OR ty.idoperation = @idoperation)
-        AND (@idsite IS NULL OR ty.idsite = @idsite)
-        AND (@datedebut IS NULL OR ec.date_operation >= @datedebut)
-        AND (@datefin IS NULL OR ec.date_operation < DATEADD(DAY,1,@datefin))
-        AND (@journal IS NULL OR @journal = '' OR ec.journal = @journal)
-        AND elc.etat = 'en attente'
-
-     GROUP BY ec.idecriture`);
-
-      if (!ecritures.recordset.length) {
-            throw new Error("Aucune écriture à comptabiliser");
-    }
-
-     // ==============================
-        // 2. CONTRÔLE ÉQUILIBRE
-        // ==============================
-        for (const e of ecritures.recordset) {
-            if (Number(e.totalDebit) !== Number(e.totalCredit)) {
-                throw new Error(
-                    `Écriture déséquilibrée (${e.idecriture}) : D=${e.totalDebit} C=${e.totalCredit}`
-                );
-            }
-        }
-
-         // ==============================
-        // 3. VALIDATION DES LIGNES
-        // ==============================
-        await request.query(`
-            UPDATE elc
-            SET 
-                elc.etat = 'validee',
-                elc.typeecriture = 'normale'
-            FROM EcritureLigneComptable elc
-            INNER JOIN EcritureComptable ec 
-                ON ec.idecriture = elc.idecriture
+            const ecritures = await request.query(`SELECT 
+            ec.idecriture,
+            SUM(elc.debit) AS totalDebit,
+            SUM(elc.credit) AS totalCredit
+            FROM EcritureComptable ec
+            INNER JOIN EcritureLigneComptable elc on elc.idecriture = ec.idecriture
             inner join TypeOperation ty on ty.idtypeoperation=ec.idtypeoperation
-            inner join site st on ty.idsite = ty.idsite
-            where
-               (@idoperation IS NULL OR ty.idoperation = @idoperation)
-            AND (@idsite IS NULL OR st.idsite = @idsite)
+            inner join site st on st.idsite = ty.idsite
+            WHERE
+            (@idoperation IS NULL OR ty.idoperation = @idoperation)
+            AND (@idsite IS NULL OR ty.idsite = @idsite)
             AND (@datedebut IS NULL OR ec.date_operation >= @datedebut)
             AND (@datefin IS NULL OR ec.date_operation < DATEADD(DAY,1,@datefin))
             AND (@journal IS NULL OR @journal = '' OR ec.journal = @journal)
-            AND elc.etat = 'en attente'`);
+            AND elc.etat = 'en attente'
 
-        await transaction.commit();
+        GROUP BY ec.idecriture`);
 
-            return {
-                success: true,
-                status: 200,
-                message: "Comptabilisation effectuée avec succès !"
-            };
+        if (!ecritures.recordset.length) {
+                throw new Error("Aucune écriture à comptabiliser");
+        }
 
+        // ==============================
+            // 2. CONTRÔLE ÉQUILIBRE
+            // ==============================
+            for (const e of ecritures.recordset) {
+                if (Number(e.totalDebit) !== Number(e.totalCredit)) {
+                    throw new Error(
+                        `Écriture déséquilibrée (${e.idecriture}) : D=${e.totalDebit} C=${e.totalCredit}`
+                    );
+                }
+            }
+
+            // ==============================
+            // 3. VALIDATION DES LIGNES
+            // ==============================
+            await request.query(`
+                UPDATE elc
+                SET 
+                    elc.etat = 'validee',
+                    elc.typeecriture = 'normale'
+                FROM EcritureLigneComptable elc
+                INNER JOIN EcritureComptable ec 
+                    ON ec.idecriture = elc.idecriture
+                inner join TypeOperation ty on ty.idtypeoperation=ec.idtypeoperation
+                inner join site st on ty.idsite = ty.idsite
+                where
+                (@idoperation IS NULL OR ty.idoperation = @idoperation)
+                AND (@idsite IS NULL OR st.idsite = @idsite)
+                AND (@datedebut IS NULL OR ec.date_operation >= @datedebut)
+                AND (@datefin IS NULL OR ec.date_operation < DATEADD(DAY,1,@datefin))
+                AND (@journal IS NULL OR @journal = '' OR ec.journal = @journal)
+                AND elc.etat = 'en attente'`);
+
+            await transaction.commit();
+
+                return {
+                    success: true,
+                    status: 200,
+                    message: "Comptabilisation effectuée avec succès !"
+                };
+
+
+        }
+        catch (error) {
+            return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
+        }
 
     }
-    catch (error) {
-         return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
-    }
-
-}
 
     module.exports = {
         getallLigneEcriture,

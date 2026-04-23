@@ -13,6 +13,7 @@ const caisseservice = require("../services/caisse.service");
 const userservice = require("../../gestion_users/services/users.service")
 const enteteDemandeModel = require("../../gestion_demande_decaissement/models/entetedemande.model");
 let demandemodel = new enteteDemandeModel();
+const ecritureservice = require("../../gestion_comptabilisation/services/ecriture.service");
 
 let typeoperation = new typeoperationmodel();
 let typeoperations = [];
@@ -201,7 +202,6 @@ async function create_typeoperation(data) {
   
       try {
         recorded1 = await newtypeoperation1.create_typeoperationmodel(newtypeoperation1);
-        console.log(recorded1);
       } catch (error) {
         throw new Error(error);
       }
@@ -216,6 +216,14 @@ async function create_typeoperation(data) {
   if(data.demande !== undefined && data.demande !== null && data.demande !== ''){
     try {
       const decaisse = await demandemodel.decaisse_enteteDemande(data.demande, 1);
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
+
+  if(enteteoperation){
+    try {
+      await ecritureservice.GenererEcriture(enteteoperation.idoperation);
     } catch (error) {
       throw new Error(error);
     }

@@ -42,8 +42,6 @@ async function GenererEcriture(idoperation) {
     await transaction.begin();
 
     try {
-        
-
         // Récupération opération et lignes
         const enteteoperation = await alloperationservice.getenteteoperationbyid(idoperation)
         const typeoperation = await alloperationservice.gettypeoperationbyid(idoperation);
@@ -60,7 +58,7 @@ async function GenererEcriture(idoperation) {
         const devises = [...new Set(typeoperation.data.flat().map(t => t.caisse_iddevise))];
         
         let rule;
-
+    
         if (caisses.length > 1 && devises.length === 1) {
             rule = rules.transfert;
         } else if (caisses.length > 1 && devises.length > 1) {
@@ -93,7 +91,7 @@ async function GenererEcriture(idoperation) {
 
         //Insertion dans la table ecriture et ligne écriture 
         for (const journalid in groupes) 
-     {
+        {
             // Création de l'écriture principale
                 const lignesJournal = groupes[journalid];
                 const idecriture = uuidv4();
@@ -102,16 +100,12 @@ async function GenererEcriture(idoperation) {
                 const headers = getCommonFields(lignesJournal);
 
                 const pieceNumber = await piecegenerate.generatePieceNumber(transaction, headers.journal);
-
-                console.log("typedata",typeData);
-                console.log("headers",headers);
-                con;
               
                 await transaction.request()
                     .input("idecriture", sql.UniqueIdentifier, idecriture)
                     .input("ref_ecriture", sql.NVarChar, pieceNumber)
-                    .input("idtypeoperation", sql.NVarChar, typeData.idtypeoperation)
-                    .input("codtypeoperation", sql.UniqueIdentifier, typeData.typeoperation)
+                    .input("idtypeoperation", sql.UniqueIdentifier, typeData.idtypeoperation)
+                    .input("codtypeoperation", sql.NVarChar, typeData.typeoperation)
                     .input("idjournal", sql.UniqueIdentifier, headers.idjournal)
                     .input("journal", sql.NVarChar, headers.journal)
                     .input("date", sql.DateTime, typeData.date)
@@ -177,8 +171,8 @@ async function GenererEcriture(idoperation) {
 
             console.log(`Journal ${lignesJournal[0].journal} : Total Débit = ${totalDebit}, Total Crédit = ${totalCredit}`);
             // Contrôle équilibre comptable
-             if (totalDebit !== totalCredit) {
-            throw new Error(`Écriture déséquilibrée : D=${totalDebit} C=${totalCredit}`);
+            if (totalDebit !== totalCredit) {
+                throw new Error(`Écriture déséquilibrée : D=${totalDebit} C=${totalCredit}`);
             }
 
             
@@ -291,7 +285,8 @@ async function GenererJustificatif(idjustificatif) {
 
 module.exports = {
     GenererJustificatif,
-    GenererEcriture };
+    GenererEcriture 
+};
 
 
 
