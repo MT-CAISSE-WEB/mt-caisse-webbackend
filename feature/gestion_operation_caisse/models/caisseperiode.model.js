@@ -148,6 +148,8 @@ class caisseperiodeModel {
                 .input('montantphysique', sql.Decimal(22, 9), data.montantphysique)
                 .input('ecart', sql.Decimal(22, 9), data.ecart)
                 .input('statut', sql.NVarChar(10), data.statut)
+                .input('validatedat', sql.DateTime, new Date())
+                .input('validatedby', sql.NVarChar(100), data.validatedby)
                 .query(caisseperiodeQueries.CLOSE_PERIODE);
             return result;
                 

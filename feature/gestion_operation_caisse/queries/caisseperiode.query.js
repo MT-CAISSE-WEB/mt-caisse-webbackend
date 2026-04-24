@@ -52,7 +52,9 @@ module.exports = {
             soldefermeture = @soldefermeture,
             montantphysique = @montantphysique,
             ecart = @ecart,
-            statut = @statut
+            statut = @statut,
+            validatedat = @validatedat,
+            validatedby = @validatedby
         OUTPUT INSERTED.* WHERE idperiode = @idperiode
     `,
     DELETE : `

@@ -289,5 +289,35 @@ module.exports = {
             AND OPE.idsite = @idsite
 
         ORDER BY OPE.dateoperation, C.libelle
+    `,
+    etatcloture : `
+        SELECT 
+            cp.idperiode,
+            cp.idcaisse,
+            so.codesociete,
+            so.raisonsociale,
+            s.codesite,
+            s.libelle AS site_lib,
+            c.codecaisse,
+            c.libelle AS caisse_libelle,
+            d.codedevise,
+            cp.dateperiode,
+            cp.soldeouverture,
+            cp.soldefermeture,
+            cp.montantphysique,
+            cp.ecart,
+            cp.statut,
+            cp.validatedat,
+            cp.validatedby
+        FROM CaissePeriode cp
+        INNER JOIN Caisse c ON cp.idcaisse = c.idcaisse
+        INNER JOIN Devise d ON c.iddevise = d.iddevise
+        INNER JOIN Societe so ON c.idsociete = so.idsociete
+        INNER JOIN Site s ON c.idsite = s.idsite
+        WHERE 
+            (@idcaisse IS NULL OR cp.idcaisse = @idcaisse)
+            AND (@datedebut IS NULL OR cp.dateperiode >= @datedebut)
+            AND (@datefin IS NULL OR cp.dateperiode <= @datefin)
+        ORDER BY cp.dateperiode DESC;
     `
 }

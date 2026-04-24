@@ -334,11 +334,58 @@ async function Allpaiement(){
     }
 }
 
+async function getEtatCloture({ idcaisse, datedebut, datefin }) {
+  try {
+    const pool = await connectDB();
+
+    const result = await pool.request()
+      .input('idcaisse', sql.UniqueIdentifier, idcaisse || null)
+      .input('datedebut', sql.DateTime, datedebut || null)
+      .input('datefin', sql.DateTime, datefin || null)
+      .query(operationQueries.etatcloture);
+
+    const resultat =  result.recordset;
+
+    const data =  resultat.map(item => ({
+        idperiode: item.idperiode,
+        caisse: {
+            id: item.idcaisse,
+            libelle: item.caisse_libelle,
+            code: item.codecaisse
+        },
+        date: item.dateperiode,
+        devise: item.codedevise,
+        codesociete : item.codesociete,
+        societe: item.raisonsociale,
+        codesite: item.codesite,
+        site: item.site_lib,
+        soldes: {
+            ouverture: Number(item.soldeouverture),
+            fermeture: Number(item.soldefermeture),
+            physique: Number(item.montantphysique),
+            ecart: Number(item.ecart)
+        },
+        statut: item.statut,
+        validation: {
+            date: item.validatedat,
+            user: item.validatedby
+        }
+    }));
+
+    return { success: true, data: data };
+
+  } catch (error) {
+    console.log(`Erreur de recuperation: ${error}`.cyan.bold);
+    throw error;
+  }
+}
+
 module.exports = {
     journalPaiement,
     editionjournal,
     detailOperation,
     getLastOperation,
     history,
-    Allpaiement
+    Allpaiement,
+    getEtatCloture
 };

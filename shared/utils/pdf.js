@@ -284,4 +284,41 @@ async function genererPdfJournal(data, datedebut, datefin, utilisateur){
     return buffer;
 }
 
+async function genererPdfCloture(data, datedebut, datefin,){
+    const donnees = data.data;
+    const today = new Date();
+
+    const templatePath = path.join(__dirname, '../../views/templates/etat-cloture.html');
+    let html = fs.readFileSync(templatePath, 'utf8');
+
+    // Remplacement entête
+    html = html
+        .replace('{{codesociete}}', donnees.codesociete || '')
+        .replace('{{societe}}', donnees.raisonsociale || '')
+        .replace('{{codesite}}', donnees.codesite || '')
+        .replace('{{site}}', donnees.site || '')
+        .replace('{{codecaisse}}', donnees.codecaisse || '')
+        .replace('{{caisse}}', donnees.caisse.libelle || '')
+        .replace(/{{devise}}/g, donnees.devise || '')
+        .replace('{{datedebut}}', datedebut || '')
+        .replace('{{datefin}}', datefin || '');
+
+    // Sécurité si aucune ligne
+    const lignes = donnees || [];
+
+    const operations = donnees.map(op => `
+        <tr>
+            <td>${op.date || ''}</td>
+            <td>${op.caisse.libelle || ''}</td>
+            <td>${op.devise || ''}</td>
+            <td class="right">${Number(op.soldes.ouverture || 0).toLocaleString('fr-FR')}</td>
+            <td class="right">${Number(soldes.fermeture || 0).toLocaleString('fr-FR')}</td>
+            <td class="right">${Number(op.soldes.physique || 0).toLocaleString('fr-FR')}</td>
+            <td class="right">${Number(op.soldes.ecart || 0).toLocaleString('fr-FR')}</td>
+            <td>${op.statut || ''}</td>
+        </tr>
+    `).join('');
+
+}
+
 module.exports = { genererPdfRecu , genererPdfJournal};

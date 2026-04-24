@@ -10,6 +10,7 @@ router.post("/journalcaisse", jouconsultation_controller.get_journalcaisse); // 
 router.post("/lastoperation", opconsultation_controller.getLastOpController); // OK
 router.post("/historyoperation", opconsultation_controller.historyController); // OK
 router.get("/allpayment", opconsultation_controller.getAllpayment); // OK
-
+router.post("/cloture/caisse", opconsultation_controller.etatclotureController); // OK
+router.post("/etat/cloture/pdf", jouconsultation_controller.get_journalcaisse); // OK
 
 module.exports = router;
