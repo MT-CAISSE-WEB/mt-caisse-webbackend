@@ -42,14 +42,11 @@ async function GenererEcriture(idoperation) {
     await transaction.begin();
 
     try {
-        
-
         // Récupération opération et lignes
         const enteteoperation = await alloperationservice.getenteteoperationbyid(idoperation)
-        const typeoperation = await alloperationservice.gettypeoperwationbyid(idoperation);
+        const typeoperation = await alloperationservice.gettypeoperationbyid(idoperation);
         const ligneoperation  = await alloperationservice.getligneoperationbyidoperation(idoperation);
         const paramcomptable = await alloperationservice.getparamcomptable();
-
 
         //const justificatifoperation = await alloperationservice.
 
@@ -59,10 +56,9 @@ async function GenererEcriture(idoperation) {
         const caisses = [...new Set(typeoperation.data.flat().map(t => t.idcaisse))];
 
         const devises = [...new Set(typeoperation.data.flat().map(t => t.caisse_iddevise))];
-
         
         let rule;
-
+    
         if (caisses.length > 1 && devises.length === 1) {
             rule = rules.transfert;
         } else if (caisses.length > 1 && devises.length > 1) {
@@ -82,6 +78,8 @@ async function GenererEcriture(idoperation) {
         //Groupes les lignes par journaux 
         const groupes = {};
 
+
+
         for (const i of lignesjournal) {
             const journal = i.idjournal;
 
@@ -95,8 +93,8 @@ async function GenererEcriture(idoperation) {
 
         //Insertion dans la table ecriture et ligne écriture 
         for (const journalid in groupes) 
-     {
-            // Création de l'écriture principale
+        {
+                // Création de l'écriture principale
                 const lignesJournal = groupes[journalid];
                 const idecriture = uuidv4();
                 const typeData = lignesJournal.find(l => l.idtypeoperation);
@@ -105,28 +103,27 @@ async function GenererEcriture(idoperation) {
 
                 const pieceNumber = await piecegenerate.generatePieceNumber(transaction, headers.journal);
               
-                await transaction.request()
+                const result1 = await transaction.request()
                     .input("idecriture", sql.UniqueIdentifier, idecriture)
                     .input("ref_ecriture", sql.NVarChar, pieceNumber)
-                    .input("idtypeoperation", sql.NVarChar, typeData.idtypeoperation)
-                    .input("codtypeoperation", sql.UniqueIdentifier, typeData.typeoperation)
+                    .input("idtypeoperation", sql.UniqueIdentifier, typeData.idtypeoperation)
+                    .input("codtypeoperation", sql.NVarChar, typeData.typeoperation)
                     .input("idjournal", sql.UniqueIdentifier, headers.idjournal)
                     .input("journal", sql.NVarChar, headers.journal)
                     .input("date", sql.DateTime, typeData.date)
+                    .input("libelle",sql.VarChar,lignesjournal[0].libelle_ecriture)
                     .input("createdby", sql.NVarChar, 'SYSTEM')
                     .query(`
                         INSERT INTO EcritureComptable
-                        (idecriture,ref_ecriture, idjournal, idtypeoperation,codtypeoperation, journal, date_operation, createdby, createdat)
-                        VALUES (@idecriture, @ref_ecriture, @idjournal, @idtypeoperation, @codtypeoperation, @journal, @date, @createdby, GETDATE())
+                        (idecriture,ref_ecriture, idjournal, idtypeoperation,codtypeoperation, journal, date_operation,libelle, createdby, createdat)
+                        VALUES (@idecriture, @ref_ecriture, @idjournal, @idtypeoperation, @codtypeoperation, @journal, @date,@libelle, @createdby, GETDATE())
                     `);
-
-
 
             // Insertion des lignes comptables
             let totalDebit = 0, totalCredit = 0;
             let num = 1;
 
-            for (const l of lignesjournal) {
+            for (const l of lignesJournal) {
                 totalDebit += l.debit || 0;
                 totalCredit += l.credit || 0;
          
@@ -140,7 +137,7 @@ async function GenererEcriture(idoperation) {
                 throw new Error(`Le compte ${l.idcompte} n'existe pas dans PlanComptable (ligne ${num})`);
             }
              
-                await transaction.request()
+               await transaction.request()
                     .input("idligneecriture", sql.UniqueIdentifier, uuidv4())
                     .input("idecriture", sql.UniqueIdentifier,idecriture)
                     .input("numligne", sql.Int, l.numligne || num++)
@@ -154,13 +151,13 @@ async function GenererEcriture(idoperation) {
                     .input("tiers", sql.NVarChar, l.tiers || null)
                     .input("debit", sql.Decimal(22,9), l.debit || 0)
                     .input("credit", sql.Decimal(22,9), l.credit || 0)
-                    .input("etat", sql.NVarChar, l.etat || 'validee')
+                    .input("etat", sql.NVarChar, l.etat || 'en attente')
                     .input("iddevise", sql.UniqueIdentifier, l.iddevise)
                     .input("devise", sql.NVarChar, l.devise)
                     .input("montantdevise", sql.Decimal(22,9), l.montantdevise)
                     .input("taux", sql.Decimal(18,6), l.taux || 1)
                     .input("montantbase", sql.Decimal(22,9),l.montantref )
-                    .input("typeecriture", sql.NVarChar, l.typeecriture || 'normale')
+                    .input("typeecriture", sql.NVarChar, l.typeecriture || 'simulation')
                     .query(queries.createligneecriture);
 
                 await transaction.request()
@@ -177,14 +174,10 @@ async function GenererEcriture(idoperation) {
 
             console.log(`Journal ${lignesJournal[0].journal} : Total Débit = ${totalDebit}, Total Crédit = ${totalCredit}`);
             // Contrôle équilibre comptable
-             if (totalDebit !== totalCredit) {
-            throw new Error(`Écriture déséquilibrée : D=${totalDebit} C=${totalCredit}`);
+            if (totalDebit !== totalCredit) {
+                throw new Error(`Écriture déséquilibrée : D=${totalDebit} C=${totalCredit}`);
             }
-
-            
     }
-
-       
         //Commit transaction
         await transaction.commit();
 
@@ -289,21 +282,10 @@ async function GenererJustificatif(idjustificatif) {
     }
 }
 
-// async function GenererEcritureMultiple(ids) {
-//     const results = [];
-
-//     for (const id of ids) {
-//         const res = await GenererEcriture(id);
-//         results.push({ id, ...res });
-//     }
-//     return results;
-// }
-
 module.exports = {
     GenererJustificatif,
-    GenererEcriture,
-    //GenererEcritureMultiple
- };
+    GenererEcriture 
+};
 
 
 

@@ -3,6 +3,8 @@ module.exports = {
         SELECT
             C.codecaisse AS codecaisse,
             C.libelle            AS caisse,
+            DC.codedevise        AS devise_caisse,
+            L.libelle            AS libelle_op,
             TOPE.montant               AS montant,
             D.codedevise               AS devise_operation,
             TOPE.montantref            AS montant_ref,
@@ -18,8 +20,15 @@ module.exports = {
         FROM EnteteOperationCaisse EOC
         INNER JOIN TypeOperation TOPE 
             ON TOPE.idoperation = EOC.idoperation
+        OUTER APPLY (
+			SELECT TOP 1 libelle
+			FROM ligneoperationCaisse L
+			WHERE L.idoperation = TOPE.idoperation
+		) L
         INNER JOIN Caisse C 
             ON C.idcaisse = TOPE.idcaisse
+        INNER JOIN Devise DC 
+            ON DC.iddevise = C.iddevise
         INNER JOIN Devise D 
             ON D.iddevise = EOC.iddevise
         INNER JOIN Site S
@@ -250,14 +259,14 @@ module.exports = {
     editionjournal : `
         SELECT Soc.codesociete, Soc.raisonsociale,
         Site.codesite, Site.libelle as lib_site,
-        C.codecaisse, C.libelle as lib_caisse, D.codedevise AS devise_caisse,
+        C.codecaisse, C.libelle as lib_caisse,
         TOPE.codtypeoperation      AS typeoperation,
         OPE.codeoperation, OPE.dateoperation,
         NOP.codenature, NOP.libelle as lib_nature,
         CAN.codecentreanalytique AS codecentre, CAN.libelle as lib_centre,
         T.codetiers, T.designation AS nom_tiers,
-        OPL.libelle, OPL.montantoperation, DevO.codedevise,
-        OPE.montant AS total_ope,
+        OPL.libelle, TOPE.montant,  D.codedevise AS devise_caisse,
+        OPE.montant AS total_ope, DevO.codedevise,
         CP.soldeouverture, CP.soldefermeture
 
         FROM EnteteOperationCaisse OPE
@@ -280,5 +289,35 @@ module.exports = {
             AND OPE.idsite = @idsite
 
         ORDER BY OPE.dateoperation, C.libelle
+    `,
+    etatcloture : `
+        SELECT 
+            cp.idperiode,
+            cp.idcaisse,
+            so.codesociete,
+            so.raisonsociale,
+            s.codesite,
+            s.libelle AS site_lib,
+            c.codecaisse,
+            c.libelle AS caisse_libelle,
+            d.codedevise,
+            cp.dateperiode,
+            cp.soldeouverture,
+            cp.soldefermeture,
+            cp.montantphysique,
+            cp.ecart,
+            cp.statut,
+            cp.validatedat,
+            cp.validatedby
+        FROM CaissePeriode cp
+        INNER JOIN Caisse c ON cp.idcaisse = c.idcaisse
+        INNER JOIN Devise d ON c.iddevise = d.iddevise
+        INNER JOIN Societe so ON c.idsociete = so.idsociete
+        INNER JOIN Site s ON c.idsite = s.idsite
+        WHERE 
+            (@idcaisse IS NULL OR cp.idcaisse = @idcaisse)
+            AND (@datedebut IS NULL OR cp.dateperiode >= @datedebut)
+            AND (@datefin IS NULL OR cp.dateperiode <= @datefin)
+        ORDER BY cp.dateperiode DESC;
     `
 }

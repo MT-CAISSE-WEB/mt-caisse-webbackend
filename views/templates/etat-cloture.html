@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <title>Journal de caisse</title>
+
+        <style>
+
+        body{
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            margin:0;
+        }
+
+        .center{ text-align:center; }
+        .right{ text-align:right; }
+        .bold{ font-weight:bold; }
+
+        h1{
+            font-size:24px;
+            margin:4px 0;
+        }
+
+        h2{
+            font-size:22px;
+            margin:3px 0;
+        }
+
+        .header{
+            margin-bottom:8px;
+        }
+
+        .info{
+            font-size:14px;
+            margin-bottom:4px;
+        }
+
+        tr.total{
+            border-top:1px solid black;
+            font-weight:bold;
+        }
+
+        .line{
+            border-top:1px dashed black;
+            margin:6px 0;
+        }
+
+        .line0{
+            border-top:1px solid rgb(208, 19, 19);
+            margin:6px 0;
+        }
+
+        .small{
+            font-size:9px;
+        }
+
+        .jour{
+        margin-top:10px;
+        page-break-inside: avoid;
+
+        }
+
+        .jour-header{
+            font-weight:bold;
+            margin-top:6px;
+        }
+
+        .solde{
+            margin:4px 0;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+        }
+
+        th{
+            border-bottom:1px solid black;
+            padding:3px;
+            font-size:10px;
+            text-align:left;
+        }
+
+        td{
+            padding:2px;
+            font-size:10px;
+        }
+
+        .right{
+            text-align:right;
+        }
+        </style>
+    </head>
+    <body>
+
+        <!-- ENTETE -->
+        <div class="header center">
+            <h1>{{societe}}</h1>
+            <div class="line0 center"></div>
+            <h2>ETAT DE CLOTURE</h2>
+        </div>
+
+        <div class="info">
+            <div><b>Site :</b> {{codesite}} - {{site}}</div>
+            <div><b>Caisse :</b> {{codecaisse}} - {{caisse}}</div>
+            <div><b>Devise :</b> {{devise}}</div>
+        </div>
+
+        <div class="info">
+            <b>Période :</b>Du {{datedebut}} au {{datefin}}
+        </div>
+
+        <div class="line"></div>
+
+        {{lignes}}
+
+        <div class="line"></div>
+
+    </body>
+
+    <footer>
+        <div class="left small">
+            Imprimé le {{dateimp}} à {{heureimp}} par {{utilisateur}}
+        </div>
+    </footer>
+</html>

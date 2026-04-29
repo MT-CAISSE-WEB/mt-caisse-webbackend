@@ -2,43 +2,128 @@ const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
 
-async function genererPdfRecu(data) {
+
+async function genererPdfRecu(data, copies = 2) {
 
     const templatePath = path.join(__dirname, '../../views/templates/recu-caisse.html');
     let html = fs.readFileSync(templatePath, 'utf8');
 
-    // Générer lignes HTML
+    // =========================
+    // TABLES HTML
+    // =========================
 
-    // lignes d'opérations
     const lignesHtml = data.lignes.map(l => `
         <tr>
             <td>${l.libelle || ''}</td>
-            <td class="right">${l.montant.toLocaleString()}</td>
+            <td class="right">${(l.montant || 0).toLocaleString()}</td>
         </tr>
     `).join('');
 
-    // caisses payeuses
     const caissesHtml = data.caisses.map(c => `
         <tr>
-            <td>${c.libelle}</td>
-            <td class="right">${c.montant.toLocaleString()} ${c.devise || ''}</td>
+            <td>${c.libelle || ''}</td>
+            <td class="right">${(c.montant || 0).toLocaleString()} ${c.devise || ''}</td>
         </tr>
     `).join('');
 
-    html = html
-        .replace('{{societe}}', data.societe)
-        .replace('{{site}}', data.site)
-        .replace('{{date}}', data.date)
-        .replace('{{numero}}', data.numero)
-        .replace('{{type}}', data.type)
-        .replace('{{devise}}', data.devise)
-        .replace('{{description}}', data.description)
-        .replace('{{total}}', data.total.toLocaleString())
-        .replace('{{soldeouverture}}', data.soldeouverture.toLocaleString())
-        .replace('{{soldefermeture}}', data.soldefermeture.toLocaleString())
-        .replace('{{lignes}}', lignesHtml)
-        .replace('{{caisses}}', caissesHtml);
+    // =========================
+    // TEMPLATE D’UN TICKET
+    // =========================
 
+    const ticketTemplate = `
+        <div class="ticket">
+
+            <div class="center bold">REÇU DE CAISSE</div>
+            <div class="center">${data.societe}</div>
+            <div class="center small">${data.site}</div>
+
+            <div class="line"></div>
+
+            <div>Date : ${data.date}</div>
+            <div>N° opération : ${data.numero}</div>
+            <div>Type : ${data.type}</div>
+
+            <div class="line"></div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>${data.description || ''}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="line"></div>
+
+            <div class="bold right">
+                Total : ${(data.total || 0).toLocaleString()} ${data.devise}
+            </div>
+
+            <div class="line"></div>
+
+            <br><br>
+
+            <div class="bold center">PAIEMENT</div>
+
+            <br>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Caisse</th>
+                        <th class="right">Montant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${caissesHtml}
+                </tbody>
+            </table>
+
+            <div class="line"></div>
+
+            <br><br><br>
+
+            <table>
+                <tr>
+                    <td>
+                        <div class="bold">Le caissier</div>
+                        <br><br><br>
+                        <div class="small">Signature</div>
+                    </td>
+                    <td class="right">
+                        <div class="bold">Le bénéficiaire</div>
+                        <br><br><br>
+                        <div class="small">Signature</div>
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+    `;
+
+    // =========================
+    // DUPLICATION
+    // =========================
+
+    const ticketsHtml = Array.from({ length: copies }, (_, i) => `
+        ${ticketTemplate}
+        ${i < copies - 1 ? '<div class="separator"></div>' : ''}
+    `).join('');
+
+    // =========================
+    // INJECTION
+    // =========================
+
+    html = html.replace('{{tickets}}', ticketsHtml);
+
+    // =========================
+    // PDF
+    // =========================
 
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
@@ -55,7 +140,7 @@ async function genererPdfRecu(data) {
     return buffer;
 }
 
-async function genererPdfJournal(data, datedebut, datefin) {
+async function genererPdfJournal(data, datedebut, datefin, utilisateur){
 
     const donnees = data.data;
     const today = new Date();
@@ -81,7 +166,8 @@ async function genererPdfJournal(data, datedebut, datefin) {
         .replace('{{dateimp}}', today.toLocaleDateString('fr-FR'))
         .replace('{{heureimp}}', today.toLocaleTimeString('fr-FR'))
         .replace('{{soldeouverture}}', soldeOuverture)
-        .replace('{{soldefermeture}}', soldeFermeture);
+        .replace('{{soldefermeture}}', soldeFermeture)
+        .replace('{{utilisateur}}', utilisateur || '');
 
 
     // Sécurité si aucune ligne
@@ -104,8 +190,10 @@ async function genererPdfJournal(data, datedebut, datefin) {
         <tr>
             <td>${op.codeoperation || ''}</td>
                 <td>${op.nature || ''}</td>
+                <td>${op.libelle || ''}</td>
+                <td>${op.centre || ''}</td>
                 <td>${op.tiers || ''}</td>
-            <td class="right">${Number(op.montant || 0).toLocaleString('fr-FR')} ${donnees.devise_caisse}</td>
+            <td class="right">${Number(op.montant || 0).toLocaleString('fr-FR')}</td>
         </tr>
     `).join('');
 
@@ -113,14 +201,14 @@ async function genererPdfJournal(data, datedebut, datefin) {
         <tr>
             <td colspan="3" class="left">
                 <strong>Total encaissement : </strong>
-                ${Number(totalEncaissement || 0).toLocaleString('fr-FR')} ${donnees.devise_caisse}
+                ${Number(totalEncaissement || 0).toLocaleString('fr-FR')}
             </td>
             <td class="left"></td>
         </tr>
         <tr>
             <td colspan="3" class="left">
                 <strong>Total encaissement : </strong>
-                ${Number(totalDecaissement || 0).toLocaleString('fr-FR')} ${donnees.devise_caisse}
+                ${Number(totalDecaissement || 0).toLocaleString('fr-FR')}
             </td>
             <td class="left"></td>
         </tr>
@@ -135,14 +223,16 @@ async function genererPdfJournal(data, datedebut, datefin) {
 
             <div class="solde">
                 Solde ouverture : 
-                <strong>${Number(jour.solde_ouverture || 0).toLocaleString('fr-FR')} ${donnees.devise_caisse}</strong>
+                <strong>${Number(jour.solde_ouverture || 0).toLocaleString('fr-FR')}</strong>
             </div>
 
             <table>
                 <thead>
                     <tr>
                         <th>Pièce</th>
+                        <th>Libellé</th>
                         <th>Nature</th>
+                        <th>Centre</th>
                         <th>Tiers</th>
                         <th class="right">Montant</th>
                     </tr>
@@ -157,7 +247,7 @@ async function genererPdfJournal(data, datedebut, datefin) {
 
             <div class="solde right">
                 Solde fermeture :
-                <strong>${Number(jour.solde_fermeture || 0).toLocaleString('fr-FR')} ${donnees.devise_caisse}</strong>
+                <strong>${Number(jour.solde_fermeture || 0).toLocaleString('fr-FR')}</strong>
             </div>
 
             <div class="line"></div>
@@ -169,7 +259,7 @@ async function genererPdfJournal(data, datedebut, datefin) {
 
     html = html.replace('{{lignes}}', lignesHtml);
 
-    const browser = await puppeteer.launch({
+     const browser = await puppeteer.launch({
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
@@ -192,6 +282,43 @@ async function genererPdfJournal(data, datedebut, datefin) {
     await browser.close();
 
     return buffer;
+}
+
+async function genererPdfCloture(data, datedebut, datefin,){
+    const donnees = data.data;
+    const today = new Date();
+
+    const templatePath = path.join(__dirname, '../../views/templates/etat-cloture.html');
+    let html = fs.readFileSync(templatePath, 'utf8');
+
+    // Remplacement entête
+    html = html
+        .replace('{{codesociete}}', donnees.codesociete || '')
+        .replace('{{societe}}', donnees.raisonsociale || '')
+        .replace('{{codesite}}', donnees.codesite || '')
+        .replace('{{site}}', donnees.site || '')
+        .replace('{{codecaisse}}', donnees.codecaisse || '')
+        .replace('{{caisse}}', donnees.caisse.libelle || '')
+        .replace(/{{devise}}/g, donnees.devise || '')
+        .replace('{{datedebut}}', datedebut || '')
+        .replace('{{datefin}}', datefin || '');
+
+    // Sécurité si aucune ligne
+    const lignes = donnees || [];
+
+    const operations = donnees.map(op => `
+        <tr>
+            <td>${op.date || ''}</td>
+            <td>${op.caisse.libelle || ''}</td>
+            <td>${op.devise || ''}</td>
+            <td class="right">${Number(op.soldes.ouverture || 0).toLocaleString('fr-FR')}</td>
+            <td class="right">${Number(soldes.fermeture || 0).toLocaleString('fr-FR')}</td>
+            <td class="right">${Number(op.soldes.physique || 0).toLocaleString('fr-FR')}</td>
+            <td class="right">${Number(op.soldes.ecart || 0).toLocaleString('fr-FR')}</td>
+            <td>${op.statut || ''}</td>
+        </tr>
+    `).join('');
+
 }
 
 module.exports = { genererPdfRecu , genererPdfJournal};

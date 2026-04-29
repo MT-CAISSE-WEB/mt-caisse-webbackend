@@ -8,7 +8,7 @@ module.exports.get_journalcaisse = asyncHandler(async (req, res) => {
     try {
         const parms = req.body;
         const data = await consultationservice.editionjournal(parms.datedebut, parms.datefin, parms.idcaisse, parms.idsite);
-        const pdfBuffer = await pdfjs.genererPdfJournal(data, parms.datedebut, parms.datefin);
+        const pdfBuffer = await pdfjs.genererPdfJournal(data, parms.datedebut, parms.datefin, parms.utilisateur);
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'inline; filename=journal-caisse.pdf');

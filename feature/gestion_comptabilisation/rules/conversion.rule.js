@@ -14,8 +14,10 @@ module.exports = function conversionRule(enteteoperation, typeoperation, ligneop
     if (!mouvements.length) throw new Error("Aucun mouvement");
 
     // 1. Mouvement de référence (taux = 1)
-    const base = mouvements.find(m => m.taux === 1);
-    if (!base) throw new Error("Aucune caisse de référence (taux=1)");
+    //const base = mouvements.find(m => m.taux === 1);
+    const base_1 = mouvements.find(m => m.caisse_iddevise === enteteoperation.iddevise);
+    const base_2 = mouvements.find(m => m.caisse_iddevise !== enteteoperation.iddevise);
+    if (!base_1) throw new Error("Aucune caisse de référence");
 
     // Total charges
     const totalCharges = lignes.reduce((s, l) => s + l.montantoperation, 0);
@@ -25,7 +27,6 @@ module.exports = function conversionRule(enteteoperation, typeoperation, ligneop
     // CHARGES
     // ==============================
     for (const l of lignes) {
-
         result.push({
             idligneoperation : l.idligneoperation,
             idcompte: l.compte_id,
@@ -35,11 +36,11 @@ module.exports = function conversionRule(enteteoperation, typeoperation, ligneop
             codenature : l.nature_code,
             libellenature : l.nature_libelle,
 
-            idjournal: base.idjournal,
-            journal: base.codejournal,
+            idjournal: base_1.idjournal,
+            journal: base_1.codejournal,
 
-            debit: base.codtypeoperation === 'decaissement' ? l.montantoperation : 0,
-            credit: base.codtypeoperation === 'encaissement' ? l.montantoperation : 0,
+            debit: base_1.codtypeoperation === 'decaissement' || 'decaissementaj' ? l.montantoperation : 0,
+            credit: base_1.codtypeoperation === 'encaissement' ? l.montantoperation : 0,
 
             idcentreanalytique : l.centre_id,
             centreanalytique : l.codecentreanalytique,
@@ -47,8 +48,8 @@ module.exports = function conversionRule(enteteoperation, typeoperation, ligneop
             idtiers : l.tiers_id,
             tiers : l.codetiers,
 
-            iddevise: base.caisse_iddevise,
-            devise: base.codedevise,
+            iddevise: base_1.caisse_iddevise,
+            devise: base_1.codedevise,
 
             montantdevise: l.montantoperation,
             taux: 1,
@@ -56,8 +57,9 @@ module.exports = function conversionRule(enteteoperation, typeoperation, ligneop
 
             etat: 'en attente',
             numligne: result.length + 1,
-            typeecriture: 'charge',
-            date : enteteoperation.dateoperation
+            typeecriture: 'simulation',
+            date : enteteoperation.dateoperation,
+            libelle_ecriture : l.libelle
         });
     }
 
@@ -65,66 +67,66 @@ module.exports = function conversionRule(enteteoperation, typeoperation, ligneop
     // CAISSE PRINCIPALE
     // ==============================
     result.push({
-        idcompte: base.idcompte,
-        compte: base.numcompte,
+        idcompte: base_1.idcompte,
+        compte: base_1.numcompte,
 
-        idjournal: base.idjournal,
-        journal: base.codejournal,
+        idjournal: base_1.idjournal,
+        journal: base_1.codejournal,
 
-        idtypeoperation : base.idtypeoperation,
-        codtypeoperation : base.codtypeoperation,
+        idtypeoperation : base_1.idtypeoperation,
+        codtypeoperation : base_1.codtypeoperation,
 
         debit: 0,
-        credit: base.montant,
+        credit: base_1.montant,
 
-        idcentreanalytique :  base.centre_id,
-        centreanalytique :  base.codecentreanalytique,
+        idcentreanalytique :  base_1.centre_id,
+        centreanalytique :  base_1.codecentreanalytique,
 
-        idtiers :  base.tiers_id,
-        tiers :  base.codetiers,
+        idtiers :  base_1.tiers_id,
+        tiers :  base_1.codetiers,
 
-        iddevise: base.caisse_iddevise,
-        devise: base.codedevise,
+        iddevise: base_1.caisse_iddevise,
+        devise: base_1.codedevise,
 
-        montantdevise: base.montant,
+        montantdevise: base_1.montant,
         taux: 1,
-        montantref: base.montant,
+        montantref: base_1.montant,
 
         etat: 'en attente',
         numligne: result.length + 1,
-        typeecriture: 'caisse',
-        date : enteteoperation.dateoperation
+        typeecriture: 'simulation',
+        date : enteteoperation.dateoperation,
+        libelle_ecriture : lignes[0].libelle
     });
-
+     
     // ==============================
     // TRANSIT (différence)
     // ==============================
-    const reste = totalCharges - base.montant;
+    const reste = totalCharges - base_1.montant;
 
     if (reste > 0) {
-
         //Sortie en devise de base (CDF)
         result.push({
-           idcompte:paramcomptable.idcompte,
-            compte:paramcomptable.numcompte,
+            idcompte:paramcomptable[0].idcompte,
+            compte:paramcomptable[0].numcompte,
 
-            idjournal: base.idjournal,
-            journal: base.codejournal,
+            idjournal: base_1.idjournal,
+            journal: base_1.codejournal,
 
-            idtypeoperation : base.idtypeoperation,
-            codtypeoperation : base.codtypeoperation,
+            idtypeoperation : base_1.idtypeoperation,
+            codtypeoperation : base_1.codtypeoperation,
 
             debit: 0,
             credit: reste,
 
-            idcentreanalytique :  base.centre_id,
-            centreanalytique :  base.codecentreanalytique,
+            idcentreanalytique :  base_1.centre_id,
+            centreanalytique :  base_1.codecentreanalytique,
 
-            idtiers :  base.tiers_id,
-            tiers :  base.codetiers,
+            idtiers :  base_1.tiers_id,
+            tiers :  base_1.codetiers,
 
-            iddevise: base.caisse_iddevise,
-            devise: base.codedevise,
+            iddevise: base_1.caisse_iddevise,
+            devise: base_1.codedevise,
 
             montantdevise: reste,
             taux: 1,
@@ -132,34 +134,34 @@ module.exports = function conversionRule(enteteoperation, typeoperation, ligneop
 
             etat: 'en attente',
             numligne: result.length + 1,
-            typeecriture: 'transit',
-            date : enteteoperation.dateoperation
+            typeecriture: 'simulation',
+            date : enteteoperation.dateoperation,
+            libelle_ecriture : lignes[0].libelle
         });
-
-
+    
         // ==============================
         // AUTRES CAISSES (conversion)
         // ==============================
-        const autres = mouvements.filter(m => m.taux !== 1);
-
-  
+        const autres = mouvements.filter(m => m.caisse_iddevise !== enteteoperation.iddevise);
 
         for (const m of autres) {
-
-            const montantDevise = reste / m.taux;
-
-            console.log(m);
-            con;
+           let montantDevise=0;
+            if(m.taux === 1 ){
+                montantDevise = base_2.montantref;
+            }
+            else{
+                montantDevise = base_2.montant;
+            }
 
             // Entrée transit en devise cible
             result.push({
-                idcompte:paramcomptable.idcompte,
-                compte:paramcomptable.numcompte,
+                idcompte:paramcomptable[0].idcompte,
+                compte:paramcomptable[0].numcompte,
 
                 idjournal: m.idjournal,
                 journal: m.codejournal,
 
-                debit: montantDevise,
+                debit:montantDevise,
                 credit: 0,
 
                 idtypeoperation : m.idtypeoperation,
@@ -176,14 +178,16 @@ module.exports = function conversionRule(enteteoperation, typeoperation, ligneop
 
                 montantdevise: montantDevise,
                 taux: m.taux,
-                montantref: reste,
+                montantref: m.montantref,
 
                 etat: 'en attente',
                 numligne: result.length + 1,
-                typeecriture: 'transit',
-                date : enteteoperation.dateoperation
+                typeecriture: 'simulation',
+                date : enteteoperation.dateoperation,
+                libelle_ecriture : lignes[0].libelle
             });
 
+    
             // Caisse cible
             result.push({
                 idcompte: m.idcompte,
@@ -213,11 +217,14 @@ module.exports = function conversionRule(enteteoperation, typeoperation, ligneop
 
                 etat: 'en attente',
                 numligne: result.length + 1,
-                typeecriture: 'caisse',
-                date : enteteoperation.dateoperation
+                typeecriture: 'simulation',
+                date : enteteoperation.dateoperation,
+                libelle_ecriture : lignes[0].libelle
             });
         }
-    }
+
     
+    }
+
     return result;
 };

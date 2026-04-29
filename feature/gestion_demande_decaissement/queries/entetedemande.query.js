@@ -276,6 +276,8 @@ module.exports = {
             L.numligne,
             L.libellelignedemande,
             L.montantdemande,
+            L.codebudgetaire,
+            L.idlignebudget,
 
             -- ================= NATURE / CENTRE =================
             N.idnature AS idnatureop,
@@ -422,34 +424,32 @@ module.exports = {
     `,
     bydetailLigneBudgetnature : `
         Select E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle as dept_libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide, BU.isanalytique,
-			LD.idbudget,BDN.idnature, N.codenature, N.libelle AS nature_lib, LD.budgetconso, LD.preengage, LD.engage, LD.realise, BDN.montantprevisionsociete, SUM(LD.montantdemande) AS montant_demande, SUM(LD.montantref) AS montant_ref
+			LD.idbudget, N.idnature, N.codenature, N.libelle AS nature_lib, LD.budgetconso, LD.preengage, LD.engage, LD.realise, LD.idlignebudget, LD.codebudgetaire, BDN.montantprevisionsociete, SUM(LD.montantdemande) AS montant_demande, SUM(LD.montantref) AS montant_ref
         From EnteteDemande E
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
             LEFT JOIN Budget BU ON BU.idbudget = LD.idbudget
-			LEFT JOIN BudgetDepartementNature BDN ON BDN.iddepartement = E.iddepartement AND BDN.idbudget = BU.idbudget
-			AND BDN.idnature = LD.idnature
+			LEFT JOIN BudgetDepartementNature BDN ON BDN.idbudgetdepartementnature = LD.idlignebudget
 			LEFT JOIN NatureOperation N ON N.idnature = LD.idnature
             LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
             LEFT JOIN Departement DP ON DP.iddepartement = E.iddepartement
         Where E.iddemande = @iddemande
         Group By E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide, BU.isanalytique,
-			LD.idbudget,BDN.idnature, N.codenature, N.libelle, LD.budgetconso, LD.budgetconso, LD.preengage, LD.engage, LD.realise, BDN.montantprevisionsociete
+			LD.idbudget, N.idnature, N.codenature, N.libelle, LD.budgetconso, LD.budgetconso, LD.preengage, LD.engage, LD.realise, LD.idlignebudget, LD.codebudgetaire, BDN.montantprevisionsociete
     `,
     bydetailLigneBudgetcentre : `
         Select E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle as dept_libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
-			LD.idbudget,BDN.idcentre, CA.codecentre, CA.libelle as centre_lib, BDN.idnature, N.codenature, N.libelle AS nature_lib, LD.budgetconso, LD.preengage, LD.engage, LD.realise, BDN.montantprevisionsociete, SUM(LD.montantdemande) AS montant_demande, SUM(LD.montantref) AS montant_ref
+			LD.idbudget, CA.idcentre, CA.codecentre, CA.libelle as centre_lib, BDN.idnature, N.codenature, N.libelle AS nature_lib, LD.budgetconso, LD.preengage, LD.engage, LD.realise, LD.idlignebudget, LD.codebudgetaire, BDN.montantprevisionsociete, SUM(LD.montantdemande) AS montant_demande, SUM(LD.montantref) AS montant_ref
         From EnteteDemande E
             LEFT JOIN LigneDemande LD ON LD.iddemande = E.iddemande
             LEFT JOIN Budget BU ON BU.idbudget = LD.idbudget
-			LEFT JOIN BudgetDepartementNature BDN ON BDN.iddepartement = E.iddepartement AND BDN.idbudget = BU.idbudget
-			AND BDN.idcentre = LD.idcentre
+			LEFT JOIN BudgetDepartementNature BDN ON BDN.idbudgetdepartementnature = LD.idlignebudget
             LEFT JOIN CentreAnalytique CA ON CA.idcentre = LD.idcentre
 			LEFT JOIN NatureOperation N ON N.idnature = LD.idnature
             LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
             LEFT JOIN Departement DP ON DP.iddepartement = E.iddepartement
         Where E.iddemande = @iddemande
         Group By E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
-			LD.idbudget, BDN.idcentre, CA.codecentre, CA.libelle, BDN.idnature, N.codenature, N.libelle, LD.budgetconso, LD.budgetconso, LD.preengage, LD.engage, LD.realise, BDN.montantprevisionsociete
+			LD.idbudget, CA.idcentre, CA.codecentre, CA.libelle, BDN.idnature, N.codenature, N.libelle, LD.budgetconso, LD.budgetconso, LD.preengage, LD.engage, LD.realise, LD.idlignebudget, LD.codebudgetaire, BDN.montantprevisionsociete
     `,
     checkDroit : `
         SELECT 1
@@ -498,5 +498,84 @@ module.exports = {
     resetCircuit : `
         DELETE FROM ValidationDemande
         WHERE iddemande = @iddemande
-    `
+    `,
+    getbudget : `
+        SELECT
+            -- ================= ENTETE =================
+            E.iddemande,
+            E.codedemande,
+            E.typedemande,
+            E.libelledemande,
+            E.datedemande,
+
+            -- ================= Budget ==================
+            BU.valide, 
+            BU.isanalytique,
+
+            -- ================= DEMANDEUR =================
+            U.idutilisateur,
+            U.nom,
+            U.prenom,
+
+            -- ================= SOCIETE / SITE =================
+            S.idsociete,
+            S.raisonsociale AS societe,
+            SI.idsite,
+            SI.libelle AS site,
+
+            -- ================= DEVISE ================= 
+            DE.iddevise, 
+            DE.codedevise,
+
+            -- ================= DEPARTEMENT =================
+            DEP.iddepartement,
+            DEP.codedept,
+            DEP.libelle AS libelledept,
+
+            -- ================= LIGNE =================
+            L.idlignedemande,
+            L.numligne,
+            L.libellelignedemande,
+            L.montantdemande,
+
+            -- ================= NATURE / CENTRE =================
+            N.idnature AS idnatureop,
+            N.libelle AS natureoperation,
+            C.idcentreanalytique AS idcentreana,
+            C.libelle AS centreanalytique,
+
+            -- ================= Tiers =================
+            T.idtiers AS idtiers,
+            T.codetiers AS codetiers,
+            T.designation AS designationtiers
+
+        FROM EnteteDemande E
+        LEFT JOIN Utilisateur U ON U.idutilisateur = E.iddemandeur
+        LEFT JOIN Societe S ON S.idsociete = E.idsociete
+        LEFT JOIN Site SI ON SI.idsite = E.idsite
+        LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
+        LEFT JOIN Departement DEP ON DEP.iddepartement = E.iddepartement
+
+        LEFT JOIN LigneDemande L 
+            ON L.iddemande = E.iddemande
+        
+        LEFT JOIN Budget BU ON BU.idbudget = L.idbudget
+		LEFT JOIN BudgetDepartementNature BDN ON BDN.idbudgetdepartementnature = L.idlignebudget	
+
+        LEFT JOIN NatureOperation N 
+            ON N.idnature = L.idnature
+
+        LEFT JOIN CentreAnalytique C 
+            ON C.idcentreanalytique = L.idcentre
+        
+        LEFT JOIN Tiers T 
+            ON T.idtiers = L.idtiers
+
+        --JOINTURE DÉTAIL SANS FILTRAGE
+        LEFT JOIN DetailsDemande D 
+            ON D.idlignedemande = L.idlignedemande
+            AND D.iddemande = E.iddemande
+
+        WHERE E.iddemande = @iddemande
+    `,
 }

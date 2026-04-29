@@ -117,6 +117,7 @@ async function delete_compte(idcompte) {
 // OK
 async function import_plan_comptable(filePath, info) {
   const today = new Date();
+  console.log(info, info.idsociete, info.createdby);
   const parser = fs
     .createReadStream(filePath)
     .pipe(parse({ delimiter: ";", from_line: 1 }));
@@ -130,12 +131,14 @@ async function import_plan_comptable(filePath, info) {
             libelle: row[1]?.trim(),
             ventillable: Number(row[2]),
             auxiliaire: Number(row[3]),
-            actif: Number(row[4]),
-            suivibudgetaire: Number(row[5]),
-            suivibudgetairemensuel: Number(row[6]),
+            suivibudgetaire: Number(row[4]),
+            suivibudgetairemensuel: Number(row[5]),
+            actif: Number(row[6]),
             idsociete: info.idsociete,
             createdby: info.createdby,
-            createdat: today
+            updatedby: info.createdby,
+            createdat: today,
+            updatedat: today
           };
 
         await create_compte(data);

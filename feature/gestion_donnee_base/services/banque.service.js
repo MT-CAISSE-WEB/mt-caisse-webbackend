@@ -58,7 +58,7 @@ async function create_banque(data) {
     data.solde_initial,
     data.solde_actuel,
     data.idsociete,
-    data.idsite,
+    data.idsite || null,
     data.idcompte,
     data.iddevise,
     data.createdat || today, 
@@ -140,9 +140,10 @@ async function import_banque(filePath, info) {
             numerocompte: Number(row[5]),
             actif: Number(row[6]),
             idsociete: info.idsociete,
-            idcompte: info.idcompte,
-            createdby: 'System',
-            createdat: today
+            createdby: info.createdby,
+            updatedby: info.createdby,
+            createdat: today,
+            updatedat: today
           };
 
         await create_banque(data);

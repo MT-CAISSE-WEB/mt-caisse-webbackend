@@ -13,19 +13,19 @@ const queryupsert = `IF EXISTS (SELECT 1 FROM Tiers WHERE codetiers = @codetiers
     ELSE
     BEGIN
         INSERT INTO Tiers (idtiers, codetiers, designation, typetiers, actif, idsociete,
-        createdat, updatedat, createdby, updatedby)
+        createdat, createdby)
         OUTPUT INSERTED.*
         VALUES (@idtiers, @codetiers, @designation, @typetiers, @actif, @idsociete,
-        @createdat, @updatedat, @createdby, @updatedby)
+        @createdat, @createdby)
     END
 `;
 
 const queryInsert = `
         INSERT INTO Tiers (idtiers, codetiers, designation, typetiers, actif, idsociete,
-        createdat, updatedat, createdby, updatedby)
+        createdat, createdby)
         OUTPUT INSERTED.*
         VALUES (@idtiers, @codetiers, @designation, @typetiers, @actif, @idsociete,
-        @createdat, @updatedat, @createdby, @updatedby)
+        @createdat, @createdby)
     `;
 
 const queryUpdate = `UPDATE Tiers SET designation = @designation, typetiers = @typetiers, 
@@ -84,8 +84,6 @@ class TiersModel {
             .input('createdby', sql.NVarChar(50), this.createdby)
             .input('updatedby', sql.NVarChar(50), this.updatedby)
             .query(queryupsert);
-
-            console.log(result);
 
             return { success: true, data: result.recordset[0] };
         } catch (error) {

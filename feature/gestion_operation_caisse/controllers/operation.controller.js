@@ -101,7 +101,7 @@ module.exports.get_operationmax = asyncHandler(async(req, res, next) => {
 module.exports.get_recudecaisse = asyncHandler(async (req, res) => {
     try {
         const data = await typeoperationservice.getDataRecu(req.params.id);
-        const pdfBuffer = await pdfjs.genererPdfRecu(data);
+        const pdfBuffer = await pdfjs.genererPdfRecu(data, 2);
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'inline; filename=recu-caisse.pdf');

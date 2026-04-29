@@ -127,7 +127,9 @@ async function import_tiers(filePath, info) {
             actif: Number(row[3]),
             idsociete: info.idsociete,
             createdby: info.createdby,
-            createdat: today
+            updatedby: info.createdby,
+            createdat: today,
+            updatedat: today
           };
 
         await create_tiers(data);

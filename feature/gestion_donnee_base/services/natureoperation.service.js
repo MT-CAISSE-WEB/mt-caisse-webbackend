@@ -74,7 +74,7 @@ async function create_nature(data) {
 // OK
 async function get_by_idnature(idnature) {
   if (!idnature) {
-    throw new Error("Ce compte n'existe pas.");
+    throw new Error("Cette nature n'existe pas.");
   }
 
   try {
@@ -119,39 +119,53 @@ async function delete_nature(idnature) {
 // OK
 async function import_nature(filePath, info) {
   const today = new Date();
+
   const parser = fs
     .createReadStream(filePath)
     .pipe(parse({ delimiter: ";", from_line: 1 }));
 
-    try {
-      for await (const row of parser) {
-        // recupere les donnees
-        try{          
-          const data = {
-            codenature: row[0]?.trim(),
-            libelle: row[1]?.trim(),
-            decajustifier: Number(row[2]),
-            imputationtiers: Number(row[3]),
-            demandedecaissement: Number(row[4]),
-            typeoperation: Number(row[5]),
-            actif: Number(row[6]),
-            idsociete: info.idsociete,
-            idcompte: info.idcompte,
-            createdby: 'System',
-            createdat: today
-          };
+  try {
+    for await (const row of parser) {
+      try {
+
+        const numcompte = row[6]?.trim();
+
+        // 🔍 récupérer idcompte
+        const idcompte = await nature.getIdCompteByNumero(numcompte);
+
+        if (!idcompte) {
+          console.warn(`Compte introuvable : ${numcompte}`);
+          continue; // ou throw selon ton besoin
+        }
+
+        const data = {
+          codenature: row[0]?.trim(),
+          libelle: row[1]?.trim(),
+          typeoperation: row[2]?.trim(),
+          decajustifier: Number(row[3]),
+          imputationtiers: Number(row[4]),
+          demandedecaissement: Number(row[5]),
+          idcompte: idcompte, // ✅ GUID ici
+          actif: Number(row[7]),
+          idsociete: info.idsociete,
+          createdby: info.createdby,
+          updatedby: info.createdby,
+          createdat: today,
+          updatedat: today
+        };
 
         await create_nature(data);
-      
-        } catch (error) {
-        console.error("Error:", error.message);
-        throw error; }
+
+      } catch (error) {
+        console.error("Erreur ligne :", row, error.message);
       }
-    }  catch (error) {
-        console.error("Error:", error.message);
-        throw error;
     }
+  } catch (error) {
+    console.error("Erreur globale :", error.message);
+    throw error;
+  }
 }
+
 
 // OK
 async function exportNatures(debut, fin) {

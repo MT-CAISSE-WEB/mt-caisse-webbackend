@@ -7,6 +7,9 @@ const caissemodel = new caisseModel();
 let periodemodel = new periodeModel();
 let typeoperation = new typeoperationmodel();
 let caisseperiodes = [];
+let user = null;
+
+const userservice = require('../../gestion_users/services/users.service');
 
 async function get_all_caisseperiodes(page = 1, limit = 5) {
   const result = await periodemodel.get_allcaisseperiodes(page, limit);
@@ -134,6 +137,9 @@ async function fermeture_periode(idutilisateur, data) {
     throw new Error("Aucune période de caisse fournie.");
   }
 
+  //Recuperer user
+  user = await userservice.getoneuser(idutilisateur);
+
   const results = [];
 
   for(const periode of data){
@@ -164,6 +170,9 @@ async function fermeture_periode(idutilisateur, data) {
     const datePeriode = new Date(periode.dateperiode);
     const today = new Date();
 
+    //Validateur
+    periode.validatedby = user.data.nom + " " + user.data.prenom;
+
     // On met à 00:00 pour éviter les problèmes d'heures
     today.setHours(0, 0, 0, 0);
     datePeriode.setHours(0, 0, 0, 0);
@@ -182,7 +191,7 @@ async function fermeture_periode(idutilisateur, data) {
 
       if(periodeAs){
         const newperiode = new periodeModel(uuidv4(), periode.idcaisse, newDate, periode.soldefermeture, 0, 0, 0, 
-        "non ouverte", periode.validatedat, periode.validatedby || null, periode.createdat || today, periode.createdby || 'System', periode.updatedat || null, periode.updatedby || null);
+        "non ouverte", periode.validatedat, null, periode.createdat || today, periode.createdby || 'System', periode.updatedat || null, periode.updatedby || null);
         const periodeNext = await newperiode.create_caisseperiode();
       }
 

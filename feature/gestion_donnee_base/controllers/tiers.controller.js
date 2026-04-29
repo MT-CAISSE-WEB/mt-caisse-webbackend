@@ -93,12 +93,8 @@ module.exports.exportTiers = asyncHandler(async (req, res) => {
 
   const { debut, fin, typetiers, format } = req.body;
 
-  console.log('Export request received with parameters:', { debut, fin, typetiers, format });
-
   try {
     const data = await tiersservice.exportTiers(debut, fin, typetiers);
-
-    console.log(data);
 
     if (format === 'excel') {
       return exportExcel(data, res);
@@ -107,7 +103,6 @@ module.exports.exportTiers = asyncHandler(async (req, res) => {
     }
 
   } catch (err) {
-    console.log(err.message)
     res.status(500).json({
       success: false,
       message: err.message

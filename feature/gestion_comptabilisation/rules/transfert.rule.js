@@ -25,8 +25,9 @@ module.exports = function multiCaisseRule(
 
     const isDecaissement = type.includes('decaissement');
     const isEncaissement = type.includes('encaissement');
+    const isDecaissementaj = type.includes('decaissementaj');
 
-    if (!isDecaissement && !isEncaissement) {
+    if (!isDecaissement || !isEncaissement || !isDecaissementaj ) {
         throw new Error("Type d'opération non supporté");
     }
 
@@ -39,8 +40,9 @@ module.exports = function multiCaisseRule(
     // CHARGE / PRODUIT (UNE SEULE LIGNE)
     // ==============================
     const ref = lignes[0];
-
-    result.push({
+    
+    for (ref in lignes){
+        result.push({
         idcompte: ref.compte_id,
         compte: ref.numcompte,
 
@@ -69,8 +71,11 @@ module.exports = function multiCaisseRule(
         etat: 'en attente',
         numligne: result.length + 1,
         typeecriture: 'charge',
-        date : enteteoperation.dateoperation
+        date : enteteoperation.dateoperation,
+        libelle_ecriture : ref.libelle
     });
+    }
+    
 
     // ==============================
     // CAISSES (RÉPARTITION)
@@ -91,7 +96,7 @@ module.exports = function multiCaisseRule(
             journal: m.codejournal,
 
             debit: isEncaissement ? m.montant : 0,
-            credit: isDecaissement ? m.montant : 0,
+            credit: isDecaissement || isDecaissementaj ? m.montant : 0,
 
             idcentreanalytique: m.centre_id,
             centreanalytique: m.codecentreanalytique,
@@ -109,7 +114,8 @@ module.exports = function multiCaisseRule(
             etat: 'en attente',
             numligne: result.length + 1,
             typeecriture: 'caisse',
-            date : enteteoperation.dateoperation
+            date : enteteoperation.dateoperation,
+            libelle_ecriture : ref.libelle
         });
     }
 

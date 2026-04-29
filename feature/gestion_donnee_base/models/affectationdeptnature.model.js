@@ -37,7 +37,7 @@ class AffectationDepartementNatureModel {
             // Natures affectées
             const resultAffectes = await pool.request()
                 .input("iddepartement", sql.UniqueIdentifier, iddepartement)
-                .query(`SELECT n.idnature, n.decajustifier, n.codenature, n.libelle, n.actif, n.demandedecaissement, n.imputationtiers
+                .query(`SELECT n.idnature, n.codenature, n.libelle, n.decajustifier, n.actif, n.demandedecaissement, n.imputationtiers
                     FROM NatureOperation n INNER JOIN AffectationDepartementNature a
                     ON a.idnature = n.idnature
                     WHERE a.iddepartement = @iddepartement
@@ -46,7 +46,7 @@ class AffectationDepartementNatureModel {
             // Natures non affectées
             const resultNonAffectes = await pool.request()
                 .input("iddepartement", sql.UniqueIdentifier, iddepartement)
-                .query(`SELECT n.idnature, n.decajustifier, n.codenature, n.libelle, n.actif
+                .query(`SELECT n.idnature, n.codenature, n.libelle, decajustifier, n.actif
                     FROM NatureOperation n WHERE n.actif = 1 AND NOT EXISTS (
                         SELECT 1 FROM AffectationDepartementNature a
                         WHERE a.idnature = n.idnature AND a.iddepartement = @iddepartement)
@@ -61,7 +61,7 @@ class AffectationDepartementNatureModel {
     }
 
     
-        async saveAffectations(iddepartement, data) {
+    async saveAffectations(iddepartement, idsNatures, info) {
         const pool = await connectDB();
         const transaction = new sql.Transaction(pool);
 
@@ -76,16 +76,16 @@ class AffectationDepartementNatureModel {
                 `);
 
             // 2️⃣ Insérer les nouvelles affectations
-            for (const ligne of data) {
+            for (const idnature of idsNatures) {
                 await transaction.request()
                     .input('idaffdepartementnature', sql.UniqueIdentifier, uuidv4())
-                    .input('idsociete', sql.UniqueIdentifier, data.idsociete)
+                    .input('idsociete', sql.UniqueIdentifier, info.idsociete)
                     .input('iddepartement', sql.UniqueIdentifier, iddepartement)
-                    .input('idnature', sql.UniqueIdentifier, ligne.idnature)
+                    .input('idnature', sql.UniqueIdentifier, idnature.idnature)
                     .input('createdat', sql.DateTime, new Date())
                     .input('updatedat', sql.DateTime, new Date())
-                    .input('createdby', sql.NVarChar(50), data.createdby)
-                    .input('updatedby', sql.NVarChar(50), data.updatedby)
+                    .input('createdby', sql.NVarChar(50), info.createdby)
+                    .input('updatedby', sql.NVarChar(50), info.createdby)
                     .query(queryInsert);
             }
 
@@ -119,8 +119,6 @@ class AffectationDepartementNatureModel {
                     WHERE (@debut IS NULL OR d.codedept >= @debut) 
                     AND (@fin IS NULL OR d.codedept <= @fin)
                     ORDER BY n.libelle ASC`);
-
-        console.log(result.recordset);
 
         const data = result.recordset;
 

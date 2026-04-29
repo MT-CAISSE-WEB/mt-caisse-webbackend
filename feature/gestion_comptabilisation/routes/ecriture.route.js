@@ -5,8 +5,8 @@ const authmiddleware = require("../../../middlewares/auth.middlewre");
 
 //router.get("/Ecriture",authmiddleware.authentificatetoken, ecriturecontroller.getallecritures);
 //router.get("/Ecriture/:id",authmiddleware.authentificatetoken, ecriturecontroller.getoneecriture);
-router.post("/:idoperation", ecriturecontroller.GenererEcriture);
-router.post("/justificatif/:idjustificatif",ecriturecontroller.GenererJustificatif);
+router.post("/:idoperation",authmiddleware.authentificatetoken, ecriturecontroller.GenererEcriture);
+router.post("/justificatif/:idjustificatif",authmiddleware.authentificatetoken,ecriturecontroller.GenererJustificatif);
 //router.delete("/Ecriture/:id",authmiddleware.authentificatetoken, ecriturecontroller.deleteecriture);
 
 module.exports = router;

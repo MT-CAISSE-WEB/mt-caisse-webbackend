@@ -428,6 +428,7 @@ exports.getByBudgetId = async (req, res) => {
       attributes: [
         "idbudget",
         "codebudget",
+        "typebudget",
         "libelle",
         "entite",
         "isanalytique",

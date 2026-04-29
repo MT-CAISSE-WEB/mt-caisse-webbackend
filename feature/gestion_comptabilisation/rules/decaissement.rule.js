@@ -4,9 +4,13 @@ module.exports = function decaissementRule(enteteoperation,typeoperation, ligneo
  
     const lignes = ligneoperation[0].filter(l => l && l.montantoperation > 0 && (l.comptabilise === 0 || l.comptabilise === null));
 
+    
+
     if (lignes.length === 0) {
         throw new Error("Aucune ligne valide à comptabiliser");
     }
+
+ 
     
     result.push({
         idtypeoperation : typeoperation[0][0].idtypeoperation,
@@ -37,8 +41,9 @@ module.exports = function decaissementRule(enteteoperation,typeoperation, ligneo
         taux : typeoperation[0][0].taux,
         montantref : typeoperation[0][0].montantref,
         numligne : 1,
-        typeecriture : 'caisse',
-        date : enteteoperation.dateoperation
+        typeecriture : 'simulation',
+        date : enteteoperation.dateoperation,
+        libelle_ecriture : lignes[0].libelle
 
     })
 
@@ -77,8 +82,9 @@ module.exports = function decaissementRule(enteteoperation,typeoperation, ligneo
         taux : null,
         montantref :null,
         numligne : result.length + 1,
-        typeecriture : 'caisse',
-        date : enteteoperation.dateoperation
+        typeecriture : 'simulation',
+        date : enteteoperation.dateoperation,
+        libelle_ecriture : l.libelle
          
         })
     }
