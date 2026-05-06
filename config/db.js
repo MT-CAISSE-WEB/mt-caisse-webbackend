@@ -9,6 +9,7 @@ const config = {
   password: process.env.DB_PASSWORD,
   server: process.env.DB_SERVER, // ou l’adresse IP du serveur
   database: process.env.DB_NAME,
+  port: 1433,
   options: {
     encrypt: process.env.DB_ENCRYPT === 'true', // true si Azure
     trustServerCertificate: true,
@@ -60,7 +61,7 @@ const poolPromise = new sql.ConnectionPool(config)
     return pool;
   })
   .catch(err => {
-    console.log('Erreur de connexion SQL Server', err);
+    console.log('Erreur de connexion SQL Server ', err);
     throw err;
   });
 
@@ -89,4 +90,4 @@ const poolPromise = new sql.ConnectionPool(config)
       }
   }
 
-module.exports =  {connectInstance,connectDB, initdatabase,poolPromise,sql};
+module.exports =  {connectInstance,connectDB, initdatabase, poolPromise, sql};

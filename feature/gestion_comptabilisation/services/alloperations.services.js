@@ -1,4 +1,3 @@
-
 const { DateTime, UniqueIdentifier } = require('mssql');
 const {db, sql, connectInstance, connectDB} = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
@@ -98,15 +97,15 @@ async function getligneoperationbyidoperation(idoperation){
 }
 
 async function getjustificatifbyid(idjustificatif){
+    const pool = await connectDB();
     try {
-        const pool = await connectDB();
         const result = await pool.request()
-        .input("idjustificatif",sql.UniqueIdentifier,idjustificatif)
-        .query(`select j.*,d.codedevise 
-            from JustificatifOperation j
+        .input("idjustificatif", sql.UniqueIdentifier, idjustificatif)
+        .query(`select j.*,d.codedevise from JustificatifOperation j
             inner join devise d on d.iddevise = j.iddevise where idjustificatifoperation=@idjustificatif`);
 
 
+        console.log("Justificatif :", result);
          return {
             success: true,
             status: 200,
@@ -114,6 +113,7 @@ async function getjustificatifbyid(idjustificatif){
             data: result.recordsets[0]
         };
     } catch (error) {
+        console.log("Erreur :", error);
          return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
     }
 }

@@ -128,7 +128,6 @@ db.initdatabase();
 //LANCEMENT DE LA BASE DE DONNEES
 connectInstance();
 
-
 // JOURNALISATION PERSONNALISEE
 app.use(logger);
 

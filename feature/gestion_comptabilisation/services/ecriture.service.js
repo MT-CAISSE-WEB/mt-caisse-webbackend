@@ -9,6 +9,7 @@ const { Console } = require('console');
 const queries = require("../query/requete.query");
 const piecegenerate = require('../utils/ecritures.utils');
 const { type } = require('os');
+//const justificatifcontroller = require('../../gestion_paramètres/controllers/justificatifOperation.controller');
 
 // Génère une référence unique pour l'écriture
 function generateRef(operation) {
@@ -191,6 +192,7 @@ async function GenererEcriture(idoperation) {
 }
 
 async function GenererJustificatif(idjustificatif) {
+    console.log("Génération du justificatif pour ID:", idjustificatif);
     const pool = await connectDB();
     const transaction = new sql.Transaction(pool);
     await transaction.begin();
@@ -198,11 +200,13 @@ async function GenererJustificatif(idjustificatif) {
 
     try {
          const justificatif = await alloperationservice.getjustificatifbyid(idjustificatif);
+         //const justificatif = await justificatifcontroller.findOne(idjustificatif);
+         console.log("Justificatif récupéré:", justificatif);
          const justificatifdetails = await alloperationservice.getjustificatifdetailsbyid(idjustificatif);
+         console.log("Détails du justificatif récupérés:", justificatifdetails);
          const typeoperation = await alloperationservice.gettypeoperationbyid(justificatif.data[0].idoperation);
          const paramcomptable = await alloperationservice.getparamcomptable();
-         const Natureoperationdecaj = await alloperationservice.getnatureoperationdecaj();
-
+         const Natureoperationdecaj = await alloperationservice.getnatureoperationdecaj(); 
 
          if (!justificatif.data) throw new Error("Justificatif introuvable");
          const base = typeoperation.data.flat().find(m => m.taux === 1);
@@ -231,6 +235,7 @@ async function GenererJustificatif(idjustificatif) {
          
          let totalDebit = 0, totalCredit = 0;
          let num = 1;
+    
     for (const r of result) {
         //insertion des écritures
         totalDebit += r.debit || 0;
@@ -278,6 +283,7 @@ async function GenererJustificatif(idjustificatif) {
     return { success: true  , message: "Justificatif généré avec succès" };
 
     } catch (error) {
+        console.log("Erreur lors de la génération du justificatif :", error);
         await transaction.rollback();
         return { success: false, message: error.message };
     }

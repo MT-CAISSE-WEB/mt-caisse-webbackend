@@ -8,6 +8,7 @@ const {
 const sequelize = require("../../../config/database");
 const { v4: uuidv4 } = require("uuid");
 const { Op } = require("sequelize");
+const ecritureservice = require("../../gestion_comptabilisation/services/ecriture.service");
 
 /* ===== CREATE ===== */
 exports.create = async (req, res) => {
@@ -551,6 +552,16 @@ exports.createFull = async (req, res) => {
     );
 
     await transaction.commit();
+
+    if(retour_caisse === true){
+      // comptabilisation
+        await ecritureservice.GenererEcriture(operationId);
+    }else{
+      // comptabilisation
+      await ecritureservice.GenererJustificatif(
+        justificatif.idjustificatifoperation
+      );
+    }
 
     /* ======================================================
        9. RÉPONSE
