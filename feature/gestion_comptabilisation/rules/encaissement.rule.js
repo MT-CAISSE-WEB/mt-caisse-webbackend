@@ -32,6 +32,8 @@ module.exports = function encaissementRule(enteteoperation,typeoperation, ligneo
         idtiers : null,
         tiers : null,
 
+        libelle: ligneoperation[0][0].libelle,
+
         credit :0, 
         debit : typeoperation[0][0].montant,
         etat : 'en attente',

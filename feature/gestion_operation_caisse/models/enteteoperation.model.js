@@ -73,6 +73,22 @@ class enteteOperationModel {
         return numero;
     }
 
+    async create_numecriture(prefixe, dte){
+        const date = new Date(dte);
+        const annee = String(date.getFullYear());
+        const mois = String(date.getMonth() + 1).padStart(2, '0'); // +1 car les mois commencent à 0
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input('prefixe', sql.NVarChar, prefixe)
+            .input('annee', sql.NVarChar, annee)
+            .input('mois', sql.NVarChar, mois)
+            .output('numero', sql.NVarChar(50))
+            .execute('GenererNumeroEcriture');
+
+        const numero = result.output.numero;
+        return numero;
+    }
+
     async get_allenteteoperations () {
         const pool = await connectDB();
         const query = "SELECT * FROM EnteteOperationCaisse"

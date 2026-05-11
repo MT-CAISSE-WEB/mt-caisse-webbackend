@@ -893,6 +893,22 @@ BEGIN
 	);
 END
 
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CompteurEcriture')
+BEGIN
+    CREATE TABLE CompteurEcriture (
+		prefixe NVARCHAR(10) NOT NULL,
+		annee INT NOT NULL,
+		mois INT NOT NULL,
+		compteur INT NOT NULL DEFAULT 0,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+		PRIMARY KEY (prefixe, annee, mois)
+	);
+END
+
+
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CaisseBilletage')
 BEGIN
     CREATE TABLE CaisseBilletage (
@@ -1511,6 +1527,65 @@ BEGIN
 END
 -- GO
 
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.procedures 
+    WHERE name = 'GenererNumeroEcriture'
+)
+BEGIN
+    EXEC('
+        CREATE PROCEDURE GenererNumeroEcriture
+            @prefixe NVARCHAR(10),
+            @annee INT,
+            @mois INT,
+            @numero NVARCHAR(50) OUTPUT
+        AS
+        BEGIN
+            SET NOCOUNT ON;
+
+            DECLARE @compteur INT;
+
+            BEGIN TRANSACTION;
+
+            -- Créer le compteur s''il n''existe pas
+            IF NOT EXISTS (
+                SELECT 1 
+                FROM CompteurEcriture
+                WHERE prefixe = @prefixe
+                  AND annee   = @annee
+                  AND mois    = @mois
+            )
+            BEGIN
+                INSERT INTO CompteurEcriture(prefixe, annee, mois, compteur)
+                VALUES (@prefixe, @annee, @mois, 0);
+            END
+
+            -- Incrémenter le compteur
+            UPDATE CompteurEcriture
+            SET compteur = compteur + 1
+            WHERE prefixe = @prefixe
+              AND annee   = @annee
+              AND mois    = @mois;
+
+            SELECT @compteur = compteur
+            FROM CompteurEcriture
+            WHERE prefixe = @prefixe
+              AND annee   = @annee
+              AND mois    = @mois;
+
+            COMMIT TRANSACTION;
+
+            -- Génération du numéro final
+            SET @numero =
+                @prefixe +
+                CAST(@annee AS NVARCHAR) +
+                RIGHT(''00'' + CAST(@mois AS NVARCHAR), 2) + ''-'' +
+                RIGHT(''000'' + CAST(@compteur AS NVARCHAR), 3);
+        END
+    ');
+END
+-- GO
+
 DECLARE @now DATETIME = GETDATE();
 DECLARE @user NVARCHAR(50) = 'SYSTEM';
 
@@ -1727,6 +1802,7 @@ BEGIN
     CREATE TABLE EcritureComptable (
 		idecriture UNIQUEIDENTIFIER,
         ref_ecriture NVARCHAR(255),
+        num_piece NVARCHAR(255),
 
         idtypeoperation UNIQUEIDENTIFIER null,
         codtypeoperation NVARCHAR(255) null,

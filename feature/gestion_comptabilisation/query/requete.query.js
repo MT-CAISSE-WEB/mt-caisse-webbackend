@@ -90,12 +90,9 @@ queryjustificatifdetailsbyid = `select
     left join natureoperation n on j.idnature = n.idnature
     left join centreanalytique ca on j.idcentreanalytique = ca.idcentreanalytique
     inner join PlanComptable p on n.idcompte = p.idcompte
-    where j.idjustificatif = @idjustificatif`; 
+    where j.idjustificatif = @idjustificatif`;
 
-
-    
-
-queryligneoperationbyidoperation =`select 
+queryligneoperationbyidoperation = `select 
     l.idligneoperation,
     l.idoperation,
     l.idnature,
@@ -144,6 +141,7 @@ createligneecriture = ` INSERT INTO EcritureLigneComptable
             debit,
             credit,
             etat,
+            libelle,
             iddevise,
             devise,
             montantdevise,
@@ -169,6 +167,7 @@ createligneecriture = ` INSERT INTO EcritureLigneComptable
             @debit,
             @credit,
             @etat,
+            @libelle,
             @iddevise,
             @devise,
             @montantdevise,
@@ -177,10 +176,10 @@ createligneecriture = ` INSERT INTO EcritureLigneComptable
             @typeecriture,
             GETDATE(),
             'SYSTEM'
-        )`
+        )`;
 module.exports = {
-    querytypeoperation,
-    queryligneoperationbyidoperation,
-    createligneecriture,
-    queryjustificatifdetailsbyid
+  querytypeoperation,
+  queryligneoperationbyidoperation,
+  createligneecriture,
+  queryjustificatifdetailsbyid,
 };

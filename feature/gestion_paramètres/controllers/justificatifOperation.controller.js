@@ -553,13 +553,13 @@ exports.createFull = async (req, res) => {
 
     await transaction.commit();
 
-    if(retour_caisse === true){
+    if (retour_caisse === true) {
       // comptabilisation
-        await ecritureservice.GenererEcriture(operationId);
-    }else{
+      await ecritureservice.GenererEcriture(operationId);
+    } else {
       // comptabilisation
       await ecritureservice.GenererJustificatif(
-        justificatif.idjustificatifoperation
+        justificatif.idjustificatifoperation,
       );
     }
 
