@@ -2,18 +2,16 @@ module.exports = function encaissementRule(enteteoperation,typeoperation, ligneo
     let result = [];
     let total = 0; 
 
- 
     const lignes = ligneoperation[0].filter(l => l && l.montantoperation > 0 && (l.comptabilise === 0 || l.comptabilise === null));
-
-
 
     if (lignes.length === 0) {
         throw new Error("Aucune ligne valide à comptabiliser");
     }
+
     result.push({
         idtypeoperation : typeoperation[0][0].idtypeoperation,
         typeoperation : typeoperation[0][0].codtypeoperation,
-        libelle : typeoperation[0][0].libelle,
+        libelle : ligneoperation[0][0].libelle,
         
         idcompte : typeoperation[0][0].idcompte,
         compte : typeoperation[0][0].numcompte,
@@ -32,8 +30,6 @@ module.exports = function encaissementRule(enteteoperation,typeoperation, ligneo
         idtiers : null,
         tiers : null,
 
-        libelle: ligneoperation[0][0].libelle,
-
         credit :0, 
         debit : typeoperation[0][0].montant,
         etat : 'en attente',
@@ -46,9 +42,8 @@ module.exports = function encaissementRule(enteteoperation,typeoperation, ligneo
         numligne : 1,
         typeecriture : 'caisse',
         date : enteteoperation.dateoperation
-
     })
-    
+
     for (const l of ligneoperation[0]){
         total += l.montantoperation;
 

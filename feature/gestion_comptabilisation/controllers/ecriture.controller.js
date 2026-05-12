@@ -5,7 +5,6 @@ const ecritureservice = require ("../services/ecriture.service");
 module.exports.GenererEcriture = asyncHandler (async(req,res, next)=>{
     try {
          const { idoperation } = req.params;
-         console.log("ID de l'opération pour générer l'écriture :", idoperation);
          const result = await ecritureservice.GenererEcriture(idoperation);
 
             if (!result.success) {  
@@ -20,7 +19,6 @@ module.exports.GenererEcriture = asyncHandler (async(req,res, next)=>{
 module.exports.GenererJustificatif = asyncHandler (async(req,res, next)=>{
     try {
          const { idjustificatif } = req.params;
-         console.log("ID du justificatif pour générer le justificatif :", idjustificatif);
          const result = await ecritureservice.GenererJustificatif(idjustificatif);  
 
             if (!result.success) {  

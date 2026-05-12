@@ -9,7 +9,7 @@ const queries = require("../query/requete.query");
 const piecegenerate = require("../utils/ecritures.utils");
 const { type } = require("os");
 const enteteoperationmodel = require("../../gestion_operation_caisse/models/enteteoperation.model");
-let enteteoperation = new enteteoperationmodel();
+let enteteoperations = new enteteoperationmodel();
 
 // Génère une référence unique pour l'écriture
 function generateRef(operation) {
@@ -51,9 +51,9 @@ async function GenererEcriture(idoperation) {
     );
     const ligneoperation =
       await alloperationservice.getligneoperationbyidoperation(idoperation);
+
     const paramcomptable = await alloperationservice.getparamcomptable();
 
-    //const justificatifoperation = await alloperationservice.
 
     if (
       !enteteoperation.data ||
@@ -134,13 +134,13 @@ async function GenererEcriture(idoperation) {
         headers.journal,
       );
 
-      const numeroecriture = await enteteoperation.create_numecriture(headers.journal, typeData.date);
-
+      const numecr = await enteteoperations.create_numecriture(headers.journal, typeData.date);
+     
       await transaction
         .request()
         .input("idecriture", sql.UniqueIdentifier, idecriture)
         .input("ref_ecriture", sql.NVarChar, pieceNumber)
-        .input("num_piece", sql.NVarChar, numeroecriture)
+        .input("num_piece", sql.NVarChar, numecr)
         .input(
           "idtypeoperation",
           sql.UniqueIdentifier,
@@ -190,6 +190,7 @@ async function GenererEcriture(idoperation) {
             sql.UniqueIdentifier,
             l.idcentreanalytique || null,
           )
+          .input("libelle", sql.NVarChar, l.libelle || null)
           .input("centreanalytique", sql.NVarChar, l.centreanalytique || null)
           .input("idtiers", sql.UniqueIdentifier, l.idtiers || null)
           .input("tiers", sql.NVarChar, l.tiers || null)
@@ -230,6 +231,7 @@ async function GenererEcriture(idoperation) {
 
     return { success: true, message: "Écriture générée avec succès" };
   } catch (error) {
+    console.log("Erreur au niveau de la comptabilisation :", error);
     await transaction.rollback();
     return { success: false, message: error.message };
   }
@@ -248,7 +250,6 @@ async function GenererJustificatif(idjustificatif) {
     const justificatifdetails =
       await alloperationservice.getjustificatifdetailsbyid(idjustificatif);
 
-    // console.log("Détails justificatifs récupéré:", justificatifdetails)
     const typeoperation = await alloperationservice.gettypeoperationbyid(
       justificatif.data[0].idoperation,
     );
@@ -264,13 +265,12 @@ async function GenererJustificatif(idjustificatif) {
     if (!justificatif.data) throw new Error("Justificatif introuvable");
     const base = typeoperation.data.flat().find((m) => m => m.caisse_iddevise === justificatif.data[0].iddevise);
     const base_1 = typeoperation.data.flat().find((m) => m => m.caisse_iddevise !== justificatif.data[0].iddevise);
-    //const base = typeoperation.data.flat().find((m) => m.taux === 1);
-    if (!base) throw new Error("Aucune caisse de référence (taux=1)");
-    console.log("Base pour la règle justificatif:", base);
+    
+    if (!base) throw new Error("Aucune caisse de même devise que le justificatif n'a été trouvée pour appliquer la règle justificatif");
+
     const ecriturecomptable =
       await alloperationservice.getecriturecomptablebyid(base.idtypeoperation);
 
-    console.log("Écriture comptable liée à l'opération:", ecriturecomptable);
     const result = rules.justificatif(
       paramcomptable.data[0],
       Natureoperationdecaj.data[0],
@@ -281,8 +281,7 @@ async function GenererJustificatif(idjustificatif) {
     );
 
     const idecriture = uuidv4();
-    const numeroecriture = await enteteoperation.create_numecriture(paramcomptable.data[0][0].codejournal, justificatif.data[0].date);
-    console.log("Résultat de la règle justificatif:", ecriturecomptable);
+    const numeroecriture = await enteteoperations.create_numecriture(paramcomptable.data[0][0].codejournal, justificatif.data[0].date);
 
     await transaction
       .request()

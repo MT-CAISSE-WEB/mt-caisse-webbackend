@@ -13,7 +13,7 @@ module.exports = function decaissementRule(enteteoperation,typeoperation, ligneo
         typeoperation : typeoperation[0][0].codtypeoperation,
         idcompte : typeoperation[0][0].idcompte,
         compte : typeoperation[0][0].numcompte,
-
+        libelle : ligneoperation[0][0].libelle,
         idjournal : typeoperation[0][0].idjournal,
         journal : typeoperation[0][0].codejournal,
 
@@ -39,7 +39,6 @@ module.exports = function decaissementRule(enteteoperation,typeoperation, ligneo
         numligne : 1,
         typeecriture : 'caisse',
         date : enteteoperation.dateoperation
-
     })
 
 
@@ -66,7 +65,7 @@ module.exports = function decaissementRule(enteteoperation,typeoperation, ligneo
 
         idtiers : l.tiers_id,
         tiers : l.codetiers,
-
+        libelle : l.libelle,
         credit : 0,
         debit : l.montantoperation,
         etat : 'en attente',
