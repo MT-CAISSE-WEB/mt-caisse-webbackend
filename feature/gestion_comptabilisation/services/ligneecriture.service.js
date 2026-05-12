@@ -59,6 +59,7 @@ const queryinsert = `
     elc.idligneecriture,
     elc.numligne,
     ec.ref_ecriture,
+    ec.num_piece,
     ec.journal,
     ec.date_operation,
     elc.idcentreanalytique,
