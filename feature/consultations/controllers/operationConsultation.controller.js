@@ -49,7 +49,7 @@ module.exports.historyController = asyncHandler(async(req, res, next) => {
 module.exports.getLastOpController = asyncHandler(async(req, res, next) => {
   try {
     const data = req.body;
-    const result = await consultationservice.getLastOperation(data.caisses, data.date);
+    const result = await consultationservice.getLastOperation(data.caisses, data.date, data.page, data.limit);
     res.status(201).json({ success: true, data: result });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
