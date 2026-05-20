@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const operation_controller = require("../controllers/operation.controller");
+const enteteoperation_controller = require("../controllers/enteteoperation.controller");
 const authmiddleware = require("../../../middlewares/auth.middlewre");
 
 // CRUD OPERATION
@@ -12,6 +13,6 @@ router.post("/create/", authmiddleware.authentificatetoken, operation_controller
 router.put("/update/:id", authmiddleware.authentificatetoken, operation_controller.update_typeoperation);
 router.delete("/delete/:id", authmiddleware.authentificatetoken, operation_controller.delete_typeoperation);
 router.get('/recu-caisse/:id', authmiddleware.authentificatetoken, operation_controller.get_recudecaisse);
-
+router.post("/cancel/", authmiddleware.authentificatetoken, operation_controller.cancel_enteteoperation);
 
 module.exports = router;

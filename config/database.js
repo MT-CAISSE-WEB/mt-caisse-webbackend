@@ -13,13 +13,14 @@ const sequelize = new Sequelize(
   process.env.DB_USER,
   process.env.DB_PASSWORD,
   {
-    host: 'LAPTOP-7OP8LE5U',
+    host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     dialect: 'mssql',
     dialectModule: require('tedious'),
     logging: false,
     dialectOptions: {
       options: {
+        instanceName: process.env.DB_INSTANCE_NAME,
         encrypt: process.env.DB_ENCRYPT === 'true',
         trustServerCertificate: true,
       },

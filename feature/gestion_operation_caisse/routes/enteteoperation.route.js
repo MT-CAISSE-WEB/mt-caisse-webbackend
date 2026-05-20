@@ -11,5 +11,6 @@ router.get("/caisse/solde", authmiddleware.authentificatetoken, operation_contro
 router.post("/create/", authmiddleware.authentificatetoken, enteteoperation_controller.create_enteteoperation);
 router.put("/update/:id", authmiddleware.authentificatetoken, enteteoperation_controller.update_enteteoperation);
 router.delete("/delete/:id", authmiddleware.authentificatetoken, enteteoperation_controller.delete_enteteoperation);
+router.post("/cancel/", authmiddleware.authentificatetoken, enteteoperation_controller.cancel_enteteoperation);
 
 module.exports = router;

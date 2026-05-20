@@ -780,12 +780,15 @@ BEGIN
         idsociete UNIQUEIDENTIFIER,
         idsite UNIQUEIDENTIFIER,
         iddevise UNIQUEIDENTIFIER,
+        idoperationorigine UNIQUEIDENTIFIER NULL,
+        idoperationannulation UNIQUEIDENTIFIER NULL,
         dateoperation DATETIME,
         dateoperation_date AS CAST(dateoperation AS DATE),
         montant DECIMAL(22,9),
         tauxoperation DECIMAL(22,9),
         montant_str AS CAST(montant AS NVARCHAR(50)),
         justifiee INT DEFAULT 0,
+        annulee INT DEFAULT 0,
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
@@ -793,7 +796,9 @@ BEGIN
         FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
         FOREIGN KEY (iddevise) REFERENCES Devise(iddevise),
         FOREIGN KEY (idsite) REFERENCES Site(idsite),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        FOREIGN KEY (idoperationorigine) REFERENCES EnteteOperationCaisse(idoperation),
+        FOREIGN KEY (idoperationannulation) REFERENCES EnteteOperationCaisse(idoperation)
     );
 END
 

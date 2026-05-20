@@ -134,6 +134,7 @@ class enteteOperationModel {
                     .input('iddemande', sql.UniqueIdentifier, data.iddemande)
                     .input('codedemande', sql.NVarChar(24), data.codedemande)
                     .input('idsociete', sql.UniqueIdentifier, data.idsociete)
+                    .input('idoperationorigine', sql.UniqueIdentifier, data.idoperationorigine)
                     .input('updatedat', sql.DateTime, new Date())
                     .input('updatedby', sql.NVarChar(100), data.updatedby || 'System')
                     .query(queryUpdate);
@@ -149,6 +150,7 @@ class enteteOperationModel {
                     .input('codeoperation', sql.NVarChar(24), numerogenere)
                     .input('iddemande', sql.UniqueIdentifier, data.iddemande)
                     .input('idsociete', sql.UniqueIdentifier, data.idsociete)
+                    .input('idoperationorigine', sql.UniqueIdentifier, data.idoperationorigine)
                     .input('iddevise', sql.UniqueIdentifier, data.iddevise)
                     .input('codedevise', sql.NVarChar(25), data.codedevise)
                     .input('dateoperation', sql.DateTime, data.dateoperation)
@@ -173,6 +175,39 @@ class enteteOperationModel {
             return { success : true , data : result};
         } catch (error) {
             console.log(`Erreur de suppression: ${error}`.cyan.bold);
+        }
+    }
+
+    async update_status (idoperation, statusData) {
+        const pool = await connectDB();
+        try {
+            const result = await pool.request()
+                .input('idoperation', sql.UniqueIdentifier, idoperation)
+                .input('annulee', sql.Bit, statusData.annulee)
+                .input('idoperationannulation', sql.UniqueIdentifier, statusData.idoperationannulation)
+                .input('updatedat', sql.DateTime, statusData.updatedat)
+                .input('updatedby', sql.NVarChar(100), statusData.updatedby)
+                .query("UPDATE EnteteOperationCaisse SET annulee = @annulee, idoperationannulation = @idoperationannulation, updatedat = @updatedat, updatedby = @updatedby WHERE idoperation = @idoperation");
+            return { success: true, data: result };
+        } catch (error) {
+            console.log(`Erreur de modification du statut: ${error}`.cyan.bold);
+            throw error;
+        }
+    }
+
+    async update_operationorigine (idoperation, data) {
+        const pool = await connectDB();
+        try {
+            const result = await pool.request()
+                .input('idoperation', sql.UniqueIdentifier, idoperation)
+                .input('idoperationorigine', sql.UniqueIdentifier, data.idoperationorigine)
+                .input('updatedat', sql.DateTime, data.updatedat)
+                .input('updatedby', sql.NVarChar(100), data.updatedby)
+                .query("UPDATE EnteteOperationCaisse SET idoperationorigine = @idoperationorigine, updatedat = @updatedat, updatedby = @updatedby WHERE idoperation = @idoperation");
+            return { success: true, data: result };
+        } catch (error) {
+            console.log(`Erreur de modification du statut: ${error}`.cyan.bold);
+            throw error;
         }
     }
 }

@@ -459,7 +459,28 @@ module.exports = {
             ca.idcaisse AS caisse_idcaisse,
             ca.codecaisse AS caisse_codecaisse,
             ca.libelle AS caisse_libelle,
-            dca.codedevise AS devise_caisse
+            dca.codedevise AS devise_caisse,
+
+            elc.idligneecriture,
+            elc.numligne,
+            ec.ref_ecriture,
+            ec.num_piece,
+            ec.journal,
+            ec.date_operation,
+            elc.idcentreanalytique,
+            elc.centreanalytique,
+            elc.typeecriture,
+            elc.etat,
+            elc.idcompte,
+            elc.compte,
+            elc.idtiers,
+            elc.tiers,
+            elc.libelle,
+            elc.debit,
+            elc.credit,
+            (elc.debit + elc.credit) AS montant_ecriture,
+            elc.iddevise,
+            elc.devise
 
         FROM Ops o
             JOIN EnteteOperationCaisse e ON e.idoperation = o.idoperation
@@ -493,8 +514,15 @@ module.exports = {
             LEFT JOIN Devise dca 
             ON dca.iddevise = ca.iddevise
 
-            ORDER BY e.createdat DESC;
+            -- Jointure sur EcritureComptable
+            LEFT JOIN EcritureComptable ec
+            ON ec.idtypeoperation = t.idtypeoperation
 
+            -- Jointure sur EcritureLigneComptable
+            LEFT JOIN EcritureLigneComptable elc
+            ON elc.idecriture = ec.idecriture
+
+            ORDER BY e.createdat DESC;
         SELECT COUNT(*) AS total 
         FROM EnteteOperationCaisse e
         WHERE 1 = 1

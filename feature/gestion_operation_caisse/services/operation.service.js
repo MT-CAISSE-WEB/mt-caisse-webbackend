@@ -18,7 +18,7 @@ const ecritureservice = require("../../gestion_comptabilisation/services/ecritur
 let typeoperation = new typeoperationmodel();
 let typeoperations = [];
 
-async function get_all_typeoperations({ page, limit, search, date, user}) {
+async function get_all_typeoperations({page, limit, search, date, user}) {
 
   //Récuperer les data de l'utilisateur connecté
   const userconnect = await userservice.getoneuser(user);
@@ -37,18 +37,22 @@ async function get_all_typeoperations({ page, limit, search, date, user}) {
               idoperation: row.idoperation,
               codeoperation: row.codeoperation,
               dateoperation: row.dateoperation,
+              idoperationorigine: row.idoperationorigine,
+              idoperationannulation: row.idoperationannulation,
               idsociete : row.idsociete,
               idsite : row.idsite,
               iddevise : row.iddevise,
               montant : row.montant,
               tauxoperation : row.tauxoperation,
               justifiee : row.justifiee,
+              annulee : row.annulee,
               createdat: row.createdat,
               createdby: row.createdby,
               updatedat: row.updatedat,
               updatedby: row.updatedby,
               lignes: [],
               caisses: [],
+              ecritures: [],
               // Devise
               devise : row.iddevise ? new devisemodel(
                 row.devise_iddevise, row.devise_codedevise, row.devise_intitule, row.devise_codeiso, row.devise_actif, row.devise_createdat, row.devise_createdby, row.devise_updatedat, row.devise_updatedby) : null,
@@ -103,6 +107,74 @@ async function get_all_typeoperations({ page, limit, search, date, user}) {
               });
           }
       }
+
+      // ---------------------------
+      // Construction des écritures
+      // ---------------------------
+      if (row.idligneecriture) {
+
+          // rechercher la pièce comptable
+          let ecriture = op.ecritures.find(
+              e => e.refecriture === row.ref_ecriture
+          );
+
+          // créer si inexistant
+          if (!ecriture) {
+              ecriture = {
+                  refecriture: row.ref_ecriture,
+                  numpiece: row.num_piece,
+                  journal: row.journal,
+                  dateoperation: row.date_operation,
+                  lignes: []
+              };
+
+              op.ecritures.push(ecriture);
+          }
+
+          // éviter doublon ligne
+          const ligneExists = ecriture.lignes.find(
+              l => l.idligneecriture === row.idligneecriture
+          );
+
+          if (!ligneExists) {
+              ecriture.lignes.push({
+                  idligneecriture: row.idligneecriture,
+                  numligne: row.numligne,
+                  typeecriture: row.typeecriture,
+                  etat: row.etat,
+
+                  compte: row.idcompte ? {
+                      idcompte: row.idcompte,
+                      compte: row.compte
+                  } : null,
+
+                  tiers: row.idtiers ? {
+                      idtiers: row.idtiers,
+                      tiers: row.tiers
+                  } : null,
+
+                  centreanalytique:
+                      row.idcentreanalytique ? {
+                          idcentreanalytique:
+                              row.idcentreanalytique,
+                          centreanalytique:
+                              row.centreanalytique
+                      } : null,
+
+                  libelle: row.libelle,
+
+                  debit: Number(row.debit || 0),
+                  credit: Number(row.credit || 0),
+                  montant: Number(row.montant_ecriture || 0),
+
+                  devise: row.iddevise ? {
+                      iddevise: row.iddevise,
+                      devise: row.devise
+                  } : null
+              });
+          }
+      }
+
       // ---------------------------
       // Construction des types
       // ---------------------------
@@ -432,6 +504,170 @@ async function getDataRecu(idoperation){
    }
 }
 
+async function cancel_enteteoperation(data) {
+  const today = new Date();
+
+  try {
+    if (!data?.idoperation) {
+      throw new Error("Opération invalide.");
+    }
+
+    if (!Array.isArray(data.caisses) || data.caisses.length === 0) {
+      throw new Error("Aucune caisse fournie.");
+    }
+
+    if (!Array.isArray(data.lignes) || data.lignes.length === 0) {
+      throw new Error("Aucune ligne d'opération fournie.");
+    }
+
+    /* ======================================================
+       1. Déterminer le type inverse
+    ====================================================== */
+    let nouveauTypePaiement = null;
+
+    switch ((data.caisses[0]?.codtypeoperation || '').toLowerCase()) {
+      case 'encaissement':
+        nouveauTypePaiement = 'decaissement';
+        break;
+
+      case 'decaissement':
+      case 'decaissementaj':
+        nouveauTypePaiement = 'encaissement';
+        break;
+
+      default:
+        throw new Error("Type de paiement non reconnu.");
+    }
+
+    /* ======================================================
+       2. Création de l'entête inverse
+    ====================================================== */
+    const newEnteteData = {
+      codeoperation: null, // nouveau compteur
+      demande: data.demande || null,
+      societe: data.idsociete,
+      site: data.idsite,
+      devise: data.iddevise,
+      dateoperation: new Date(data.dateoperation),
+      montant: data.montant,
+      tauxoperation: data.tauxoperation,
+      createdby: data.createdby || 'SYSTEM',
+
+      // traçabilité
+      idoperationorigine: data.idoperation,
+      libelleannulation: `Annulation - ${data.codeoperation}`
+    };
+
+    const enteteoperation =
+      await enteteoperationservice.create_enteteoperation(
+        newEnteteData
+      );
+
+    if (!enteteoperation?.idoperation) {
+      throw new Error(
+        "Échec de création de l'opération d'annulation."
+      );
+    }
+
+    /* ======================================================
+       3. Duplication des lignes
+    ====================================================== */
+    for (const ligne of data.lignes) {
+      const dataligne = {
+        idoperation: enteteoperation.idoperation,
+        idnature: ligne.nature?.idnature || null,
+        idcentre: ligne.centre?.idcentre || null,
+        idtiers: ligne.tiers?.idtiers || null,
+        libelle: `Annulation - ${ligne.libelle}`,
+        montantoperation: Number(ligne.montantoperation),
+        createdby: data.createdby || 'SYSTEM'
+      };
+
+      await ligneoperationservice.create_ligneoperation(
+        dataligne
+      );
+    }
+
+    /* ======================================================
+       4. Création type opération inverse
+    ====================================================== */
+    for (const caisse of data.caisses) {
+      if (
+        caisse.montant &&
+        Number(caisse.montant) !== 0
+      ) {
+        const caisse1 =
+          await caisseservice.get_by_idcaisse(
+            caisse.idcaisse
+          );
+
+        const newtypeoperation =
+          new typeoperationmodel(
+            uuidv4(),
+            nouveauTypePaiement,
+            enteteoperation.idoperation,
+            caisse.idperiode || null,
+            data.idsociete,
+            data.idsite,
+            caisse1?.idcaisse || null,
+            Number(caisse.montant),
+            caisse.taux,
+            caisse.montantref,
+            today,
+            data.createdby || 'SYSTEM',
+            null,
+            null
+          );
+
+        const recorded =
+          await newtypeoperation.create_typeoperationmodel(
+            newtypeoperation
+          );
+
+        if (!recorded.success) {
+          throw new Error(recorded.message);
+        }
+      }
+    }
+
+    /* ======================================================
+       5. Génération écriture comptable
+    ====================================================== */
+    await ecritureservice.GenererEcriture(
+      enteteoperation.idoperation
+    );
+
+    /* ======================================================
+       6. Marquer l'opération source annulée
+       (optionnel mais recommandé)
+    ====================================================== */
+
+    await enteteoperationservice.update_status(
+      data.idoperation,
+      {
+        annulee: 1,
+        idoperationannulation: enteteoperation.idoperation,
+        updatedat: today,
+        updatedby: data.createdby || 'SYSTEM'
+      }
+    );
+
+    await enteteoperationservice.update_operationorigine(
+      enteteoperation.idoperation,
+      {
+        idoperationorigine: data.idoperation,
+        updatedat: today,
+        updatedby: data.createdby || 'SYSTEM'
+      }
+    );
+
+    return enteteoperation;
+
+  } catch (err) {
+    throw err;
+  }
+}
+
 module.exports = {
   get_all_typeoperations,
   get_by_idtypeoperation,
@@ -439,6 +675,7 @@ module.exports = {
   update_typeoperation,
   delete_typeoperation,
   get_soldecaisse,
+  cancel_enteteoperation,
   get_operationmax,
   getDataRecu
 };

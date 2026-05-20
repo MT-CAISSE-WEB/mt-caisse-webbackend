@@ -65,3 +65,16 @@ module.exports.delete_enteteoperation = asyncHandler(async(req, res, next) => {
     res.status(404).json({ success: false, message: error.message });
   }
 });
+
+/**
+ * Annule une enteteoperation
+ */
+module.exports.cancel_enteteoperation = asyncHandler(async(req, res, next) => {
+  try {
+    const data = req.body;
+    const new_enteteoperation = await enteteoperationservice.cancel_enteteoperation(data);
+    res.status(201).json({ success: true, data: new_enteteoperation });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
