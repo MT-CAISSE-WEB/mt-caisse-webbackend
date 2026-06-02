@@ -52,7 +52,7 @@ class typeoperationModel {
         }
     }
 
-    async get_alltypeoperations ({ page = 1, limit, search = null, date = null}, user) {
+    async get_alltypeoperations ({ page = 1, limit, search = null, date = null, typepaiement = null, devise = null}, user) {
         page = parseInt(page) || 1;
         limit = parseInt(limit) || 5;
         
@@ -67,6 +67,8 @@ class typeoperationModel {
                 .input('date', sql.Date, date || null)
                 .input('offset', sql.Int, offset)
                 .input('limit', sql.Int, limit)
+                .input('typepaiement', sql.NVarChar, typepaiement || null)
+                .input('devise', sql.UniqueIdentifier, devise || null)
                 .query(operationQueries.getAllOps);
 
             const operations = result.recordsets[0];

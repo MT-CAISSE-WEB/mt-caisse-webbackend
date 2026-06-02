@@ -786,6 +786,8 @@ BEGIN
         dateoperation_date AS CAST(dateoperation AS DATE),
         montant DECIMAL(22,9),
         tauxoperation DECIMAL(22,9),
+        typeoperation NVARCHAR(50),
+        beneficiaire NVARCHAR(255),
         montant_str AS CAST(montant AS NVARCHAR(50)),
         justifiee INT DEFAULT 0,
         annulee INT DEFAULT 0,

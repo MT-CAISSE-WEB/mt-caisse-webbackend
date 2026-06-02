@@ -18,14 +18,14 @@ const ecritureservice = require("../../gestion_comptabilisation/services/ecritur
 let typeoperation = new typeoperationmodel();
 let typeoperations = [];
 
-async function get_all_typeoperations({page, limit, search, date, user}) {
+async function get_all_typeoperations({page, limit, search, date, user, typepaiement, devise}) {
 
   //Récuperer les data de l'utilisateur connecté
   const userconnect = await userservice.getoneuser(user);
 
   let soldes = [];
   soldes = await typeoperation.get_soldecaisse();
-  const result = await typeoperation.get_alltypeoperations({ page, limit, search, date}, userconnect.data);
+  const result = await typeoperation.get_alltypeoperations({ page, limit, search, date, typepaiement, devise }, userconnect.data);
 
   try {
     const operations = {};
@@ -44,6 +44,8 @@ async function get_all_typeoperations({page, limit, search, date, user}) {
               iddevise : row.iddevise,
               montant : row.montant,
               tauxoperation : row.tauxoperation,
+              typeoperation : row.typeoperation,
+              beneficiaire : row.beneficiaire,
               justifiee : row.justifiee,
               annulee : row.annulee,
               createdat: row.createdat,

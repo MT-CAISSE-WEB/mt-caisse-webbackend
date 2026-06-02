@@ -14,6 +14,7 @@ module.exports.getallutilisateurrole = asyncHandler (async(req,res, next)=>{
 module.exports.getutilisateursroles = asyncHandler (async(req,res, next)=>{
     try {
          const idutilisateur = req.params['id'];
+         console.log("idutilisateur", idutilisateur);
          const utilisateursrole = await utilisateur_roleservice.getutilisateurrole(idutilisateur);
          res.status(utilisateursrole.status).json({success:utilisateursrole.success,message:utilisateursrole.message,data:utilisateursrole.data});
     } catch (error) {

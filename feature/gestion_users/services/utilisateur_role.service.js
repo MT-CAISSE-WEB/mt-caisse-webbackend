@@ -21,6 +21,7 @@ async function getutilisateurrole(idutilisateur){
         };
     } 
     catch (error) {
+        console.log("error", error);
          return {
             success: false,
             status: 500,

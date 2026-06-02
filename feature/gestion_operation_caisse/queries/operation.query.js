@@ -347,14 +347,14 @@ module.exports = {
         AND (
             @search IS NULL OR 
             e.codeoperation LIKE @search OR 
-            CAST(e.montant AS NVARCHAR) LIKE @search OR
-            EXISTS (
-                SELECT 1 
-                FROM Devise dev
-                WHERE dev.iddevise = e.iddevise 
-                AND dev.codedevise = @search
-            )
+            CAST(e.montant AS NVARCHAR) LIKE @search
         )
+
+        --Typepaiement
+        AND (@typepaiement IS NULL OR e.typeoperation = @typepaiement)
+
+        -- devise
+        AND (@devise IS NULL OR e.iddevise = @devise)
 
         --Filtre date
         AND (@date IS NULL OR CONVERT(date, e.dateoperation) = @date)

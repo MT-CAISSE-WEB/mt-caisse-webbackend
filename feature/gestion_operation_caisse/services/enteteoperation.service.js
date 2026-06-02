@@ -87,6 +87,8 @@ async function create_enteteoperation(data) {
     datePeriode,
     data.montant,
     data.tauxoperation || 1,
+    data.typepaiement || null,
+    data.beneficiaire || null,
     data.createdat || today,
     data.createdby || 'System');
   const recorded = await newenteteoperation.create_enteteoperationmodel(newenteteoperation);

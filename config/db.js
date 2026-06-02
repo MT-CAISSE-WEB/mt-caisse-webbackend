@@ -66,28 +66,28 @@ const poolPromise = new sql.ConnectionPool(config)
   });
 
 
-  const initdatabase = async () => {
-      try {
-         const masterpool = await sql.connect(config);
-          await masterpool.request().query(`
-          IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '${config.database}')
-          BEGIN
-            CREATE DATABASE ${config.database} ;
-          END
-        `);
+const initdatabase = async () => {
+    try {
+        const masterpool = await sql.connect(config);
+        await masterpool.request().query(`
+        IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '${config.database}')
+        BEGIN
+          CREATE DATABASE ${config.database} ;
+        END
+      `);
 
-         console.log("Base  vérifiée/créée");
+        console.log("Base  vérifiée/créée");
 
-         const dbPool = await sql.connect({ ...config, database: config.database });
-         const tablesScript = fs.readFileSync("./config/init.sql", "utf8");
-         await dbPool.request().batch(tablesScript);
+        const dbPool = await sql.connect({ ...config, database: config.database });
+        const tablesScript = fs.readFileSync("./config/init.sql", "utf8");
+        await dbPool.request().batch(tablesScript);
 
-          console.log("Tables initialisées");
-          await sql.close();
-      } catch (error) {
-         console.error("Erreur initDatabase :", error);
-         await sql.close();
-      }
-  }
+        console.log("Tables initialisées");
+        await sql.close();
+    } catch (error) {
+        console.error("Erreur initDatabase :", error);
+        await sql.close();
+    }
+}
 
-module.exports =  {connectInstance,connectDB, initdatabase, sql};
+module.exports =  {connectInstance,connectDB, initdatabase, sql, poolPromise};
