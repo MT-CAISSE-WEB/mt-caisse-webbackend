@@ -131,3 +131,16 @@ module.exports.get_recentperiode = asyncHandler(async(req, res, next) => {
     res.status(404).json({ success: false, message: error.message });
   }
 });
+
+/**
+ * Validation une periode caisse existante
+ */
+module.exports.recalculate_solde = asyncHandler(async(req, res, next) => {
+  try {
+    const data  = req.body;
+    const solde_ = await caisseperiodeservice.recalculate_solde(data);
+    res.json({ success: true, data: solde_ });
+  } catch (error) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+});

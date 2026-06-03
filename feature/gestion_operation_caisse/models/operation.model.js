@@ -149,6 +149,7 @@ class typeoperationModel {
         const pool = await connectDB();
         try {
             const result = await pool.request().input("idperiode", idperiode).query(typeoperationQueries.solde_caisse_periode);
+            console.log("resultat solde periode ", result);
             return result.recordset;
         } catch (error) {
             console.log(`Erreur de récupération du solde par période: ${error}`.cyan.bold);

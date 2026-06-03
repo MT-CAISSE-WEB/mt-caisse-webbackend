@@ -1,3 +1,4 @@
+const {sql, connectInstance, connectDB} = require('../../../config/db');
 const caisseModel = require("../models/caisse.model");
 const typeoperationmodel = require("../models/operation.model");
 const periodeModel = require("../models/caisseperiode.model");
@@ -310,6 +311,93 @@ async function create_caisseBilletage(data) {
   return {success: true, data: dataresponse};
 }
 
+async function recalculate_solde(data){
+  if (!data.startDate) {
+    throw new Error("Aucune date envoyée");
+  }
+
+  const recent_periode = await get_recentperiode(data.idcaisse);
+
+  if (!recent_periode) {
+      throw new Error("Aucune période trouvée pour cette caisse");
+  }
+
+  const startDate = new Date(data.startDate);
+  const recentDate = new Date(recent_periode.dateperiode);
+
+  if (startDate > recentDate) {
+      throw new Error(`La date ${data.startDate} est supérieure à la dernière période ouverte`);
+  }
+
+  //RECUPERER TOUTES LES PERIODES A RECALCULER
+  const periodes = await periodemodel.get_periodes_between(
+      data.idcaisse,
+      data.startDate,
+      recent_periode.dateperiode
+  );
+
+  const previousPeriode = await periodemodel.get_previous_periode(data.idcaisse, data.startDate );
+  let soldeCourant;
+
+  if (previousPeriode) {
+      soldeCourant = Number(previousPeriode.soldeouverture);
+  } else {
+      soldeCourant = Number(
+          periodes[0].caisse.soldeouverture
+      );
+  }
+
+  const pool = await connectDB();
+  const transaction = new sql.Transaction(pool);
+
+  try{
+    await transaction.begin();
+
+    for (let i = 0; i < periodes.length; i++) {
+      const periode = periodes[i];
+
+      if (i > 0) {
+          periode.soldeouverture = soldeCourant;
+      }
+
+      const soldes = await typeoperation.get_soldeperiode(periode.idperiode);
+      const soldeItem = soldes.find(s => s.idcaisse === periode.idcaisse);
+      const solde = soldeItem ? Number(soldeItem.solde) : 0;
+      const soldeFermeture = Number(periode.soldeouverture) + solde;
+
+      const montantPhysique = Number(periode.montantphysique || 0);
+      const ecart = periode.montantphysique != null ? montantPhysique - soldeFermeture : periode.ecart;
+
+      const isLastPeriode = periode.idperiode === recent_periode.idperiode;
+
+      if (isLastPeriode && periode.statut?.toLowerCase() === 'ouverte') {
+        await periodemodel.update_soldeouverture(
+            transaction,
+            periode.idperiode,
+            periode.soldeouverture
+        );
+      } else {
+          await periodemodel.update_soldes(
+            transaction,
+            periode.idperiode,
+            periode.soldeouverture,
+            soldeFermeture,
+            ecart
+        );
+      }
+      soldeCourant = soldeFermeture;
+    }
+
+    await transaction.commit();
+    
+  }catch(error){
+    await transaction.rollback();
+    console.log(`Erreur de recalcul du solde: ${error}`.cyan.bold);
+    throw new Error("Erreur lors du recalcul du solde");
+  }
+
+}
+
 module.exports = {
   get_all_caisseperiodes,
   get_by_idperiode,
@@ -320,5 +408,6 @@ module.exports = {
   open_periode,
   get_recentperiode,
   delete_caisse,
-  create_caisseBilletage
+  create_caisseBilletage,
+  recalculate_solde
 };

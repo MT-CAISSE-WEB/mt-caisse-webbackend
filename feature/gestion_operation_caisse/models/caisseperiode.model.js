@@ -205,6 +205,80 @@ class caisseperiodeModel {
             return { success: false, message: error.message };
         }
     }
+
+    async get_previous_periode(idcaisse, dateperiode){
+        const pool = await connectDB();
+        try {
+            const result = await pool.request()
+            .input('idcaisse', sql.UniqueIdentifier, idcaisse)
+            .input('dateperiode', sql.Date, dateperiode)
+            .query(caisseperiodeQueries.CAISSE_PERIODE);
+
+            const caisseperiode = result.recordset[0];
+            let caisse = null;
+
+            if (caisseperiode.idcaisse) {
+                caisse = await caissemodel.get_onecaisse(caisseperiode.idcaisse);
+            }
+            
+            return {...caisseperiode, caisse : caisse};
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    }
+
+    async get_periodes_between(idcaisse, startDate, endDate){
+        const pool = await connectDB();
+        try {
+            const result = await pool.request()
+            .input('idcaisse', sql.UniqueIdentifier, idcaisse)
+            .input('startDate', sql.Date, startDate)
+            .input('endDate', sql.Date, endDate)
+            .query(caisseperiodeQueries.PERIODE_RECALCUL);
+            
+            return result.recordset;
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    }
+
+    async update_soldes(
+      transaction,
+      idperiode,
+      soldeOuverture,
+      soldeFermeture,
+      ecart) {
+
+      return transaction.request()
+          .input('idperiode', sql.UniqueIdentifier, idperiode)
+          .input('soldeouverture', sql.Decimal(22,9), soldeOuverture)
+          .input('soldefermeture', sql.Decimal(22,9), soldeFermeture)
+          .input('ecart', sql.Decimal(22,9), ecart) 
+          .query(`
+              UPDATE CaissePeriode
+              SET
+                  soldeouverture = @soldeouverture,
+                  soldefermeture = @soldefermeture,
+                  ecart = @ecart
+              WHERE idperiode = @idperiode
+          `);
+    }
+
+    async update_soldeouverture(
+      transaction,
+      idperiode,
+      soldeOuverture) {
+
+      return transaction.request()
+          .input('idperiode', sql.UniqueIdentifier, idperiode)
+          .input('soldeouverture', sql.Decimal(22,9), soldeOuverture)
+          .query(`
+              UPDATE CaissePeriode
+              SET
+                  soldeouverture = @soldeouverture
+              WHERE idperiode = @idperiode
+          `);
+    }
 }
 
 

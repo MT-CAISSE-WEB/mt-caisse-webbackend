@@ -130,4 +130,18 @@ module.exports = {
         ecart, createdat, createdby) OUTPUT INSERTED.*
         VALUES(@idbilletage, @idperiode, @valeur, @quantite, @montant, @ecart, @createdat, @createdby)
     `,
+    CAISSE_PERIODE : `
+        SELECT *
+        FROM CaissePeriode
+        WHERE idcaisse = @idcaisse AND CAST(dateperiode AS DATE) = @dateperiode
+        ORDER BY dateperiode DESC;
+    `,
+    PERIODE_RECALCUL : `
+    SELECT *
+        FROM CaissePeriode
+        WHERE idcaisse = @idcaisse
+        AND dateperiode >= @startDate
+        AND dateperiode <= @endDate
+        ORDER BY dateperiode ASC
+    `
 }

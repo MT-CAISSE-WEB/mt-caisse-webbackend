@@ -19,5 +19,6 @@ router.put("/open/:id", authmiddleware.authentificatetoken, periodecaisse_contro
 router.put("/close/:id", authmiddleware.authentificatetoken, periodecaisse_controller.fermeture_caisse);
 router.post("/validate/:id", authmiddleware.authentificatetoken, periodecaisse_controller.validate_caisse);
 router.post("/billetage", authmiddleware.authentificatetoken, periodecaisse_controller.create_billetage);
+router.post("/recalculate", authmiddleware.authentificatetoken, periodecaisse_controller.recalculate_solde);
 
 module.exports = router;
