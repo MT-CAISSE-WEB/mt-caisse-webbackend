@@ -132,8 +132,18 @@ module.exports.get_recentperiode = asyncHandler(async(req, res, next) => {
   }
 });
 
+module.exports.get_caisse_tresorerie_by_date = asyncHandler(async(req, res, next) => {
+  try {
+    const { startDate, endDate, idcaisse } = req.body;
+    const data = await caisseperiodeservice.get_caisse_tresorerie_by_date(startDate, endDate, idcaisse);
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+});
+
 /**
- * Validation une periode caisse existante
+ * Recalculate le solde d'une periode caisse existante
  */
 module.exports.recalculate_solde = asyncHandler(async(req, res, next) => {
   try {
