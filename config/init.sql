@@ -1949,3 +1949,56 @@ END
 
 -- ALTER TABLE PieceJointe
 -- ADD taille BIGINT;
+
+-- PJ & operation de caisse
+IF NOT EXISTS (
+    SELECT *
+    FROM sys.tables
+    WHERE name = 'OperationPieceJointe'
+)
+BEGIN
+    CREATE TABLE OperationPieceJointe (
+        idoperationpiecejointe UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+
+        idoperation UNIQUEIDENTIFIER NOT NULL,
+        idpiecejointe UNIQUEIDENTIFIER NOT NULL,
+
+        createdat DATETIME DEFAULT GETDATE(),
+        createdby NVARCHAR(50),
+        updatedat DATETIME,
+        updatedby NVARCHAR(50),
+
+        CONSTRAINT FK_OperationPieceJointe_Operation
+            FOREIGN KEY (idoperation)
+            REFERENCES EnteteOperationCaisse(idoperation)
+            ON DELETE CASCADE,
+
+        CONSTRAINT FK_OperationPieceJointe_PieceJointe
+            FOREIGN KEY (idpiecejointe)
+            REFERENCES PieceJointe(idpiecejointe)
+            ON DELETE CASCADE,
+
+        CONSTRAINT UQ_OperationPieceJointe
+            UNIQUE (idoperation, idpiecejointe)
+    );
+END
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_OperationPieceJointe_Operation'
+)
+BEGIN
+    CREATE INDEX IX_OperationPieceJointe_Operation
+    ON OperationPieceJointe(idoperation);
+END
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_OperationPieceJointe_Piece'
+)
+BEGIN
+    CREATE INDEX IX_OperationPieceJointe_Piece
+    ON OperationPieceJointe(idpiecejointe);
+END
