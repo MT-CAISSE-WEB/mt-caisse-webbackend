@@ -209,7 +209,7 @@ async function GenererEcriture(idoperation) {
           .request()
           .input("idligneoperation", sql.UniqueIdentifier, l.idligneoperation)
           .input("numpiececomptable", sql.NVarChar, pieceNumber).query(`
-                UPDATE ligneoperationCaisse
+                UPDATE LigneOperationCaisse
                 SET comptabilise = 1,numpiececomptable=@numpiececomptable,datecomptabilisation = GETDATE()
                 WHERE idligneoperation = @idligneoperation
                 `);

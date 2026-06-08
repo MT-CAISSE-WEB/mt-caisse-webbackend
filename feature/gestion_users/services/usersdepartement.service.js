@@ -6,7 +6,7 @@ dotenv.config({path: '../../../config/config.env'});
 async function getutilisateurdepartement(idutilisateur){
     try {
         const pool = await db.poolPromise;
-        const query =`select * from utilisateurdepartement
+        const query =`select * from UtilisateurDepartement
                       WHERE idutilisateur = @idutilisateur`;
 
         const result = await pool.request()
@@ -33,9 +33,9 @@ async function upsertutilisateurdept(params){
     try {
         const pool = await db.poolPromise;
         const {idutilisateur, iddepartement, createdby, updatedby} = params;
-        const query = ` IF EXISTS (SELECT 1 FROM utilisateurdepartement WHERE idutilisateur = @idutilisateur AND iddepartement = @iddepartement)
+        const query = ` IF EXISTS (SELECT 1 FROM UtilisateurDepartement WHERE idutilisateur = @idutilisateur AND iddepartement = @iddepartement)
          BEGIN
-            UPDATE  utilisateurdepartement SET
+            UPDATE  UtilisateurDepartement SET
                 idutilisateur = @idutilisateur,
                 iddepartement = @iddepartement,
                 updatedby = @updatedby,
@@ -45,7 +45,7 @@ async function upsertutilisateurdept(params){
          END
          ELSE
          BEGIN
-            INSERT INTO  utilisateurdepartement (idutilisateur,iddepartement,createdby,createdat)
+            INSERT INTO  UtilisateurDepartement (idutilisateur,iddepartement,createdby,createdat)
             OUTPUT 'insert' AS action, INSERTED.*
             VALUES (@idutilisateur,@iddepartement, @createdby, GETDATE())
          END`;
@@ -79,9 +79,9 @@ async function getAllutilisateurdept(){
     try {
         const pool = await db.poolPromise;
         const query = `SELECT ud.*, r.code,d.codedept,d.libelle,d.responsable,u.nom,u.prenom
-                       FROM utilisateurdepartement ud
-                       left JOIN utilisateur u ON ur.idutilisateur = u.idutilisateur
-                       left JOIN departement d ON ud.iddepartement = d.iddepartement
+                       FROM UtilisateurDepartement ud
+                       left JOIN Utilisateur u ON ur.idutilisateur = u.idutilisateur
+                       left JOIN Departement d ON ud.iddepartement = d.iddepartement
                        `;
         const result = await pool.request().query(query);  
         return {
@@ -103,7 +103,7 @@ async function getAllutilisateurdept(){
 async function deleteutilisateurdept(idutilisateur,iddepartement){
     try {
         const pool = await db.poolPromise;
-        const query = `DELETE FROM utilisateurdepartement WHERE idutilisateur = @idutilisateur AND iddepartement = @iddepartement`;
+        const query = `DELETE FROM UtilisateurDepartement WHERE idutilisateur = @idutilisateur AND iddepartement = @iddepartement`;
         await pool.request()
             .input('idutilisateur', db.sql.UniqueIdentifier, idutilisateur)
             .input('iddepartement', db.sql.UniqueIdentifier, iddepartement)

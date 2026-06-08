@@ -211,7 +211,7 @@ module.exports = {
 
         FROM EnteteDemande ED
         JOIN EnteteOperationCaisse EOC ON EOC.iddemande = ED.iddemande
-        JOIN ligneoperationCaisse LOC ON LOC.idoperation = EOC.idoperation
+        JOIN LigneOperationCaisse LOC ON LOC.idoperation = EOC.idoperation
         JOIN TypeOperation TOp ON TOp.idoperation = EOC.idoperation
         JOIN NatureOperation NO ON NO.idnature = LOC.idnature
 
@@ -233,7 +233,7 @@ module.exports = {
 
         FROM EnteteDemande ED
         JOIN EnteteOperationCaisse EOC ON EOC.iddemande = ED.iddemande
-        JOIN ligneoperationCaisse LOC ON LOC.idoperation = EOC.idoperation
+        JOIN LigneOperationCaisse LOC ON LOC.idoperation = EOC.idoperation
         JOIN TypeOperation TOp ON TOp.idoperation = EOC.idoperation
 
         JOIN LigneDemande LD 
@@ -259,7 +259,7 @@ module.exports = {
 
         FROM EnteteOperationCaisse EOC
         JOIN TypeOperation TOp ON TOp.idoperation = EOC.idoperation
-        JOIN ligneoperationCaisse LOC ON LOC.idoperation = EOC.idoperation
+        JOIN LigneOperationCaisse LOC ON LOC.idoperation = EOC.idoperation
         JOIN LigneDemande LD ON LD.idnature = LOC.idnature
         JOIN Budget B ON B.idbudget = LD.idbudget
 
@@ -295,7 +295,7 @@ module.exports = {
         JOIN Devise DC ON DC.iddevise = C.iddevise
         JOIN Devise D ON D.iddevise = E.iddevise
         JOIN CaissePeriode CP ON CP.idperiode = TOPE.idperiode
-        LEFT JOIN ligneoperationCaisse L ON L.idoperation = E.idoperation
+        LEFT JOIN LigneOperationCaisse L ON L.idoperation = E.idoperation
         LEFT JOIN NatureOperation N ON N.idnature = L.idnature
         LEFT JOIN Tiers T ON T.idtiers = L.idtiers
 

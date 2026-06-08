@@ -47,9 +47,9 @@ async function createdevise(data){
         const iddevise = uuidv4();
 
         const query = `
-            IF EXISTS (SELECT 1 FROM devise WHERE codedevise = @codedevise)
+            IF EXISTS (SELECT 1 FROM Devise WHERE codedevise = @codedevise)
             BEGIN
-                UPDATE devise
+                UPDATE Devise
                 SET intitule = @intitule,
                     codeiso = @codeiso,
                     actif = @actif,
@@ -60,7 +60,7 @@ async function createdevise(data){
             END
             ELSE
             BEGIN
-                INSERT INTO devise (iddevise, codedevise, intitule, codeiso, actif, createdby, createdat)
+                INSERT INTO Devise (iddevise, codedevise, intitule, codeiso, actif, createdby, createdat)
                 OUTPUT INSERTED.*
                 VALUES (@iddevise, @codedevise, @intitule, @codeiso, @actif, @createdby, GETDATE())
             END
@@ -100,7 +100,7 @@ async function createdevise(data){
     async function getalldevises(){
         try {
             const pool = await connectDB();
-            const query = "SELECT * FROM devise";
+            const query = "SELECT * FROM Devise";
             const result = await pool.request().query(query);
             return {
                 success :true,

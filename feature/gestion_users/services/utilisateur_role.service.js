@@ -81,7 +81,7 @@ async function getAllutilisateurrole(){
         const pool = await db.poolPromise;
         const query = `SELECT ur.*, r.code,r.libelle,u.nom,u.prenom
                        FROM utilisateur_role ur
-                       left JOIN utilisateur u ON ur.idutilisateur = u.idutilisateur
+                       left JOIN Utilisateur u ON ur.idutilisateur = u.idutilisateur
                        left JOIN role r ON ur.idrole = r.idrole
                        `;
         const result = await pool.request().query(query);  

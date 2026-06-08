@@ -14,7 +14,7 @@ async function changepassword(params){
         const user = await pool.request()
         .input("idutilisateur",db.sql.UniqueIdentifier,userid)
         .query(`select password 
-                from utilisateur where idutilisateur =@idutilisateur`);
+                from Utilisateur where idutilisateur =@idutilisateur`);
         if(user.recordset.length ===0)
         {
             return {
@@ -191,7 +191,7 @@ async function getalluser(){
 async function getoneuser(iduser){
     try {
         const pool = await connectDB();
-        const query = "SELECT * FROM utilisateur where idutilisateur = @idutilisateur";
+        const query = "SELECT * FROM Utilisateur where idutilisateur = @idutilisateur";
         const result = await pool.request()
         .input('idutilisateur',db.sql.UniqueIdentifier,iduser)
         .query(query);
@@ -215,7 +215,7 @@ async function deleteuser(iduser)
           
           try {
               const pool = await connectDB();
-              const query = "DELETE FROM utilisateur where idutilisateur = @idutilisateur";
+              const query = "DELETE FROM Utilisateur where idutilisateur = @idutilisateur";
               const result = await pool.request()
               .input('idutilisateur', sql.UniqueIdentifier,iduser)
               .query(query);
@@ -265,17 +265,17 @@ try{
 
         left join role r on ur.idrole = r.idrole
 
-        left join utilisateurdepartement ud
+        left join UtilisateurDepartement ud
         on ud.idutilisateur = u.idutilisateur
 
-        left join departement d on ud.iddepartement = d.iddepartement
+        left join Departement d on ud.iddepartement = d.iddepartement
 
         LEFT JOIN Devise dref 
             ON dref.iddevise = s.iddevisereference
 
         LEFT JOIN Devise drep 
             ON drep.iddevise = s.iddevisereporting
-        left join site st
+        left join Site st
             on st.idsite = u.idsite
 
         WHERE u.login = @login`;
@@ -385,7 +385,7 @@ try{
             .input("userid", db.sql.UniqueIdentifier, user.idutilisateur)
             .input("token", db.sql.NVarChar(255), hashedRefresh)
             .query(`
-                INSERT INTO REFRESH_TOKEN(idutilisateur, token)
+                INSERT INTO Refresh_token(idutilisateur, token)
                 VALUES (@userid, @token)
             `);  
             
@@ -417,7 +417,7 @@ async function refreshtoken (refreshToken){
         const pool = await connectDB();
 
         // Récupération liste
-        const result = await pool.request().query("SELECT * FROM REFRESH_TOKEN");
+        const result = await pool.request().query("SELECT * FROM Refresh_token");
 
         const found = result.recordset.find(rt =>
             argon2.verify(rt.token, refreshToken)
@@ -453,7 +453,7 @@ async function logout(refreshToken){
 
             // Supprimer le refresh token lié à l'utilisateur
             await pool.request()
-                .query("DELETE FROM REFRESH_TOKEN");
+                .query("DELETE FROM Refresh_token");
 
             return { status: 200, success: true, message: "Déconnexion réussie" };
 

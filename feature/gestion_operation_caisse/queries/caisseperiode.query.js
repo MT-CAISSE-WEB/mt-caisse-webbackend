@@ -126,7 +126,7 @@ module.exports = {
         ORDER BY dateperiode DESC;
     `,
     INSERTBILLET : `
-        INSERT INTO caisseBilletage(idbilletage, idperiode, valeur, quantite, montant,
+        INSERT INTO CaisseBilletage(idbilletage, idperiode, valeur, quantite, montant,
         ecart, createdat, createdby) OUTPUT INSERTED.*
         VALUES(@idbilletage, @idperiode, @valeur, @quantite, @montant, @ecart, @createdat, @createdby)
     `,

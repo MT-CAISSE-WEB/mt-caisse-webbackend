@@ -115,6 +115,7 @@ async function editionjournal(datedebut, datefin, idcaisse, idsite) {
 
             dateGroup.operations.push({
                 typeoperation: r.typeoperation,
+                dateoperation: r.dateoperation.toISOString().split('T')[0],
                 codeoperation: r.codeoperation,
                 cnature: r.codenature,
                 nature: r.lib_nature,
@@ -123,10 +124,9 @@ async function editionjournal(datedebut, datefin, idcaisse, idsite) {
                 ctiers: r.codetiers,
                 tiers: r.nom_tiers,
                 libelle: r.libelle,
-                montant: r.montant || 0,
+                montant: r.montantligne || 0,
                 montant_ope: r.total_ope || 0,
             });
-
         });
 
         const lignes = Array.from(map.values());
@@ -136,6 +136,8 @@ async function editionjournal(datedebut, datefin, idcaisse, idsite) {
             raisonsociale: head.raisonsociale,
             codesite: head.codesite,
             lib_site: head.lib_site,
+            codejournal: head.codejournal,
+            lib_journal: head.designation,
             codecaisse: head.codecaisse,
             lib_caisse: head.lib_caisse,
             devise_caisse: head.devise_caisse,

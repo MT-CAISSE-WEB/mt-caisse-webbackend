@@ -15,7 +15,7 @@ const queryInsert = `
         VALUES (@idligneoperation, @idoperation, @idnature, @idcentre, @idsociete, @idtiers, @libelle, @montantoperation, @comptabilise, @numpiececomptable, @datecomptabilisation, @createdat, @createdby, @updatedat, @updatedby)
         `;
 
-const queryUpdate = `UPDATE ligneoperationCaisse SET idnature = @idnature, idcentre = @idcentre, libelle = @libelle, montantoperation = @montantoperation, idtiers = @idtiers, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE idligneoperation = @idligneoperation`;
+const queryUpdate = `UPDATE LigneOperationCaisse SET idnature = @idnature, idcentre = @idcentre, libelle = @libelle, montantoperation = @montantoperation, idtiers = @idtiers, updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE idligneoperation = @idligneoperation`;
 
 class ligneoperationModel {
     constructor(idligneoperation, idoperation, codeoperation, idsociete, codesociete, idtiers, codetiers, idnature, codenature, idcentre, codecentre, libelle, montantoperation, comptabilise, numpiececomptable, datecomptabilisation, createdat, createdby, updatedat, updatedby)
@@ -72,7 +72,7 @@ class ligneoperationModel {
 
     async get_allligneoperations () {
         const pool = await connectDB();
-        const query = "SELECT * FROM ligneoperationCaisse"
+        const query = "SELECT * FROM LigneOperationCaisse"
         try {
             const result = await pool.request().query(query);
             return result;
@@ -84,7 +84,7 @@ class ligneoperationModel {
     async get_oneligneoperation(idligneoperation){
         const pool = await connectDB();
         try {
-            const result = await pool.request().input('idligneoperation', sql.UniqueIdentifier, idligneoperation).query("SELECT * FROM ligneoperationCaisse WHERE idligneoperation = @idligneoperation");
+            const result = await pool.request().input('idligneoperation', sql.UniqueIdentifier, idligneoperation).query("SELECT * FROM LigneOperationCaisse WHERE idligneoperation = @idligneoperation");
             const ligneoperation = result.recordset[0];
             let operation = null ;
             let societe = null;
@@ -149,7 +149,7 @@ class ligneoperationModel {
         try {
             const result = await pool.request()
             .input('idligneoperation', sql.UniqueIdentifier, idligneoperation)
-            .query("DELETE FROM ligneoperationCaisse WHERE idligneoperation = @idligneoperation");
+            .query("DELETE FROM LigneOperationCaisse WHERE idligneoperation = @idligneoperation");
             return result;
         } catch (error) {
             console.log(`Erreur de suppression: ${error}`.cyan.bold);

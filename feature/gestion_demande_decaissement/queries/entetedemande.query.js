@@ -93,7 +93,7 @@ module.exports = {
             -- Sécurité utilisateur
             AND (
                 @typeentitesociete = 1
-                OR e.idsite = @idsite
+                OR E.idsite = @idsite
             )
 
             AND (
@@ -197,7 +197,7 @@ module.exports = {
         -- Sécurité utilisateur
         AND (
             @typeentitesociete = 1
-            OR e.idsite = @idsite
+            OR E.idsite = @idsite
         )
             
         AND (
@@ -407,7 +407,7 @@ module.exports = {
             LEFT JOIN EnteteDemande D ON D.iddemande = VD.iddemande
             LEFT JOIN Motif M ON M.idmotif = VD.idmotif
             LEFT JOIN Utilisateur U ON U.idutilisateur = VD.idutilisateur
-            LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = VD.idcircuitvalidation
+            LEFT JOIN CircuitValidation CI ON CI.idcircuitvalidation = VD.idcircuitvalidation
         Where VD.iddemande = @iddemande
         ORDER BY VD.rang ASC;
     `,

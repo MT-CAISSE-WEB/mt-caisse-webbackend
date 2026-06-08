@@ -74,6 +74,8 @@ class typeoperationModel {
             const operations = result.recordsets[0];
             const total = result.recordsets[1][0].total;
             const totalPages = Math.ceil(total / limit);
+
+            console.log(operations);
             
             return {page, limit, total, totalPages, data: operations};
         } catch (error) {

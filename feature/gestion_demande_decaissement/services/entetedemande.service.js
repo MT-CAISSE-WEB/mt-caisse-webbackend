@@ -655,6 +655,7 @@ async function getAll({page, limit , search, status, user}) {
   const userconnect = await userservice.getoneuser(user);
 
   const result = await demandeModel.get_allDemandes({page, limit , search, status}, userconnect.data);
+
   if (!result || result.length === 0) {
     throw new Error("Liste des demandes non chargée");
   }
@@ -1342,6 +1343,7 @@ async function getDernierTaux(deviseorigine, devisedestination, date){
     const result = await demandeModel.getTauxRecent(deviseorigine, devisedestination, date);
     return result;
   } catch (error) {
+    console.log(`Erreur de recuperation: ${error}`.cyan.bold);
     throw error;
   }
 }

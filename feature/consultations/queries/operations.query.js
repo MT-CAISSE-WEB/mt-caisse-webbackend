@@ -22,7 +22,7 @@ module.exports = {
             ON TOPE.idoperation = EOC.idoperation
         OUTER APPLY (
 			SELECT TOP 1 libelle
-			FROM ligneoperationCaisse L
+			FROM LigneOperationCaisse L
 			WHERE L.idoperation = TOPE.idoperation
 		) L
         INNER JOIN Caisse C 
@@ -259,24 +259,26 @@ module.exports = {
     editionjournal : `
         SELECT Soc.codesociete, Soc.raisonsociale,
         Site.codesite, Site.libelle as lib_site,
+		J.codejournal, J.designation,
         C.codecaisse, C.libelle as lib_caisse,
-        TOPE.codtypeoperation      AS typeoperation,
+        TOPE.codtypeoperation      AS typeoperation, OPE.idoperation,
         OPE.codeoperation, OPE.dateoperation,
         NOP.codenature, NOP.libelle as lib_nature,
         CAN.codecentreanalytique AS codecentre, CAN.libelle as lib_centre,
         T.codetiers, T.designation AS nom_tiers,
-        OPL.libelle, TOPE.montant,  D.codedevise AS devise_caisse,
+        OPL.libelle, OPL.montantoperation AS montantligne,  D.codedevise AS devise_caisse,
         OPE.montant AS total_ope, DevO.codedevise,
         CP.soldeouverture, CP.soldefermeture
 
         FROM EnteteOperationCaisse OPE
         INNER JOIN TypeOperation TOPE ON TOPE.idoperation = OPE.idoperation
         INNER JOIN Caisse C ON TOPE.idcaisse = C.idcaisse
+		INNER JOIN Journal J ON C.idjournal = J.idjournal
         INNER JOIN Devise D ON D.iddevise = C.iddevise
         INNER JOIN Devise DevO ON DevO.iddevise = OPE.iddevise
         INNER JOIN Societe Soc ON C.idsociete = Soc.idsociete
         INNER JOIN Site ON Site.idsite = C.idsite
-        INNER JOIN LigneOperationCaisse OPL ON OPE.idoperation = OPL.idoperation
+        LEFT JOIN LigneOperationCaisse OPL ON OPE.idoperation = OPL.idoperation
         LEFT JOIN NatureOperation NOP ON NOP.idnature = OPL.idnature
         LEFT JOIN CentreAnalytique CAN ON CAN.idcentreanalytique = OPL.idcentre
         LEFT JOIN Tiers T ON T.idtiers = OPL.idtiers

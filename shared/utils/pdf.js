@@ -145,6 +145,11 @@ async function genererPdfJournal(data, datedebut, datefin, utilisateur){
     const donnees = data.data;
     const today = new Date();
 
+    // Récupere la première date d’opération pour l’afficher dans le solde initial
+    const premiereDate = donnees.lignes && donnees.lignes.length > 0 && donnees.lignes[0].operations && donnees.lignes[0].operations.length > 0
+        ? new Date(donnees.lignes[0].operations[0].dateoperation).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        : '';
+
     const templatePath = path.join(__dirname, '../../views/templates/journal-caisse.html');
     let html = fs.readFileSync(templatePath, 'utf8');
 
@@ -152,22 +157,32 @@ async function genererPdfJournal(data, datedebut, datefin, utilisateur){
     const soldeOuverture = Number(donnees.soldeouverture || 0).toLocaleString('fr-FR');
     const soldeFermeture = Number(donnees.soldefermeture || 0).toLocaleString('fr-FR');
 
+    // Récupére la premiere valeur du champ soldeouverture pour l’afficher dans le solde initial
+    const soldeInitial = donnees.lignes && donnees.lignes.length > 0
+        ? Number(donnees.lignes[0].solde_ouverture || 0).toLocaleString('fr-FR')
+        : 'Aucun solde';
+
+
     // Remplacement entête
     html = html
         .replace('{{codesociete}}', donnees.codesociete || '')
         .replace('{{societe}}', donnees.raisonsociale || '')
         .replace('{{codesite}}', donnees.codesite || '')
         .replace('{{site}}', donnees.lib_site || '')
+        .replace('{{codejournal}}', donnees.codejournal || '')
+        .replace('{{journal}}', donnees.lib_journal || '')
         .replace('{{codecaisse}}', donnees.codecaisse || '')
         .replace('{{caisse}}', donnees.lib_caisse || '')
         .replace(/{{devise}}/g, donnees.devise_caisse || '')
-        .replace('{{datedebut}}', datedebut || '')
-        .replace('{{datefin}}', datefin || '')
+        .replace('{{datedebut}}', datedebut? new Date(datedebut).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '')
+        .replace('{{datefin}}', datefin? new Date(datefin).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '')
         .replace('{{dateimp}}', today.toLocaleDateString('fr-FR'))
         .replace('{{heureimp}}', today.toLocaleTimeString('fr-FR'))
         .replace('{{soldeouverture}}', soldeOuverture)
         .replace('{{soldefermeture}}', soldeFermeture)
-        .replace('{{utilisateur}}', utilisateur || '');
+        .replace('{{utilisateur}}', utilisateur || '')
+        .replace('{{date_solde}}', premiereDate)
+        .replace('{{solde_initial}}', soldeInitial);
 
 
     // Sécurité si aucune ligne
@@ -182,78 +197,98 @@ async function genererPdfJournal(data, datedebut, datefin, utilisateur){
         .reduce((sum, o) => sum + Number(o.montant || 0), 0);
 
         const totalDecaissement = jour.operations
-        .filter(o => o.typeoperation?.toLowerCase() === 'decaissement')
+        .filter(o => o.typeoperation?.substring(0, 12).toLowerCase() === 'decaissement')
         .reduce((sum, o) => sum + Number(o.montant || 0), 0);
-        // 
 
-    const operations = jour.operations.map(op => `
-        <tr>
-            <td>${op.codeoperation || ''}</td>
-                <td>${op.nature || ''}</td>
-                <td>${op.libelle || ''}</td>
-                <td>${op.centre || ''}</td>
-                <td>${op.tiers || ''}</td>
-            <td class="right">${Number(op.montant || 0).toLocaleString('fr-FR')}</td>
-        </tr>
-    `).join('');
+        const soldeFinal = (Number(jour.solde_ouverture || 0) + totalEncaissement - totalDecaissement).toLocaleString('fr-FR');
 
-    const totaux = `
-        <tr>
-            <td colspan="3" class="left">
-                <strong>Total encaissement : </strong>
-                ${Number(totalEncaissement || 0).toLocaleString('fr-FR')}
-            </td>
-            <td class="left"></td>
-        </tr>
-        <tr>
-            <td colspan="3" class="left">
-                <strong>Total encaissement : </strong>
-                ${Number(totalDecaissement || 0).toLocaleString('fr-FR')}
-            </td>
-            <td class="left"></td>
-        </tr>
+        // Calcul du solde courant au fil des opérations
+        let soldeCourant = Number(jour.solde_ouverture || 0);
+
+        // Construction des lignes d’opérations
+        const operations = jour.operations.map(op => {
+
+            const montant = Number(op.montant || 0);
+
+            if (op.typeoperation?.substring(0, 12).toLowerCase() === 'decaissement') {
+                soldeCourant -= montant;
+            } else if (op.typeoperation?.toLowerCase() === 'encaissement') {
+                soldeCourant += montant;
+            }
+
+            return `
+                <tr>
+                    <td>
+                        ${op.dateoperation
+                            ? new Date(op.dateoperation).toLocaleDateString('fr-FR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                            })
+                            : ''}
+                    </td>
+                    <td>${op.codeoperation || ''}</td>
+                    <td>${op.libelle || ''}</td>
+
+                    <td class="right">
+                        ${op.typeoperation?.substring(0, 12).toLowerCase() === 'decaissement'
+                            ? montant.toLocaleString('fr-FR')
+                            : 0.0}
+                    </td>
+
+                    <td class="right">
+                        ${op.typeoperation?.toLowerCase() === 'encaissement'
+                            ? montant.toLocaleString('fr-FR')
+                            : 0.0}
+                    </td>
+
+                    <td class="right">
+                        ${soldeCourant.toLocaleString('fr-FR')}
+                    </td>
+
+                </tr>
+            `;
+        }).join('');
+
+        // Récupère les dates uniques des opérations du jour pour les afficher dans le solde final
+        const datesUniques = [
+            ...new Set(
+                jour.operations
+                    .map(o => {
+                        if (!o.dateoperation) return null;
+
+                        return new Date(o.dateoperation).toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                        });
+                    })
+                    .filter(Boolean)
+            )
+        ];
+
+        const dates = datesUniques.join(', ');
+
+        // Affiche les totaux du jour et le solde final
+        const totaux = `
+            <tr class="total-row">
+                <td colspan="3" class="right">
+                    Solde au ${jour.dateoperation || ''} ${dates}
+                </td>
+                <td class="num">
+                    ${Number(totalDecaissement || 0.0).toLocaleString('fr-FR')}
+                </td>
+                <td class="num">
+                    ${Number(totalEncaissement || 0.0).toLocaleString('fr-FR')}
+                </td>
+                <td class="num">${soldeFinal}</td>
+            </tr>
+            `;
+
+        return `
+            ${operations}
+            ${totaux}
         `;
-
-    return `
-        <div class="jour">
-
-            <div class="jour-header">
-                <strong>Date :</strong> ${new Date(jour.date).toLocaleDateString('fr-FR')}
-            </div>
-
-            <div class="solde">
-                Solde ouverture : 
-                <strong>${Number(jour.solde_ouverture || 0).toLocaleString('fr-FR')}</strong>
-            </div>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Pièce</th>
-                        <th>Libellé</th>
-                        <th>Nature</th>
-                        <th>Centre</th>
-                        <th>Tiers</th>
-                        <th class="right">Montant</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    ${operations}
-                    <div class="line"></div>
-                    ${totaux}
-                </tbody>
-            </table>
-
-            <div class="solde right">
-                Solde fermeture :
-                <strong>${Number(jour.solde_fermeture || 0).toLocaleString('fr-FR')}</strong>
-            </div>
-
-            <div class="line"></div>
-
-        </div>
-    `;
 
     }).join('');
 

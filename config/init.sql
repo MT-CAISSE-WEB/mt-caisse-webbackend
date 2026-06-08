@@ -1,8 +1,11 @@
 -- USE MTCAISSEWEB;
 -- -- OK
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Devise')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'Devise')
 BEGIN
-    CREATE TABLE Devise (
+    CREATE TABLE Devise
+    (
         iddevise UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codedevise NVARCHAR(3) UNIQUE,
         intitule NVARCHAR(150),
@@ -15,49 +18,58 @@ BEGIN
     );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Motif')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'Motif')
 BEGIN
-    CREATE TABLE Motif (
-		idmotif UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-		codemotif NVARCHAR(50) UNIQUE,
-		libellemotif NVARCHAR(150),
-		createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
+    CREATE TABLE Motif
+    (
+        idmotif UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codemotif NVARCHAR(50) UNIQUE,
+        libellemotif NVARCHAR(150),
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
     );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PieceJointe')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'PieceJointe')
 BEGIN
-    CREATE TABLE PieceJointe (
-		idpiecejointe UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-		urlpiece NVARCHAR(150) UNIQUE,
-		nomtable NVARCHAR(50),
+    CREATE TABLE PieceJointe
+    (
+        idpiecejointe UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        urlpiece NVARCHAR(150) UNIQUE,
+        nomtable NVARCHAR(50),
         idtable UNIQUEIDENTIFIER,
         dossier NVARCHAR(50),
-		createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
     );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ModeleCompteur')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'ModeleCompteur')
 BEGIN
-    CREATE TABLE ModeleCompteur (
-		idmodelecompteur UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-		codemodelecompteur NVARCHAR(50) UNIQUE,
-		libelle NVARCHAR(50),
+    CREATE TABLE ModeleCompteur
+    (
+        idmodelecompteur UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codemodelecompteur NVARCHAR(50) UNIQUE,
+        libelle NVARCHAR(50),
         typedocument NVARCHAR(50) NOT NULL,
         sequence_1 NVARCHAR(50),
         prefixe_1 NVARCHAR(50),
         sequence_2 NVARCHAR(50),
         prefixe_2 NVARCHAR(50),
-		createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
     );
 END
 
@@ -65,204 +77,237 @@ END
 -- -- 2️⃣ Tauxdevise (dépend de Devise)
 -- -- ============================================
 -- OK
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Tauxdevise')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'Tauxdevise')
 BEGIN
-    CREATE TABLE Tauxdevise (
+    CREATE TABLE Tauxdevise
+    (
         idtauxdevise UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-		iddeviseorigine UNIQUEIDENTIFIER,
-		iddevisedestination UNIQUEIDENTIFIER,
+        iddeviseorigine UNIQUEIDENTIFIER,
+        iddevisedestination UNIQUEIDENTIFIER,
         codetauxdevise NVARCHAR(50) UNIQUE,
-		intitule NVARCHAR(150),
-		typecours NVARCHAR(50),
+        intitule NVARCHAR(150),
+        typecours NVARCHAR(50),
         datecours Datetime,
-		coefficient DECIMAL(18,9),
-		coefficientinverse DECIMAL(18,9),
+        coefficient DECIMAL(18,9),
+        coefficientinverse DECIMAL(18,9),
         createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
-		FOREIGN KEY (iddeviseorigine) REFERENCES Devise(iddevise),
-		FOREIGN KEY (iddevisedestination) REFERENCES Devise(iddevise),
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (iddeviseorigine) REFERENCES Devise(iddevise),
+        FOREIGN KEY (iddevisedestination) REFERENCES Devise(iddevise),
     );
 END
 
 
 -- OK
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Societe')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'Societe')
 BEGIN
-    CREATE TABLE Societe (
+    CREATE TABLE Societe
+    (
         idsociete UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-		iddevisereference UNIQUEIDENTIFIER,
-		iddevisereporting UNIQUEIDENTIFIER,
-		codesociete nvarchar(50) unique,
-		raisonsociale NVARCHAR(150),
-		sigle NVARCHAR(50),
-		rccm NVARCHAR(50),
-		numnui NVARCHAR(50),
-		email NVARCHAR(50),
-		telephone NVARCHAR(20),
-		logo NVARCHAR(50),
-		adresse NVARCHAR(200),
-		suivibudgetaire INT DEFAULT 0,
+        iddevisereference UNIQUEIDENTIFIER,
+        iddevisereporting UNIQUEIDENTIFIER,
+        codesociete nvarchar(50) unique,
+        raisonsociale NVARCHAR(150),
+        sigle NVARCHAR(50),
+        rccm NVARCHAR(50),
+        numnui NVARCHAR(50),
+        email NVARCHAR(50),
+        telephone NVARCHAR(20),
+        logo NVARCHAR(50),
+        adresse NVARCHAR(200),
+        suivibudgetaire INT DEFAULT 0,
         createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
-		FOREIGN KEY (iddevisereference) REFERENCES Devise(iddevise),
-		FOREIGN KEY (iddevisereporting) REFERENCES Devise(iddevise),
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (iddevisereference) REFERENCES Devise(iddevise),
+        FOREIGN KEY (iddevisereporting) REFERENCES Devise(iddevise),
     );
 END
 
 
 -- OK
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Site')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'Site')
 BEGIN
-    CREATE TABLE Site (
+    CREATE TABLE Site
+    (
         idsite UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-		idsociete UNIQUEIDENTIFIER,
-		codesite nvarchar(50) unique,
-		libelle NVARCHAR(150),
-		email NVARCHAR(30),
-		telephone NVARCHAR(20),
-		adresse NVARCHAR(200),
+        idsociete UNIQUEIDENTIFIER,
+        codesite nvarchar(50) unique,
+        libelle NVARCHAR(150),
+        email NVARCHAR(30),
+        telephone NVARCHAR(20),
+        adresse NVARCHAR(200),
         createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
-		idcentreanalytique UNIQUEIDENTIFIER NULL,
-		estcentreanalytique INT DEFAULT 0,
-		FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
-		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        idcentreanalytique UNIQUEIDENTIFIER NULL,
+        estcentreanalytique INT DEFAULT 0,
+        FOREIGN KEY (idcentreanalytique) REFERENCES CentreAnalytique(idcentreanalytique),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );
 END
 
 
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Utilisateur')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'Utilisateur')
 BEGIN
-    CREATE TABLE Utilisateur (
-		idutilisateur UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-		codeutilisateur NVARCHAR(24) UNIQUE,
-		idsociete UNIQUEIDENTIFIER,
+    CREATE TABLE Utilisateur
+    (
+        idutilisateur UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codeutilisateur NVARCHAR(24) UNIQUE,
+        idsociete UNIQUEIDENTIFIER,
         idsite uniqueidentifier,
-		nom NVARCHAR(100),
-		prenom NVARCHAR(100),
-		adresse NVARCHAR(100),
-		telephone NVARCHAR(50),
-		email NVARCHAR(50) unique,
-		login NVARCHAR(50) unique,
-		password NVARCHAR(255),
-		typeentitesite INT DEFAULT 0,
-		typeentitedepartement INT DEFAULT 0,
-		typeentitesociete INT DEFAULT 0,
-		acheteur INT DEFAULT 0,
+        nom NVARCHAR(100),
+        prenom NVARCHAR(100),
+        adresse NVARCHAR(100),
+        telephone NVARCHAR(50),
+        email NVARCHAR(50) unique,
+        login NVARCHAR(50) unique,
+        password NVARCHAR(255),
+        typeentitesite INT DEFAULT 0,
+        typeentitedepartement INT DEFAULT 0,
+        typeentitesociete INT DEFAULT 0,
+        acheteur INT DEFAULT 0,
         createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
-		foreign key (idsociete) references Societe(idsociete),
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        foreign key (idsociete) references Societe(idsociete),
         foreign key (idsite) references Site(idsite)
     );
 END
 
 
 ---Ajout role et permission à completer chez vous
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'role')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'role')
 BEGIN
-CREATE TABLE role (
-    idrole INT PRIMARY KEY IDENTITY(1,1),
-	code VARCHAR(50),
-    libelle VARCHAR(50) NOT NULL,
-	createdby NVARCHAR(50),
-    createdat Datetime,
-	updatedat Datetime,
-	updatedby NVARCHAR(50)
-);
+    CREATE TABLE role
+    (
+        idrole INT PRIMARY KEY IDENTITY(1,1),
+        code VARCHAR(50),
+        libelle VARCHAR(50) NOT NULL,
+        createdby NVARCHAR(50),
+        createdat Datetime,
+        updatedat Datetime,
+        updatedby NVARCHAR(50)
+    );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'utilisateur_role')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'utilisateur_role')
 BEGIN
-CREATE TABLE utilisateur_role (
-    idutilisateur UNIQUEIDENTIFIER,
-    idrole INT NOT NULL,
-	createdby NVARCHAR(50),
-    createdat Datetime,
-	updatedat Datetime,
-	updatedby NVARCHAR(50),
-    PRIMARY KEY (idutilisateur, idrole),
-    FOREIGN KEY (idrole) REFERENCES role(idrole),
-    FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur)
-);
+    CREATE TABLE utilisateur_role
+    (
+        idutilisateur UNIQUEIDENTIFIER,
+        idrole INT NOT NULL,
+        createdby NVARCHAR(50),
+        createdat Datetime,
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        PRIMARY KEY (idutilisateur, idrole),
+        FOREIGN KEY (idrole) REFERENCES role(idrole),
+        FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur)
+    );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'permission')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'permission')
 BEGIN
-CREATE TABLE permission (
-    idpermission INT PRIMARY KEY IDENTITY(1,1),
-    code VARCHAR(50) NOT NULL,
-    description VARCHAR(255) NOT NULL,
-	createdby NVARCHAR(50),
-    createdat Datetime,
-	updatedat Datetime,
-	updatedby NVARCHAR(50)
-);
+    CREATE TABLE permission
+    (
+        idpermission INT PRIMARY KEY IDENTITY(1,1),
+        code VARCHAR(50) NOT NULL,
+        description VARCHAR(255) NOT NULL,
+        createdby NVARCHAR(50),
+        createdat Datetime,
+        updatedat Datetime,
+        updatedby NVARCHAR(50)
+    );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'role_permission')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'role_permission')
 BEGIN
-CREATE TABLE role_permission (
-    idrole INT NOT NULL,
-    idpermission INT NOT NULL,
-	createdby NVARCHAR(50),
-    createdat Datetime,
-	updatedat Datetime,
-	updatedby NVARCHAR(50),
-    PRIMARY KEY (idrole, idpermission),
-    FOREIGN KEY (idrole) REFERENCES role(idrole),
-    FOREIGN KEY (idpermission) REFERENCES permission(idpermission)
-);
+    CREATE TABLE role_permission
+    (
+        idrole INT NOT NULL,
+        idpermission INT NOT NULL,
+        createdby NVARCHAR(50),
+        createdat Datetime,
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        PRIMARY KEY (idrole, idpermission),
+        FOREIGN KEY (idrole) REFERENCES role(idrole),
+        FOREIGN KEY (idpermission) REFERENCES permission(idpermission)
+    );
 END
 
 
 ---refresh token a ajouter aussi
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name='Refresh_token')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name='Refresh_token')
 BEGIN
-	CREATE TABLE Refresh_token (
-		idutilisateur UNIQUEIDENTIFIER,
-		token NVARCHAR(150),
-		foreign key (idutilisateur) references Utilisateur(idutilisateur)
-	);
+    CREATE TABLE Refresh_token
+    (
+        idutilisateur UNIQUEIDENTIFIER,
+        token NVARCHAR(150),
+        foreign key (idutilisateur) references Utilisateur(idutilisateur)
+    );
 END
 
 
 -- OK
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Departement')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'Departement')
 BEGIN
-    CREATE TABLE Departement (
+    CREATE TABLE Departement
+    (
         iddepartement UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-		idsociete UNIQUEIDENTIFIER,
-		idsite UNIQUEIDENTIFIER,
-		responsable UNIQUEIDENTIFIER,
+        idsociete UNIQUEIDENTIFIER,
+        idsite UNIQUEIDENTIFIER,
+        responsable UNIQUEIDENTIFIER,
         codedept NVARCHAR(50) UNIQUE,
-		libelle NVARCHAR(150),
-		email NVARCHAR(30),
-		telephone NVARCHAR(20),
-		adresse NVARCHAR(200),
+        libelle NVARCHAR(150),
+        email NVARCHAR(30),
+        telephone NVARCHAR(20),
+        adresse NVARCHAR(200),
         createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
-		FOREIGN KEY (idsite) REFERENCES Site(idsite),
-		FOREIGN KEY (responsable) REFERENCES Utilisateur(idutilisateur),
-		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
+        FOREIGN KEY (responsable) REFERENCES Utilisateur(idutilisateur),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
     );
 END
 -- FIN INIT JUNIOR
 
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PlanComptable')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'PlanComptable')
 BEGIN
-    CREATE TABLE PlanComptable (
+    CREATE TABLE PlanComptable
+    (
         idcompte UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idsociete UNIQUEIDENTIFIER,
         numcompte NVARCHAR(50) UNIQUE,
@@ -281,9 +326,12 @@ BEGIN
 END
 
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'NatureOperation')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'NatureOperation')
 BEGIN
-    CREATE TABLE NatureOperation (
+    CREATE TABLE NatureOperation
+    (
         idnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codenature NVARCHAR(50) UNIQUE,
         idsociete UNIQUEIDENTIFIER,
@@ -304,9 +352,12 @@ BEGIN
 END
 
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CentreAnalytique')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'CentreAnalytique')
 BEGIN
-    CREATE TABLE CentreAnalytique (
+    CREATE TABLE CentreAnalytique
+    (
         idcentreanalytique UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idsociete UNIQUEIDENTIFIER,
         codecentreanalytique NVARCHAR(50) UNIQUE,
@@ -321,9 +372,12 @@ BEGIN
 END
 
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Tiers')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'Tiers')
 BEGIN
-    CREATE TABLE Tiers (
+    CREATE TABLE Tiers
+    (
         idtiers UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codetiers NVARCHAR(24) UNIQUE,
         idsociete UNIQUEIDENTIFIER,
@@ -334,7 +388,7 @@ BEGIN
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50)
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+            FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
     );
 END
 
@@ -343,9 +397,12 @@ END
 -- 13️⃣ CircuitValidation (dépend de Sites, Departement, Societe)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CircuitValidation')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'CircuitValidation')
 BEGIN
-    CREATE TABLE CircuitValidation (
+    CREATE TABLE CircuitValidation
+    (
         idcircuitvalidation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codecircuitvalidation NVARCHAR(24) UNIQUE,
         libelle NVARCHAR(100),
@@ -367,9 +424,12 @@ END
 --  CircuitEtape 
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Circuitetape')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'Circuitetape')
 BEGIN
-    CREATE TABLE Circuitetape (
+    CREATE TABLE Circuitetape
+    (
         idcircuitetape UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idcircuitvalidation UNIQUEIDENTIFIER,
         rang INT,
@@ -386,9 +446,12 @@ END
 --  EtapeValidateur 
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Etapevalidateur')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'Etapevalidateur')
 BEGIN
-    CREATE TABLE Etapevalidateur (
+    CREATE TABLE Etapevalidateur
+    (
         idcircuitetape UNIQUEIDENTIFIER,
         idutilisateur UNIQUEIDENTIFIER,
         createdat Datetime,
@@ -403,9 +466,12 @@ END
 -- 11️⃣ Budget (dépend de Sites, Societe, Budget parent)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Budget')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'Budget')
 BEGIN
-    CREATE TABLE Budget (
+    CREATE TABLE Budget
+    (
         idbudget UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codebudget NVARCHAR(24) UNIQUE,
         libelle NVARCHAR(150),
@@ -444,9 +510,12 @@ END
 -- 12️⃣ BudgetDepartementNature (dépend de Budget, Departement, NatureOperation)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'BudgetDepartementNature')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'BudgetDepartementNature')
 BEGIN
-    CREATE TABLE BudgetDepartementNature (
+    CREATE TABLE BudgetDepartementNature
+    (
         idbudgetdepartementnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idbudget UNIQUEIDENTIFIER,
         iddepartement UNIQUEIDENTIFIER,
@@ -468,9 +537,12 @@ BEGIN
     );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'banque')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'banque')
 BEGIN
-    CREATE TABLE banque (
+    CREATE TABLE banque
+    (
         idbanque UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codebanque VARCHAR(50) UNIQUE NOT NULL,
         libelle VARCHAR(150) NOT NULL,
@@ -497,9 +569,9 @@ END
 
 IF NOT EXISTS (
     SELECT 1
-    FROM sys.indexes
-    WHERE name = 'UQ_Circuit_Site_Action'
-      AND object_id = OBJECT_ID('CircuitValidation')
+FROM sys.indexes
+WHERE name = 'UQ_Circuit_Site_Action'
+    AND object_id = OBJECT_ID('CircuitValidation')
 )
 BEGIN
     CREATE UNIQUE INDEX UQ_Circuit_Site_Action
@@ -510,9 +582,9 @@ END
 
 IF NOT EXISTS (
     SELECT 1
-    FROM sys.indexes
-    WHERE name = 'UQ_Circuit_Societe_Action'
-      AND object_id = OBJECT_ID('CircuitValidation')
+FROM sys.indexes
+WHERE name = 'UQ_Circuit_Societe_Action'
+    AND object_id = OBJECT_ID('CircuitValidation')
 )
 BEGIN
     CREATE UNIQUE INDEX UQ_Circuit_Societe_Action
@@ -527,9 +599,12 @@ END
 -- =======================
 
 -- AffectationNatureCentre
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AffectationNatureCentre')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'AffectationNatureCentre')
 BEGIN
-    CREATE TABLE AffectationNatureCentre (
+    CREATE TABLE AffectationNatureCentre
+    (
         idaffnaturecentre UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idsociete UNIQUEIDENTIFIER,
         createdat Datetime,
@@ -546,9 +621,12 @@ BEGIN
 END
 
 -- AffectationDepartementNature
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AffectationDepartementNature')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'AffectationDepartementNature')
 BEGIN
-    CREATE TABLE AffectationDepartementNature (
+    CREATE TABLE AffectationDepartementNature
+    (
         idaffdepartementnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idsociete UNIQUEIDENTIFIER,
         createdat Datetime,
@@ -570,9 +648,12 @@ END
 -- 12️⃣ BudgetDepartementNature (dépend de Budget, Departement, NatureOperation)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'BudgetDepartementNature')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'BudgetDepartementNature')
 BEGIN
-    CREATE TABLE BudgetDepartementNature (
+    CREATE TABLE BudgetDepartementNature
+    (
         idbudgetdepartementnature UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idbudget UNIQUEIDENTIFIER,
         iddepartement UNIQUEIDENTIFIER,
@@ -597,9 +678,12 @@ END
 -- 17️⃣ EnteteDemande (dépend de Utilisateur, CircuitValidation, Sites, Departement, Societe, Devise)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'EnteteDemande')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'EnteteDemande')
 BEGIN
-    CREATE TABLE EnteteDemande (
+    CREATE TABLE EnteteDemande
+    (
         iddemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codedemande NVARCHAR(50) UNIQUE,
         iddemandeur UNIQUEIDENTIFIER,
@@ -633,9 +717,12 @@ END
 -- 18️⃣ LigneDemande (dépend de EnteteDemande, NatureOperation, Budget, CentreAnalytique, Sites, Societe)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'LigneDemande')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'LigneDemande')
 BEGIN
-    CREATE TABLE LigneDemande (
+    CREATE TABLE LigneDemande
+    (
         idlignedemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         iddemande UNIQUEIDENTIFIER,
         numligne INT,
@@ -673,9 +760,12 @@ END
 -- 19️⃣ DetailsDemande (dépend de LigneDemande, EnteteDemande, Societe)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DetailsDemande')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'DetailsDemande')
 BEGIN
-    CREATE TABLE DetailsDemande (
+    CREATE TABLE DetailsDemande
+    (
         iddetailsdemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         iddemande UNIQUEIDENTIFIER,
         idlignedemande UNIQUEIDENTIFIER,
@@ -694,9 +784,12 @@ BEGIN
 END
 -- FIN INIT FERREOL
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Journal')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'Journal')
 BEGIN
-    CREATE TABLE Journal (
+    CREATE TABLE Journal
+    (
         idjournal UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codejournal NVARCHAR(24) UNIQUE,
         idsociete UNIQUEIDENTIFIER,
@@ -706,7 +799,7 @@ BEGIN
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50)
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+            FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
     );
 END
 
@@ -714,9 +807,12 @@ END
 -- Caisse (dépend de Societe, Devise, Sites, Journal, PlanComptable)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Caisse')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'Caisse')
 BEGIN
-    CREATE TABLE Caisse (
+    CREATE TABLE Caisse
+    (
         idcaisse UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codecaisse NVARCHAR(24) UNIQUE,
         libelle NVARCHAR(100),
@@ -746,9 +842,12 @@ END
 -- 🔟 UtilisateurCaisse (dépend de Utilisateur, Caisse, Societe)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'UtilisateurCaisse')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'UtilisateurCaisse')
 BEGIN
-    CREATE TABLE UtilisateurCaisse (
+    CREATE TABLE UtilisateurCaisse
+    (
         idutilisateurcaisse UNIQUEIDENTIFIER PRIMARY KEY,
         idcaisse UNIQUEIDENTIFIER,
         idutilisateur UNIQUEIDENTIFIER,
@@ -771,9 +870,12 @@ END
 -- 21️⃣ EnteteOperationCaisse (dépend de EnteteDemande, Societe)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'EnteteOperationCaisse')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'EnteteOperationCaisse')
 BEGIN
-    CREATE TABLE EnteteOperationCaisse (
+    CREATE TABLE EnteteOperationCaisse
+    (
         idoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codeoperation NVARCHAR(50) UNIQUE,
         iddemande UNIQUEIDENTIFIER,
@@ -808,9 +910,12 @@ END
 -- 22️⃣ LigneOperationCaisse (dépend de EnteteOperationCaisse, NatureOperation, CentreAnalytique, Tiers, Societe)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ligneoperationCaisse')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'LigneOperationCaisse')
 BEGIN
-    CREATE TABLE ligneoperationCaisse (
+    CREATE TABLE LigneOperationCaisse
+    (
         idligneoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idoperation UNIQUEIDENTIFIER,
         idnature UNIQUEIDENTIFIER,
@@ -838,94 +943,111 @@ END
 -- 62️ CaissePeriode (dépend de EnteteOperationCaisse, Caisse)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CaissePeriode')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'CaissePeriode')
 BEGIN
-    CREATE TABLE CaissePeriode (
+    CREATE TABLE CaissePeriode
+    (
         idperiode UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idcaisse UNIQUEIDENTIFIER,
         dateperiode DATETIME,
         soldeouverture DECIMAL(22,9),
         soldefermeture DECIMAL(22,9),
-        montantphysique DECIMAL(22,9),   -- comptage manuel
+        montantphysique DECIMAL(22,9),
+        -- comptage manuel
         ecart DECIMAL(22,9),
-        statut NVARCHAR(20) DEFAULT 'non ouverte',            -- OUVERT / FERME / VALIDE
+        statut NVARCHAR(20) DEFAULT 'non ouverte',
+        -- OUVERT / FERME / VALIDE
         validatedat DATETIME,
         validatedby NVARCHAR(50),
         createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
         FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
     );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TypeOperation')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'TypeOperation')
 BEGIN
-    CREATE TABLE TypeOperation (
-		idtypeoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-		codtypeoperation NVARCHAR(50),
-		idoperation UNIQUEIDENTIFIER,
+    CREATE TABLE TypeOperation
+    (
+        idtypeoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        codtypeoperation NVARCHAR(50),
+        idoperation UNIQUEIDENTIFIER,
         idperiode UNIQUEIDENTIFIER,
-		idsociete UNIQUEIDENTIFIER,
-		idsite UNIQUEIDENTIFIER,
-		idcaisse UNIQUEIDENTIFIER,
-		montant DECIMAL(21,9),
+        idsociete UNIQUEIDENTIFIER,
+        idsite UNIQUEIDENTIFIER,
+        idcaisse UNIQUEIDENTIFIER,
+        montant DECIMAL(21,9),
         taux DECIMAL(18,13),
         montantref DECIMAL(21,9),
         createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
         FOREIGN KEY (idoperation) REFERENCES EnteteOperationCaisse(idoperation) ON DELETE CASCADE,
-		FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
-		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
-		FOREIGN KEY (idsite) REFERENCES Site(idsite),
+        FOREIGN KEY (idcaisse) REFERENCES Caisse(idcaisse),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        FOREIGN KEY (idsite) REFERENCES Site(idsite),
         FOREIGN KEY (idperiode) REFERENCES CaissePeriode(idperiode),
     );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Compteurs')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'Compteurs')
 BEGIN
-    CREATE TABLE Compteurs (
-		prefixe NVARCHAR(10) NOT NULL,
-		annee INT NOT NULL,
-		mois INT NOT NULL,
-		jour INT NOT NULL,
-		compteur INT NOT NULL DEFAULT 0,
+    CREATE TABLE Compteurs
+    (
+        prefixe NVARCHAR(10) NOT NULL,
+        annee INT NOT NULL,
+        mois INT NOT NULL,
+        jour INT NOT NULL,
+        compteur INT NOT NULL DEFAULT 0,
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
-		PRIMARY KEY (prefixe, annee, mois, jour)
-	);
+        PRIMARY KEY (prefixe, annee, mois, jour)
+    );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CompteurEcriture')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'CompteurEcriture')
 BEGIN
-    CREATE TABLE CompteurEcriture (
-		prefixe NVARCHAR(10) NOT NULL,
-		annee INT NOT NULL,
-		mois INT NOT NULL,
-		compteur INT NOT NULL DEFAULT 0,
+    CREATE TABLE CompteurEcriture
+    (
+        prefixe NVARCHAR(10) NOT NULL,
+        annee INT NOT NULL,
+        mois INT NOT NULL,
+        compteur INT NOT NULL DEFAULT 0,
         createdat Datetime,
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
-		PRIMARY KEY (prefixe, annee, mois)
-	);
+        PRIMARY KEY (prefixe, annee, mois)
+    );
 END
 
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CaisseBilletage')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'CaisseBilletage')
 BEGIN
-    CREATE TABLE CaisseBilletage (
+    CREATE TABLE CaisseBilletage
+    (
         idbilletage UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idperiode UNIQUEIDENTIFIER UNIQUE,
-        valeur DECIMAL(21,9),     
+        valeur DECIMAL(21,9),
         quantite INT,
         montant DECIMAL(21,9),
-        ecart DECIMAL(21,9),     
-        type NVARCHAR(20),         
+        ecart DECIMAL(21,9),
+        type NVARCHAR(20),
         createdat DATETIME,
         createdby NVARCHAR(50),
         FOREIGN KEY (idperiode) REFERENCES CaissePeriode(idperiode)
@@ -940,9 +1062,12 @@ END
 -- 14️⃣ CircuitValidateur (dépend de Utilisateur, Societe)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CircuitValidateur')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'CircuitValidateur')
 BEGIN
-    CREATE TABLE CircuitValidateur (
+    CREATE TABLE CircuitValidateur
+    (
         idcircuitvalidateur UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codecircuitvalidateur NVARCHAR(24) UNIQUE,
         idutilisateur UNIQUEIDENTIFIER,
@@ -959,19 +1084,23 @@ BEGIN
     );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ValidationDemande')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'ValidationDemande')
 BEGIN
-    CREATE TABLE ValidationDemande (
+    CREATE TABLE ValidationDemande
+    (
         idvalidationdemande UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         iddemande UNIQUEIDENTIFIER,
         idcircuitvalidation UNIQUEIDENTIFIER,
         idcircuitetape UNIQUEIDENTIFIER,
         idutilisateur UNIQUEIDENTIFIER,
         idmotif UNIQUEIDENTIFIER,
-        decision NVARCHAR(20), -- APPROUVE | REJETE | EN_ATTENTE
+        decision NVARCHAR(20),
+        -- APPROUVE | REJETE | EN_ATTENTE
         commentaire NVARCHAR(255),
         datevalidation DATETIME,
-        rang  INT Default null,
+        rang INT Default null,
         createdat DATETIME DEFAULT GETDATE(),
         createdby NVARCHAR(50),
         FOREIGN KEY (iddemande) REFERENCES EnteteDemande(iddemande),
@@ -984,19 +1113,23 @@ END
 
 -- FIN INIT GIL
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ValidationBudget')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'ValidationBudget')
 BEGIN
-    CREATE TABLE ValidationBudget (
+    CREATE TABLE ValidationBudget
+    (
         idvalidationbudget UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idbudget UNIQUEIDENTIFIER,
         idcircuitvalidation UNIQUEIDENTIFIER,
         idcircuitetape UNIQUEIDENTIFIER,
         idutilisateur UNIQUEIDENTIFIER,
         idmotif UNIQUEIDENTIFIER,
-        decision NVARCHAR(20), -- APPROUVE | REJETE | EN_ATTENTE
+        decision NVARCHAR(20),
+        -- APPROUVE | REJETE | EN_ATTENTE
         commentaire NVARCHAR(255),
         datevalidation DATETIME,
-        rang  INT Default null,
+        rang INT Default null,
         createdat DATETIME DEFAULT GETDATE(),
         createdby NVARCHAR(50),
         FOREIGN KEY (idbudget) REFERENCES Budget(idbudget),
@@ -1011,31 +1144,37 @@ END
 
 -- En ce qui concerne la gestion des demandes
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'UtilisateurDepartement')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'UtilisateurDepartement')
 BEGIN
-    CREATE TABLE UtilisateurDepartement (
-		iduserdepartement UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-		idutilisateur UNIQUEIDENTIFIER,
-		iddepartement UNIQUEIDENTIFIER,
-		idsociete UNIQUEIDENTIFIER,
-		debutactivite Datetime,
-		finactivite Datetime,
-		createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
-		FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
-		FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
-		FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+    CREATE TABLE UtilisateurDepartement
+    (
+        iduserdepartement UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idutilisateur UNIQUEIDENTIFIER,
+        iddepartement UNIQUEIDENTIFIER,
+        idsociete UNIQUEIDENTIFIER,
+        debutactivite Datetime,
+        finactivite Datetime,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement),
+        FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
     );
 END
 
 -- FIN INIT DENIS 🔟 UtilisateurCaisse (dépend de Utilisateur, Caisse, Societe)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'UtilisateurCaisse')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'UtilisateurCaisse')
 BEGIN
-    CREATE TABLE UtilisateurCaisse (
+    CREATE TABLE UtilisateurCaisse
+    (
         idutilisateurcaisse UNIQUEIDENTIFIER PRIMARY KEY,
         idcaisse UNIQUEIDENTIFIER,
         idutilisateur UNIQUEIDENTIFIER,
@@ -1056,9 +1195,12 @@ END
 -- 14️⃣ CircuitValidateur (dépend de Utilisateur, Societe)
 -- ============================================
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CircuitValidateur')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'CircuitValidateur')
 BEGIN
-    CREATE TABLE CircuitValidateur (
+    CREATE TABLE CircuitValidateur
+    (
         idcircuitvalidateur UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codecircuitvalidateur NVARCHAR(24) UNIQUE,
         idutilisateur UNIQUEIDENTIFIER,
@@ -1079,26 +1221,32 @@ END
 
 
 -- En ce qui concerne la gestion des demandes
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'UtilisateurDepartement')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'UtilisateurDepartement')
 BEGIN
-    CREATE TABLE UtilisateurDepartement (
-		idutilisateur UNIQUEIDENTIFIER,
-		iddepartement UNIQUEIDENTIFIER,
-		createdat Datetime,
-		createdby NVARCHAR(50),
-		updatedat Datetime,
-		updatedby NVARCHAR(50),
+    CREATE TABLE UtilisateurDepartement
+    (
+        idutilisateur UNIQUEIDENTIFIER,
+        iddepartement UNIQUEIDENTIFIER,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
         PRIMARY KEY (idutilisateur,iddepartement),
-		FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement) ON DELETE CASCADE,
-		FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
+        FOREIGN KEY (iddepartement) REFERENCES Departement(iddepartement) ON DELETE CASCADE,
+        FOREIGN KEY (idutilisateur) REFERENCES Utilisateur(idutilisateur),
     );
 END
 -- FIN INIT DENIS
 
 -- Justificatif opération
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'JustificatifOperation')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'JustificatifOperation')
 BEGIN
-    CREATE TABLE JustificatifOperation (
+    CREATE TABLE JustificatifOperation
+    (
         idjustificatifoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codejustificatif NVARCHAR(24) UNIQUE,
         idoperation UNIQUEIDENTIFIER,
@@ -1117,9 +1265,12 @@ BEGIN
     );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'DetailsJustificatifOperation')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'DetailsJustificatifOperation')
 BEGIN
-    CREATE TABLE DetailsJustificatifOperation (
+    CREATE TABLE DetailsJustificatifOperation
+    (
         iddetailsjustificatifoperation UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idjustificatif UNIQUEIDENTIFIER,
         idnature UNIQUEIDENTIFIER,
@@ -1138,9 +1289,12 @@ BEGIN
     );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Transfertfond')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'Transfertfond')
 BEGIN
-    CREATE TABLE Transfertfond (
+    CREATE TABLE Transfertfond
+    (
         idtransfert UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         codetransfert NVARCHAR(24) UNIQUE,
         typesource NVARCHAR(20),
@@ -1164,9 +1318,12 @@ BEGIN
     );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ParametreComptable')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'ParametreComptable')
 BEGIN
-    CREATE TABLE ParametreComptable (
+    CREATE TABLE ParametreComptable
+    (
         idparametrecomptable UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
         idsociete UNIQUEIDENTIFIER UNIQUE,
         idjournal UNIQUEIDENTIFIER NULL,
@@ -1182,34 +1339,39 @@ BEGIN
     );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Appconfig')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'AppConfig')
 BEGIN
-    CREATE TABLE AppConfig (
-    code NVARCHAR(50) PRIMARY KEY,
-    valeur NVARCHAR(100) NOT NULL,
-    description NVARCHAR(255),
-    createdat Datetime DEFAULT GETDATE(),
-    createdby NVARCHAR(50),
-    updatedat Datetime,
-    updatedby NVARCHAR(50)
+    CREATE TABLE AppConfig
+    (
+        code NVARCHAR(50) PRIMARY KEY,
+        valeur NVARCHAR(100) NOT NULL,
+        description NVARCHAR(255),
+        createdat Datetime DEFAULT GETDATE(),
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50)
     );
 END
 
 IF NOT EXISTS (
-    SELECT 1 
-    FROM AppConfig 
-    WHERE code = 'APP_INITIALIZED'
+    SELECT 1
+FROM AppConfig
+WHERE code = 'APP_INITIALIZED'
 )
 BEGIN
-    INSERT INTO AppConfig (code, valeur)
-    VALUES ('APP_INITIALIZED', '0');
+    INSERT INTO AppConfig
+        (code, valeur)
+    VALUES
+        ('APP_INITIALIZED', '0');
 END
 
 -- Index sur CentreAnalytique(idcentreanalytique)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_CentreAnalytique_Id'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_CentreAnalytique_Id'
     AND object_id = OBJECT_ID('CentreAnalytique')
 )
 BEGIN
@@ -1219,9 +1381,9 @@ END
 
 -- Index sur Tiers(idtiers)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_Tiers_Id'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_Tiers_Id'
     AND object_id = OBJECT_ID('Tiers')
 )
 BEGIN
@@ -1231,9 +1393,9 @@ END
 
 -- Index sur Devise(codedevise)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_Devise_Code'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_Devise_Code'
     AND object_id = OBJECT_ID('Devise')
 )
 BEGIN
@@ -1244,9 +1406,9 @@ END
 
 -- Index sur NatureOperation(idnature)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_NatureOperation_Id'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_NatureOperation_Id'
     AND object_id = OBJECT_ID('NatureOperation')
 )
 BEGIN
@@ -1256,9 +1418,9 @@ END
 
 -- Index sur TypeOperation(idoperation)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_TypeOperation_IdOperation'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_TypeOperation_IdOperation'
     AND object_id = OBJECT_ID('TypeOperation')
 )
 BEGIN
@@ -1268,9 +1430,9 @@ END
 
 -- Index sur LigneOperationCaisse(idoperation)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_LigneOperationCaisse_IdOperation'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_LigneOperationCaisse_IdOperation'
     AND object_id = OBJECT_ID('LigneOperationCaisse')
 )
 BEGIN
@@ -1281,9 +1443,9 @@ END
 
 -- Index sur EnteteOperationCaisse(dateoperation_date)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_EnteteOperationCaisse_Date'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_EnteteOperationCaisse_Date'
     AND object_id = OBJECT_ID('EnteteOperationCaisse')
 )
 BEGIN
@@ -1293,9 +1455,9 @@ END
 
 -- Index sur EnteteOperationCaisse(createdat DESC, idsite)
 IF NOT EXISTS(
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_EnteteOperationCaisse_other'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_EnteteOperationCaisse_other'
     AND object_id = OBJECT_ID('EnteteOperationCaisse')
 )
 BEGIN
@@ -1313,9 +1475,9 @@ END
 
 -- Index sur EnteteOperationCaisse(codeoperation, montant_str);
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_EnteteOperationCaisse_Search'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_EnteteOperationCaisse_Search'
     AND object_id = OBJECT_ID('EnteteOperationCaisse')
 )
 BEGIN
@@ -1325,9 +1487,9 @@ END
 
 -- Index sur EnteteOperationCaisse(dateoperation)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_operation_date'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_operation_date'
     AND object_id = OBJECT_ID('EnteteOperationCaisse')
 )
 BEGIN
@@ -1337,9 +1499,9 @@ END
 
 -- Index sur TypeOperation(idoperation)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_typeoperation_operation'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_typeoperation_operation'
     AND object_id = OBJECT_ID('TypeOperation')
 )
 BEGIN
@@ -1349,9 +1511,9 @@ END
 
 -- Index sur JustificatifOperation(idoperation)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_justificatif_operation'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_justificatif_operation'
     AND object_id = OBJECT_ID('JustificatifOperation')
 )
 BEGIN
@@ -1361,9 +1523,9 @@ END
 
 -- Index sur DetailsJustificatifOperation(idjustificatif)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_detailjustificatif'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_detailjustificatif'
     AND object_id = OBJECT_ID('DetailsJustificatifOperation')
 )
 BEGIN
@@ -1371,23 +1533,23 @@ BEGIN
     ON DetailsJustificatifOperation(idjustificatif);
 END
 
--- Index sur ligneoperationCaisse(idoperation)
+-- Index sur LigneOperationCaisse(idoperation)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_ligneoperation'
-    AND object_id = OBJECT_ID('ligneoperationCaisse')
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_ligneoperation'
+    AND object_id = OBJECT_ID('LigneOperationCaisse')
 )
 BEGIN
     CREATE INDEX IX_ligneoperation
-    ON ligneoperationCaisse(idoperation);
+    ON LigneOperationCaisse(idoperation);
 END
 
 -- Index sur typeoperation(idoperation, codtypeoperation)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_TypeOperation_operation_code'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_TypeOperation_operation_code'
     AND object_id = OBJECT_ID('TypeOperation')
 )
 BEGIN
@@ -1397,9 +1559,9 @@ END
 
 -- Index sur EnteteOperationCaisse(idsociete, idsite, createdat)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_operation_societe_site'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_operation_societe_site'
     AND object_id = OBJECT_ID('EnteteOperationCaisse')
 )
 BEGIN
@@ -1409,9 +1571,9 @@ END
 
 -- Index sur LigneDemande(iddemande)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_LigneDemande_IdDemande'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_LigneDemande_IdDemande'
     AND object_id = OBJECT_ID('LigneDemande')
 )
 BEGIN
@@ -1422,9 +1584,9 @@ END
 
 -- Index sur EnteteDemande(createdat DESC, idsite)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_EnteteDemande_Main'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_EnteteDemande_Main'
     AND object_id = OBJECT_ID('EnteteDemande')
 )
 BEGIN
@@ -1435,9 +1597,9 @@ END
 
 -- Index sur EnteteDemande(codedemande, libelledemande)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_EnteteDemande_Search'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_EnteteDemande_Search'
     AND object_id = OBJECT_ID('EnteteDemande')
 )
 BEGIN
@@ -1447,9 +1609,9 @@ END
 
 -- Index sur CaissePeriode(idcaisse, dateperiode)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'idx_caisseperiode_idcaisse_date'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'idx_caisseperiode_idcaisse_date'
     AND object_id = OBJECT_ID('CaissePeriode')
 )
 BEGIN
@@ -1459,9 +1621,9 @@ END
 
 -- Index sur DetailsDemande(idlignedemande)
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.indexes 
-    WHERE name = 'IX_DetailsDemande_Ligne'
+    SELECT 1
+FROM sys.indexes
+WHERE name = 'IX_DetailsDemande_Ligne'
     AND object_id = OBJECT_ID('DetailsDemande ')
 )
 BEGIN
@@ -1471,9 +1633,9 @@ BEGIN
 END
 
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.procedures 
-    WHERE name = 'GenererNumeroOperation'
+    SELECT 1
+FROM sys.procedures
+WHERE name = 'GenererNumeroOperation'
 )
 BEGIN
     EXEC('
@@ -1535,9 +1697,9 @@ END
 -- GO
 
 IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.procedures 
-    WHERE name = 'GenererNumeroEcriture'
+    SELECT 1
+FROM sys.procedures
+WHERE name = 'GenererNumeroEcriture'
 )
 BEGIN
     EXEC('
@@ -1596,24 +1758,33 @@ END
 DECLARE @now DATETIME = GETDATE();
 DECLARE @user NVARCHAR(50) = 'SYSTEM';
 
-INSERT INTO Devise (codedevise, intitule, codeiso, actif, createdat, createdby)
-SELECT * FROM (
-    VALUES 
-    ('USD', 'Dollar américain', 'USD', 1, @now, @user),
-    ('CDF', 'Franc congolais', 'CDF', 1, @now, @user),
-    ('XAF', 'Franc CFA', 'XAF', 1, @now, @user)
+INSERT INTO Devise
+    (codedevise, intitule, codeiso, actif, createdat, createdby)
+SELECT *
+FROM (
+    VALUES
+        ('USD', 'Dollar américain', 'USD', 1, @now, @user),
+        ('CDF', 'Franc congolais', 'CDF', 1, @now, @user),
+        ('XAF', 'Franc CFA', 'XAF', 1, @now, @user)
 ) AS d(codedevise, intitule, codeiso, actif, createdat, createdby)
 WHERE NOT EXISTS (
-    SELECT 1 FROM Devise dv WHERE dv.codedevise = d.codedevise
+    SELECT 1
+FROM Devise dv
+WHERE dv.codedevise = d.codedevise
 );
 
 DECLARE @idDeviseCDF UNIQUEIDENTIFIER;
 DECLARE @idDeviseUSD UNIQUEIDENTIFIER;
 
-SELECT @idDeviseCDF = iddevise FROM Devise WHERE codedevise = 'CDF';
-SELECT @idDeviseUSD = iddevise FROM Devise WHERE codedevise = 'USD';
+SELECT @idDeviseCDF = iddevise
+FROM Devise
+WHERE codedevise = 'CDF';
+SELECT @idDeviseUSD = iddevise
+FROM Devise
+WHERE codedevise = 'USD';
 
-INSERT INTO Societe (
+INSERT INTO Societe
+    (
     iddevisereference,
     iddevisereporting,
     codesociete,
@@ -1625,8 +1796,8 @@ INSERT INTO Societe (
     suivibudgetaire,
     createdat,
     createdby
-)
-SELECT 
+    )
+SELECT
     @idDeviseCDF,
     @idDeviseUSD,
     'SOC001',
@@ -1639,53 +1810,68 @@ SELECT
     GETDATE(),
     'SYSTEM'
 WHERE NOT EXISTS (
-    SELECT 1 FROM Societe WHERE codesociete = 'SOC001'
+    SELECT 1
+FROM Societe
+WHERE codesociete = 'SOC001'
 );
 
-INSERT INTO Motif (codemotif, libellemotif, createdat, createdby)
-SELECT * FROM (
-    VALUES 
-    ('MOT001', 'Budget non autorisé', GETDATE(), 'SYSTEM'),
-    ('MOT002', 'Budget non défini ', GETDATE(), 'SYSTEM'),
-    ('MOT003', 'Ligne budgétaire clôtueré', GETDATE(), 'SYSTEM'),
-    ('MOT004', 'Demande incomplète', GETDATE(), 'SYSTEM'),
-    ('MOT005', 'Pièces justificatives manquantes', GETDATE(), 'SYSTEM'),
-    ('MOT006', 'Demande non conforme aux procédures', GETDATE(), 'SYSTEM'),
-    ('MOT007', 'Montant incohérent', GETDATE(), 'SYSTEM'),
-    ('MOT008', 'Hors périmètre budgétaire', GETDATE(), 'SYSTEM'),
-    ('MOT009', 'Demande non prioritaire', GETDATE(), 'SYSTEM')
+INSERT INTO Motif
+    (codemotif, libellemotif, createdat, createdby)
+SELECT *
+FROM (
+    VALUES
+        ('MOT001', 'Budget non autorisé', GETDATE(), 'SYSTEM'),
+        ('MOT002', 'Budget non défini ', GETDATE(), 'SYSTEM'),
+        ('MOT003', 'Ligne budgétaire clôtueré', GETDATE(), 'SYSTEM'),
+        ('MOT004', 'Demande incomplète', GETDATE(), 'SYSTEM'),
+        ('MOT005', 'Pièces justificatives manquantes', GETDATE(), 'SYSTEM'),
+        ('MOT006', 'Demande non conforme aux procédures', GETDATE(), 'SYSTEM'),
+        ('MOT007', 'Montant incohérent', GETDATE(), 'SYSTEM'),
+        ('MOT008', 'Hors périmètre budgétaire', GETDATE(), 'SYSTEM'),
+        ('MOT009', 'Demande non prioritaire', GETDATE(), 'SYSTEM')
 ) AS m(codemotif, libellemotif, createdat, createdby)
 WHERE NOT EXISTS (
-    SELECT 1 FROM Motif mo WHERE mo.codemotif = m.codemotif
+    SELECT 1
+FROM Motif mo
+WHERE mo.codemotif = m.codemotif
 );
 
 
-INSERT INTO role (code, libelle, createdat, createdby)
-SELECT * FROM (
-    VALUES 
-    ('00', 'Super administrateur', GETDATE(), 'SYSTEM'),
-    ('01', 'Administrateur system', GETDATE(), 'SYSTEM'),
-    ('04', 'Caissier', GETDATE(), 'SYSTEM'),
-    ('02', 'Superviseur caisse', GETDATE(), 'SYSTEM'),
-    ('05', 'Demandeur', GETDATE(), 'SYSTEM'),
-    ('03', 'Comptable', GETDATE(), 'SYSTEM')
+INSERT INTO role
+    (code, libelle, createdat, createdby)
+SELECT *
+FROM (
+    VALUES
+        ('00', 'Super administrateur', GETDATE(), 'SYSTEM'),
+        ('01', 'Administrateur system', GETDATE(), 'SYSTEM'),
+        ('04', 'Caissier', GETDATE(), 'SYSTEM'),
+        ('02', 'Superviseur caisse', GETDATE(), 'SYSTEM'),
+        ('05', 'Demandeur', GETDATE(), 'SYSTEM'),
+        ('03', 'Comptable', GETDATE(), 'SYSTEM')
 ) AS r(code, libelle, createdat, createdby)
 WHERE NOT EXISTS (
-    SELECT 1 FROM role rl WHERE rl.code = r.code
+    SELECT 1
+FROM role rl
+WHERE rl.code = r.code
 );
 
 
-INSERT INTO permission (code, description, createdat, createdby)
-SELECT * FROM (
-    VALUES 
-    ('CREATE_CAISSE', 'Créer une opération de caisse', GETDATE(), 'SYSTEM'),
-    ('VALIDATE_CAISSE', 'Valider une opération', GETDATE(), 'SYSTEM')
+INSERT INTO permission
+    (code, description, createdat, createdby)
+SELECT *
+FROM (
+    VALUES
+        ('CREATE_CAISSE', 'Créer une opération de caisse', GETDATE(), 'SYSTEM'),
+        ('VALIDATE_CAISSE', 'Valider une opération', GETDATE(), 'SYSTEM')
 ) AS p(code, description, createdat, createdby)
 WHERE NOT EXISTS (
-    SELECT 1 FROM permission pe WHERE pe.code = p.code
+    SELECT 1
+FROM permission pe
+WHERE pe.code = p.code
 );
 
-INSERT INTO ModeleCompteur (
+INSERT INTO ModeleCompteur
+    (
     codemodelecompteur,
     libelle,
     typedocument,
@@ -1695,20 +1881,26 @@ INSERT INTO ModeleCompteur (
     prefixe_2,
     createdat,
     createdby
-)
-SELECT * FROM (
-    VALUES 
-    ('CPT00', 'Compteur des demandes', 'demande', 'constante', 'DEC', 'site', null, GETDATE(), 'SYSTEM'),
-    ('CPT01', 'Compteur des opérations', 'opération de caisse', 'site', null, 'constante', 'OPE', GETDATE(), 'SYSTEM')
+    )
+SELECT *
+FROM (
+    VALUES
+        ('CPT00', 'Compteur des demandes', 'demande', 'constante', 'DEC', 'site', null, GETDATE(), 'SYSTEM'),
+        ('CPT01', 'Compteur des opérations', 'opération de caisse', 'site', null, 'constante', 'OPE', GETDATE(), 'SYSTEM')
 ) AS mc(codemodelecompteur, libelle, typedocument, sequence_1, prefixe_1, sequence_2, prefixe_2, createdat, createdby)
 WHERE NOT EXISTS (
-    SELECT 1 FROM ModeleCompteur m WHERE m.codemodelecompteur = mc.codemodelecompteur
+    SELECT 1
+FROM ModeleCompteur m
+WHERE m.codemodelecompteur = mc.codemodelecompteur
 );
 
 DECLARE @idSociete UNIQUEIDENTIFIER;
-SELECT @idSociete = idsociete  FROM Societe WHERE codesociete = 'SOC001';
+SELECT @idSociete = idsociete
+FROM Societe
+WHERE codesociete = 'SOC001';
 
-INSERT INTO Site (
+INSERT INTO Site
+    (
     idsociete,
     codesite,
     libelle,
@@ -1717,24 +1909,30 @@ INSERT INTO Site (
     adresse,
     createdat,
     createdby
-)
-SELECT * FROM (
-    VALUES 
-    (@idSociete, 'SIEGE', 'Siège kinshasa', 'kinshasa@phc-congo.com', null, 'Kinshasa - Gombe', @now, @user),
-    (@idSociete, 'LOKUTU', 'Lokutu', 'lokutu@phc-congo.com', null, 'Lokutu - RDC', @now, @user)
+    )
+SELECT *
+FROM (
+    VALUES
+        (@idSociete, 'SIEGE', 'Siège kinshasa', 'kinshasa@phc-congo.com', null, 'Kinshasa - Gombe', @now, @user),
+        (@idSociete, 'LOKUTU', 'Lokutu', 'lokutu@phc-congo.com', null, 'Lokutu - RDC', @now, @user)
 ) AS s(idsociete, codesite, libelle, email, telephone, adresse, createdat, createdby)
 WHERE NOT EXISTS (
-    SELECT 1 FROM Site st WHERE st.codesite = s.codesite
+    SELECT 1
+FROM Site st
+WHERE st.codesite = s.codesite
 );
 
 DECLARE @idSite UNIQUEIDENTIFIER;
-SELECT @idSite = idsite FROM Site WHERE codesite = 'SIEGE';
+SELECT @idSite = idsite
+FROM Site
+WHERE codesite = 'SIEGE';
 
 DECLARE @password NVARCHAR(255);
 SET @password = CONVERT(NVARCHAR(255), HASHBYTES('SHA2_256', 'dolimex@caisse'), 2);
 -- mot de passe générique = dolimex@caisse,
 
-INSERT INTO Utilisateur (
+INSERT INTO Utilisateur
+    (
     codeutilisateur,
     idsociete,
     idsite,
@@ -1751,8 +1949,8 @@ INSERT INTO Utilisateur (
     acheteur,
     createdat,
     createdby
-)
-SELECT 
+    )
+SELECT
     'ADMIN001',
     @idSociete,
     @idSite,
@@ -1770,16 +1968,23 @@ SELECT
     @now,
     @user
 WHERE NOT EXISTS (
-    SELECT 1 FROM Utilisateur WHERE login = 'dolimex'
+    SELECT 1
+FROM Utilisateur
+WHERE login = 'dolimex'
 );
 
 DECLARE @idrole INT
 DECLARE @iduser UNIQUEIDENTIFIER
 
-SELECT @idrole = idrole FROM Role WHERE code = '00'
-SELECT @iduser = idutilisateur FROM Utilisateur WHERE login = 'dolimex'
+SELECT @idrole = idrole
+FROM role
+WHERE code = '00'
+SELECT @iduser = idutilisateur
+FROM Utilisateur
+WHERE login = 'dolimex'
 
-INSERT INTO Utilisateur_role (
+INSERT INTO utilisateur_role
+    (
     idutilisateur,
     idrole,
     createdat,
@@ -1791,9 +1996,9 @@ SELECT
     @now,
     @user
 WHERE NOT EXISTS (
-    SELECT 1 
-    FROM utilisateur_role ur
-    WHERE ur.idutilisateur = @iduser 
+    SELECT 1
+FROM utilisateur_role ur
+WHERE ur.idutilisateur = @iduser
     AND ur.idrole = @idrole
 );
 
@@ -1804,10 +2009,13 @@ WHERE NOT EXISTS (
 -- ============================================
 --  Table Ecriture Comptable 
 -- ============================================
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'EcritureComptable')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'EcritureComptable')
 BEGIN
-    CREATE TABLE EcritureComptable (
-		idecriture UNIQUEIDENTIFIER,
+    CREATE TABLE EcritureComptable
+    (
+        idecriture UNIQUEIDENTIFIER,
         ref_ecriture NVARCHAR(255),
         num_piece NVARCHAR(255),
 
@@ -1818,25 +2026,28 @@ BEGIN
         journal NVARCHAR(255),
 
         date_operation DATETIME,
-		createdby NVARCHAR(50),
+        createdby NVARCHAR(50),
         createdat DATETIME,
-		updatedby NVARCHAR(50),
+        updatedby NVARCHAR(50),
         updatedat Datetime,
         PRIMARY KEY (idecriture),
-    
-		FOREIGN KEY (idtypeoperation) references TypeOperation,
-		FOREIGN KEY (idjournal) references Journal
-	);
+
+        FOREIGN KEY (idtypeoperation) references TypeOperation,
+        FOREIGN KEY (idjournal) references Journal
+    );
 END
 
 -- ============================================
 --  Ecriture Ligne Comptable 
 -- ============================================
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'EcritureLigneComptable')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'EcritureLigneComptable')
 BEGIN
-    CREATE TABLE EcritureLigneComptable (
+    CREATE TABLE EcritureLigneComptable
+    (
         idligneecriture UNIQUEIDENTIFIER,
-		idecriture UNIQUEIDENTIFIER,
+        idecriture UNIQUEIDENTIFIER,
 
         idnature uniqueidentifier null,
         nature nvarchar(255) null,
@@ -1855,7 +2066,8 @@ BEGIN
         libelle NVARCHAR(255),
         debit DECIMAL(22,9),
         credit DECIMAL(22,9),
-        etat NVARCHAR(20), -- PROVISOIRE, VALIDE, ANNULE
+        etat NVARCHAR(20),
+        -- PROVISOIRE, VALIDE, ANNULE
 
         iddevise UNIQUEIDENTIFIER,
         devise nvarchar(50),
@@ -1863,12 +2075,12 @@ BEGIN
         taux DECIMAL(18,6),
         montantbase DECIMAL(22,9),
 
-		createdby NVARCHAR(50),
+        createdby NVARCHAR(50),
         createdat DATETIME,
-		updatedby NVARCHAR(50),
+        updatedby NVARCHAR(50),
         updatedat Datetime,
         PRIMARY KEY ( idligneecriture ),
-		FOREIGN KEY (idecriture) references ecriturecomptable,
+        FOREIGN KEY (idecriture) references ecriturecomptable,
         foreign key (iddevise) references Devise(iddevise),
         foreign key (idcentreanalytique) references CentreAnalytique(idcentreanalytique),
         foreign key (idcompte) references PlanComptable,
@@ -1878,12 +2090,78 @@ BEGIN
     );
 END
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PieceComptableSequence')
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'PieceComptableSequence')
 BEGIN
-CREATE TABLE PieceComptableSequence (
-    id INT IDENTITY PRIMARY KEY,
-    journal NVARCHAR(10),
-    datepiece NVARCHAR(10),
-    sequence INT
-);
+    CREATE TABLE PieceComptableSequence
+    (
+        id INT IDENTITY PRIMARY KEY,
+        journal NVARCHAR(10),
+        datepiece NVARCHAR(10),
+        sequence INT
+    );
 END
+
+
+-- PJ & demande
+IF NOT EXISTS (
+    SELECT *
+    FROM sys.tables
+    WHERE name = 'DemandePieceJointe'
+)
+BEGIN
+    CREATE TABLE DemandePieceJointe (
+        iddemandepiecejointe UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+
+        iddemande UNIQUEIDENTIFIER NOT NULL,
+        idpiecejointe UNIQUEIDENTIFIER NOT NULL,
+
+        createdat DATETIME DEFAULT GETDATE(),
+        createdby NVARCHAR(50),
+        updatedat DATETIME,
+        updatedby NVARCHAR(50),
+
+        CONSTRAINT FK_DemandePieceJointe_Demande
+            FOREIGN KEY (iddemande)
+            REFERENCES EnteteDemande(iddemande)
+            ON DELETE CASCADE,
+
+        CONSTRAINT FK_DemandePieceJointe_PieceJointe
+            FOREIGN KEY (idpiecejointe)
+            REFERENCES PieceJointe(idpiecejointe)
+            ON DELETE CASCADE,
+
+        CONSTRAINT UQ_DemandePieceJointe
+            UNIQUE (iddemande, idpiecejointe)
+    );
+END
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_DemandePieceJointe_Demande'
+)
+BEGIN
+    CREATE INDEX IX_DemandePieceJointe_Demande
+    ON DemandePieceJointe(iddemande);
+END
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_DemandePieceJointe_Piece'
+)
+BEGIN
+    CREATE INDEX IX_DemandePieceJointe_Piece
+    ON DemandePieceJointe(idpiecejointe);
+END
+
+-- ALTER TABLE PieceJointe
+-- ADD nomfichier NVARCHAR(255);
+
+-- ALTER TABLE PieceJointe
+-- ADD mimetype NVARCHAR(100);
+
+-- ALTER TABLE PieceJointe
+-- ADD taille BIGINT;

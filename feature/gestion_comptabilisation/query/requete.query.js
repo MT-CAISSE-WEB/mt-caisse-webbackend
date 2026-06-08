@@ -117,7 +117,7 @@ queryligneoperationbyidoperation = `select
     t.codetiers,
     t.designation AS tiers_designation
 
-from ligneoperationCaisse l
+from LigneOperationCaisse l
 left join tiers t on l.idtiers = t.idtiers
 left join natureoperation n on l.idnature = n.idnature
 inner join PlanComptable p on n.idcompte = p.idcompte
