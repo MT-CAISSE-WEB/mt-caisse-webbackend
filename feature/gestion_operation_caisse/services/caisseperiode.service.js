@@ -440,8 +440,6 @@ async function get_caisse_tresorerie_by_date(startDate, endDate, idcaisse){
 
   const data = await buildTresorerieConversion(allcaisse, deviseReferenceId);
 
-  console.log("Données de trésorerie:", data);
-
   return data;
 }
 

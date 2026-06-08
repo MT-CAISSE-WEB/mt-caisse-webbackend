@@ -291,6 +291,7 @@ module.exports = {
             FROM dates_range d
             CROSS JOIN Caisse c
             INNER JOIN Devise dev ON dev.iddevise = c.iddevise
+            WHERE (@idcaisse IS NULL OR c.idcaisse = @idcaisse) 
         ),
 
         -- 3. Pour chaque caisse, trouver le dernier solde connu avant ou à chaque date
