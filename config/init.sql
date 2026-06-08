@@ -1887,3 +1887,68 @@ CREATE TABLE PieceComptableSequence (
     sequence INT
 );
 END
+
+-- PJ & demande
+IF NOT EXISTS (
+    SELECT *
+    FROM sys.tables
+    WHERE name = 'DemandePieceJointe'
+)
+BEGIN
+    CREATE TABLE DemandePieceJointe (
+        iddemandepiecejointe UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+
+        iddemande UNIQUEIDENTIFIER NOT NULL,
+        idpiecejointe UNIQUEIDENTIFIER NOT NULL,
+
+        createdat DATETIME DEFAULT GETDATE(),
+        createdby NVARCHAR(50),
+        updatedat DATETIME,
+        updatedby NVARCHAR(50),
+
+        CONSTRAINT FK_DemandePieceJointe_Demande
+            FOREIGN KEY (iddemande)
+            REFERENCES EnteteDemande(iddemande)
+            ON DELETE CASCADE,
+
+        CONSTRAINT FK_DemandePieceJointe_PieceJointe
+            FOREIGN KEY (idpiecejointe)
+            REFERENCES PieceJointe(idpiecejointe)
+            ON DELETE CASCADE,
+
+        CONSTRAINT UQ_DemandePieceJointe
+            UNIQUE (iddemande, idpiecejointe)
+    );
+END
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_DemandePieceJointe_Demande'
+)
+BEGIN
+    CREATE INDEX IX_DemandePieceJointe_Demande
+    ON DemandePieceJointe(iddemande);
+END
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_DemandePieceJointe_Piece'
+)
+BEGIN
+    CREATE INDEX IX_DemandePieceJointe_Piece
+    ON DemandePieceJointe(idpiecejointe);
+END
+
+-- ALTER TABLE PieceJointe
+-- ADD nomfichier NVARCHAR(255);
+
+-- ALTER TABLE PieceJointe
+-- ADD mimetype NVARCHAR(100);
+
+-- ALTER TABLE PieceJointe
+-- ADD taille BIGINT;
+
+-- Alter table PieceJointe 
+-- alter column urlpiece nvarchar(900);

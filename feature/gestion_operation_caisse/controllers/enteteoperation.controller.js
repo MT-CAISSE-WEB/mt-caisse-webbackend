@@ -1,13 +1,15 @@
 const enteteoperationservice = require("../services/enteteoperation.service");
 const asyncHandler = require("../../../shared/middlewares/async");
 const ErrorResponse = require("../../../shared/utils/errorResponse");
+const path = require("path");
 
 /**
  * Liste toutes les enteteoperations
  */
-module.exports.get_enteteoperations = asyncHandler(async(req, res, next) => {
+module.exports.get_enteteoperations = asyncHandler(async (req, res, next) => {
   try {
-    const enteteoperations = await enteteoperationservice.get_all_enteteoperations();
+    const enteteoperations =
+      await enteteoperationservice.get_all_enteteoperations();
     res.json({ success: true, data: enteteoperations });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur", error });
@@ -17,10 +19,11 @@ module.exports.get_enteteoperations = asyncHandler(async(req, res, next) => {
 /**
  * Une enteteoperation existant par son id
  */
-module.exports.get_oneenteteoperation = asyncHandler(async(req, res, next) => {
+module.exports.get_oneenteteoperation = asyncHandler(async (req, res, next) => {
   try {
-    const identeteoperation  = req.params.id;
-    const enteteoperation_ = await enteteoperationservice.get_by_identeteoperation(identeteoperation);
+    const identeteoperation = req.params.id;
+    const enteteoperation_ =
+      await enteteoperationservice.get_by_identeteoperation(identeteoperation);
     res.json({ success: true, data: enteteoperation_ });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
@@ -30,11 +33,15 @@ module.exports.get_oneenteteoperation = asyncHandler(async(req, res, next) => {
 /**
  * Crée une nouvelle enteteoperation
  */
-module.exports.create_enteteoperation = asyncHandler(async(req, res, next) => {
+module.exports.create_enteteoperation = asyncHandler(async (req, res, next) => {
   try {
     const data = req.body;
-    const new_enteteoperation = await enteteoperationservice.create_enteteoperation(data);
-    res.status(201).json({ success: true, data: new_enteteoperation });
+    const new_enteteoperation =
+      await enteteoperationservice.create_enteteoperation(data);
+    res.status(201).json({
+      success: true,
+      data: new_enteteoperation,
+    });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
@@ -43,10 +50,14 @@ module.exports.create_enteteoperation = asyncHandler(async(req, res, next) => {
 /**
  * Met à jour une enteteoperation existante
  */
-module.exports.update_enteteoperation = asyncHandler(async(req, res, next) => {
+module.exports.update_enteteoperation = asyncHandler(async (req, res, next) => {
   try {
-    const identeteoperation  = req.params.id;
-    const enteteoperation_ = await enteteoperationservice.update_enteteoperation(identeteoperation, req.body);
+    const identeteoperation = req.params.id;
+    const enteteoperation_ =
+      await enteteoperationservice.update_enteteoperation(
+        identeteoperation,
+        req.body,
+      );
     res.json({ success: true, data: enteteoperation_ });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
@@ -56,10 +67,11 @@ module.exports.update_enteteoperation = asyncHandler(async(req, res, next) => {
 /**
  * Supprime une enteteoperation
  */
-module.exports.delete_enteteoperation = asyncHandler(async(req, res, next) => {
+module.exports.delete_enteteoperation = asyncHandler(async (req, res, next) => {
   try {
     const identeteoperation = req.params.id;
-    const enteteoperation_ = await enteteoperationservice.delete_enteteoperation(identeteoperation);
+    const enteteoperation_ =
+      await enteteoperationservice.delete_enteteoperation(identeteoperation);
     res.json({ success: true, message: "entete operation supprimée" });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
@@ -69,12 +81,143 @@ module.exports.delete_enteteoperation = asyncHandler(async(req, res, next) => {
 /**
  * Annule une enteteoperation
  */
-module.exports.cancel_enteteoperation = asyncHandler(async(req, res, next) => {
+module.exports.cancel_enteteoperation = asyncHandler(async (req, res, next) => {
   try {
     const data = req.body;
-    const new_enteteoperation = await enteteoperationservice.cancel_enteteoperation(data);
+    const new_enteteoperation =
+      await enteteoperationservice.cancel_enteteoperation(data);
     res.status(201).json({ success: true, data: new_enteteoperation });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * Upload de pièces jointes pour une demande
+ */
+module.exports.uploadFiles = asyncHandler(async (req, res, next) => {
+  try {
+    const idoperation = req.params.id;
+    const files = req.files;
+    const userId = "ADMIN";
+
+    if (!files || files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Aucun fichier à uploader",
+      });
+    }
+
+    const result = await enteteoperationservice.uploadFiles(
+      idoperation,
+      files,
+      userId,
+    );
+
+    res.status(201).json({
+      success: true,
+      data: result,
+      message: `${result.length} fichier(s) uploadé(s) avec succès`,
+    });
+  } catch (error) {
+    res.status(error.code === "DEMANDE_NOT_FOUND" ? 404 : 400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * Récupère toutes les pièces jointes d'une opération
+ */
+module.exports.getFiles = asyncHandler(async (req, res, next) => {
+  try {
+    const idoperation = req.params.id;
+    const files = await enteteoperationservice.getFiles(idoperation);
+
+    res.json({ success: true, data: files });
+  } catch (error) {
+    res.status(error.code === "DEMANDE_NOT_FOUND" ? 404 : 500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * Supprime une pièce jointe d'une opération
+ */
+module.exports.deleteFile = asyncHandler(async (req, res, next) => {
+  try {
+    const { id: idoperation, idpiecejointe } = req.params;
+    const userId = req.user?.idutilisateur || "ADMIN";
+
+    const result = await enteteoperationservice.deleteFile(
+      idoperation,
+      idpiecejointe,
+      userId,
+    );
+
+    res.json({ success: true, message: result.message });
+  } catch (error) {
+    res.status(error.code === "FILE_NOT_FOUND" ? 404 : 400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * Télécharge un fichier (stream direct)
+ * GET /api/operations/download?path=uploads/operations/xxx.pdf
+ * OU
+ * GET /uploads/operations/xxx.pdf (si exposé statiquement)
+ */
+module.exports.downloadFile = asyncHandler(async (req, res, next) => {
+  try {
+    // Récupérer le chemin depuis query param
+    const filePath = req.query.path;
+
+    if (!filePath) {
+      return res.status(400).json({
+        success: false,
+        message: "Chemin du fichier manquant",
+      });
+    }
+
+    const decodedPath = decodeURIComponent(filePath);
+
+    const sanitizedPath = path
+      .normalize(decodedPath)
+      .replace(/^(\.\.(\/|\\|$))+/, "");
+
+    const allowedDirs = ["uploads/operations", "uploads"];
+    const isAllowed = allowedDirs.some((dir) => sanitizedPath.startsWith(dir));
+
+    if (!isAllowed) {
+      return res.status(403).json({
+        success: false,
+        message: "Accès non autorisé",
+      });
+    }
+
+    const { stream, stats, mimetype, nomfichier } =
+      await enteteoperationservice.downloadFile(sanitizedPath);
+
+    res.setHeader("Content-Type", mimetype);
+    res.setHeader("Content-Length", stats.size);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${encodeURIComponent(nomfichier)}"`,
+    );
+    res.setHeader("Cache-Control", "public, max-age=3600");
+
+    stream.pipe(res);
+  } catch (error) {
+    console.error("Erreur downloadFile:", error);
+    res.status(error.code === "FILE_NOT_FOUND" ? 404 : 500).json({
+      success: false,
+      message: error.message,
+    });
   }
 });
