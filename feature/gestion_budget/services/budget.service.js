@@ -8,9 +8,10 @@ const circuitquery = require("../queries/circuitvalidation.query");
 const budgetcontroller = require("../controllers/budget.controller");
 const { upload } = require("../../../middlewares/upload/pjbudget");
 const path = require("path");
-const fs = require("fs");
-const fsPromises = require("fs").promises;
+const fs = require("fs").promises;
 const sequelize = require("../../../config/database");
+
+const AdmZip = require("adm-zip");
 
 //Recuperer le budget par idbudget
 async function get_budgetByid(idbudget) {
@@ -419,6 +420,9 @@ const {
   BudgetPieceJointe,
   Budget,
 } = require("../../gestion_pj_demandes/models/budgets/index");
+const {
+  getFiles,
+} = require("../../gestion_demande_decaissement/services/entetedemande.service");
 
 /**
  * Upload de fichiers pour une demande
@@ -731,4 +735,135 @@ function getmimetypeFromExtension(filepath) {
     ".txt": "text/plain",
   };
   return mimetypes[ext] || "application/octet-stream";
+}
+
+/**
+ * Récupère toutes les pièces jointes d'un budget
+ * @param {string} idbudget - ID du budget
+ * @returns {Promise<Array>} - Liste des pièces jointes
+ */
+async function getBudgetFiles(idbudget) {
+  const budget = await Budget.findByPk(idbudget);
+  if (!budget) {
+    throw new Error("Budget introuvable");
+  }
+
+  const piecesJointes = await PieceJointe.findAll({
+    include: [
+      {
+        model: BudgetPieceJointe,
+        where: { idbudget },
+        attributes: [],
+        required: true,
+      },
+    ],
+    attributes: [
+      "idpiecejointe",
+      "urlpiece",
+      "nomfichier",
+      ["mimetype", "mimetype"],
+      "taille",
+      "createdat",
+      "createdby",
+    ],
+  });
+
+  return piecesJointes;
+}
+
+// Télécharger tous les fichiers
+
+exports.downloadAllFiles = async (idbudget) => {
+  console.log("🚀 downloadAllFiles appelé pour idbudget:", idbudget);
+
+  const piecesJointes = await getBudgetFiles(idbudget);
+  console.log("📁 Pièces jointes trouvées:", piecesJointes.length);
+
+  if (!piecesJointes || piecesJointes.length === 0) {
+    throw new Error("Aucune pièce jointe trouvée pour ce budget");
+  }
+
+  // Cas d'un seul fichier
+  if (piecesJointes.length === 1) {
+    const piece = piecesJointes[0];
+    const filePath = path.join(process.cwd(), piece.urlpiece);
+
+    try {
+      await fs.access(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+
+      return {
+        buffer: fileBuffer,
+        filename: piece.nomfichier,
+        totalFiles: 1,
+        isZip: false,
+      };
+    } catch (err) {
+      console.error(`❌ Fichier introuvable: ${filePath}`, err.message);
+      throw new Error(`Fichier introuvable: ${piece.nomfichier}`);
+    }
+  }
+
+  // Cas de plusieurs fichiers → ZIP
+  console.log("📦 Création du ZIP...");
+
+  const zip = new AdmZip();
+  let addedFiles = 0;
+
+  for (const piece of piecesJointes) {
+    const filePath = path.join(process.cwd(), piece.urlpiece);
+    console.log(`📄 Ajout: ${piece.nomfichier}`);
+
+    try {
+      await fs.access(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+      zip.addFile(piece.nomfichier, fileBuffer);
+      addedFiles++;
+      console.log(`   ✅ Ajouté (${addedFiles}/${piecesJointes.length})`);
+    } catch (err) {
+      console.error(`   ❌ Erreur: ${err.message}`);
+    }
+  }
+
+  if (addedFiles === 0) {
+    throw new Error("Aucun fichier valide n'a pu être ajouté au ZIP");
+  }
+
+  const zipBuffer = zip.toBuffer();
+  console.log(`✅ ZIP créé: ${zipBuffer.length} octets`);
+
+  const budgetInfo = await Budget.findByPk(idbudget, {
+    attributes: ["codebudget", "libelle"],
+  });
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+  const filename = `budget_${
+    budgetInfo?.codebudget || idbudget
+  }_${timestamp}.zip`;
+
+  return {
+    buffer: zipBuffer,
+    filename: filename,
+    totalFiles: addedFiles,
+    isZip: true,
+  };
+};
+
+// Fonction utilitaire pour le mimetype (si pas déjà définie)
+function getMimeTypeFromExtension(filepath) {
+  const ext = path.extname(filepath).toLowerCase();
+  const mimeTypes = {
+    ".pdf": "application/pdf",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".doc": "application/msword",
+    ".docx":
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xls": "application/vnd.ms-excel",
+    ".xlsx":
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".csv": "text/csv",
+    ".txt": "text/plain",
+  };
+  return mimeTypes[ext] || "application/octet-stream";
 }
