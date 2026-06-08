@@ -2002,3 +2002,56 @@ BEGIN
     CREATE INDEX IX_OperationPieceJointe_Piece
     ON OperationPieceJointe(idpiecejointe);
 END
+
+-- pj & budget
+IF NOT EXISTS (
+    SELECT *
+    FROM sys.tables
+    WHERE name = 'BudgetPieceJointe'
+)
+BEGIN
+    CREATE TABLE BudgetPieceJointe (
+        idbudgetpiecejointe UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+
+        idbudget UNIQUEIDENTIFIER NOT NULL,
+        idpiecejointe UNIQUEIDENTIFIER NOT NULL,
+
+        createdat DATETIME DEFAULT GETDATE(),
+        createdby NVARCHAR(50),
+        updatedat DATETIME,
+        updatedby NVARCHAR(50),
+
+        CONSTRAINT FK_BudgetPieceJointe_Budget
+            FOREIGN KEY (idbudget)
+            REFERENCES Budget(idbudget)
+            ON DELETE CASCADE,
+
+        CONSTRAINT FK_BudgetPieceJointe_PieceJointe
+            FOREIGN KEY (idpiecejointe)
+            REFERENCES PieceJointe(idpiecejointe)
+            ON DELETE CASCADE,
+
+        CONSTRAINT UQ_BudgetPieceJointe
+            UNIQUE (idbudget, idpiecejointe)
+    );
+END
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_BudgetPieceJointe_Budget'
+)
+BEGIN
+    CREATE INDEX IX_BudgetPieceJointe_Budget
+    ON BudgetPieceJointe(idbudget);
+END
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_BudgetPieceJointe_Piece'
+)
+BEGIN
+    CREATE INDEX IX_BudgetPieceJointe_Piece
+    ON BudgetPieceJointe(idpiecejointe);
+END
