@@ -52,7 +52,7 @@ const querytypeoperation = `SELECT
     d.codeiso,
     d.intitule AS devise_libelle
 
-FROM TypeOperation t
+FROM typeoperation t
 inner join Caisse c on t.idcaisse = c.idcaisse
 inner join Journal j on c.idjournal = j.idjournal
 inner join PlanComptable p on c.idcompte = p.idcompte
@@ -117,7 +117,7 @@ queryligneoperationbyidoperation = `select
     t.codetiers,
     t.designation AS tiers_designation
 
-from LigneOperationCaisse l
+from ligneoperationCaisse l
 left join Tiers t on l.idtiers = t.idtiers
 left join NatureOperation n on l.idnature = n.idnature
 inner join PlanComptable p on n.idcompte = p.idcompte

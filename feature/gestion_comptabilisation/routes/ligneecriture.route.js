@@ -5,6 +5,7 @@ const authmiddleware = require("../../../middlewares/auth.middlewre");
 
 router.post("/Ecriture/LigneEcriture/comptabilisationdefinitive",ligneecriturecontroller.comptabilisationEcriture);
 router.post("/Ecriture/LigneEcriture",ligneecriturecontroller.getallLigneEcriture);
+router.post("/Ecriture/LigneEcriture/valider-par-ids", ligneecriturecontroller.validerParIds);
 //router.get("/Ecriture/:id",authmiddleware.authentificatetoken, ecriturecontroller.getoneecriture);
 
 module.exports = router;

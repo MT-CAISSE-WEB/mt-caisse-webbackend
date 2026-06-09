@@ -112,7 +112,6 @@ order by ec.date_operation desc, ec.ref_ecriture desc, elc.numligne asc`;
         }
     }
 
-
     async function comptabilisationEcriture (idoperation,idsite, datedebut, datefin, journal){
         const pool = await connectDB();
         const transaction = new sql.Transaction(pool);
@@ -132,21 +131,21 @@ order by ec.date_operation desc, ec.ref_ecriture desc, elc.numligne asc`;
 
             const ecritures = await request.query(`SELECT 
             ec.idecriture,
-            SUM(elc.debit) AS totalDebit,
-            SUM(elc.credit) AS totalCredit
-            FROM EcritureComptable ec
-            INNER JOIN EcritureLigneComptable elc on elc.idecriture = ec.idecriture
-            inner join TypeOperation ty on ty.idtypeoperation=ec.idtypeoperation
-            inner join Site st on st.idsite = ty.idsite
-            WHERE
-            (@idoperation IS NULL OR ty.idoperation = @idoperation)
-            AND (@idsite IS NULL OR ty.idsite = @idsite)
-            AND (@datedebut IS NULL OR ec.date_operation >= @datedebut)
-            AND (@datefin IS NULL OR ec.date_operation < DATEADD(DAY,1,@datefin))
-            AND (@journal IS NULL OR @journal = '' OR ec.journal = @journal)
-            AND elc.etat = 'en attente'
+                SUM(elc.debit) AS totalDebit,
+                SUM(elc.credit) AS totalCredit
+                FROM EcritureComptable ec
+                INNER JOIN EcritureLigneComptable elc on elc.idecriture = ec.idecriture
+                inner join TypeOperation ty on ty.idtypeoperation=ec.idtypeoperation
+                inner join Site st on st.idsite = ty.idsite
+                WHERE
+                (@idoperation IS NULL OR ty.idoperation = @idoperation)
+                AND (@idsite IS NULL OR ty.idsite = @idsite)
+                AND (@datedebut IS NULL OR ec.date_operation >= @datedebut)
+                AND (@datefin IS NULL OR ec.date_operation < DATEADD(DAY,1,@datefin))
+                AND (@journal IS NULL OR @journal = '' OR ec.journal = @journal)
+                AND elc.etat = 'en attente'
 
-        GROUP BY ec.idecriture`);
+            GROUP BY ec.idecriture`);
 
         if (!ecritures.recordset.length) {
                 throw new Error("Aucune écriture à comptabiliser");
@@ -168,21 +167,21 @@ order by ec.date_operation desc, ec.ref_ecriture desc, elc.numligne asc`;
             // ==============================
             await request.query(`
                 UPDATE elc
-                SET 
-                    elc.etat = 'validee',
-                    elc.typeecriture = 'normale'
-                FROM EcritureLigneComptable elc
-                INNER JOIN EcritureComptable ec 
-                    ON ec.idecriture = elc.idecriture
-                inner join TypeOperation ty on ty.idtypeoperation=ec.idtypeoperation
-                inner join Site st on ty.idsite = ty.idsite
-                where
-                (@idoperation IS NULL OR ty.idoperation = @idoperation)
-                AND (@idsite IS NULL OR st.idsite = @idsite)
-                AND (@datedebut IS NULL OR ec.date_operation >= @datedebut)
-                AND (@datefin IS NULL OR ec.date_operation < DATEADD(DAY,1,@datefin))
-                AND (@journal IS NULL OR @journal = '' OR ec.journal = @journal)
-                AND elc.etat = 'en attente'`);
+                    SET 
+                        elc.etat = 'validee',
+                        elc.typeecriture = 'normale'
+                    FROM EcritureLigneComptable elc
+                    INNER JOIN EcritureComptable ec 
+                        ON ec.idecriture = elc.idecriture
+                    inner join TypeOperation ty on ty.idtypeoperation=ec.idtypeoperation
+                    inner join Site st on st.idsite = ty.idsite
+                    where
+                    (@idoperation IS NULL OR ty.idoperation = @idoperation)
+                    AND (@idsite IS NULL OR st.idsite = @idsite)
+                    AND (@datedebut IS NULL OR ec.date_operation >= @datedebut)
+                    AND (@datefin IS NULL OR ec.date_operation < DATEADD(DAY,1,@datefin))
+                    AND (@journal IS NULL OR @journal = '' OR ec.journal = @journal)
+                    AND elc.etat = 'en attente'`);
 
             await transaction.commit();
 
@@ -200,8 +199,86 @@ order by ec.date_operation desc, ec.ref_ecriture desc, elc.numligne asc`;
 
     }
 
-    module.exports = {
-        getallLigneEcriture,
-        comptabilisationEcriture,
-
+    async function validerParIds(ids) {
+        const pool = await connectDB();
+        const transaction = new sql.Transaction(pool);
+        try {
+            await transaction.begin();
+            const request = transaction.request();
+            // Créer une table temporaire ou utiliser un IN avec des paramètres multiples
+            const idsPlaceholders = ids.map((_, i) => `@id${i}`).join(',');
+            ids.forEach((id, i) => {
+                request.input(`id${i}`, sql.UniqueIdentifier, id);
+            });
+            const updateQuery = `
+                UPDATE elc
+                SET elc.etat = 'validee', elc.typeecriture = 'normale'
+                FROM EcritureLigneComptable elc
+                WHERE elc.idligneecriture IN (${idsPlaceholders})
+                AND elc.etat = 'en attente'
+            `;
+            const result = await request.query(updateQuery);
+            await transaction.commit();
+            return { success: true, status: 200, message: `${result.rowsAffected[0]} écriture(s) validée(s)` };
+        } catch (error) {
+            await transaction.rollback();
+            return { success: false, status: 500, message: error.message };
+        }
     }
+
+    async function comptabiliserOperations(filters) {
+        const pool = await connectDB();
+        const transaction = new sql.Transaction(pool);
+        try {
+            await transaction.begin();
+            const request = transaction.request();
+
+            // Paramètres
+            request.input("idsite", sql.UniqueIdentifier, filters.idsite || null);
+            request.input("datedebut", sql.DateTime, filters.datedebut || null);
+            request.input("datefin", sql.DateTime, filters.datefin || null);
+            request.input("idoperation", sql.UniqueIdentifier, filters.idoperation || null);
+
+            // Construction dynamique du WHERE
+            let whereClause = `elc.etat = 'en attente'`;
+
+            if (filters.idoperation) {
+                // Filtrage par opération : on joint TypeOperation pour récupérer idoperation
+                whereClause += ` AND ty.idoperation = @idoperation`;
+            } else {
+                if (filters.idsite) whereClause += ` AND ty.idsite = @idsite`;
+                if (filters.datedebut) whereClause += ` AND ec.dateoperation >= @datedebut`;
+                if (filters.datefin) whereClause += ` AND ec.dateoperation < DATEADD(DAY, 1, @datefin)`;
+            }
+
+            const updateQuery = `
+                UPDATE elc
+                SET elc.etat = 'validee', elc.typeecriture = 'normale'
+                FROM EcritureLigneComptable elc
+                INNER JOIN EcritureComptable ec ON ec.idecriture = elc.idecriture
+                INNER JOIN TypeOperation ty ON ty.idtypeoperation = ec.idtypeoperation
+                WHERE ${whereClause}
+            `;
+
+            const result = await request.query(updateQuery);
+            await transaction.commit();
+
+            return {
+                success: true,
+                status: 200,
+                message: `${result.rowsAffected[0]} écriture(s) comptabilisée(s)`
+            };
+        } catch (error) {
+            await transaction.rollback();
+            console.error("Erreur comptabilisation:", error);
+            return { success: false, status: 500, message: error.message };
+        }
+    }
+
+
+module.exports = {
+    getallLigneEcriture,
+    comptabilisationEcriture,
+    validerParIds,
+    comptabiliserOperations
+}
