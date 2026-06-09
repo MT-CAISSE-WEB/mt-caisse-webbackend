@@ -13,6 +13,7 @@ const detaildemandeservice = require("../services/detaildemande.service");
 const userservice = require("../../gestion_users/services/users.service");
 const lignedemandeModel = require("../models/lignedemande.model");
 const compteurservice = require("../../gestion_paramètres/services/compteur.service");
+const fs2 = require("fs");
 
 // pour gestion des pj
 const { upload } = require("../../../middlewares/upload/pjdemande");
@@ -1768,47 +1769,6 @@ async function deleteFile(iddemande, idpiecejointe, userId) {
   }
 }
 
-/**
- * Télécharge un fichier (stream direct)
- * @param {string} urlpiece - Chemin relatif du fichier (ex: uploads/demandes/xxx.pdf)
- * @returns {Promise<{stream: fs.ReadStream, stats: fs.tats, mimetype: string, nomfichier: string}>}
- */
-async function downloadFile(urlpiece) {
-  // 1. Construire le chemin absolu
-  const absolutePath = path.join(process.cwd(), urlpiece);
-
-  // 2. Vérifier si le fichier existe
-  try {
-    await fs.access(absolutePath);
-  } catch (error) {
-    throw new DemandeError(
-      `Fichier introuvable: ${urlpiece}`,
-      "FILE_NOT_FOUND",
-      { urlpiece },
-    );
-  }
-
-  // 3. Récupérer les stats du fichier
-  const stats = await fs.tat(absolutePath);
-
-  // 4. Déterminer le mimetype depuis l'extension (fallback)
-  const mimetype = getmimetypeFromExtension(absolutePath);
-
-  // 5. Extraire le nom original depuis l'url (ou depuis la base selon ton besoin)
-  const nomfichier =
-    path.basename(urlpiece).split("_").slice(2).join("_") ||
-    path.basename(urlpiece);
-
-  // 6. Retourner le stream de lecture
-  const stream = fs.createReadStream(absolutePath);
-
-  return {
-    stream,
-    stats,
-    mimetype,
-    nomfichier,
-  };
-}
 
 /**
  * Détermine le mimetype depuis l'extension du fichier
@@ -1861,7 +1821,7 @@ async function downloadFile(urlpiece) {
     path.basename(urlpiece);
 
   // 6. Retourner le stream de lecture (utiliser fs.createReadStream)
-  const stream = fs.createReadStream(absolutePath);
+  const stream = fs2.createReadStream(absolutePath);
 
   stream.on("error", (err) => {
     console.error("❌ Erreur stream:", err);
