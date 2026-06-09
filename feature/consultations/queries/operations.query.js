@@ -290,7 +290,7 @@ module.exports = {
             --AND ( @typeentitesociete = 1 OR OPE.idsite = @idsite )
             AND OPE.idsite = @idsite
 
-        ORDER BY OPE.dateoperation, C.libelle
+        ORDER BY OPE.dateoperation, C.libelle, OPE.codeoperation
     `,
     etatcloture : `
         SELECT 

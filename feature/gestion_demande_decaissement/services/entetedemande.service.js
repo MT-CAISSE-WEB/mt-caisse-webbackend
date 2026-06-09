@@ -17,9 +17,9 @@ const compteurservice = require("../../gestion_paramètres/services/compteur.ser
 // pour gestion des pj
 const { upload } = require("../../../middlewares/upload/pjdemande");
 const path = require("path");
-const fs = require("fs");
-const fsPromises = require("fs").promises;
+const fs = require("fs").promises;
 const sequelize = require("../../../config/database");
+const AdmZip = require("adm-zip");
 
 let demandeModel = new enteteDemandeModel();
 let demandesArray = [];
@@ -223,7 +223,6 @@ async function validateBudgetsForLines(societe, lignes, filterData) {
  * @param {Object} filterData Données de filtrage
  */
 async function validateBudgetsAnalytique(lignes, filterData) {
-  console.log(lignes);
   // Validation des budgets en parallèle pour optimiser
   const validationPromises = lignes.map(async (ligne, index) => {
     try {
@@ -463,8 +462,6 @@ async function createEnteteDemande(
     );
 
     const entetedemande = await newEntete.create_enteteDemande();
-
-    console.log("Entête de demande créée avec ID:", entetedemande);
 
     if (!entetedemande?.data?.iddemande) {
       throw new DemandeError(
@@ -1393,8 +1390,6 @@ async function get_detailBudget(iddemande) {
       demande_ = await demandeModel.get_detailBudgetnature(iddemande);
     } else {
       demande_ = await demandeModel.get_detailBudgetcentre(iddemande);
-
-      console.log("Détail budget centre analytique:", demande_);
     }
 
     try {
@@ -1580,6 +1575,7 @@ async function getDernierTaux(deviseorigine, devisedestination, date) {
 const {
   PieceJointe,
   DemandePieceJointe,
+  EnteteDemande,
 } = require("../../gestion_pj_demandes/models/index");
 
 /**
@@ -1775,7 +1771,7 @@ async function deleteFile(iddemande, idpiecejointe, userId) {
 /**
  * Télécharge un fichier (stream direct)
  * @param {string} urlpiece - Chemin relatif du fichier (ex: uploads/demandes/xxx.pdf)
- * @returns {Promise<{stream: fs.ReadStream, stats: fs.Stats, mimetype: string, nomfichier: string}>}
+ * @returns {Promise<{stream: fs.ReadStream, stats: fs.tats, mimetype: string, nomfichier: string}>}
  */
 async function downloadFile(urlpiece) {
   // 1. Construire le chemin absolu
@@ -1793,7 +1789,7 @@ async function downloadFile(urlpiece) {
   }
 
   // 3. Récupérer les stats du fichier
-  const stats = await fs.stat(absolutePath);
+  const stats = await fs.tat(absolutePath);
 
   // 4. Déterminer le mimetype depuis l'extension (fallback)
   const mimetype = getmimetypeFromExtension(absolutePath);
@@ -1842,9 +1838,9 @@ async function downloadFile(urlpiece) {
   // 1. Construire le chemin absolu
   const absolutePath = path.join(process.cwd(), urlpiece);
 
-  // 2. Vérifier si le fichier existe (utiliser fs.promises.access)
+  // 2. Vérifier si le fichier existe (utiliser fs.access)
   try {
-    await fs.promises.access(absolutePath);
+    await fs.access(absolutePath);
   } catch (error) {
     throw new DemandeError(
       `Fichier introuvable: ${urlpiece}`,
@@ -1853,8 +1849,8 @@ async function downloadFile(urlpiece) {
     );
   }
 
-  // 3. Récupérer les stats du fichier (utiliser fs.promises.stat)
-  const stats = await fs.promises.stat(absolutePath);
+  // 3. Récupérer les stats du fichier (utiliser fs.stat)
+  const stats = await fs.stat(absolutePath);
 
   // 4. Déterminer le mimetype depuis l'extension (fallback)
   const mimetype = getmimetypeFromExtension(absolutePath);
@@ -1904,6 +1900,73 @@ function getmimetypeFromExtension(filepath) {
   return mimetypes[ext] || "application/octet-stream";
 }
 
+// Télécharger toutes les pièces jointes
+const downloadAllFiles = async (iddemande) => {
+  const piecesJointes = await getFiles(iddemande);
+
+  if (!piecesJointes || piecesJointes.length === 0) {
+    throw new Error("Aucune pièce jointe trouvée pour cette demande");
+  }
+
+  // Cas d'un seul fichier
+  if (piecesJointes.length === 1) {
+    const piece = piecesJointes[0];
+    const filePath = path.join(process.cwd(), piece.urlpiece);
+
+    try {
+      await fs.access(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+
+      return {
+        buffer: fileBuffer,
+        filename: piece.nomfichier,
+        totalFiles: 1,
+        isZip: false,
+      };
+    } catch (err) {
+      console.error(`❌ Fichier introuvable: ${filePath}`, err.message);
+      throw new Error(`Fichier introuvable: ${piece.nomfichier}`);
+    }
+  }
+
+  // Cas de plusieurs fichiers → ZIP
+
+  const zip = new AdmZip();
+  let addedFiles = 0;
+
+  for (const piece of piecesJointes) {
+    const filePath = path.join(process.cwd(), piece.urlpiece);
+
+    try {
+      await fs.access(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+      zip.addFile(piece.nomfichier, fileBuffer);
+      addedFiles++;
+    } catch (err) {
+      console.error(`   ❌ Erreur: ${err.message}`);
+    }
+  }
+
+  if (addedFiles === 0) {
+    throw new Error("Aucun fichier valide n'a pu être ajouté au ZIP");
+  }
+
+  const zipBuffer = zip.toBuffer();
+
+  const demandeInfo = await EnteteDemande.findByPk(iddemande, {
+    attributes: ["codedemande", "libelledemande"],
+  });
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+  const filename = `demande_${demandeInfo?.codedemande}_${demandeInfo?.libelledemande}_${timestamp}.zip`;
+
+  return {
+    buffer: zipBuffer,
+    filename: filename,
+    totalFiles: addedFiles,
+    isZip: true,
+  };
+};
+
 module.exports = {
   getAll,
   create_demande,
@@ -1921,4 +1984,5 @@ module.exports = {
   getFiles,
   deleteFile,
   downloadFile,
+  downloadAllFiles,
 };

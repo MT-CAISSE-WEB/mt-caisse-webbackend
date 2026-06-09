@@ -23,7 +23,6 @@ module.exports.getAll = asyncHandler(async (req, res, next) => {
     });
     res.json({ success: true, data: demandes });
   } catch (error) {
-    console.log("Erreur getAll demandes:", error);
     res.status(500).json({ success: false, message: "Erreur serveur", error });
   }
 });
@@ -50,7 +49,6 @@ module.exports.create = asyncHandler(async (req, res, next) => {
     const new_demande = await demandeservice.create_demande(data);
     res.status(201).json({ success: true, data: new_demande });
   } catch (error) {
-    console.log("Erreur création demande:", error);
     res.status(400).json({ success: false, message: error.message });
   }
 });
@@ -142,7 +140,6 @@ module.exports.getDetailBudget = asyncHandler(async (req, res, next) => {
       message: "Details budget de la demande",
     });
   } catch (error) {
-    console.log("Erreur getDetailBudget:", error);
     res.status(404).json({ success: false, message: error.message });
   }
 });
@@ -160,7 +157,6 @@ module.exports.gettauxrecent = asyncHandler(async (req, res, next) => {
     );
     res.json({ success: true, data: tauxrecents[0] });
   } catch (error) {
-    console.log("Erreur gettauxrecent:", error);
     res.status(500).json({ success: false, message: "Erreur serveur", error });
   }
 });
@@ -290,5 +286,51 @@ module.exports.downloadFile = asyncHandler(async (req, res, next) => {
       success: false,
       message: error.message,
     });
+  }
+});
+
+// Fonction de download de plusieurs fichiers
+
+module.exports.downloadAllFiles = asyncHandler(async (req, res) => {
+  try {
+    const iddemande = req.params.id;
+
+    const result = await demandeservice.downloadAllFiles(iddemande);
+
+    if (result.isZip) {
+      // Cas ZIP (plusieurs fichiers)
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${encodeURIComponent(result.filename)}"`,
+      );
+      res.setHeader("Content-Length", result.buffer.length);
+      res.setHeader("X-Total-Files", result.totalFiles);
+      res.send(result.buffer);
+    } else {
+      // Cas fichier unique
+      res.setHeader("Content-Type", result.mimetype);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${encodeURIComponent(result.filename)}"`,
+      );
+      res.setHeader("Content-Length", result.buffer.length);
+      res.send(result.buffer);
+    }
+  } catch (error) {
+    console.error("❌ Erreur downloadAllFiles:", error);
+
+    if (error.message.includes("Aucune pièce jointe")) {
+      res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Erreur lors du téléchargement",
+        error: error.message,
+      });
+    }
   }
 });

@@ -557,3 +557,51 @@ exports.downloadFile = async (req, res) => {
     });
   }
 };
+
+/**
+ * Télécharge toutes les pièces jointes d'un budget
+ * GET /api/budget/:id/budget-pieces-jointes/download-all
+ */
+exports.downloadAllFiles = async (req, res) => {
+  try {
+    const idbudget = req.params.id;
+
+    const result = await budgetService.downloadAllFiles(idbudget);
+
+    if (result.isZip) {
+      // Cas ZIP (plusieurs fichiers)
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${encodeURIComponent(result.filename)}"`,
+      );
+      res.setHeader("Content-Length", result.buffer.length);
+      res.setHeader("X-Total-Files", result.totalFiles);
+      res.send(result.buffer);
+    } else {
+      // Cas fichier unique
+      res.setHeader("Content-Type", result.mimetype);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${encodeURIComponent(result.filename)}"`,
+      );
+      res.setHeader("Content-Length", result.buffer.length);
+      res.send(result.buffer);
+    }
+  } catch (error) {
+    console.error("❌ Erreur downloadAllFiles:", error);
+
+    if (error.message.includes("Aucune pièce jointe")) {
+      res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Erreur lors du téléchargement",
+        error: error.message,
+      });
+    }
+  }
+};
