@@ -260,7 +260,8 @@ module.exports = {
         SELECT Soc.codesociete, Soc.raisonsociale,
         Site.codesite, Site.libelle as lib_site,
         C.codecaisse, C.libelle as lib_caisse,
-        TOPE.codtypeoperation      AS typeoperation,
+        J.codejournal, J.designation,
+        TOPE.codtypeoperation      AS typeoperation, OPE.idoperation,
         OPE.codeoperation, OPE.dateoperation,
         NOP.codenature, NOP.libelle as lib_nature,
         CAN.codecentreanalytique AS codecentre, CAN.libelle as lib_centre,
@@ -272,11 +273,12 @@ module.exports = {
         FROM EnteteOperationCaisse OPE
         INNER JOIN TypeOperation TOPE ON TOPE.idoperation = OPE.idoperation
         INNER JOIN Caisse C ON TOPE.idcaisse = C.idcaisse
+        INNER JOIN Journal J ON C.idjournal = J.idjournal
         INNER JOIN Devise D ON D.iddevise = C.iddevise
         INNER JOIN Devise DevO ON DevO.iddevise = OPE.iddevise
         INNER JOIN Societe Soc ON C.idsociete = Soc.idsociete
         INNER JOIN Site ON Site.idsite = C.idsite
-        INNER JOIN LigneOperationCaisse OPL ON OPE.idoperation = OPL.idoperation
+        LEFT JOIN LigneOperationCaisse OPL ON OPE.idoperation = OPL.idoperation
         LEFT JOIN NatureOperation NOP ON NOP.idnature = OPL.idnature
         LEFT JOIN CentreAnalytique CAN ON CAN.idcentreanalytique = OPL.idcentre
         LEFT JOIN Tiers T ON T.idtiers = OPL.idtiers

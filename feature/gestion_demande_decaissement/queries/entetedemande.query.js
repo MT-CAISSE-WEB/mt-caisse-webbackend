@@ -93,7 +93,7 @@ module.exports = {
             -- Sécurité utilisateur
             AND (
                 @typeentitesociete = 1
-                OR e.idsite = @idsite
+                OR E.idsite = @idsite
             )
 
             AND (
@@ -197,7 +197,7 @@ module.exports = {
         -- Sécurité utilisateur
         AND (
             @typeentitesociete = 1
-            OR e.idsite = @idsite
+            OR E.idsite = @idsite
         )
             
         AND (
