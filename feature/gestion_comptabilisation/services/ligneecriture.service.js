@@ -83,7 +83,7 @@ FROM EcritureLigneComptable elc
 INNER JOIN EcritureComptable ec 
     ON ec.idecriture = elc.idecriture
 inner join TypeOperation ty on ty.idtypeoperation=ec.idtypeoperation
-inner join site st on st.idsite = ty.idsite
+inner join Site st on st.idsite = ty.idsite
 
 WHERE
     (@idsite IS NULL OR ty.idsite = @idsite)
@@ -137,7 +137,7 @@ order by ec.date_operation desc, ec.ref_ecriture desc, elc.numligne asc`;
             FROM EcritureComptable ec
             INNER JOIN EcritureLigneComptable elc on elc.idecriture = ec.idecriture
             inner join TypeOperation ty on ty.idtypeoperation=ec.idtypeoperation
-            inner join site st on st.idsite = ty.idsite
+            inner join Site st on st.idsite = ty.idsite
             WHERE
             (@idoperation IS NULL OR ty.idoperation = @idoperation)
             AND (@idsite IS NULL OR ty.idsite = @idsite)
@@ -175,7 +175,7 @@ order by ec.date_operation desc, ec.ref_ecriture desc, elc.numligne asc`;
                 INNER JOIN EcritureComptable ec 
                     ON ec.idecriture = elc.idecriture
                 inner join TypeOperation ty on ty.idtypeoperation=ec.idtypeoperation
-                inner join site st on ty.idsite = ty.idsite
+                inner join Site st on ty.idsite = ty.idsite
                 where
                 (@idoperation IS NULL OR ty.idoperation = @idoperation)
                 AND (@idsite IS NULL OR st.idsite = @idsite)

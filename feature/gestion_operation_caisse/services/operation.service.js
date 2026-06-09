@@ -27,8 +27,6 @@ async function get_all_typeoperations({page, limit, search, date, user, typepaie
   soldes = await typeoperation.get_soldecaisse();
   const result = await typeoperation.get_alltypeoperations({ page, limit, search, date, typepaiement, devise }, userconnect.data);
 
-  console.log(result);
-
   try {
     const operations = {};
     result.data.forEach(row => {

@@ -2,26 +2,37 @@ const societeservice = require("../../gestion_organisation/services/societe.serv
 const siteservice = require("../../gestion_organisation/services/site.service");
 const deviseservice = require("../../gestion_organisation/services/devise.service");
 const enteteoperationmodel = require("../models/enteteoperation.model");
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require("uuid");
 const compteurservice = require("../../gestion_paramètres/services/compteur.service");
 
 let enteteoperation = new enteteoperationmodel();
 let enteteoperations = [];
 
+// pour gestion des pj
+const { upload } = require("../../../middlewares/upload/pjoperation");
+const path = require("path");
+const fs = require("fs");
+const fsPromises = require("fs").promises;
+const sequelize = require("../../../config/database");
+
 async function get_all_enteteoperations() {
   const result = await enteteoperation.get_allenteteoperations();
-  enteteoperations = result.recordset.map(item => new enteteoperationmodel(
-    item.idoperation,
-    item.codeoperation, 
-    item.iddemande, 
-    item.codedemande,
-    item.idsociete, 
-    item.codesociete,
-    item.dateoperation,
-    item.createdat, 
-    item.createdby, 
-    item.updatedat,  
-    item.updatedby));
+  enteteoperations = result.recordset.map(
+    (item) =>
+      new enteteoperationmodel(
+        item.idoperation,
+        item.codeoperation,
+        item.iddemande,
+        item.codedemande,
+        item.idsociete,
+        item.codesociete,
+        item.dateoperation,
+        item.createdat,
+        item.createdby,
+        item.updatedat,
+        item.updatedby,
+      ),
+  );
   return enteteoperations;
 }
 
@@ -32,54 +43,61 @@ async function create_enteteoperation(data) {
 
   //Récuperer le site sur l'utilisateur connecté
   let site = null;
-  if(data.site){
+  if (data.site) {
     site = await siteservice.getonesite(data.site);
-  }else{
-    throw new Error('Site utilisateur introuvable');
+  } else {
+    throw new Error("Site utilisateur introuvable");
   }
 
   //Récuperer la devise
   let devise = null;
-  if(data.devise){
+  if (data.devise) {
     devise = await deviseservice.getonedevise(data.devise);
   }
 
   const datePeriode = new Date(data.dateoperation);
-  
+
   const today = new Date();
   if (datePeriode > today) {
-    throw new Error("La date operation ne peut pas être supérieure à la date du jour");
+    throw new Error(
+      "La date operation ne peut pas être supérieure à la date du jour",
+    );
   }
 
   const compteur = await compteurservice.getall();
   // Trouver le compteur "operation"
-  const demandeCompteur = compteur.data.find(c => c.typedocument != 'demande');
+  const demandeCompteur = compteur.data.find(
+    (c) => c.typedocument != "demande",
+  );
 
   // Fonction pour résoudre une séquence
   const resolveSequence = (sequence, prefixe) => {
     switch (sequence) {
-      case 'site':
-        return site.data?.codesite || '';
-      case 'constante':
-        return prefixe || '';
+      case "site":
+        return site.data?.codesite || "";
+      case "constante":
+        return prefixe || "";
       default:
-        return '';
+        return "";
     }
   };
 
   // Résolution des préfixes
   const prefixe = [
     resolveSequence(demandeCompteur?.sequence_1, demandeCompteur?.prefixe_1),
-    resolveSequence(demandeCompteur?.sequence_2, demandeCompteur?.prefixe_2)
-  ].join('');
+    resolveSequence(demandeCompteur?.sequence_2, demandeCompteur?.prefixe_2),
+  ].join("");
 
   //Générer le numero d'operation
   //const prefix = "NUM";
-  const numerogenere = await enteteoperation.create_numoperation(prefixe, datePeriode);
+  const numerogenere = await enteteoperation.create_numoperation(
+    prefixe,
+    datePeriode,
+  );
   const newenteteoperation = new enteteoperationmodel(
-    uuidv4(),   
-    data.codeoperation || numerogenere, 
-    data.demande ? data.demande : null, 
+    uuidv4(),
+    data.codeoperation || numerogenere,
+    data.demande ? data.demande : null,
     data.societe,
     data.site,
     data.devise,
@@ -90,8 +108,11 @@ async function create_enteteoperation(data) {
     data.typepaiement || null,
     data.beneficiaire || null,
     data.createdat || today,
-    data.createdby || 'System');
-  const recorded = await newenteteoperation.create_enteteoperationmodel(newenteteoperation);
+    data.createdby || "System",
+  );
+  const recorded = await newenteteoperation.create_enteteoperationmodel(
+    newenteteoperation,
+  );
   // si le modèle renvoie une erreur
   if (!recorded.success) {
     throw new Error(recorded.message);
@@ -106,7 +127,9 @@ async function get_by_identeteoperation(identeteoperation) {
   }
 
   try {
-    const enteteoperation_ = await enteteoperation.get_oneenteteoperation(identeteoperation);
+    const enteteoperation_ = await enteteoperation.get_oneenteteoperation(
+      identeteoperation,
+    );
     return enteteoperation_;
   } catch (err) {
     console.log(`Aucune donnée: ${err}`.cyan.bold);
@@ -120,25 +143,29 @@ async function update_enteteoperation(identeteoperation, data) {
   }
 
   try {
-    const enteteoperation_ = await enteteoperation.update_enteteoperation(data.codeoperation, data);
+    const enteteoperation_ = await enteteoperation.update_enteteoperation(
+      data.codeoperation,
+      data,
+    );
     return enteteoperation_.recordset;
   } catch (err) {
     console.log(`Erreur de modification: ${err}`.cyan.bold);
     throw err;
   }
-  
 }
 
 async function delete_enteteoperation(identeteoperation) {
-   try {
-    const enteteoperation_ = await enteteoperation.delete_enteteoperation(identeteoperation);
+  try {
+    const enteteoperation_ = await enteteoperation.delete_enteteoperation(
+      identeteoperation,
+    );
     if (!enteteoperation_.success) {
       throw new Error(enteteoperation_.message);
     }
     return enteteoperation_;
-   } catch (err) {
+  } catch (err) {
     throw err;
-   }
+  }
 }
 
 async function cancel_enteteoperation(data) {
@@ -162,14 +189,14 @@ async function cancel_enteteoperation(data) {
     ====================================================== */
     let nouveauTypePaiement = null;
 
-    switch ((data.caisses[0]?.codtypeoperation || '').toLowerCase()) {
-      case 'encaissement':
-        nouveauTypePaiement = 'decaissement';
+    switch ((data.caisses[0]?.codtypeoperation || "").toLowerCase()) {
+      case "encaissement":
+        nouveauTypePaiement = "decaissement";
         break;
 
-      case 'decaissement':
-      case 'decaissementaj':
-        nouveauTypePaiement = 'encaissement';
+      case "decaissement":
+      case "decaissementaj":
+        nouveauTypePaiement = "encaissement";
         break;
 
       default:
@@ -188,22 +215,17 @@ async function cancel_enteteoperation(data) {
       dateoperation: new Date(),
       montant: data.montant,
       tauxoperation: data.tauxoperation,
-      createdby: data.createdby || 'SYSTEM',
+      createdby: data.createdby || "SYSTEM",
 
       // traçabilité
       idoperationorigine: data.idoperation,
-      libelleannulation: `Annulation - ${data.codeoperation}`
+      libelleannulation: `Annulation - ${data.codeoperation}`,
     };
 
-    const enteteoperation =
-      await create_enteteoperation(
-        newEnteteData
-      );
+    const enteteoperation = await create_enteteoperation(newEnteteData);
 
     if (!enteteoperation?.idoperation) {
-      throw new Error(
-        "Échec de création de l'opération d'annulation."
-      );
+      throw new Error("Échec de création de l'opération d'annulation.");
     }
 
     /* ======================================================
@@ -217,49 +239,39 @@ async function cancel_enteteoperation(data) {
         idtiers: ligne.tiers?.idtiers || null,
         libelle: `Annulation - ${ligne.libelle}`,
         montantoperation: Number(ligne.montantoperation),
-        createdby: data.createdby || 'SYSTEM'
+        createdby: data.createdby || "SYSTEM",
       };
 
-      await ligneoperationservice.create_ligneoperation(
-        dataligne
-      );
+      await ligneoperationservice.create_ligneoperation(dataligne);
     }
 
     /* ======================================================
        4. Création type opération inverse
     ====================================================== */
     for (const caisse of data.caisses) {
-      if (
-        caisse.montant &&
-        Number(caisse.montant) !== 0
-      ) {
-        const caisse1 =
-          await caisseservice.get_by_idcaisse(
-            caisse.idcaisse
-          );
+      if (caisse.montant && Number(caisse.montant) !== 0) {
+        const caisse1 = await caisseservice.get_by_idcaisse(caisse.idcaisse);
 
-        const newtypeoperation =
-          new typeoperationmodel(
-            uuidv4(),
-            nouveauTypePaiement,
-            enteteoperation.idoperation,
-            caisse.idperiode || null,
-            data.idsociete,
-            data.idsite,
-            caisse1?.idcaisse || null,
-            Number(caisse.montant),
-            caisse.taux,
-            caisse.montantref,
-            today,
-            data.createdby || 'SYSTEM',
-            null,
-            null
-          );
+        const newtypeoperation = new typeoperationmodel(
+          uuidv4(),
+          nouveauTypePaiement,
+          enteteoperation.idoperation,
+          caisse.idperiode || null,
+          data.idsociete,
+          data.idsite,
+          caisse1?.idcaisse || null,
+          Number(caisse.montant),
+          caisse.taux,
+          caisse.montantref,
+          today,
+          data.createdby || "SYSTEM",
+          null,
+          null,
+        );
 
-        const recorded =
-          await newtypeoperation.create_typeoperationmodel(
-            newtypeoperation
-          );
+        const recorded = await newtypeoperation.create_typeoperationmodel(
+          newtypeoperation,
+        );
 
         if (!recorded.success) {
           throw new Error(recorded.message);
@@ -270,25 +282,19 @@ async function cancel_enteteoperation(data) {
     /* ======================================================
        5. Génération écriture comptable
     ====================================================== */
-    await ecritureservice.GenererEcriture(
-      enteteoperation.idoperation
-    );
+    await ecritureservice.GenererEcriture(enteteoperation.idoperation);
 
     /* ======================================================
        6. Marquer l'opération source annulée
        (optionnel mais recommandé)
     ====================================================== */
-    await update_status(
-      data.idoperation,
-      {
-        annulee: 1,
-        updatedat: today,
-        updatedby: data.createdby || 'SYSTEM'
-      }
-    );
+    await update_status(data.idoperation, {
+      annulee: 1,
+      updatedat: today,
+      updatedby: data.createdby || "SYSTEM",
+    });
 
     return enteteoperation;
-
   } catch (err) {
     throw err;
   }
@@ -300,13 +306,15 @@ async function update_status(identeteoperation, data) {
   }
 
   try {
-    const enteteoperation_ = await enteteoperation.update_status(identeteoperation, data);
+    const enteteoperation_ = await enteteoperation.update_status(
+      identeteoperation,
+      data,
+    );
     return enteteoperation_.recordset;
   } catch (err) {
     console.log(`Erreur de modification: ${err}`.cyan.bold);
     throw err;
   }
-  
 }
 
 async function update_operationorigine(identeteoperation, data) {
@@ -315,13 +323,343 @@ async function update_operationorigine(identeteoperation, data) {
   }
 
   try {
-    const enteteoperation_ = await enteteoperation.update_operationorigine(identeteoperation, data);
+    const enteteoperation_ = await enteteoperation.update_operationorigine(
+      identeteoperation,
+      data,
+    );
     return enteteoperation_.recordset;
   } catch (err) {
     console.log(`Erreur de modification: ${err}`.cyan.bold);
     throw err;
   }
-  
+}
+
+const {
+  PieceJointe,
+  OperationPieceJointe,
+} = require("../../gestion_pj_demandes/models/operations/index");
+
+/**
+ * Upload de fichiers pour une demande
+ * @param {string} idoperation - ID de l'opération
+ * @param {Array} files - Fichiers uploadés (multer)
+ * @param {string} userId - ID de l'utilisateur qui upload
+ * @returns {Promise<Array>} - Liste des pièces jointes créées
+ */
+async function uploadFiles(idoperation, files, userId) {
+  // 1. Vérifier que l'opération existe
+  const operation = await get_by_identeteoperation(idoperation);
+  if (!operation) {
+    throw new Error("Opération introuvable");
+  }
+
+  const results = [];
+  const transaction = await sequelize.transaction();
+
+  try {
+    for (const file of files) {
+      // 2. Chemin relatif pour stockage en base
+      const relativePath = path
+        .join("uploads/operations", file.filename)
+        .replace(/\\/g, "/");
+
+      try {
+        // Utiliser fs.promises.unlink au lieu de fs.unlink
+        await fs.promises.unlink(filePath);
+      } catch (unlinkError) {
+        console.error(
+          `Erreur nettoyage fichier ${file.filename}:`,
+          unlinkError,
+        );
+      }
+
+      // 3. Créer l'entrée dans PieceJointe
+      const [pieceJointe, created] = await PieceJointe.findOrCreate({
+        where: {
+          urlpiece: relativePath,
+          nomfichier: file.originalname,
+        },
+        defaults: {
+          idpiecejointe: uuidv4(),
+          urlpiece: relativePath,
+          nomfichier: file.originalname,
+          mimetype: file.mimetype,
+          taille: file.size,
+          nomtable: "EnteteOperationCaisse",
+          idtable: idoperation,
+          dossier: "operations",
+          createdat: new Date(),
+          createdby: userId,
+        },
+        transaction,
+      });
+
+      // 4. Vérifier si la liaison existe déjà
+      const [liaison, liaisonCreated] = await OperationPieceJointe.findOrCreate(
+        {
+          where: {
+            idoperation: idoperation,
+            idpiecejointe: pieceJointe.idpiecejointe,
+          },
+          defaults: {
+            idoperationpiecejointe: uuidv4(),
+            idoperation: idoperation,
+            idpiecejointe: pieceJointe.idpiecejointe,
+            createdat: new Date(),
+            createdby: userId,
+          },
+          transaction,
+        },
+      );
+
+      results.push({
+        idpiecejointe: pieceJointe.idpiecejointe,
+        nomfichier: file.originalname,
+        urlpiece: relativePath,
+        taille: file.size,
+        mimetype: file.mimetype,
+        alreadyExists: !liaisonCreated,
+      });
+    }
+
+    await transaction.commit();
+    return results;
+  } catch (error) {
+    await transaction.rollback();
+
+    // Nettoyer les fichiers physiques en cas d'erreur
+    for (const file of files) {
+      const filePath = path.join(
+        process.env.UPLOAD_DIR || "./uploads/operations",
+        file.filename,
+      );
+      try {
+        await fs.unlink(filePath);
+      } catch (unlinkError) {
+        console.error(
+          `Erreur nettoyage fichier ${file.filename}:`,
+          unlinkError,
+        );
+      }
+    }
+
+    throw new Error(`Erreur upload: ${error.message}`);
+  }
+}
+
+/**
+ * Récupère toutes les pièces jointes d'une demande
+ * @param {string} idoperation - ID de l'opération
+ * @returns {Promise<Array>} - Liste des pièces jointes
+ */
+async function getFiles(idoperation) {
+  const operation = await get_by_identeteoperation(idoperation);
+  if (!operation) {
+    throw new Error("Opération introuvable");
+  }
+
+  const piecesJointes = await PieceJointe.findAll({
+    include: [
+      {
+        model: OperationPieceJointe,
+        where: { idoperation },
+        attributes: [],
+        required: true,
+      },
+    ],
+    attributes: [
+      "idpiecejointe",
+      "urlpiece",
+      "nomfichier",
+      ["mimetype", "mimetype"],
+      "taille",
+      "createdat",
+      "createdby",
+    ],
+  });
+
+  return piecesJointes;
+}
+
+/**
+ * Supprime une pièce jointe d'une demande
+ * @param {string} idoperation - ID de l'opération
+ * @param {string} idpiecejointe - ID de la pièce jointe
+ * @param {string} userId - ID de l'utilisateur
+ * @returns {Promise<Object>}
+ */
+async function deleteFile(idoperation, idpiecejointe, userId) {
+  const transaction = await sequelize.transaction();
+
+  try {
+    // 1. Vérifier que la liaison existe
+    const liaison = await OperationPieceJointe.findOne({
+      where: { idoperation, idpiecejointe },
+      transaction,
+    });
+
+    if (!liaison) {
+      throw new Error("Pièce jointe non trouvée pour cette opération");
+    }
+
+    // 2. Récupérer les infos du fichier
+    const pieceJointe = await PieceJointe.findByPk(idpiecejointe, {
+      transaction,
+    });
+
+    if (!pieceJointe) {
+      throw new Error("Pièce jointe introuvable");
+    }
+
+    // 3. Supprimer la liaison
+    await liaison.destroy({ transaction });
+
+    // 4. Supprimer l'entrée PieceJointe
+    await pieceJointe.destroy({ transaction });
+
+    // 5. Supprimer le fichier physique
+    const filePath = path.join(process.cwd(), pieceJointe.urlpiece);
+    try {
+      await fs.unlink(filePath);
+    } catch (unlinkError) {
+      console.error(
+        `Erreur suppression fichier physique ${filePath}:`,
+        unlinkError,
+      );
+      // On continue même si le fichier n'existe pas
+    }
+
+    await transaction.commit();
+
+    return { success: true, message: "Pièce jointe supprimée avec succès" };
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
+}
+
+/**
+ * Télécharge un fichier (stream direct)
+ * @param {string} urlpiece - Chemin relatif du fichier (ex: uploads/demandes/xxx.pdf)
+ * @returns {Promise<{stream: fs.ReadStream, stats: fs.Stats, mimetype: string, nomfichier: string}>}
+ */
+async function downloadFile(urlpiece) {
+  // 1. Construire le chemin absolu
+  const absolutePath = path.join(process.cwd(), urlpiece);
+
+  // 2. Vérifier si le fichier existe
+  try {
+    await fs.access(absolutePath);
+  } catch (error) {
+    throw new Error(`Fichier introuvable: ${urlpiece}`);
+  }
+
+  // 3. Récupérer les stats du fichier
+  const stats = await fs.stat(absolutePath);
+
+  // 4. Déterminer le mimetype depuis l'extension (fallback)
+  const mimetype = getmimetypeFromExtension(absolutePath);
+
+  // 5. Extraire le nom original depuis l'url (ou depuis la base selon ton besoin)
+  const nomfichier =
+    path.basename(urlpiece).split("_").slice(2).join("_") ||
+    path.basename(urlpiece);
+
+  // 6. Retourner le stream de lecture
+  const stream = fs.createReadStream(absolutePath);
+
+  return {
+    stream,
+    stats,
+    mimetype,
+    nomfichier,
+  };
+}
+
+/**
+ * Détermine le mimetype depuis l'extension du fichier
+ * @param {string} filepath - Chemin du fichier
+ * @returns {string}
+ */
+function getmimetypeFromExtension(filepath) {
+  const ext = path.extname(filepath).toLowerCase();
+  const mimetypes = {
+    ".pdf": "application/pdf",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".gif": "image/gif",
+    ".doc": "application/msword",
+    ".docx":
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xls": "application/vnd.ms-excel",
+    ".xlsx":
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".csv": "text/csv",
+    ".txt": "text/plain",
+  };
+  return mimetypes[ext] || "application/octet-stream";
+}
+async function downloadFile(urlpiece) {
+  // 1. Construire le chemin absolu
+  const absolutePath = path.join(process.cwd(), urlpiece);
+
+  // 2. Vérifier si le fichier existe (utiliser fs.promises.access)
+  try {
+    await fs.promises.access(absolutePath);
+  } catch (error) {
+    throw new Error(`Fichier introuvable: ${urlpiece}`);
+  }
+
+  // 3. Récupérer les stats du fichier (utiliser fs.promises.stat)
+  const stats = await fs.promises.stat(absolutePath);
+
+  // 4. Déterminer le mimetype depuis l'extension (fallback)
+  const mimetype = getmimetypeFromExtension(absolutePath);
+
+  // 5. Extraire le nom original depuis l'url
+  const nomfichier =
+    path.basename(urlpiece).split("_").slice(2).join("_") ||
+    path.basename(urlpiece);
+
+  // 6. Retourner le stream de lecture (utiliser fs.createReadStream)
+  const stream = fs.createReadStream(absolutePath);
+
+  stream.on("error", (err) => {
+    console.error("❌ Erreur stream:", err);
+  });
+
+  return {
+    stream,
+    stats,
+    mimetype,
+    nomfichier,
+  };
+}
+
+/**
+ * Détermine le mimetype depuis l'extension du fichier
+ * @param {string} filepath - Chemin du fichier
+ * @returns {string}
+ */
+function getmimetypeFromExtension(filepath) {
+  const ext = path.extname(filepath).toLowerCase();
+  const mimetypes = {
+    ".pdf": "application/pdf",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".gif": "image/gif",
+    ".doc": "application/msword",
+    ".docx":
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xls": "application/vnd.ms-excel",
+    ".xlsx":
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".csv": "text/csv",
+    ".txt": "text/plain",
+  };
+  return mimetypes[ext] || "application/octet-stream";
 }
 
 module.exports = {
@@ -332,5 +670,9 @@ module.exports = {
   update_enteteoperation,
   update_status,
   update_operationorigine,
-  delete_enteteoperation
+  delete_enteteoperation,
+  uploadFiles,
+  getFiles,
+  deleteFile,
+  downloadFile,
 };

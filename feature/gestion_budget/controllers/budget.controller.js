@@ -1,6 +1,7 @@
 const budgetservice = require("../services/budget.service");
 const { Budget } = require("../models/index");
 const sequelize = require("../../../config/database");
+const path = require("path");
 
 const {
   CircuitValidation,
@@ -425,6 +426,134 @@ exports.getAnnualBudgetsWithMonthly = async (req, res) => {
     res.status(500).json({
       success: false,
       error: error,
+    });
+  }
+};
+
+const { upload } = require("../../../middlewares/upload/pjbudget");
+const budgetService = require("../services/budget.service");
+/**
+ * Upload de pièces jointes pour une demande
+ */
+exports.uploadFiles = async (req, res) => {
+  try {
+    const idbudget = req.params.id;
+    const files = req.files;
+    const userId = "ADMIN";
+
+    if (!files || files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Aucun fichier à uploader",
+      });
+    }
+
+    const result = await budgetService.uploadFiles(idbudget, files, userId);
+
+    res.status(201).json({
+      success: true,
+      data: result,
+      message: `${result.length} fichier(s) uploadé(s) avec succès`,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+/**
+ * Récupère toutes les pièces jointes d'une demande
+ */
+exports.getFiles = async (req, res) => {
+  try {
+    const idbudget = req.params.id;
+    const files = await budgetService.getFiles(idbudget);
+
+    res.json({ success: true, data: files });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+/**
+ * Supprime une pièce jointe d'une demande
+ */
+exports.deleteFile = async (req, res) => {
+  try {
+    const { id: idbudget, idpiecejointe } = req.params;
+    const userId = req.user?.idutilisateur || "ADMIN";
+
+    const result = await budgetService.deleteFile(
+      idbudget,
+      idpiecejointe,
+      userId,
+    );
+
+    res.json({ success: true, message: result.message });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+/**
+ * Télécharge un fichier (stream direct)
+ * GET /api/budgets/download?path=uploads/budgets/xxx.pdf
+ * OU
+ * GET /uploads/budgets/xxx.pdf (si exposé statiquement)
+ */
+exports.downloadFile = async (req, res) => {
+  try {
+    // Récupérer le chemin depuis query param
+    const filePath = req.query.path;
+
+    if (!filePath) {
+      return res.status(400).json({
+        success: false,
+        message: "Chemin du fichier manquant",
+      });
+    }
+
+    const decodedPath = decodeURIComponent(filePath);
+
+    const sanitizedPath = path
+      .normalize(decodedPath)
+      .replace(/^(\.\.(\/|\\|$))+/, "");
+
+    const allowedDirs = ["uploads/budgets", "uploads"];
+    const isAllowed = allowedDirs.some((dir) => sanitizedPath.startsWith(dir));
+
+    if (!isAllowed) {
+      return res.status(403).json({
+        success: false,
+        message: "Accès non autorisé",
+      });
+    }
+
+    const { stream, stats, mimetype, nomfichier } =
+      await budgetService.downloadFile(sanitizedPath);
+
+    res.setHeader("Content-Type", mimetype);
+    res.setHeader("Content-Length", stats.size);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${encodeURIComponent(nomfichier)}"`,
+    );
+    res.setHeader("Cache-Control", "public, max-age=3600");
+
+    stream.pipe(res);
+  } catch (error) {
+    console.error("Erreur downloadFile:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };

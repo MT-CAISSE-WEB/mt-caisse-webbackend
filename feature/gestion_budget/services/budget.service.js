@@ -6,6 +6,11 @@ const enteteDemandeModel = require("../../gestion_demande_decaissement/models/en
 let modelcircuit = new enteteDemandeModel();
 const circuitquery = require("../queries/circuitvalidation.query");
 const budgetcontroller = require("../controllers/budget.controller");
+const { upload } = require("../../../middlewares/upload/pjbudget");
+const path = require("path");
+const fs = require("fs");
+const fsPromises = require("fs").promises;
+const sequelize = require("../../../config/database");
 
 //Recuperer le budget par idbudget
 async function get_budgetByid(idbudget) {
@@ -408,3 +413,322 @@ exports.validerBudget = async (req, res) => {
 };
 
 exports.initCircuitBudget = initCircuitBudget;
+
+const {
+  PieceJointe,
+  BudgetPieceJointe,
+  Budget,
+} = require("../../gestion_pj_demandes/models/budgets/index");
+
+/**
+ * Upload de fichiers pour une demande
+ * @param {string} idbudget - ID du budget
+ * @param {Array} files - Fichiers uploadés (multer)
+ * @param {string} userId - ID de l'utilisateur qui upload
+ * @returns {Promise<Array>} - Liste des pièces jointes créées
+ */
+exports.uploadFiles = async (idbudget, files, userId) => {
+  // 1. Vérifier que la budget existe
+  const budget = await Budget.findByPk(idbudget);
+  if (!budget) {
+    throw new Error("Budget introuvable");
+  }
+
+  const results = [];
+  const transaction = await sequelize.transaction();
+
+  try {
+    for (const file of files) {
+      // 2. Chemin relatif pour stockage en base
+      const relativePath = path
+        .join("uploads/budgets", file.filename)
+        .replace(/\\/g, "/");
+
+      // 3. Créer l'entrée dans PieceJointe
+      const [pieceJointe, created] = await PieceJointe.findOrCreate({
+        where: {
+          urlpiece: relativePath,
+          nomfichier: file.originalname,
+        },
+        defaults: {
+          idpiecejointe: uuidv4(),
+          urlpiece: relativePath,
+          nomfichier: file.originalname,
+          mimetype: file.mimetype,
+          taille: file.size,
+          nomtable: "Budget",
+          idtable: idbudget,
+          dossier: "budgets",
+          createdat: new Date(),
+          createdby: userId,
+        },
+        transaction,
+      });
+
+      // 4. Vérifier si la liaison existe déjà
+      const [liaison, liaisonCreated] = await BudgetPieceJointe.findOrCreate({
+        where: {
+          idbudget: idbudget,
+          idpiecejointe: pieceJointe.idpiecejointe,
+        },
+        defaults: {
+          idbudgetpiecejointe: uuidv4(),
+          idbudget: idbudget,
+          idpiecejointe: pieceJointe.idpiecejointe,
+          createdat: new Date(),
+          createdby: userId,
+        },
+        transaction,
+      });
+
+      results.push({
+        idpiecejointe: pieceJointe.idpiecejointe,
+        nomfichier: file.originalname,
+        urlpiece: relativePath,
+        taille: file.size,
+        mimetype: file.mimetype,
+        alreadyExists: !liaisonCreated,
+      });
+    }
+
+    await transaction.commit();
+    return results;
+  } catch (error) {
+    await transaction.rollback();
+
+    // Nettoyer les fichiers physiques en cas d'erreur
+    for (const file of files) {
+      const filePath = path.join(
+        process.env.UPLOAD_DIR || "./uploads/budgets",
+        file.filename,
+      );
+      try {
+        await fs.unlink(filePath);
+      } catch (unlinkError) {
+        console.error(
+          `Erreur nettoyage fichier ${file.filename}:`,
+          unlinkError,
+        );
+      }
+    }
+
+    throw new Error(`Erreur upload: ${error.message}`);
+  }
+};
+
+/**
+ * Récupère toutes les pièces jointes d'une demande
+ * @param {string} idbudget - ID du budget
+ * @returns {Promise<Array>} - Liste des pièces jointes
+ */
+exports.getFiles = async (idbudget) => {
+  // 1. Vérifier que la demande existe
+  const budget = await Budget.findByPk(idbudget);
+  if (!budget) {
+    throw new Error("Budget introuvable");
+  }
+
+  const piecesJointes = await PieceJointe.findAll({
+    include: [
+      {
+        model: BudgetPieceJointe,
+        where: { idbudget },
+        attributes: [],
+        required: true,
+      },
+    ],
+    attributes: [
+      "idpiecejointe",
+      "urlpiece",
+      "nomfichier",
+      ["mimetype", "mimetype"],
+      "taille",
+      "createdat",
+      "createdby",
+    ],
+  });
+
+  return piecesJointes;
+};
+
+/**
+ * Supprime une pièce jointe d'une demande
+ * @param {string} idbudget - ID du budget
+ * @param {string} idpiecejointe - ID de la pièce jointe
+ * @param {string} userId - ID de l'utilisateur
+ * @returns {Promise<Object>}
+ */
+exports.deleteFile = async (idbudget, idpiecejointe, userId) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    // 1. Vérifier que la liaison existe
+    const liaison = await BudgetPieceJointe.findOne({
+      where: { idbudget, idpiecejointe },
+      transaction,
+    });
+
+    if (!liaison) {
+      throw new Error("Pièce jointe non trouvée pour cette demande");
+    }
+
+    // 2. Récupérer les infos du fichier
+    const pieceJointe = await PieceJointe.findByPk(idpiecejointe, {
+      transaction,
+    });
+
+    if (!pieceJointe) {
+      throw new Error("Pièce jointe introuvable");
+    }
+
+    // 3. Supprimer la liaison
+    await liaison.destroy({ transaction });
+
+    // 4. Supprimer l'entrée PieceJointe
+    await pieceJointe.destroy({ transaction });
+
+    // 5. Supprimer le fichier physique
+    const filePath = path.join(process.cwd(), pieceJointe.urlpiece);
+    try {
+      await fs.unlink(filePath);
+    } catch (unlinkError) {
+      console.error(
+        `Erreur suppression fichier physique ${filePath}:`,
+        unlinkError,
+      );
+      // On continue même si le fichier n'existe pas
+    }
+
+    await transaction.commit();
+
+    return { success: true, message: "Pièce jointe supprimée avec succès" };
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
+};
+
+/**
+ * Télécharge un fichier (stream direct)
+ * @param {string} urlpiece - Chemin relatif du fichier (ex: uploads/demandes/xxx.pdf)
+ * @returns {Promise<{stream: fs.ReadStream, stats: fs.Stats, mimetype: string, nomfichier: string}>}
+ */
+exports.downloadFile = async (urlpiece) => {
+  // 1. Construire le chemin absolu
+  const absolutePath = path.join(process.cwd(), urlpiece);
+
+  // 2. Vérifier si le fichier existe
+  try {
+    await fs.access(absolutePath);
+  } catch (error) {
+    throw new Error(`Fichier introuvable: ${urlpiece}`);
+  }
+
+  // 3. Récupérer les stats du fichier
+  const stats = await fs.stat(absolutePath);
+
+  // 4. Déterminer le mimetype depuis l'extension (fallback)
+  const mimetype = getmimetypeFromExtension(absolutePath);
+
+  // 5. Extraire le nom original depuis l'url (ou depuis la base selon ton besoin)
+  const nomfichier =
+    path.basename(urlpiece).split("_").slice(2).join("_") ||
+    path.basename(urlpiece);
+
+  // 6. Retourner le stream de lecture
+  const stream = fs.createReadStream(absolutePath);
+
+  return {
+    stream,
+    stats,
+    mimetype,
+    nomfichier,
+  };
+};
+
+/**
+ * Détermine le mimetype depuis l'extension du fichier
+ * @param {string} filepath - Chemin du fichier
+ * @returns {string}
+ */
+function getmimetypeFromExtension(filepath) {
+  const ext = path.extname(filepath).toLowerCase();
+  const mimetypes = {
+    ".pdf": "application/pdf",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".gif": "image/gif",
+    ".doc": "application/msword",
+    ".docx":
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xls": "application/vnd.ms-excel",
+    ".xlsx":
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".csv": "text/csv",
+    ".txt": "text/plain",
+  };
+  return mimetypes[ext] || "application/octet-stream";
+}
+
+exports.downloadFile = async (urlpiece) => {
+  // 1. Construire le chemin absolu
+  const absolutePath = path.join(process.cwd(), urlpiece);
+
+  // 2. Vérifier si le fichier existe (utiliser fs.promises.access)
+  try {
+    await fs.promises.access(absolutePath);
+  } catch (error) {
+    throw new Error(`Fichier introuvable: ${urlpiece}`);
+  }
+
+  // 3. Récupérer les stats du fichier (utiliser fs.promises.stat)
+  const stats = await fs.promises.stat(absolutePath);
+
+  // 4. Déterminer le mimetype depuis l'extension (fallback)
+  const mimetype = getmimetypeFromExtension(absolutePath);
+
+  // 5. Extraire le nom original depuis l'url
+  const nomfichier =
+    path.basename(urlpiece).split("_").slice(2).join("_") ||
+    path.basename(urlpiece);
+
+  // 6. Retourner le stream de lecture (utiliser fs.createReadStream)
+  const stream = fs.createReadStream(absolutePath);
+
+  stream.on("error", (err) => {
+    console.error("❌ Erreur stream:", err);
+  });
+
+  return {
+    stream,
+    stats,
+    mimetype,
+    nomfichier,
+  };
+};
+
+/**
+ * Détermine le mimetype depuis l'extension du fichier
+ * @param {string} filepath - Chemin du fichier
+ * @returns {string}
+ */
+function getmimetypeFromExtension(filepath) {
+  const ext = path.extname(filepath).toLowerCase();
+  const mimetypes = {
+    ".pdf": "application/pdf",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".gif": "image/gif",
+    ".doc": "application/msword",
+    ".docx":
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xls": "application/vnd.ms-excel",
+    ".xlsx":
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".csv": "text/csv",
+    ".txt": "text/plain",
+  };
+  return mimetypes[ext] || "application/octet-stream";
+}

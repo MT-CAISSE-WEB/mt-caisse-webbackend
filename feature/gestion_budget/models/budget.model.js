@@ -55,6 +55,4 @@ const Budget = sequelize.define(
   },
 );
 
-// ===== Associations =====
-
 module.exports = Budget;

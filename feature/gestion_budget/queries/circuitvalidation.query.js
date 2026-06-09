@@ -14,7 +14,7 @@ module.exports = {
         from ValidationBudget VB
             LEFT JOIN Budget B ON B.idbudget = VB.idbudget
             LEFT JOIN Utilisateur U ON U.idutilisateur = VB.idutilisateur
-            LEFT JOIN Circuitvalidation CI ON CI.idcircuitvalidation = VB.idcircuitvalidation
+            LEFT JOIN CircuitValidation CI ON CI.idcircuitvalidation = VB.idcircuitvalidation
         Where VB.idbudget = @idbudget
         ORDER BY VB.rang ASC;
     `,

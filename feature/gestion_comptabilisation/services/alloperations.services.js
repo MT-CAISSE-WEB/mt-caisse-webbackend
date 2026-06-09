@@ -8,8 +8,8 @@ async function getparamcomptable() {
     const pool = await connectDB();
     const result = await pool.request()
       .query(`select p.*,j.codejournal,pl.numcompte
-                from parametreComptable p
-                inner join journal j on j.idjournal = p.idjournal
+                from ParametreComptable p
+                inner join Journal j on j.idjournal = p.idjournal
                 inner join PlanComptable pl on pl.idcompte = p.idcompte`);
     return {
       success: true,
@@ -127,7 +127,7 @@ async function getjustificatifbyid(idjustificatif) {
       .input("idjustificatif", sql.UniqueIdentifier, idjustificatif)
       .query(`select j.*, d.codedevise 
             from JustificatifOperation j
-            inner join devise d on d.iddevise = j.iddevise where idjustificatifoperation=@idjustificatif`);
+            inner join Devise d on d.iddevise = j.iddevise where idjustificatifoperation=@idjustificatif`);
 
     return {
       success: true,

@@ -52,11 +52,11 @@ const querytypeoperation = `SELECT
     d.codeiso,
     d.intitule AS devise_libelle
 
-FROM typeoperation t
-inner join caisse c on t.idcaisse = c.idcaisse
-inner join journal j on c.idjournal = j.idjournal
-inner join plancomptable p on c.idcompte = p.idcompte
-inner join devise d on c.iddevise = d.iddevise
+FROM TypeOperation t
+inner join Caisse c on t.idcaisse = c.idcaisse
+inner join Journal j on c.idjournal = j.idjournal
+inner join PlanComptable p on c.idcompte = p.idcompte
+inner join Devise d on c.iddevise = d.iddevise
 
 WHERE t.idoperation = @idoperation`;
 
@@ -86,9 +86,9 @@ queryjustificatifdetailsbyid = `select
     t.designation AS tiers_designation
 
     from DetailsJustificatifOperation j
-    left join tiers t on j.idtiers = t.idtiers
-    left join natureoperation n on j.idnature = n.idnature
-    left join centreanalytique ca on j.idcentreanalytique = ca.idcentreanalytique
+    left join Tiers t on j.idtiers = t.idtiers
+    left join NatureOperation n on j.idnature = n.idnature
+    left join CentreAnalytique ca on j.idcentreanalytique = ca.idcentreanalytique
     inner join PlanComptable p on n.idcompte = p.idcompte
     where j.idjustificatif = @idjustificatif`;
 
@@ -118,10 +118,10 @@ queryligneoperationbyidoperation = `select
     t.designation AS tiers_designation
 
 from LigneOperationCaisse l
-left join tiers t on l.idtiers = t.idtiers
-left join natureoperation n on l.idnature = n.idnature
+left join Tiers t on l.idtiers = t.idtiers
+left join NatureOperation n on l.idnature = n.idnature
 inner join PlanComptable p on n.idcompte = p.idcompte
-left join centreanalytique ca on l.idcentre = ca.idcentreanalytique
+left join CentreAnalytique ca on l.idcentre = ca.idcentreanalytique
 where l.idoperation=@idoperation and (l.comptabilise = 0 or l.comptabilise is NULL)
 `;
 

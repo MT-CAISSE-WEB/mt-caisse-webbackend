@@ -290,6 +290,8 @@ class enteteDemandeModel {
             .input('date', sql.DateTime, date)
             .query(entetedemandeQuery.dernierTaux)
 
+        console.log("Taux de change récupéré:", result.recordset);
+
         return result.recordset
     } catch (error) {
         console.log(error);
