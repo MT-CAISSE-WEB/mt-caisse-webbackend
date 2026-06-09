@@ -9,6 +9,7 @@ const budgetcontroller = require("../controllers/budget.controller");
 const { upload } = require("../../../middlewares/upload/pjbudget");
 const path = require("path");
 const fs = require("fs").promises;
+const fs2 = require("fs");
 const sequelize = require("../../../config/database");
 
 const AdmZip = require("adm-zip");
@@ -613,44 +614,6 @@ exports.deleteFile = async (idbudget, idpiecejointe, userId) => {
 };
 
 /**
- * Télécharge un fichier (stream direct)
- * @param {string} urlpiece - Chemin relatif du fichier (ex: uploads/demandes/xxx.pdf)
- * @returns {Promise<{stream: fs.ReadStream, stats: fs.Stats, mimetype: string, nomfichier: string}>}
- */
-exports.downloadFile = async (urlpiece) => {
-  // 1. Construire le chemin absolu
-  const absolutePath = path.join(process.cwd(), urlpiece);
-
-  // 2. Vérifier si le fichier existe
-  try {
-    await fs.access(absolutePath);
-  } catch (error) {
-    throw new Error(`Fichier introuvable: ${urlpiece}`);
-  }
-
-  // 3. Récupérer les stats du fichier
-  const stats = await fs.stat(absolutePath);
-
-  // 4. Déterminer le mimetype depuis l'extension (fallback)
-  const mimetype = getmimetypeFromExtension(absolutePath);
-
-  // 5. Extraire le nom original depuis l'url (ou depuis la base selon ton besoin)
-  const nomfichier =
-    path.basename(urlpiece).split("_").slice(2).join("_") ||
-    path.basename(urlpiece);
-
-  // 6. Retourner le stream de lecture
-  const stream = fs.createReadStream(absolutePath);
-
-  return {
-    stream,
-    stats,
-    mimetype,
-    nomfichier,
-  };
-};
-
-/**
  * Détermine le mimetype depuis l'extension du fichier
  * @param {string} filepath - Chemin du fichier
  * @returns {string}
@@ -678,16 +641,16 @@ function getmimetypeFromExtension(filepath) {
 exports.downloadFile = async (urlpiece) => {
   // 1. Construire le chemin absolu
   const absolutePath = path.join(process.cwd(), urlpiece);
+  console.log("absolutePath:", absolutePath);
 
-  // 2. Vérifier si le fichier existe (utiliser fs.promises.access)
   try {
-    await fs.promises.access(absolutePath);
+    await fs.access(absolutePath);
   } catch (error) {
     throw new Error(`Fichier introuvable: ${urlpiece}`);
   }
 
   // 3. Récupérer les stats du fichier (utiliser fs.promises.stat)
-  const stats = await fs.promises.stat(absolutePath);
+  const stats = await fs.stat(absolutePath);
 
   // 4. Déterminer le mimetype depuis l'extension (fallback)
   const mimetype = getmimetypeFromExtension(absolutePath);
@@ -698,7 +661,7 @@ exports.downloadFile = async (urlpiece) => {
     path.basename(urlpiece);
 
   // 6. Retourner le stream de lecture (utiliser fs.createReadStream)
-  const stream = fs.createReadStream(absolutePath);
+  const stream = fs2.createReadStream(absolutePath);
 
   stream.on("error", (err) => {
     console.error("❌ Erreur stream:", err);
