@@ -158,7 +158,6 @@ async function upsertuser(params){
         };
 
     } catch (error) {
-        console.log(error);
         return {
             success: false,
             status: 500,
@@ -283,7 +282,7 @@ try{
         const result = await pool.request()
             .input("login", db.sql.NVarChar(50), login)
             .query(query);
-
+        
         if (result.recordset.length === 0) {
             return {status:404, success: false, message: "Utilisateur introuvable" };
         }
@@ -352,7 +351,6 @@ try{
         }
 
 
-
         // Payload du token
         const payload = {
             id: user.idutilisateur,
@@ -388,8 +386,6 @@ try{
                 INSERT INTO Refresh_token(idutilisateur, token)
                 VALUES (@userid, @token)
             `);  
-            
-            console.log(user);
 
         return {
             success: true,

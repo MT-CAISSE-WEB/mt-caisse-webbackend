@@ -1125,10 +1125,11 @@ BEGIN
         idcircuitetape UNIQUEIDENTIFIER,
         idutilisateur UNIQUEIDENTIFIER,
         idmotif UNIQUEIDENTIFIER,
-        decision NVARCHAR(20), -- APPROUVE | REJETE | EN_ATTENTE
+        decision NVARCHAR(20),
+        -- APPROUVE | REJETE | EN_ATTENTE
         commentaire NVARCHAR(255),
         datevalidation DATETIME,
-        rang  INT Default null,
+        rang INT Default null,
         createdat DATETIME DEFAULT GETDATE(),
         createdby NVARCHAR(50),
         FOREIGN KEY (idbudget) REFERENCES Budget(idbudget),
@@ -2106,11 +2107,12 @@ END
 -- PJ & demande
 IF NOT EXISTS (
     SELECT *
-    FROM sys.tables
-    WHERE name = 'DemandePieceJointe'
+FROM sys.tables
+WHERE name = 'DemandePieceJointe'
 )
 BEGIN
-    CREATE TABLE DemandePieceJointe (
+    CREATE TABLE DemandePieceJointe
+    (
         iddemandepiecejointe UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
 
         iddemande UNIQUEIDENTIFIER NOT NULL,
@@ -2138,8 +2140,8 @@ END
 
 IF NOT EXISTS (
     SELECT 1
-    FROM sys.indexes
-    WHERE name = 'IX_DemandePieceJointe_Demande'
+FROM sys.indexes
+WHERE name = 'IX_DemandePieceJointe_Demande'
 )
 BEGIN
     CREATE INDEX IX_DemandePieceJointe_Demande
@@ -2148,8 +2150,8 @@ END
 
 IF NOT EXISTS (
     SELECT 1
-    FROM sys.indexes
-    WHERE name = 'IX_DemandePieceJointe_Piece'
+FROM sys.indexes
+WHERE name = 'IX_DemandePieceJointe_Piece'
 )
 BEGIN
     CREATE INDEX IX_DemandePieceJointe_Piece
@@ -2168,11 +2170,12 @@ END
 
 IF NOT EXISTS (
     SELECT *
-    FROM sys.tables
-    WHERE name = 'BudgetPieceJointe'
+FROM sys.tables
+WHERE name = 'BudgetPieceJointe'
 )
 BEGIN
-    CREATE TABLE BudgetPieceJointe (
+    CREATE TABLE BudgetPieceJointe
+    (
         idbudgetpiecejointe UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
 
         idbudget UNIQUEIDENTIFIER NOT NULL,
@@ -2200,8 +2203,8 @@ END
 
 IF NOT EXISTS (
     SELECT 1
-    FROM sys.indexes
-    WHERE name = 'IX_BudgetPieceJointe_Budget'
+FROM sys.indexes
+WHERE name = 'IX_BudgetPieceJointe_Budget'
 )
 BEGIN
     CREATE INDEX IX_BudgetPieceJointe_Budget
@@ -2210,8 +2213,8 @@ END
 
 IF NOT EXISTS (
     SELECT 1
-    FROM sys.indexes
-    WHERE name = 'IX_BudgetPieceJointe_Piece'
+FROM sys.indexes
+WHERE name = 'IX_BudgetPieceJointe_Piece'
 )
 BEGIN
     CREATE INDEX IX_BudgetPieceJointe_Piece
@@ -2222,11 +2225,12 @@ END
 -- PJ & operation de caisse
 IF NOT EXISTS (
     SELECT *
-    FROM sys.tables
-    WHERE name = 'OperationPieceJointe'
+FROM sys.tables
+WHERE name = 'OperationPieceJointe'
 )
 BEGIN
-    CREATE TABLE OperationPieceJointe (
+    CREATE TABLE OperationPieceJointe
+    (
         idoperationpiecejointe UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
 
         idoperation UNIQUEIDENTIFIER NOT NULL,
@@ -2254,8 +2258,8 @@ END
 
 IF NOT EXISTS (
     SELECT 1
-    FROM sys.indexes
-    WHERE name = 'IX_OperationPieceJointe_Operation'
+FROM sys.indexes
+WHERE name = 'IX_OperationPieceJointe_Operation'
 )
 BEGIN
     CREATE INDEX IX_OperationPieceJointe_Operation
@@ -2264,8 +2268,8 @@ END
 
 IF NOT EXISTS (
     SELECT 1
-    FROM sys.indexes
-    WHERE name = 'IX_OperationPieceJointe_Piece'
+FROM sys.indexes
+WHERE name = 'IX_OperationPieceJointe_Piece'
 )
 BEGIN
     CREATE INDEX IX_OperationPieceJointe_Piece

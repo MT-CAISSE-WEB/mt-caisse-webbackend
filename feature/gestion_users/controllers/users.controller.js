@@ -55,10 +55,11 @@ module.exports.login = asyncHandler (async(req,res, next)=>{
             const {login,password} = req.body;
 
             const result = await userservice.login(login,password);
-
+            console.log(result);
             res.status(result.status).json({success:result.success,message:result.message,data:result.data,token:result.token,refresh:result.refreshToken});
     }
     catch(error){
+        console.log("Error serveur",error);
         res.status(500).json({ success: false, message: "Erreur serveur", error });
     }
 });
