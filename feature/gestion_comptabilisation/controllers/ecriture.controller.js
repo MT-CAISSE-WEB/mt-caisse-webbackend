@@ -30,3 +30,25 @@ module.exports.GenererJustificatif = asyncHandler (async(req,res, next)=>{
     }
 
 });
+
+module.exports.comptabiliserUnitaire = asyncHandler(async (req, res, next) => {
+    const { idoperation } = req.body;
+    if (!idoperation) {
+        return res.status(400).json({ success: false, message: "idoperation requis" });
+    }
+    const result = await ecritureservice.comptabiliserOperations({ idoperation });
+    res.status(200).json(result);
+});
+
+
+module.exports.comptabiliserMasse = asyncHandler(async (req, res, next) => {
+    const { idsite, datedebut, datefin, journal } = req.body;
+    const filters = {
+        idsite: idsite || null,
+        datedebut: datedebut || null,
+        datefin: datefin || null
+    };
+    
+    const result = await ecritureservice.comptabiliserOperations(filters);
+    res.status(200).json(result);
+});

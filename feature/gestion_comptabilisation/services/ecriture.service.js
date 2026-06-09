@@ -392,7 +392,63 @@ async function GenererJustificatif(idjustificatif) {
   }
 }
 
+async function comptabiliserOperations(filters) {
+    const pool = await connectDB();
+    try {
+        let operationsIds = [];
+
+        // Si un idoperation est fourni, on l'utilise directement
+        if (filters.idoperation) {
+            operationsIds = [filters.idoperation];
+        } else {
+            // Sinon, on récupère les opérations correspondant aux critères (site, période)
+            const request = pool.request();
+            request.input("idsite", sql.UniqueIdentifier, filters.idsite || null);
+            request.input("datedebut", sql.DateTime, filters.datedebut || null);
+            request.input("datefin", sql.DateTime, filters.datefin || null);
+
+            let whereClause = "1=1";
+            if (filters.idsite) whereClause += " AND idsite = @idsite";
+            if (filters.datedebut) whereClause += " AND dateoperation >= @datedebut";
+            if (filters.datefin) whereClause += " AND dateoperation < DATEADD(DAY, 1, @datefin)";
+
+            const selectQuery = `
+                SELECT idoperation FROM EnteteOperationCaisse
+                WHERE ${whereClause}
+            `;
+            const result = await request.query(selectQuery);
+            operationsIds = result.recordset.map(row => row.idoperation);
+        }
+
+        if (operationsIds.length === 0) {
+            return { success: false, status: 404, message: "Aucune opération trouvée avec ces critères" };
+        }
+
+        // Appeler GenererEcriture pour chaque opération (séquentiel)
+        let comptabilisees = 0;
+        for (const idop of operationsIds) {
+            const genResult = await GenererEcriture(idop);
+            if (genResult.success) {
+                comptabilisees++;
+            } else {
+                // Log l'erreur mais continue pour les autres
+                console.error(`Erreur comptabilisation opération ${idop}: ${genResult.message}`);
+            }
+        }
+
+        return {
+            success: true,
+            status: 200,
+            message: `${comptabilisees} opération(s) comptabilisée(s) sur ${operationsIds.length}`
+        };
+    } catch (error) {
+        console.error("Erreur comptabilisation:", error);
+        return { success: false, status: 500, message: error.message };
+    }
+}
+
 module.exports = {
   GenererJustificatif,
   GenererEcriture,
+  comptabiliserOperations
 };
