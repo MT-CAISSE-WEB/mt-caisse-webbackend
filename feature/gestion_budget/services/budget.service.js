@@ -774,10 +774,7 @@ async function getBudgetFiles(idbudget) {
 // Télécharger tous les fichiers
 
 exports.downloadAllFiles = async (idbudget) => {
-  console.log("🚀 downloadAllFiles appelé pour idbudget:", idbudget);
-
   const piecesJointes = await getBudgetFiles(idbudget);
-  console.log("📁 Pièces jointes trouvées:", piecesJointes.length);
 
   if (!piecesJointes || piecesJointes.length === 0) {
     throw new Error("Aucune pièce jointe trouvée pour ce budget");
@@ -805,21 +802,18 @@ exports.downloadAllFiles = async (idbudget) => {
   }
 
   // Cas de plusieurs fichiers → ZIP
-  console.log("📦 Création du ZIP...");
 
   const zip = new AdmZip();
   let addedFiles = 0;
 
   for (const piece of piecesJointes) {
     const filePath = path.join(process.cwd(), piece.urlpiece);
-    console.log(`📄 Ajout: ${piece.nomfichier}`);
 
     try {
       await fs.access(filePath);
       const fileBuffer = await fs.readFile(filePath);
       zip.addFile(piece.nomfichier, fileBuffer);
       addedFiles++;
-      console.log(`   ✅ Ajouté (${addedFiles}/${piecesJointes.length})`);
     } catch (err) {
       console.error(`   ❌ Erreur: ${err.message}`);
     }
@@ -830,15 +824,12 @@ exports.downloadAllFiles = async (idbudget) => {
   }
 
   const zipBuffer = zip.toBuffer();
-  console.log(`✅ ZIP créé: ${zipBuffer.length} octets`);
 
   const budgetInfo = await Budget.findByPk(idbudget, {
     attributes: ["codebudget", "libelle"],
   });
   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
-  const filename = `budget_${
-    budgetInfo?.codebudget || idbudget
-  }_${timestamp}.zip`;
+  const filename = `budget_${budgetInfo?.codebudget}_${budgetInfo?.libelle}_${timestamp}.zip`;
 
   return {
     buffer: zipBuffer,

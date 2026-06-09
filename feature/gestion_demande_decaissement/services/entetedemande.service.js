@@ -17,9 +17,9 @@ const compteurservice = require("../../gestion_paramètres/services/compteur.ser
 // pour gestion des pj
 const { upload } = require("../../../middlewares/upload/pjdemande");
 const path = require("path");
-const fs = require("fs");
-const fsPromises = require("fs").promises;
+const fs = require("fs").promises;
 const sequelize = require("../../../config/database");
+const AdmZip = require("adm-zip");
 
 let demandeModel = new enteteDemandeModel();
 let demandesArray = [];
@@ -1575,6 +1575,7 @@ async function getDernierTaux(deviseorigine, devisedestination, date) {
 const {
   PieceJointe,
   DemandePieceJointe,
+  EnteteDemande,
 } = require("../../gestion_pj_demandes/models/index");
 
 /**
@@ -1899,6 +1900,73 @@ function getmimetypeFromExtension(filepath) {
   return mimetypes[ext] || "application/octet-stream";
 }
 
+// Télécharger toutes les pièces jointes
+const downloadAllFiles = async (iddemande) => {
+  const piecesJointes = await getFiles(iddemande);
+
+  if (!piecesJointes || piecesJointes.length === 0) {
+    throw new Error("Aucune pièce jointe trouvée pour cette demande");
+  }
+
+  // Cas d'un seul fichier
+  if (piecesJointes.length === 1) {
+    const piece = piecesJointes[0];
+    const filePath = path.join(process.cwd(), piece.urlpiece);
+
+    try {
+      await fs.access(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+
+      return {
+        buffer: fileBuffer,
+        filename: piece.nomfichier,
+        totalFiles: 1,
+        isZip: false,
+      };
+    } catch (err) {
+      console.error(`❌ Fichier introuvable: ${filePath}`, err.message);
+      throw new Error(`Fichier introuvable: ${piece.nomfichier}`);
+    }
+  }
+
+  // Cas de plusieurs fichiers → ZIP
+
+  const zip = new AdmZip();
+  let addedFiles = 0;
+
+  for (const piece of piecesJointes) {
+    const filePath = path.join(process.cwd(), piece.urlpiece);
+
+    try {
+      await fs.access(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+      zip.addFile(piece.nomfichier, fileBuffer);
+      addedFiles++;
+    } catch (err) {
+      console.error(`   ❌ Erreur: ${err.message}`);
+    }
+  }
+
+  if (addedFiles === 0) {
+    throw new Error("Aucun fichier valide n'a pu être ajouté au ZIP");
+  }
+
+  const zipBuffer = zip.toBuffer();
+
+  const demandeInfo = await EnteteDemande.findByPk(iddemande, {
+    attributes: ["codedemande", "libelledemande"],
+  });
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+  const filename = `demande_${demandeInfo?.codedemande}_${demandeInfo?.libelledemande}_${timestamp}.zip`;
+
+  return {
+    buffer: zipBuffer,
+    filename: filename,
+    totalFiles: addedFiles,
+    isZip: true,
+  };
+};
+
 module.exports = {
   getAll,
   create_demande,
@@ -1916,4 +1984,5 @@ module.exports = {
   getFiles,
   deleteFile,
   downloadFile,
+  downloadAllFiles,
 };

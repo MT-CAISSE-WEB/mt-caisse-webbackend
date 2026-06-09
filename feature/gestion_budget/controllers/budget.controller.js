@@ -565,7 +565,6 @@ exports.downloadFile = async (req, res) => {
 exports.downloadAllFiles = async (req, res) => {
   try {
     const idbudget = req.params.id;
-    console.log("📥 downloadAllFiles - ID budget:", idbudget);
 
     const result = await budgetService.downloadAllFiles(idbudget);
 
@@ -589,10 +588,6 @@ exports.downloadAllFiles = async (req, res) => {
       res.setHeader("Content-Length", result.buffer.length);
       res.send(result.buffer);
     }
-
-    console.log(
-      `✅ Fichier envoyé: ${result.filename} (${result.totalFiles} fichier(s))`,
-    );
   } catch (error) {
     console.error("❌ Erreur downloadAllFiles:", error);
 

@@ -4,6 +4,8 @@ const deviseservice = require("../../gestion_organisation/services/devise.servic
 const enteteoperationmodel = require("../models/enteteoperation.model");
 const { v4: uuidv4 } = require("uuid");
 const compteurservice = require("../../gestion_paramètres/services/compteur.service");
+const { EnteteDemande } = require("../../gestion_pj_demandes/models/index");
+const DemandePieceJointe = require("../../gestion_pj_demandes/models/pjdemande.model");
 
 let enteteoperation = new enteteoperationmodel();
 let enteteoperations = [];
@@ -11,9 +13,9 @@ let enteteoperations = [];
 // pour gestion des pj
 const { upload } = require("../../../middlewares/upload/pjoperation");
 const path = require("path");
-const fs = require("fs");
-const fsPromises = require("fs").promises;
+const fs = require("fs").promises;
 const sequelize = require("../../../config/database");
+const AdmZip = require("adm-zip");
 
 async function get_all_enteteoperations() {
   const result = await enteteoperation.get_allenteteoperations();
@@ -337,6 +339,7 @@ async function update_operationorigine(identeteoperation, data) {
 const {
   PieceJointe,
   OperationPieceJointe,
+  EnteteOperationCaisse,
 } = require("../../gestion_pj_demandes/models/operations/index");
 
 /**
@@ -662,6 +665,237 @@ function getmimetypeFromExtension(filepath) {
   return mimetypes[ext] || "application/octet-stream";
 }
 
+// Télécharger toutes les pièces jointes
+const downloadAllFiles = async (idoperation) => {
+  const piecesJointes = await getFiles(idoperation);
+
+  if (!piecesJointes || piecesJointes.length === 0) {
+    throw new Error("Aucune pièce jointe trouvée pour cette opération");
+  }
+
+  // Cas d'un seul fichier
+  if (piecesJointes.length === 1) {
+    const piece = piecesJointes[0];
+    const filePath = path.join(process.cwd(), piece.urlpiece);
+
+    try {
+      await fs.access(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+
+      return {
+        buffer: fileBuffer,
+        filename: piece.nomfichier,
+        totalFiles: 1,
+        isZip: false,
+      };
+    } catch (err) {
+      console.error(`❌ Fichier introuvable: ${filePath}`, err.message);
+      throw new Error(`Fichier introuvable: ${piece.nomfichier}`);
+    }
+  }
+
+  // Cas de plusieurs fichiers → ZIP
+
+  const zip = new AdmZip();
+  let addedFiles = 0;
+
+  for (const piece of piecesJointes) {
+    const filePath = path.join(process.cwd(), piece.urlpiece);
+
+    try {
+      await fs.access(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+      zip.addFile(piece.nomfichier, fileBuffer);
+      addedFiles++;
+    } catch (err) {
+      console.error(`   ❌ Erreur: ${err.message}`);
+    }
+  }
+
+  if (addedFiles === 0) {
+    throw new Error("Aucun fichier valide n'a pu être ajouté au ZIP");
+  }
+
+  const zipBuffer = zip.toBuffer();
+
+  const operationInfo = await EnteteOperationCaisse.findByPk(idoperation, {
+    attributes: ["codeoperation"],
+  });
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+  const filename = `operation_${operationInfo?.codeoperation}_${timestamp}.zip`;
+
+  return {
+    buffer: zipBuffer,
+    filename: filename,
+    totalFiles: addedFiles,
+    isZip: true,
+  };
+};
+
+// Pièces jointes opération & demandes
+/**
+ * Télécharge toutes les pièces jointes d'une opération et/ou d'une demande
+ * @param {string} idoperation - ID de l'opération (optionnel)
+ * @param {string} iddemande - ID de la demande sélectionnée (optionnel)
+ * @returns {Promise<{buffer: Buffer, filename: string, totalFiles: number}>}
+ */
+async function downloadAllOperationFiles(idoperation = null, iddemande = null) {
+  console.log("🚀 downloadAllOperationFiles - ID opération:", idoperation);
+  console.log("📋 ID demande sélectionnée:", iddemande);
+
+  let operationFiles = [];
+  let operation = null;
+  let demandeFiles = [];
+  let demandeInfo = null;
+
+  // 1. Récupérer les PJ de l'opération (si un ID est fourni)
+  if (idoperation) {
+    operation = await get_by_identeteoperation(idoperation);
+    if (operation) {
+      operationFiles = await getOperationFiles(idoperation);
+      console.log(`📁 Pièces jointes de l'opération: ${operationFiles.length}`);
+    }
+  }
+
+  // 2. Récupérer les PJ de la demande (si un ID est fourni)
+  if (iddemande) {
+    demandeFiles = await getDemandeFiles(iddemande);
+    demandeInfo = await getDemandeInfo(iddemande);
+    console.log(`📁 Pièces jointes de la demande: ${demandeFiles.length}`);
+  }
+
+  const totalFiles = operationFiles.length + demandeFiles.length;
+
+  if (totalFiles === 0) {
+    throw new Error("Aucune pièce jointe trouvée");
+  }
+
+  // 3. Création du ZIP
+  const zip = new AdmZip();
+  let addedFiles = 0;
+
+  // Ajouter les fichiers de l'opération (si existants)
+  for (const file of operationFiles) {
+    const filePath = path.join(process.cwd(), file.urlpiece);
+    try {
+      await fs.access(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+      zip.addFile(`operation/${file.nomfichier}`, fileBuffer);
+      addedFiles++;
+      console.log(`   ✅ Ajouté operation/${file.nomfichier}`);
+    } catch (err) {
+      console.error(`   ❌ Fichier operation introuvable: ${file.nomfichier}`);
+    }
+  }
+
+  // Ajouter les fichiers de la demande (si existants)
+  for (const file of demandeFiles) {
+    const filePath = path.join(process.cwd(), file.urlpiece);
+    try {
+      await fs.access(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+      const folderName = demandeInfo?.codedemande
+        ? `demande_${demandeInfo.codedemande}`
+        : "demande";
+      zip.addFile(`${folderName}/${file.nomfichier}`, fileBuffer);
+      addedFiles++;
+      console.log(`   ✅ Ajouté ${folderName}/${file.nomfichier}`);
+    } catch (err) {
+      console.error(`   ❌ Fichier demande introuvable: ${file.nomfichier}`);
+    }
+  }
+
+  if (addedFiles === 0) {
+    throw new Error("Aucun fichier valide n'a pu être ajouté au ZIP");
+  }
+
+  const zipBuffer = zip.toBuffer();
+
+  // 4. Générer le nom du fichier ZIP
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+  let filename = `documents_${timestamp}.zip`;
+
+  if (operation?.codeoperation && demandeInfo?.codedemande) {
+    filename = `${operation.codeoperation}_${demandeInfo.codedemande}_${timestamp}.zip`;
+  } else if (operation?.codeoperation) {
+    filename = `operation_${operation.codeoperation}_${timestamp}.zip`;
+  } else if (demandeInfo?.codedemande) {
+    filename = `demande_${demandeInfo.codedemande}_${timestamp}.zip`;
+  }
+
+  return {
+    buffer: zipBuffer,
+    filename: filename,
+    totalFiles: addedFiles,
+    operationFiles: operationFiles.length,
+    demandeFiles: demandeFiles.length,
+    hasOperation: operationFiles.length > 0,
+    hasDemande: demandeFiles.length > 0,
+    isZip: true,
+  };
+}
+/**
+ * Récupère les pièces jointes d'une opération
+ */
+async function getOperationFiles(idoperation) {
+  const piecesJointes = await PieceJointe.findAll({
+    include: [
+      {
+        model: OperationPieceJointe,
+        where: { idoperation },
+        attributes: [],
+        required: true,
+      },
+    ],
+    attributes: [
+      "idpiecejointe",
+      "urlpiece",
+      "nomfichier",
+      ["mimetype", "mimetype"],
+      "taille",
+      "createdat",
+      "createdby",
+    ],
+  });
+  return piecesJointes;
+}
+
+/**
+ * Récupère les pièces jointes d'une demande
+ */
+async function getDemandeFiles(iddemande) {
+  const piecesJointes = await PieceJointe.findAll({
+    include: [
+      {
+        model: DemandePieceJointe,
+        where: { iddemande },
+        attributes: [],
+        required: true,
+      },
+    ],
+    attributes: [
+      "idpiecejointe",
+      "urlpiece",
+      "nomfichier",
+      ["mimetype", "mimetype"],
+      "taille",
+      "createdat",
+      "createdby",
+    ],
+  });
+  return piecesJointes;
+}
+
+/**
+ * Récupère les infos d'une demande
+ */
+async function getDemandeInfo(iddemande) {
+  const demande = await EnteteDemande.findByPk(iddemande, {
+    attributes: ["codedemande", "libelledemande"],
+  });
+  return demande;
+}
+
 module.exports = {
   get_all_enteteoperations,
   get_by_identeteoperation,
@@ -675,4 +909,6 @@ module.exports = {
   getFiles,
   deleteFile,
   downloadFile,
+  downloadAllFiles,
+  downloadAllOperationFiles,
 };

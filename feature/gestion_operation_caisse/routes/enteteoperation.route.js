@@ -50,6 +50,23 @@ const {
 } = require("../../../middlewares/upload/pjoperation");
 // POUR LES PIÈCES JOINTES
 
+router.get(
+  "/:id/operation-pieces-jointes/download-all",
+  enteteoperation_controller.downloadAllFiles,
+);
+
+// Route pour télécharger toutes les PJ (opération + demande)
+router.get(
+  "/:id/operation-demande-pieces-jointes/download-all",
+  enteteoperation_controller.downloadAllOperationFiles,
+);
+
+// Route pour télécharger uniquement les PJ d'une demande (sans opération)
+router.get(
+  "/demande-pieces-jointes/download-all",
+  enteteoperation_controller.downloadAllOperationFiles,
+);
+
 router.post(
   "/:id/operation-pieces-jointes",
   upload.array("files", parseInt(10)),

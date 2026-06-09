@@ -51,6 +51,11 @@ const {
 } = require("../../../middlewares/upload/pjdemande");
 // POUR LES PIÈCES JOINTES
 
+router.get(
+  "/:id/demande-pieces-jointes/download-all",
+  controller.downloadAllFiles,
+);
+
 router.post(
   "/:id/demande-pieces-jointes",
   upload.array("files", parseInt(10)),
