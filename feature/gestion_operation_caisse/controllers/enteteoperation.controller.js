@@ -312,3 +312,41 @@ module.exports.downloadAllOperationFiles = async (req, res) => {
     });
   }
 };
+
+/**
+ * Récupère toutes les pièces jointes d'une opération et de sa demande
+ * GET /api/entete_operation/:idoperation/operation-demande-pieces-jointes
+ */
+module.exports.getOperationWithDemandePieces = async (req, res) => {
+  try {
+    const idoperation = req.params.id;
+    console.log(
+      "📥 getOperationWithDemandePieces - ID opération:",
+      idoperation,
+    );
+
+    const result = await enteteoperationservice.getOperationWithDemandePieces(
+      idoperation,
+    );
+
+    res.json({
+      success: true,
+      data: {
+        operationPJ: result.operationPJ,
+        demandePJ: result.demandePJ,
+        operationCount: result.operationCount,
+        demandeCount: result.demandeCount,
+        totalCount: result.totalCount,
+        hasDemande: result.hasDemande,
+        demandeInfo: result.demandeInfo,
+        operationInfo: result.operationInfo,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Erreur getOperationWithDemandePieces:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
