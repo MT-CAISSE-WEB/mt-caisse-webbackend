@@ -258,39 +258,38 @@ module.exports = {
 
     editionjournal : `
         SELECT Soc.codesociete, Soc.raisonsociale,
-        Site.codesite, Site.libelle as lib_site,
+        S.codesite, S.libelle as lib_site,
 		J.codejournal, J.designation,
         C.codecaisse, C.libelle as lib_caisse,
-        TOPE.codtypeoperation      AS typeoperation, OPE.idoperation,
-        OPE.codeoperation, OPE.dateoperation,
-        NOP.codenature, NOP.libelle as lib_nature,
-        CAN.codecentreanalytique AS codecentre, CAN.libelle as lib_centre,
-        T.codetiers, T.designation AS nom_tiers,
-        OPL.libelle, OPL.montantoperation AS montantligne,  D.codedevise AS devise_caisse,
-        OPE.montant AS total_ope, DevO.codedevise,
+        TOPE.codtypeoperation AS typeoperation
+		, EOC.codeoperation, EOC.dateoperation,
+        L.libelle, TOPE.montant AS montantligne
+		,  DC.codedevise AS devise_caisse,
+		TOPE.montantref AS montant_ref,
+        EOC.montant AS total_ope,
         CP.soldeouverture, CP.soldefermeture
 
-        FROM EnteteOperationCaisse OPE
-        INNER JOIN TypeOperation TOPE ON TOPE.idoperation = OPE.idoperation
-        INNER JOIN Caisse C ON TOPE.idcaisse = C.idcaisse
-		INNER JOIN Journal J ON C.idjournal = J.idjournal
-        INNER JOIN Devise D ON D.iddevise = C.iddevise
-        INNER JOIN Devise DevO ON DevO.iddevise = OPE.iddevise
-        INNER JOIN Societe Soc ON C.idsociete = Soc.idsociete
-        INNER JOIN Site ON Site.idsite = C.idsite
-        LEFT JOIN LigneOperationCaisse OPL ON OPE.idoperation = OPL.idoperation
-        LEFT JOIN NatureOperation NOP ON NOP.idnature = OPL.idnature
-        LEFT JOIN CentreAnalytique CAN ON CAN.idcentreanalytique = OPL.idcentre
-        LEFT JOIN Tiers T ON T.idtiers = OPL.idtiers
+        FROM EnteteOperationCaisse EOC
+        INNER JOIN TypeOperation TOPE ON TOPE.idoperation = EOC.idoperation
+        OUTER APPLY (
+			SELECT TOP 1 libelle
+			FROM ligneoperationCaisse L
+			WHERE L.idoperation = TOPE.idoperation
+		) L
+        INNER JOIN Caisse C ON C.idcaisse = TOPE.idcaisse
+        INNER JOIN Devise DC ON DC.iddevise = C.iddevise
+        INNER JOIN Devise D ON D.iddevise = EOC.iddevise
+        INNER JOIN Site S ON S.idsite = EOC.idsite
+		INNER JOIN Societe Soc ON Soc.idsociete = EOC.idsociete
         LEFT JOIN CaissePeriode CP ON CP.idperiode = TOPE.idperiode
+		INNER JOIN Journal J ON C.idjournal = J.idjournal
 
-        WHERE OPE.dateoperation BETWEEN @datedebut AND @datefin 
-            AND ( @idcaisse IS NULL OR C.idcaisse = @idcaisse )
+        WHERE EOC.dateoperation BETWEEN @datedebut AND @datefin
+        AND ( @idcaisse IS NULL OR TOPE.idcaisse = @idcaisse )
             -- Sécurité utilisateur
-            --AND ( @typeentitesociete = 1 OR OPE.idsite = @idsite )
-            AND OPE.idsite = @idsite
+        AND EOC.idsite = @idsite
 
-        ORDER BY OPE.dateoperation, C.libelle, OPE.codeoperation
+        ORDER BY EOC.dateoperation, C.libelle, EOC.codeoperation
     `,
     etatcloture : `
         SELECT 

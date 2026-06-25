@@ -67,6 +67,12 @@ router.get(
   enteteoperation_controller.downloadAllOperationFiles,
 );
 
+// PJ opérations + demandes
+router.get(
+  "/:id/operation-demande-pieces-jointes",
+  enteteoperation_controller.getOperationWithDemandePieces,
+);
+
 router.post(
   "/:id/operation-pieces-jointes",
   upload.array("files", parseInt(10)),

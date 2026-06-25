@@ -6,6 +6,7 @@ const { v4: uuidv4 } = require("uuid");
 const compteurservice = require("../../gestion_paramètres/services/compteur.service");
 const { EnteteDemande } = require("../../gestion_pj_demandes/models/index");
 const DemandePieceJointe = require("../../gestion_pj_demandes/models/pjdemande.model");
+const fs2 = require("fs");
 
 let enteteoperation = new enteteoperationmodel();
 let enteteoperations = [];
@@ -14,7 +15,6 @@ let enteteoperations = [];
 const { upload } = require("../../../middlewares/upload/pjoperation");
 const path = require("path");
 const fs = require("fs").promises;
-const fs2 = require("fs");
 const sequelize = require("../../../config/database");
 const AdmZip = require("adm-zip");
 
@@ -542,8 +542,6 @@ async function deleteFile(idoperation, idpiecejointe, userId) {
   }
 }
 
-
-
 /**
  * Détermine le mimetype depuis l'extension du fichier
  * @param {string} filepath - Chemin du fichier
@@ -705,9 +703,6 @@ const downloadAllFiles = async (idoperation) => {
  * @returns {Promise<{buffer: Buffer, filename: string, totalFiles: number}>}
  */
 async function downloadAllOperationFiles(idoperation = null, iddemande = null) {
-  console.log("🚀 downloadAllOperationFiles - ID opération:", idoperation);
-  console.log("📋 ID demande sélectionnée:", iddemande);
-
   let operationFiles = [];
   let operation = null;
   let demandeFiles = [];
@@ -718,7 +713,6 @@ async function downloadAllOperationFiles(idoperation = null, iddemande = null) {
     operation = await get_by_identeteoperation(idoperation);
     if (operation) {
       operationFiles = await getOperationFiles(idoperation);
-      console.log(`📁 Pièces jointes de l'opération: ${operationFiles.length}`);
     }
   }
 
@@ -726,7 +720,6 @@ async function downloadAllOperationFiles(idoperation = null, iddemande = null) {
   if (iddemande) {
     demandeFiles = await getDemandeFiles(iddemande);
     demandeInfo = await getDemandeInfo(iddemande);
-    console.log(`📁 Pièces jointes de la demande: ${demandeFiles.length}`);
   }
 
   const totalFiles = operationFiles.length + demandeFiles.length;
@@ -747,7 +740,6 @@ async function downloadAllOperationFiles(idoperation = null, iddemande = null) {
       const fileBuffer = await fs.readFile(filePath);
       zip.addFile(`operation/${file.nomfichier}`, fileBuffer);
       addedFiles++;
-      console.log(`   ✅ Ajouté operation/${file.nomfichier}`);
     } catch (err) {
       console.error(`   ❌ Fichier operation introuvable: ${file.nomfichier}`);
     }
@@ -764,7 +756,6 @@ async function downloadAllOperationFiles(idoperation = null, iddemande = null) {
         : "demande";
       zip.addFile(`${folderName}/${file.nomfichier}`, fileBuffer);
       addedFiles++;
-      console.log(`   ✅ Ajouté ${folderName}/${file.nomfichier}`);
     } catch (err) {
       console.error(`   ❌ Fichier demande introuvable: ${file.nomfichier}`);
     }
@@ -861,6 +852,55 @@ async function getDemandeInfo(iddemande) {
   return demande;
 }
 
+// Obtenir les pièces jointes d'une opération avec ceux de la demande
+const operationWithDemande = async (idoperaion) => {
+  const operation = await EnteteOperationCaisse.findByPk(idoperaion);
+
+  if (operation.iddemande) {
+  }
+};
+
+/**
+ * Récupère toutes les pièces jointes d'une opération et de sa demande associée
+ * @param {string} idoperation - ID de l'opération
+ * @returns {Promise<{operationPJ: Array, demandePJ: Array, totalCount: number, hasDemande: boolean}>}
+ */
+async function getOperationWithDemandePieces(idoperation) {
+  // 1. Récupérer l'opération
+  const operation = await get_by_identeteoperation(idoperation);
+  if (!operation) {
+    throw new Error("Opération introuvable");
+  }
+
+  // 2. Récupérer les PJ de l'opération
+  const operationPJ = await getOperationFiles(idoperation);
+
+  // 3. Récupérer les PJ de la demande associée (si elle existe)
+  let demandePJ = [];
+  let demandeInfo = null;
+  let hasDemande = false;
+
+  if (operation.iddemande) {
+    demandePJ = await getDemandeFiles(operation.iddemande);
+    demandeInfo = await getDemandeInfo(operation.iddemande);
+    hasDemande = true;
+  }
+
+  return {
+    operationPJ: operationPJ,
+    demandePJ: demandePJ,
+    operationCount: operationPJ.length,
+    demandeCount: demandePJ.length,
+    totalCount: operationPJ.length + demandePJ.length,
+    hasDemande: hasDemande,
+    demandeInfo: demandeInfo,
+    operationInfo: {
+      codeoperation: operation.codeoperation,
+      idoperation: operation.idoperation,
+    },
+  };
+}
+
 module.exports = {
   get_all_enteteoperations,
   get_by_identeteoperation,
@@ -876,4 +916,5 @@ module.exports = {
   downloadFile,
   downloadAllFiles,
   downloadAllOperationFiles,
+  getOperationWithDemandePieces,
 };

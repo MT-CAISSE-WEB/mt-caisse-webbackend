@@ -142,6 +142,8 @@ async function genererPdfRecu(data, copies = 2) {
 
 async function genererPdfJournal(data, datedebut, datefin, utilisateur){
 
+    console.log(data);
+
     const donnees = data.data;
     const today = new Date();
 
@@ -200,7 +202,9 @@ async function genererPdfJournal(data, datedebut, datefin, utilisateur){
         .filter(o => o.typeoperation?.substring(0, 12).toLowerCase() === 'decaissement')
         .reduce((sum, o) => sum + Number(o.montant || 0), 0);
 
-        const soldeFinal = (Number(jour.solde_ouverture || 0) + totalEncaissement - totalDecaissement).toLocaleString('fr-FR');
+        // const soldeFinal = (Number(jour.solde_ouverture || 0) + totalEncaissement - totalDecaissement).toLocaleString('fr-FR');
+
+        const soldeFinal = (Number(jour.solde_fermeture || 0)).toLocaleString('fr-FR');
 
         // Calcul du solde courant au fil des opérations
         let soldeCourant = Number(jour.solde_ouverture || 0);

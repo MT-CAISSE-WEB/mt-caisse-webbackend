@@ -87,6 +87,8 @@ async function editionjournal(datedebut, datefin, idcaisse, idsite) {
             .input('idsite', sql.UniqueIdentifier, idsite)
             .query(operationQueries.editionjournal);
 
+        console.log(result.recordset);
+
         const resultat = result.recordset;
 
         if (!resultat || resultat.length === 0) {
