@@ -9,8 +9,8 @@ const budgetcontroller = require("../controllers/budget.controller");
 const { upload } = require("../../../middlewares/upload/pjbudget");
 const path = require("path");
 const fs = require("fs").promises;
-const sequelize = require("../../../config/database");
 const fs2 = require("fs");
+const sequelize = require("../../../config/database");
 
 const AdmZip = require("adm-zip");
 
@@ -612,8 +612,6 @@ exports.deleteFile = async (idbudget, idpiecejointe, userId) => {
     throw error;
   }
 };
-
-
 
 /**
  * Détermine le mimetype depuis l'extension du fichier

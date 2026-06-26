@@ -13,12 +13,12 @@ const detaildemandeservice = require("../services/detaildemande.service");
 const userservice = require("../../gestion_users/services/users.service");
 const lignedemandeModel = require("../models/lignedemande.model");
 const compteurservice = require("../../gestion_paramètres/services/compteur.service");
-const fs2 = require("fs");
 
 // pour gestion des pj
 const { upload } = require("../../../middlewares/upload/pjdemande");
 const path = require("path");
 const fs = require("fs").promises;
+const fs2 = require("fs");
 const sequelize = require("../../../config/database");
 const AdmZip = require("adm-zip");
 
@@ -1768,7 +1768,6 @@ async function deleteFile(iddemande, idpiecejointe, userId) {
     throw error;
   }
 }
-
 
 /**
  * Détermine le mimetype depuis l'extension du fichier

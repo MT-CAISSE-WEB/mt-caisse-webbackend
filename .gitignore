@@ -2,7 +2,9 @@ node_modules/
 # Ignore tout le contenu du dossier demandes
 uploads/demandes/*
 uploads/operations/*
+uploads/budgets/*
 
 # Sauf le fichier .gitkeep pour pouvoir enregistrer le dossier dans Git
 !uploads/demandes/.gitkeep
 !uploads/operations/.gitkeep
+!uploads/budgets/.gitkeep
