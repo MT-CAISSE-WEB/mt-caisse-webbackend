@@ -132,6 +132,26 @@ BEGIN
 END
 
 
+IF NOT EXISTS (SELECT *
+FROM sys.tables
+WHERE name = 'CentreAnalytique')
+BEGIN
+    CREATE TABLE CentreAnalytique
+    (
+        idcentreanalytique UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idsociete UNIQUEIDENTIFIER,
+        codecentreanalytique NVARCHAR(50) UNIQUE,
+        libelle NVARCHAR(150),
+        actif INT DEFAULT 0,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+    );
+END
+
+
 -- OK
 IF NOT EXISTS (SELECT *
 FROM sys.tables
@@ -354,26 +374,6 @@ END
 
 IF NOT EXISTS (SELECT *
 FROM sys.tables
-WHERE name = 'CentreAnalytique')
-BEGIN
-    CREATE TABLE CentreAnalytique
-    (
-        idcentreanalytique UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        idsociete UNIQUEIDENTIFIER,
-        codecentreanalytique NVARCHAR(50) UNIQUE,
-        libelle NVARCHAR(150),
-        actif INT DEFAULT 0,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
-    );
-END
-
-
-IF NOT EXISTS (SELECT *
-FROM sys.tables
 WHERE name = 'Tiers')
 BEGIN
     CREATE TABLE Tiers
@@ -388,7 +388,7 @@ BEGIN
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50)
-            FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
     );
 END
 
