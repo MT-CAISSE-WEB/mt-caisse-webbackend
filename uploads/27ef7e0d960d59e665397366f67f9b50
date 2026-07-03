@@ -1,0 +1,23 @@
+Compte;Libellé;Ventilable;Auxiliaire;Suivi budget;Suivi budget mensuel;Actif
+401200;Fournisseurs;0;1;0;0;1
+401201;Fournisseurs de test import;0;1;0;0;1
+411010;Client ;0;1;0;0;1
+411011;Client de test import;0;1;0;0;1
+421300;Quinzaine;0;1;0;0;1
+422011;Remuneration due;0;1;0;0;1
+571000;Caisse XAF Renco;0;0;0;0;1
+571100;Caisse CDF projet A;0;0;0;0;1
+571300;Caisse CDF projet B;0;0;0;0;1
+572010;Caisse USD projet A;0;0;0;0;1
+572081;Caisse principale XAF GNCAC;0;0;0;0;1
+572201;Caisse USD projet B;0;0;0;0;1
+572991;Caisse test Richard;0;0;0;0;1
+585100;Compte de transition;0;0;0;0;1
+604000;Craies;1;0;1;1;1
+604101;Bic;1;0;1;1;1
+604104;Consommables de bureau;1;0;1;1;1
+604201;Fournitures de bureau;1;0;1;1;1
+605010;Engrais petit betail;1;0;1;1;1
+610241;Carburant;1;0;1;1;1
+620191;Transport;1;0;1;1;1
+999999;Compte test;1;0;1;1;1

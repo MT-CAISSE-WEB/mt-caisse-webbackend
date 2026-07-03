@@ -279,6 +279,20 @@ class caisseperiodeModel {
               WHERE idperiode = @idperiode
           `);
     }
+
+    async get_caisse_tresorerie_by_date(startDate, endDate, idcaisse){
+        const pool = await connectDB();
+        try {
+            const result = await pool.request()
+            .input('startDate', sql.Date, startDate || null)
+            .input('endDate', sql.Date, endDate || null)
+            .input('idcaisse', sql.UniqueIdentifier, idcaisse || null)
+            .query(caisseperiodeQueries.SOLDE_PERIODE);
+            return result.recordset;
+        } catch (error) {
+            console.log(`Erreur de récupération du solde caisse: ${error}`.cyan.bold);
+        }
+    }
 }
 
 

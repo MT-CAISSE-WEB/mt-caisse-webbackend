@@ -4,7 +4,10 @@ const typeoperationmodel = require("../models/operation.model");
 const periodeModel = require("../models/caisseperiode.model");
 const { v4: uuidv4 } = require('uuid');
 const PaginationModel = require("../../../shared/utils/model");
+const societeservice = require('../../gestion_organisation/services/societe.service');
 const caissemodel = new caisseModel();
+const enteteDemandeModel = require("../../gestion_demande_decaissement/models/entetedemande.model");
+let demandeModel = new enteteDemandeModel();
 let periodemodel = new periodeModel();
 let typeoperation = new typeoperationmodel();
 let caisseperiodes = [];
@@ -398,6 +401,253 @@ async function recalculate_solde(data){
 
 }
 
+// Cache pour stocker les taux déjà récupérés
+const tauxCache = new Map();
+
+async function getTauxAvecCache(deviseOrigineId, deviseDestId, date) {
+    // Normaliser la date au format YYYY-MM-DD pour éviter les variations horaires
+    const normalizedDate = new Date(date).toISOString().split('T')[0];
+    const key = `${deviseOrigineId}|${deviseDestId}|${normalizedDate}`;
+    
+    if (tauxCache.has(key)) {
+        return tauxCache.get(key);
+    }
+    
+    try {
+        const taux = await demandeModel.getTauxRecent(deviseOrigineId, deviseDestId, normalizedDate);
+        // Vérifier si taux existe et a une structure valide
+        const tauxValue = (taux && taux[0] && taux[0].coefficient) 
+            ? parseFloat(taux[0].coefficient) 
+            : 1; // Par défaut 1 si aucun taux trouvé
+        
+        tauxCache.set(key, tauxValue);
+        return tauxValue;
+    } catch (error) {
+        console.error(`Erreur récupération taux pour ${key}`, error);
+        return 1; // En cas d'erreur, on retourne 1 (pas de conversion)
+    }
+}
+
+async function get_caisse_tresorerie_by_date(startDate, endDate, idcaisse){
+
+  //Recuperer la devise de référence de la société
+  const societe = await societeservice.getallsociete();
+  const deviseReferenceId = societe.data[0].iddevisereference;
+
+  const allcaisse = await periodemodel.get_caisse_tresorerie_by_date(startDate, endDate, idcaisse);
+  // const data =  buildTresorerieParDate(allcaisse);
+  //const filledData = fillMissingDates(allcaisse, startDate, endDate);
+
+  const data = await buildTresorerieConversion(allcaisse, deviseReferenceId);
+
+  return data;
+}
+
+function buildTresorerieParDate(rows) {
+
+    const datesMap = new Map();
+    let totalEncaissementRef = 0;
+    let totalDecaissementRef = 0;
+    let soldeGlobalRef = 0;
+
+    for (const row of rows) {
+
+        const dateKey = new Date(row.dateperiode)
+            .toISOString()
+            .split('T')[0];
+
+        if (!datesMap.has(dateKey)) {
+            datesMap.set(dateKey, {
+                dateperiode: dateKey,
+                caisses: [],
+                totalEncaissementRef: 0,
+                totalDecaissementRef: 0,
+                soldeGlobalRef: 0
+            });
+        }
+
+        datesMap.get(dateKey).caisses.push({
+            idcaisse: row.idcaisse,
+            codecaisse: row.codecaisse,
+            libelle: row.libelle,
+            iddevise: row.iddevise,
+            codedevise: row.codedevise,
+            soldeouverture: Number(row.soldeouverture),
+            total_encaissement: Number(row.total_encaissement),
+            total_decaissement: Number(row.total_decaissement),
+            total_encaissement_ref: Number(row.total_encaissement_ref),
+            total_decaissement_ref: Number(row.total_decaissement_ref),
+            solde_theorique: Number(row.solde_theorique),
+            solde_previsionnel_fermeture: Number(row.solde_previsionnel_fermeture)
+        });
+
+        // Accumuler les totaux globaux (en devise de référence)
+        datesMap.get(dateKey).totalEncaissementRef += Number(row.total_encaissement_ref);
+        datesMap.get(dateKey).totalDecaissementRef += Number(row.total_decaissement_ref);
+        datesMap.get(dateKey).soldeGlobalRef += Number(row.solde_previsionnel_fermeture);
+    }
+
+    return Array.from(datesMap.values());
+}
+
+async function buildTresorerieConversion(datasBrutes, deviseReferenceId) {
+    const lignesConverties = [];
+
+    let totauxGlobaux = {
+        solde_ouverture_ref: 0,
+        total_encaissement_ref: 0,
+        total_decaissement_ref: 0,
+        solde_global_ref: 0
+    };
+
+    for (const row of datasBrutes) {
+        const taux = await getTauxAvecCache(row.iddevise, deviseReferenceId, row.dateperiode);
+        // Calcul des montants convertis
+        const soldeouverture_ref = row.soldeouverture * taux;
+        const total_encaissement_ref = row.total_encaissement * taux;
+        const total_decaissement_ref = row.total_decaissement * taux;
+        const solde_theorique_ref = row.solde_theorique * taux;
+
+        // Ajout aux totaux globaux
+        totauxGlobaux.solde_ouverture_ref += soldeouverture_ref;
+        totauxGlobaux.total_encaissement_ref += total_encaissement_ref;
+        totauxGlobaux.total_decaissement_ref += total_decaissement_ref;
+        totauxGlobaux.solde_global_ref += solde_theorique_ref; // ou soldeouverture_ref + total_encaissement_ref - total_decaissement_ref
+
+        // Préparer l'objet enrichi (similaire à avant, mais avec les champs convertis)
+        lignesConverties.push({
+            ...row,
+            soldeouverture_ref,
+            total_encaissement_ref,
+            total_decaissement_ref,
+            solde_theorique_ref,
+            taux_application: taux
+        });
+    }
+
+    // Reconstruire la structure par date (comme votre buildTresorerieParDate)
+    const datesMap = new Map();
+
+    for (const row of lignesConverties) {
+        const dateKey = new Date(row.dateperiode).toISOString().split('T')[0];
+
+        if (!datesMap.has(dateKey)) {
+            datesMap.set(dateKey, { dateperiode: dateKey, caisses: [], totauxGlobaux: {
+                soldeouverture_ref: 0,
+                total_encaissement_ref: 0,
+                total_decaissement_ref: 0,
+                solde_global_ref: 0}
+            });
+        }
+
+        // Ajouter les totaux globaux à chaque date
+        datesMap.get(dateKey).totauxGlobaux.soldeouverture_ref += row.soldeouverture_ref;
+        datesMap.get(dateKey).totauxGlobaux.total_encaissement_ref += row.total_encaissement_ref;
+        datesMap.get(dateKey).totauxGlobaux.total_decaissement_ref += row.total_decaissement_ref;
+        datesMap.get(dateKey).totauxGlobaux.solde_global_ref += row.solde_theorique_ref;
+
+        datesMap.get(dateKey).caisses.push({
+            idcaisse: row.idcaisse,
+            codecaisse: row.codecaisse,
+            libelle: row.libelle,
+            codedevise: row.codedevise,
+            soldeouverture: row.soldeouverture,
+            soldeouverture_ref: row.soldeouverture_ref,
+            total_encaissement: row.total_encaissement,
+            total_encaissement_ref: row.total_encaissement_ref,
+            total_decaissement: row.total_decaissement,
+            total_decaissement_ref: row.total_decaissement_ref,
+            solde_theorique: row.solde_theorique,
+            solde_theorique_ref: row.solde_theorique_ref,
+            solde_previsionnel_fermeture: row.solde_previsionnel_fermeture
+        });
+
+    }
+
+    return {
+        dates: Array.from(datesMap.values()),
+        totaux: totauxGlobaux
+    };
+}
+
+/**
+ * Complète les données de trésorerie pour que chaque caisse apparaisse à chaque date de l'intervalle,
+ * avec le dernier solde connu pour les dates sans période.
+ * @param {Array} existingRows - Lignes issues de la requête SQL (périodes existantes)
+ * @param {string} startDate - Date de début (YYYY-MM-DD)
+ * @param {string} endDate - Date de fin (YYYY-MM-DD)
+ * @returns {Array} Lignes complétées, prêtes à être groupées par date
+ */
+function fillMissingDates(existingRows, startDate, endDate) {
+    // 1. Extraire toutes les caisses uniques
+    const caissesMap = new Map();
+    for (const row of existingRows) {
+        if (!caissesMap.has(row.idcaisse)) {
+            caissesMap.set(row.idcaisse, {
+                idcaisse: row.idcaisse,
+                codecaisse: row.codecaisse,
+                libelle: row.libelle,
+                iddevise: row.iddevise,
+                codedevise: row.codedevise
+            });
+        }
+    }
+    const caisses = Array.from(caissesMap.values());
+
+    // 2. Générer toutes les dates de l'intervalle (inclus)
+    const allDates = [];
+    const current = new Date(startDate);
+    const end = new Date(endDate);
+    while (current <= end) {
+        allDates.push(current.toISOString().split('T')[0]);
+        current.setDate(current.getDate() + 1);
+    }
+
+    // 3. Index des lignes existantes par clé idcaisse|date
+    const existingMap = new Map();
+    for (const row of existingRows) {
+        const key = `${row.idcaisse}|${row.dateperiode}`;
+        existingMap.set(key, row);
+    }
+
+    const filledRows = [];
+
+    for (const caisse of caisses) {
+        let lastKnownSolde = 0; // dernier solde d'ouverture connu pour cette caisse
+        const datesSorted = [...allDates].sort(); // dates croissantes
+
+        for (const date of datesSorted) {
+            const key = `${caisse.idcaisse}|${date}`;
+            const existing = existingMap.get(key);
+
+            if (existing) {
+                // Période existante : on garde la ligne et on met à jour le dernier solde connu
+                lastKnownSolde = existing.soldeouverture;
+                filledRows.push({ ...existing });
+            } else {
+                // Période manquante : on crée une ligne artificielle
+                filledRows.push({
+                    idcaisse: caisse.idcaisse,
+                    codecaisse: caisse.codecaisse,
+                    libelle: caisse.libelle,
+                    dateperiode: date,
+                    soldeouverture: lastKnownSolde,
+                    iddevise: caisse.iddevise,
+                    codedevise: caisse.codedevise,
+                    total_encaissement: 0,
+                    total_encaissement_ref: 0,
+                    total_decaissement: 0,
+                    total_decaissement_ref: 0,
+                    solde_theorique: lastKnownSolde,
+                    solde_previsionnel_fermeture: lastKnownSolde
+                });
+            }
+        }
+    }
+
+    return filledRows;
+}
+
 module.exports = {
   get_all_caisseperiodes,
   get_by_idperiode,
@@ -409,5 +659,6 @@ module.exports = {
   get_recentperiode,
   delete_caisse,
   create_caisseBilletage,
-  recalculate_solde
+  recalculate_solde,
+  get_caisse_tresorerie_by_date
 };

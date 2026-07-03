@@ -1,0 +1,25 @@
+NAT001;Bic ;Decaissement;0;0;0;604201;1
+NAT002;Craies;Decaissement;0;0;0;604201;1
+NAT003;Gasoil;Decaissement;0;0;1;610241;1
+NAT004;Essence;Decaissement;0;0;1;610241;1
+NAT005;Frais de transport;Decaissement;0;0;1;620191;1
+NAT006;Billet d'avion;Decaissement;0;0;1;620191;1
+NAT007;Notes de frais;Decaissement;0;0;0;620191;1
+NAT008;Frais de mission;Decaissement;0;0;0;620191;1
+NAT009;Chaises et tables de bureau;Decaissement;0;0;1;604104;1
+NAT010;Caf�;Decaissement;0;0;1;604104;1
+NAT011;Sucre;Decaissement;0;0;1;604104;1
+NAT012;Eau;Decaissement;0;0;1;604104;1
+NAT013;Cartouche;Decaissement;0;0;1;605010;1
+NAT014;T�l�phones;Decaissement;0;0;1;604104;1
+NAT015;Carte de cr�dit;Decaissement;0;0;1;604104;1
+NAT016;D�caissement � justifier;Decaissement;1;1;0;422011;1
+NAT017;Batterie;Decaissement;0;0;1;605010;1
+NAT018;Frais de taxi;Decaissement;0;0;1;620191;1
+NAT019;Restauration;Decaissement;0;0;1;620191;1
+NAT021;Location salle de r�union;Decaissement;0;0;1;605010;1
+NAT055;NATURE TEST;Decaissement;0;0;1;604101;1
+NAT077;Quinzaine;Decaissement;0;1;1;421300;1
+NAT099;Frais de s�curit�;Decaissement;0;0;1;999999;1
+NATRICH;Nature test richard;Decaissement;1;1;1;620191;1
+RET-CAIE;Retour de caisse;Encaissement;0;0;0;604101;1

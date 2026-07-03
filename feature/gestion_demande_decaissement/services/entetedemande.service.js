@@ -17,10 +17,9 @@ const compteurservice = require("../../gestion_paramètres/services/compteur.ser
 // pour gestion des pj
 const { upload } = require("../../../middlewares/upload/pjdemande");
 const path = require("path");
-const fs = require("fs").promises;
-const fs2 = require("fs");
+const fs = require("fs");
+const fsPromises = require("fs").promises;
 const sequelize = require("../../../config/database");
-const AdmZip = require("adm-zip");
 
 let demandeModel = new enteteDemandeModel();
 let demandesArray = [];
@@ -1576,7 +1575,6 @@ async function getDernierTaux(deviseorigine, devisedestination, date) {
 const {
   PieceJointe,
   DemandePieceJointe,
-  EnteteDemande,
 } = require("../../gestion_pj_demandes/models/index");
 
 /**
@@ -1770,6 +1768,48 @@ async function deleteFile(iddemande, idpiecejointe, userId) {
 }
 
 /**
+ * Télécharge un fichier (stream direct)
+ * @param {string} urlpiece - Chemin relatif du fichier (ex: uploads/demandes/xxx.pdf)
+ * @returns {Promise<{stream: fs.ReadStream, stats: fs.Stats, mimetype: string, nomfichier: string}>}
+ */
+async function downloadFile(urlpiece) {
+  // 1. Construire le chemin absolu
+  const absolutePath = path.join(process.cwd(), urlpiece);
+
+  // 2. Vérifier si le fichier existe
+  try {
+    await fs.access(absolutePath);
+  } catch (error) {
+    throw new DemandeError(
+      `Fichier introuvable: ${urlpiece}`,
+      "FILE_NOT_FOUND",
+      { urlpiece },
+    );
+  }
+
+  // 3. Récupérer les stats du fichier
+  const stats = await fs.stat(absolutePath);
+
+  // 4. Déterminer le mimetype depuis l'extension (fallback)
+  const mimetype = getmimetypeFromExtension(absolutePath);
+
+  // 5. Extraire le nom original depuis l'url (ou depuis la base selon ton besoin)
+  const nomfichier =
+    path.basename(urlpiece).split("_").slice(2).join("_") ||
+    path.basename(urlpiece);
+
+  // 6. Retourner le stream de lecture
+  const stream = fs.createReadStream(absolutePath);
+
+  return {
+    stream,
+    stats,
+    mimetype,
+    nomfichier,
+  };
+}
+
+/**
  * Détermine le mimetype depuis l'extension du fichier
  * @param {string} filepath - Chemin du fichier
  * @returns {string}
@@ -1808,8 +1848,8 @@ async function downloadFile(urlpiece) {
     );
   }
 
-  // 3. Récupérer les stats du fichier (utiliser fs.stat)
-  const stats = await fs.stat(absolutePath);
+  // 3. Récupérer les stats du fichier (utiliser fs.promises.stat)
+  const stats = await fs.promises.stat(absolutePath);
 
   // 4. Déterminer le mimetype depuis l'extension (fallback)
   const mimetype = getmimetypeFromExtension(absolutePath);
@@ -1820,7 +1860,7 @@ async function downloadFile(urlpiece) {
     path.basename(urlpiece);
 
   // 6. Retourner le stream de lecture (utiliser fs.createReadStream)
-  const stream = fs2.createReadStream(absolutePath);
+  const stream = fs.createReadStream(absolutePath);
 
   stream.on("error", (err) => {
     console.error("❌ Erreur stream:", err);

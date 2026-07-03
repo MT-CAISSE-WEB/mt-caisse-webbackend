@@ -1,0 +1,16 @@
+Code;Libelle;Statut
+C014;Magasin;Actif
+CT001;Secretariat;Actif
+CT002;Service finance;Actif
+CT003;Service RH;Actif
+CT004;Service logistique;Actif
+CT005;Administration generale;Actif
+CT006;Plantation;Actif
+CT007;Garage;Actif
+CT008;Atelier soudure;Actif
+CT009;Recolte;Actif
+CT010;Usine ;Actif
+CT012;QHSE;Actif
+CT013;Achat;Actif
+CTRICH;Centre test Richard;Actif
+KA-CNT-CNT;Construction;Actif

@@ -1,0 +1,11 @@
+Code;Designation;Type;Statut
+CLT002;Palmco;Client;1
+CLT003;Perenco;Client;1
+CLT004;TotalEnergies;Client;1
+CLT01;Marsavco;Client;1
+FRN01;Burotec;Fournisseur;1
+FRN02;Congo telecom;Fournisseur;1
+FRNRI;Richard;Fournisseur;1
+SAL01;Bertrand OSSENGUE;Salarié;1
+SAL02;Davina SAMBA;Salarié;1
+SAL03;Jean-paul BOUKARY;Salarié;1

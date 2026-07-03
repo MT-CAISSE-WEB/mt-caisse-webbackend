@@ -64,7 +64,6 @@ module.exports.update_nature = asyncHandler(async(req, res, next) => {
 });
 
 
-
 /**
  * Supprime un nature
  */
@@ -90,9 +89,6 @@ module.exports.import_nature = asyncHandler(async (req, res) => {
   const result = await natureoperationservice.import_nature(req.file.path, info);
   res.status(201).json({success: true, data: result});
 });
-
-
-
 
 module.exports.exportNatures = asyncHandler(async (req, res) => {
 

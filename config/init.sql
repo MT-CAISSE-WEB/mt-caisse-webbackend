@@ -2094,25 +2094,22 @@ IF NOT EXISTS (SELECT *
 FROM sys.tables
 WHERE name = 'PieceComptableSequence')
 BEGIN
-    CREATE TABLE PieceComptableSequence
-    (
-        id INT IDENTITY PRIMARY KEY,
-        journal NVARCHAR(10),
-        datepiece NVARCHAR(10),
-        sequence INT
-    );
+CREATE TABLE PieceComptableSequence (
+    id INT IDENTITY PRIMARY KEY,
+    journal NVARCHAR(10),
+    datepiece NVARCHAR(10),
+    sequence INT
+);
 END
-
 
 -- PJ & demande
 IF NOT EXISTS (
     SELECT *
-FROM sys.tables
-WHERE name = 'DemandePieceJointe'
+    FROM sys.tables
+    WHERE name = 'DemandePieceJointe'
 )
 BEGIN
-    CREATE TABLE DemandePieceJointe
-    (
+    CREATE TABLE DemandePieceJointe (
         iddemandepiecejointe UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
 
         iddemande UNIQUEIDENTIFIER NOT NULL,
@@ -2140,8 +2137,8 @@ END
 
 IF NOT EXISTS (
     SELECT 1
-FROM sys.indexes
-WHERE name = 'IX_DemandePieceJointe_Demande'
+    FROM sys.indexes
+    WHERE name = 'IX_DemandePieceJointe_Demande'
 )
 BEGIN
     CREATE INDEX IX_DemandePieceJointe_Demande
@@ -2150,8 +2147,8 @@ END
 
 IF NOT EXISTS (
     SELECT 1
-FROM sys.indexes
-WHERE name = 'IX_DemandePieceJointe_Piece'
+    FROM sys.indexes
+    WHERE name = 'IX_DemandePieceJointe_Piece'
 )
 BEGIN
     CREATE INDEX IX_DemandePieceJointe_Piece
@@ -2167,116 +2164,9 @@ END
 -- ALTER TABLE PieceJointe
 -- ADD taille BIGINT;
 
+-- Alter table PieceJointe 
+-- alter column urlpiece nvarchar(900);
 
-IF NOT EXISTS (
-    SELECT *
-FROM sys.tables
-WHERE name = 'BudgetPieceJointe'
-)
-BEGIN
-    CREATE TABLE BudgetPieceJointe
-    (
-        idbudgetpiecejointe UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-
-        idbudget UNIQUEIDENTIFIER NOT NULL,
-        idpiecejointe UNIQUEIDENTIFIER NOT NULL,
-
-        createdat DATETIME DEFAULT GETDATE(),
-        createdby NVARCHAR(50),
-        updatedat DATETIME,
-        updatedby NVARCHAR(50),
-
-        CONSTRAINT FK_BudgetPieceJointe_Budget
-            FOREIGN KEY (idbudget)
-            REFERENCES Budget(idbudget)
-            ON DELETE CASCADE,
-
-        CONSTRAINT FK_BudgetPieceJointe_PieceJointe
-            FOREIGN KEY (idpiecejointe)
-            REFERENCES PieceJointe(idpiecejointe)
-            ON DELETE CASCADE,
-
-        CONSTRAINT UQ_BudgetPieceJointe
-            UNIQUE (idbudget, idpiecejointe)
-    );
-END
-
-IF NOT EXISTS (
-    SELECT 1
-FROM sys.indexes
-WHERE name = 'IX_BudgetPieceJointe_Budget'
-)
-BEGIN
-    CREATE INDEX IX_BudgetPieceJointe_Budget
-    ON BudgetPieceJointe(idbudget);
-END
-
-IF NOT EXISTS (
-    SELECT 1
-FROM sys.indexes
-WHERE name = 'IX_BudgetPieceJointe_Piece'
-)
-BEGIN
-    CREATE INDEX IX_BudgetPieceJointe_Piece
-    ON BudgetPieceJointe(idpiecejointe);
-END
-
-
--- PJ & operation de caisse
-IF NOT EXISTS (
-    SELECT *
-FROM sys.tables
-WHERE name = 'OperationPieceJointe'
-)
-BEGIN
-    CREATE TABLE OperationPieceJointe
-    (
-        idoperationpiecejointe UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-
-        idoperation UNIQUEIDENTIFIER NOT NULL,
-        idpiecejointe UNIQUEIDENTIFIER NOT NULL,
-
-        createdat DATETIME DEFAULT GETDATE(),
-        createdby NVARCHAR(50),
-        updatedat DATETIME,
-        updatedby NVARCHAR(50),
-
-        CONSTRAINT FK_OperationPieceJointe_Operation
-            FOREIGN KEY (idoperation)
-            REFERENCES EnteteOperationCaisse(idoperation)
-            ON DELETE CASCADE,
-
-        CONSTRAINT FK_OperationPieceJointe_PieceJointe
-            FOREIGN KEY (idpiecejointe)
-            REFERENCES PieceJointe(idpiecejointe)
-            ON DELETE CASCADE,
-
-        CONSTRAINT UQ_OperationPieceJointe
-            UNIQUE (idoperation, idpiecejointe)
-    );
-END
-
-IF NOT EXISTS (
-    SELECT 1
-FROM sys.indexes
-WHERE name = 'IX_OperationPieceJointe_Operation'
-)
-BEGIN
-    CREATE INDEX IX_OperationPieceJointe_Operation
-    ON OperationPieceJointe(idoperation);
-END
-
-IF NOT EXISTS (
-    SELECT 1
-FROM sys.indexes
-WHERE name = 'IX_OperationPieceJointe_Piece'
-)
-BEGIN
-    CREATE INDEX IX_OperationPieceJointe_Piece
-    ON OperationPieceJointe(idpiecejointe);
-END
-
--- pj & budget
 IF NOT EXISTS (
     SELECT *
     FROM sys.tables
@@ -2327,4 +2217,57 @@ IF NOT EXISTS (
 BEGIN
     CREATE INDEX IX_BudgetPieceJointe_Piece
     ON BudgetPieceJointe(idpiecejointe);
+END
+
+-- PJ & operation de caisse
+IF NOT EXISTS (
+    SELECT *
+    FROM sys.tables
+    WHERE name = 'OperationPieceJointe'
+)
+BEGIN
+    CREATE TABLE OperationPieceJointe (
+        idoperationpiecejointe UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+
+        idoperation UNIQUEIDENTIFIER NOT NULL,
+        idpiecejointe UNIQUEIDENTIFIER NOT NULL,
+
+        createdat DATETIME DEFAULT GETDATE(),
+        createdby NVARCHAR(50),
+        updatedat DATETIME,
+        updatedby NVARCHAR(50),
+
+        CONSTRAINT FK_OperationPieceJointe_Operation
+            FOREIGN KEY (idoperation)
+            REFERENCES EnteteOperationCaisse(idoperation)
+            ON DELETE CASCADE,
+
+        CONSTRAINT FK_OperationPieceJointe_PieceJointe
+            FOREIGN KEY (idpiecejointe)
+            REFERENCES PieceJointe(idpiecejointe)
+            ON DELETE CASCADE,
+
+        CONSTRAINT UQ_OperationPieceJointe
+            UNIQUE (idoperation, idpiecejointe)
+    );
+END
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_OperationPieceJointe_Operation'
+)
+BEGIN
+    CREATE INDEX IX_OperationPieceJointe_Operation
+    ON OperationPieceJointe(idoperation);
+END
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_OperationPieceJointe_Piece'
+)
+BEGIN
+    CREATE INDEX IX_OperationPieceJointe_Piece
+    ON OperationPieceJointe(idpiecejointe);
 END

@@ -1,0 +1,16 @@
+Code;Libelle;Statut
+C014;Magasin;1
+CT001;Secretariat;1
+CT002;Service finance;1
+CT003;Service RH;1
+CT004;Service logistique;1
+CT005;Administration generale;1
+CT006;Plantation;1
+CT007;Garage;1
+CT008;Atelier soudure;1
+CT009;Recolte;1
+CT010;Usine ;1
+CT012;QHSE;1
+CT013;Achat;1
+CTRICH;Centre test Richard;1
+KA-CNT-CNT;Construction;1

@@ -137,6 +137,8 @@ async function editionjournal(datedebut, datefin, idcaisse, idsite) {
             codesociete: head.codesociete,
             raisonsociale: head.raisonsociale,
             codesite: head.codesite,
+            codejournal: head.codejournal,
+            lib_journal: head.designation,
             lib_site: head.lib_site,
             codejournal: head.codejournal,
             lib_journal: head.designation,
