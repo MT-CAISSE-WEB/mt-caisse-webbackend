@@ -256,10 +256,11 @@ module.exports = {
         GROUP BY E.idoperation, E.dateoperation, t.idperiode, c.idcaisse, c.codecaisse, c.libelle, c.iddevise, d.codedevise, c.seuilmnimal, c.soldeinitialisation;
     `,
 
-    editionjournal : `
+    editionjournal: `
         SELECT Soc.codesociete, Soc.raisonsociale,
         S.codesite, S.libelle as lib_site,
 		J.codejournal, J.designation,
+        C.idcaisse,
         C.codecaisse, C.libelle as lib_caisse,
         TOPE.codtypeoperation AS typeoperation
 		, EOC.codeoperation, EOC.dateoperation,
@@ -289,8 +290,9 @@ module.exports = {
             -- Sécurité utilisateur
         AND EOC.idsite = @idsite
 
-        ORDER BY EOC.dateoperation, C.libelle, EOC.codeoperation
+        ORDER BY C.codecaisse,  EOC.dateoperation, C.libelle, EOC.codeoperation
     `,
+    
     etatcloture : `
         SELECT 
             cp.idperiode,

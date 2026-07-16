@@ -76,6 +76,86 @@ async function journalPaiement(datedebut, datefin, caisse, idsite, typeentitesoc
 }
 
 // Autor : Richard
+// async function editionjournal(datedebut, datefin, idcaisse, idsite) {
+//     const pool = await connectDB();
+
+//     try {
+//         const result = await pool.request()
+//             .input('datedebut', sql.Date, datedebut)
+//             .input('datefin', sql.Date, datefin)
+//             .input('idcaisse', sql.UniqueIdentifier, idcaisse)
+//             .input('idsite', sql.UniqueIdentifier, idsite)
+//             .query(operationQueries.editionjournal);
+
+//         const resultat = result.recordset;
+
+//         if (!resultat || resultat.length === 0) {
+//             return { success: false, message: "Aucune donnée trouvée" };
+//         }
+
+//         const head = resultat[0];
+//         const map = new Map();
+
+//         resultat.forEach(r => {
+
+//             const date = r.dateoperation.toISOString().split('T')[0];
+
+//             // Niveau DATE
+//             if (!map.has(date)) {
+//                 map.set(date, {
+//                     date,
+//                     solde_ouverture: r.soldeouverture,
+//                     solde_fermeture: r.soldefermeture,
+//                     operations: []
+//                 });
+//             }
+
+//             const dateGroup = map.get(date);
+
+
+//             dateGroup.operations.push({
+//                 typeoperation: r.typeoperation,
+//                 dateoperation: r.dateoperation.toISOString().split('T')[0],
+//                 codeoperation: r.codeoperation,
+//                 cnature: r.codenature,
+//                 nature: r.lib_nature,
+//                 ccentre: r.codecentre,
+//                 centre: r.lib_centre,
+//                 ctiers: r.codetiers,
+//                 tiers: r.nom_tiers,
+//                 libelle: r.libelle,
+//                 montant: r.montantligne || 0,
+//                 montant_ope: r.total_ope || 0,
+//             });
+//         });
+
+//         const lignes = Array.from(map.values());
+
+//         const data = {
+//             codesociete: head.codesociete,
+//             raisonsociale: head.raisonsociale,
+//             codesite: head.codesite,
+//             codejournal: head.codejournal,
+//             lib_journal: head.designation,
+//             lib_site: head.lib_site,
+//             codejournal: head.codejournal,
+//             lib_journal: head.designation,
+//             codecaisse: head.codecaisse,
+//             lib_caisse: head.lib_caisse,
+//             devise_caisse: head.devise_caisse,
+//             datedebut: new Date(datedebut).toLocaleDateString('fr-FR'),
+//             datefin: new Date(datefin).toLocaleDateString('fr-FR'),
+//             lignes
+//         };
+
+//         return { success: true, data : data };
+
+//     } catch (error) {
+//         console.log(`Erreur de récupération : ${error}`.cyan?.bold || error);
+//         throw error;
+//     }
+// }
+
 async function editionjournal(datedebut, datefin, idcaisse, idsite) {
     const pool = await connectDB();
 
@@ -87,8 +167,6 @@ async function editionjournal(datedebut, datefin, idcaisse, idsite) {
             .input('idsite', sql.UniqueIdentifier, idsite)
             .query(operationQueries.editionjournal);
 
-        console.log(result.recordset);
-
         const resultat = result.recordset;
 
         if (!resultat || resultat.length === 0) {
@@ -96,61 +174,68 @@ async function editionjournal(datedebut, datefin, idcaisse, idsite) {
         }
 
         const head = resultat[0];
-        const map = new Map();
+
+        const mapCaisses = new Map();
 
         resultat.forEach(r => {
 
+            // Regroupe les opérations par caisse
+            const cleCaisse = r.idcaisse; // ou codecaisse
+
+            if (!mapCaisses.has(cleCaisse)) {
+                mapCaisses.set(cleCaisse, {
+                    codejournal: r.codejournal,
+                    lib_journal: r.designation,
+                    codecaisse: r.codecaisse,
+                    lib_caisse: r.lib_caisse,
+                    devise: r.devise_caisse,
+
+                    solde_initial: r.soldeouverture,
+
+                    lignes:new Map()
+                    });
+                }
+
+
+            const caisse = mapCaisses.get(cleCaisse);
+
             const date = r.dateoperation.toISOString().split('T')[0];
 
-            // Niveau DATE
-            if (!map.has(date)) {
-                map.set(date, {
+            if(!caisse.lignes.has(date)){
+
+                caisse.lignes.set(date,{
                     date,
-                    solde_ouverture: r.soldeouverture,
-                    solde_fermeture: r.soldefermeture,
-                    operations: []
+                    solde_ouverture:r.soldeouverture,
+                    solde_fermeture:r.soldefermeture,
+                    operations:[]
                 });
             }
 
-            const dateGroup = map.get(date);
-
-
-            dateGroup.operations.push({
+            caisse.lignes.get(date).operations.push({
                 typeoperation: r.typeoperation,
                 dateoperation: r.dateoperation.toISOString().split('T')[0],
                 codeoperation: r.codeoperation,
-                cnature: r.codenature,
-                nature: r.lib_nature,
-                ccentre: r.codecentre,
-                centre: r.lib_centre,
-                ctiers: r.codetiers,
-                tiers: r.nom_tiers,
                 libelle: r.libelle,
                 montant: r.montantligne || 0,
                 montant_ope: r.total_ope || 0,
+                
             });
         });
 
-        const lignes = Array.from(map.values());
+        const caisses = Array.from(mapCaisses.values()).map(c=>({
+            ...c, lignes:Array.from(c.lignes.values()) }));
 
         const data = {
             codesociete: head.codesociete,
             raisonsociale: head.raisonsociale,
             codesite: head.codesite,
-            codejournal: head.codejournal,
-            lib_journal: head.designation,
             lib_site: head.lib_site,
-            codejournal: head.codejournal,
-            lib_journal: head.designation,
-            codecaisse: head.codecaisse,
-            lib_caisse: head.lib_caisse,
-            devise_caisse: head.devise_caisse,
             datedebut: new Date(datedebut).toLocaleDateString('fr-FR'),
             datefin: new Date(datefin).toLocaleDateString('fr-FR'),
-            lignes
+            caisses
         };
 
-        return { success: true, data : data };
+        return { success: true, data: data };
 
     } catch (error) {
         console.log(`Erreur de récupération : ${error}`.cyan?.bold || error);
