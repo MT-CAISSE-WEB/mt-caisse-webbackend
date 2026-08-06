@@ -4,6 +4,9 @@ const deviseservice = require("../../gestion_organisation/services/devise.servic
 const enteteoperationmodel = require("../models/enteteoperation.model");
 const { v4: uuidv4 } = require("uuid");
 const compteurservice = require("../../gestion_paramètres/services/compteur.service");
+const { EnteteDemande } = require("../../gestion_pj_demandes/models/index");
+const DemandePieceJointe = require("../../gestion_pj_demandes/models/pjdemande.model");
+const fs2 = require("fs");
 
 let enteteoperation = new enteteoperationmodel();
 let enteteoperations = [];
@@ -11,9 +14,9 @@ let enteteoperations = [];
 // pour gestion des pj
 const { upload } = require("../../../middlewares/upload/pjoperation");
 const path = require("path");
-const fs = require("fs");
-const fsPromises = require("fs").promises;
+const fs = require("fs").promises;
 const sequelize = require("../../../config/database");
+const AdmZip = require("adm-zip");
 
 async function get_all_enteteoperations() {
   const result = await enteteoperation.get_allenteteoperations();
@@ -94,6 +97,7 @@ async function create_enteteoperation(data) {
     prefixe,
     datePeriode,
   );
+
   const newenteteoperation = new enteteoperationmodel(
     uuidv4(),
     data.codeoperation || numerogenere,
@@ -101,7 +105,6 @@ async function create_enteteoperation(data) {
     data.societe,
     data.site,
     data.devise,
-    devise.data.codedevise,
     datePeriode,
     data.montant,
     data.tauxoperation || 1,
@@ -110,6 +113,9 @@ async function create_enteteoperation(data) {
     data.createdat || today,
     data.createdby || "System",
   );
+
+  console.log("newenteteoperation:", data)
+
   const recorded = await newenteteoperation.create_enteteoperationmodel(
     newenteteoperation,
   );
@@ -337,6 +343,7 @@ async function update_operationorigine(identeteoperation, data) {
 const {
   PieceJointe,
   OperationPieceJointe,
+  EnteteOperationCaisse,
 } = require("../../gestion_pj_demandes/models/operations/index");
 
 /**
@@ -364,8 +371,8 @@ async function uploadFiles(idoperation, files, userId) {
         .replace(/\\/g, "/");
 
       try {
-        // Utiliser fs.promises.unlink au lieu de fs.unlink
-        await fs.promises.unlink(filePath);
+        // Utiliser fs.unlink au lieu de fs.unlink
+        await fs.unlink(filePath);
       } catch (unlinkError) {
         console.error(
           `Erreur nettoyage fichier ${file.filename}:`,
@@ -539,44 +546,6 @@ async function deleteFile(idoperation, idpiecejointe, userId) {
 }
 
 /**
- * Télécharge un fichier (stream direct)
- * @param {string} urlpiece - Chemin relatif du fichier (ex: uploads/demandes/xxx.pdf)
- * @returns {Promise<{stream: fs.ReadStream, stats: fs.Stats, mimetype: string, nomfichier: string}>}
- */
-async function downloadFile(urlpiece) {
-  // 1. Construire le chemin absolu
-  const absolutePath = path.join(process.cwd(), urlpiece);
-
-  // 2. Vérifier si le fichier existe
-  try {
-    await fs.access(absolutePath);
-  } catch (error) {
-    throw new Error(`Fichier introuvable: ${urlpiece}`);
-  }
-
-  // 3. Récupérer les stats du fichier
-  const stats = await fs.stat(absolutePath);
-
-  // 4. Déterminer le mimetype depuis l'extension (fallback)
-  const mimetype = getmimetypeFromExtension(absolutePath);
-
-  // 5. Extraire le nom original depuis l'url (ou depuis la base selon ton besoin)
-  const nomfichier =
-    path.basename(urlpiece).split("_").slice(2).join("_") ||
-    path.basename(urlpiece);
-
-  // 6. Retourner le stream de lecture
-  const stream = fs.createReadStream(absolutePath);
-
-  return {
-    stream,
-    stats,
-    mimetype,
-    nomfichier,
-  };
-}
-
-/**
  * Détermine le mimetype depuis l'extension du fichier
  * @param {string} filepath - Chemin du fichier
  * @returns {string}
@@ -604,15 +573,15 @@ async function downloadFile(urlpiece) {
   // 1. Construire le chemin absolu
   const absolutePath = path.join(process.cwd(), urlpiece);
 
-  // 2. Vérifier si le fichier existe (utiliser fs.promises.access)
+  // 2. Vérifier si le fichier existe (utiliser fs.access)
   try {
-    await fs.promises.access(absolutePath);
+    await fs.access(absolutePath);
   } catch (error) {
     throw new Error(`Fichier introuvable: ${urlpiece}`);
   }
 
-  // 3. Récupérer les stats du fichier (utiliser fs.promises.stat)
-  const stats = await fs.promises.stat(absolutePath);
+  // 3. Récupérer les stats du fichier (utiliser fs.stat)
+  const stats = await fs.stat(absolutePath);
 
   // 4. Déterminer le mimetype depuis l'extension (fallback)
   const mimetype = getmimetypeFromExtension(absolutePath);
@@ -623,7 +592,7 @@ async function downloadFile(urlpiece) {
     path.basename(urlpiece);
 
   // 6. Retourner le stream de lecture (utiliser fs.createReadStream)
-  const stream = fs.createReadStream(absolutePath);
+  const stream = fs2.createReadStream(absolutePath);
 
   stream.on("error", (err) => {
     console.error("❌ Erreur stream:", err);
@@ -662,6 +631,279 @@ function getmimetypeFromExtension(filepath) {
   return mimetypes[ext] || "application/octet-stream";
 }
 
+// Télécharger toutes les pièces jointes
+const downloadAllFiles = async (idoperation) => {
+  const piecesJointes = await getFiles(idoperation);
+
+  if (!piecesJointes || piecesJointes.length === 0) {
+    throw new Error("Aucune pièce jointe trouvée pour cette opération");
+  }
+
+  // Cas d'un seul fichier
+  if (piecesJointes.length === 1) {
+    const piece = piecesJointes[0];
+    const filePath = path.join(process.cwd(), piece.urlpiece);
+
+    try {
+      await fs.access(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+
+      return {
+        buffer: fileBuffer,
+        filename: piece.nomfichier,
+        totalFiles: 1,
+        isZip: false,
+      };
+    } catch (err) {
+      console.error(`❌ Fichier introuvable: ${filePath}`, err.message);
+      throw new Error(`Fichier introuvable: ${piece.nomfichier}`);
+    }
+  }
+
+  // Cas de plusieurs fichiers → ZIP
+
+  const zip = new AdmZip();
+  let addedFiles = 0;
+
+  for (const piece of piecesJointes) {
+    const filePath = path.join(process.cwd(), piece.urlpiece);
+
+    try {
+      await fs.access(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+      zip.addFile(piece.nomfichier, fileBuffer);
+      addedFiles++;
+    } catch (err) {
+      console.error(`   ❌ Erreur: ${err.message}`);
+    }
+  }
+
+  if (addedFiles === 0) {
+    throw new Error("Aucun fichier valide n'a pu être ajouté au ZIP");
+  }
+
+  const zipBuffer = zip.toBuffer();
+
+  const operationInfo = await EnteteOperationCaisse.findByPk(idoperation, {
+    attributes: ["codeoperation"],
+  });
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+  const filename = `operation_${operationInfo?.codeoperation}_${timestamp}.zip`;
+
+  return {
+    buffer: zipBuffer,
+    filename: filename,
+    totalFiles: addedFiles,
+    isZip: true,
+  };
+};
+
+// Pièces jointes opération & demandes
+/**
+ * Télécharge toutes les pièces jointes d'une opération et/ou d'une demande
+ * @param {string} idoperation - ID de l'opération (optionnel)
+ * @param {string} iddemande - ID de la demande sélectionnée (optionnel)
+ * @returns {Promise<{buffer: Buffer, filename: string, totalFiles: number}>}
+ */
+async function downloadAllOperationFiles(idoperation = null, iddemande = null) {
+  let operationFiles = [];
+  let operation = null;
+  let demandeFiles = [];
+  let demandeInfo = null;
+
+  // 1. Récupérer les PJ de l'opération (si un ID est fourni)
+  if (idoperation) {
+    operation = await get_by_identeteoperation(idoperation);
+    if (operation) {
+      operationFiles = await getOperationFiles(idoperation);
+    }
+  }
+
+  // 2. Récupérer les PJ de la demande (si un ID est fourni)
+  if (iddemande) {
+    demandeFiles = await getDemandeFiles(iddemande);
+    demandeInfo = await getDemandeInfo(iddemande);
+  }
+
+  const totalFiles = operationFiles.length + demandeFiles.length;
+
+  if (totalFiles === 0) {
+    throw new Error("Aucune pièce jointe trouvée");
+  }
+
+  // 3. Création du ZIP
+  const zip = new AdmZip();
+  let addedFiles = 0;
+
+  // Ajouter les fichiers de l'opération (si existants)
+  for (const file of operationFiles) {
+    const filePath = path.join(process.cwd(), file.urlpiece);
+    try {
+      await fs.access(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+      zip.addFile(`operation/${file.nomfichier}`, fileBuffer);
+      addedFiles++;
+    } catch (err) {
+      console.error(`   ❌ Fichier operation introuvable: ${file.nomfichier}`);
+    }
+  }
+
+  // Ajouter les fichiers de la demande (si existants)
+  for (const file of demandeFiles) {
+    const filePath = path.join(process.cwd(), file.urlpiece);
+    try {
+      await fs.access(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+      const folderName = demandeInfo?.codedemande
+        ? `demande_${demandeInfo.codedemande}`
+        : "demande";
+      zip.addFile(`${folderName}/${file.nomfichier}`, fileBuffer);
+      addedFiles++;
+    } catch (err) {
+      console.error(`   ❌ Fichier demande introuvable: ${file.nomfichier}`);
+    }
+  }
+
+  if (addedFiles === 0) {
+    throw new Error("Aucun fichier valide n'a pu être ajouté au ZIP");
+  }
+
+  const zipBuffer = zip.toBuffer();
+
+  // 4. Générer le nom du fichier ZIP
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+  let filename = `documents_${timestamp}.zip`;
+
+  if (operation?.codeoperation && demandeInfo?.codedemande) {
+    filename = `${operation.codeoperation}_${demandeInfo.codedemande}_${timestamp}.zip`;
+  } else if (operation?.codeoperation) {
+    filename = `operation_${operation.codeoperation}_${timestamp}.zip`;
+  } else if (demandeInfo?.codedemande) {
+    filename = `demande_${demandeInfo.codedemande}_${timestamp}.zip`;
+  }
+
+  return {
+    buffer: zipBuffer,
+    filename: filename,
+    totalFiles: addedFiles,
+    operationFiles: operationFiles.length,
+    demandeFiles: demandeFiles.length,
+    hasOperation: operationFiles.length > 0,
+    hasDemande: demandeFiles.length > 0,
+    isZip: true,
+  };
+}
+/**
+ * Récupère les pièces jointes d'une opération
+ */
+async function getOperationFiles(idoperation) {
+  const piecesJointes = await PieceJointe.findAll({
+    include: [
+      {
+        model: OperationPieceJointe,
+        where: { idoperation },
+        attributes: [],
+        required: true,
+      },
+    ],
+    attributes: [
+      "idpiecejointe",
+      "urlpiece",
+      "nomfichier",
+      ["mimetype", "mimetype"],
+      "taille",
+      "createdat",
+      "createdby",
+    ],
+  });
+  return piecesJointes;
+}
+
+/**
+ * Récupère les pièces jointes d'une demande
+ */
+async function getDemandeFiles(iddemande) {
+  const piecesJointes = await PieceJointe.findAll({
+    include: [
+      {
+        model: DemandePieceJointe,
+        where: { iddemande },
+        attributes: [],
+        required: true,
+      },
+    ],
+    attributes: [
+      "idpiecejointe",
+      "urlpiece",
+      "nomfichier",
+      ["mimetype", "mimetype"],
+      "taille",
+      "createdat",
+      "createdby",
+    ],
+  });
+  return piecesJointes;
+}
+
+/**
+ * Récupère les infos d'une demande
+ */
+async function getDemandeInfo(iddemande) {
+  const demande = await EnteteDemande.findByPk(iddemande, {
+    attributes: ["codedemande", "libelledemande"],
+  });
+  return demande;
+}
+
+// Obtenir les pièces jointes d'une opération avec ceux de la demande
+const operationWithDemande = async (idoperaion) => {
+  const operation = await EnteteOperationCaisse.findByPk(idoperaion);
+
+  if (operation.iddemande) {
+  }
+};
+
+/**
+ * Récupère toutes les pièces jointes d'une opération et de sa demande associée
+ * @param {string} idoperation - ID de l'opération
+ * @returns {Promise<{operationPJ: Array, demandePJ: Array, totalCount: number, hasDemande: boolean}>}
+ */
+async function getOperationWithDemandePieces(idoperation) {
+  // 1. Récupérer l'opération
+  const operation = await get_by_identeteoperation(idoperation);
+  if (!operation) {
+    throw new Error("Opération introuvable");
+  }
+
+  // 2. Récupérer les PJ de l'opération
+  const operationPJ = await getOperationFiles(idoperation);
+
+  // 3. Récupérer les PJ de la demande associée (si elle existe)
+  let demandePJ = [];
+  let demandeInfo = null;
+  let hasDemande = false;
+
+  if (operation.iddemande) {
+    demandePJ = await getDemandeFiles(operation.iddemande);
+    demandeInfo = await getDemandeInfo(operation.iddemande);
+    hasDemande = true;
+  }
+
+  return {
+    operationPJ: operationPJ,
+    demandePJ: demandePJ,
+    operationCount: operationPJ.length,
+    demandeCount: demandePJ.length,
+    totalCount: operationPJ.length + demandePJ.length,
+    hasDemande: hasDemande,
+    demandeInfo: demandeInfo,
+    operationInfo: {
+      codeoperation: operation.codeoperation,
+      idoperation: operation.idoperation,
+    },
+  };
+}
+
 module.exports = {
   get_all_enteteoperations,
   get_by_identeteoperation,
@@ -675,4 +917,7 @@ module.exports = {
   getFiles,
   deleteFile,
   downloadFile,
+  downloadAllFiles,
+  downloadAllOperationFiles,
+  getOperationWithDemandePieces,
 };

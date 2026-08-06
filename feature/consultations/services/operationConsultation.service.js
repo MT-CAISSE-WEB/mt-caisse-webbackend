@@ -3,7 +3,7 @@ const sql = require('mssql');
 const { operationQueries } = require('../queries/queryIndex');
 const PaginationModel = require('../../../shared/utils/model');
 
-async function journalPaiement(datedebut, datefin, caisse, idsite, typeentitesociete){
+async function journalPaiement(datedebut, datefin, caisse, idsite, typeentitesociete) {
     const pool = await connectDB();
 
     try {
@@ -94,60 +94,68 @@ async function editionjournal(datedebut, datefin, idcaisse, idsite) {
         }
 
         const head = resultat[0];
-        const map = new Map();
+
+        const mapCaisses = new Map();
 
         resultat.forEach(r => {
 
+            // Regroupe les opérations par caisse
+            const cleCaisse = r.idcaisse; // ou codecaisse
+
+            if (!mapCaisses.has(cleCaisse)) {
+                mapCaisses.set(cleCaisse, {
+                    codejournal: r.codejournal,
+                    lib_journal: r.designation,
+                    codecaisse: r.codecaisse,
+                    lib_caisse: r.lib_caisse,
+                    devise: r.devise_caisse,
+
+                    solde_initial: r.soldeouverture,
+
+                    lignes:new Map()
+                    });
+                }
+
+
+            const caisse = mapCaisses.get(cleCaisse);
+
             const date = r.dateoperation.toISOString().split('T')[0];
 
-            // Niveau DATE
-            if (!map.has(date)) {
-                map.set(date, {
+            if(!caisse.lignes.has(date)){
+
+                caisse.lignes.set(date,{
                     date,
-                    solde_ouverture: r.soldeouverture,
-                    solde_fermeture: r.soldefermeture,
-                    operations: []
+                    solde_ouverture:r.soldeouverture,
+                    solde_fermeture:r.soldefermeture,
+                    operations:[]
                 });
             }
 
-            const dateGroup = map.get(date);
-
-
-            dateGroup.operations.push({
+            caisse.lignes.get(date).operations.push({
                 typeoperation: r.typeoperation,
                 dateoperation: r.dateoperation.toISOString().split('T')[0],
                 codeoperation: r.codeoperation,
-                cnature: r.codenature,
-                nature: r.lib_nature,
-                ccentre: r.codecentre,
-                centre: r.lib_centre,
-                ctiers: r.codetiers,
-                tiers: r.nom_tiers,
                 libelle: r.libelle,
                 montant: r.montantligne || 0,
                 montant_ope: r.total_ope || 0,
+                
             });
-
         });
 
-        const lignes = Array.from(map.values());
+        const caisses = Array.from(mapCaisses.values()).map(c=>({
+            ...c, lignes:Array.from(c.lignes.values()) }));
 
         const data = {
             codesociete: head.codesociete,
             raisonsociale: head.raisonsociale,
             codesite: head.codesite,
-            codejournal: head.codejournal,
-            lib_journal: head.designation,
             lib_site: head.lib_site,
-            codecaisse: head.codecaisse,
-            lib_caisse: head.lib_caisse,
-            devise_caisse: head.devise_caisse,
             datedebut: new Date(datedebut).toLocaleDateString('fr-FR'),
             datefin: new Date(datefin).toLocaleDateString('fr-FR'),
-            lignes
+            caisses
         };
 
-        return { success: true, data : data };
+        return { success: true, data: data };
 
     } catch (error) {
         console.log(`Erreur de récupération : ${error}`.cyan?.bold || error);
@@ -155,28 +163,29 @@ async function editionjournal(datedebut, datefin, idcaisse, idsite) {
     }
 }
 
+
 function extraireDate(value) {
-  return (typeof value === 'string' && value.includes('T'))
-    ? value.split('T')[0]
-    : null;
+    return (typeof value === 'string' && value.includes('T'))
+        ? value.split('T')[0]
+        : null;
 }
 
-async function detailOperation(data){
+async function detailOperation(data) {
     const pool = await connectDB();
 
     try {
         const result = await pool.request()
-        .input('idsite', sql.UniqueIdentifier, data.idsite)
-        .input('typeentitesociete', sql.Int, data.typeentitesociete)
-        .input('datedebut', sql.Date, data.datedebut || null)
-        .input('datefin', sql.Date, data.datefin || null)
-        .input('idcentre', sql.UniqueIdentifier, data.centre || null)
-        .input('idnature', sql.UniqueIdentifier, data.nature || null)
-        .input('idtiers', sql.UniqueIdentifier, data.tiers || null)
-        .input('codeoperation', sql.VarChar(50), data.numero || null)
-        .input('montantmin', sql.Decimal(22,9), data.montantmin || null)
-        .input('montantmax', sql.Decimal(22,9), data.montantmax || null)
-        .query(operationQueries.detailoperation);
+            .input('idsite', sql.UniqueIdentifier, data.idsite)
+            .input('typeentitesociete', sql.Int, data.typeentitesociete)
+            .input('datedebut', sql.Date, data.datedebut || null)
+            .input('datefin', sql.Date, data.datefin || null)
+            .input('idcentre', sql.UniqueIdentifier, data.centre || null)
+            .input('idnature', sql.UniqueIdentifier, data.nature || null)
+            .input('idtiers', sql.UniqueIdentifier, data.tiers || null)
+            .input('codeoperation', sql.VarChar(50), data.numero || null)
+            .input('montantmin', sql.Decimal(22, 9), data.montantmin || null)
+            .input('montantmax', sql.Decimal(22, 9), data.montantmax || null)
+            .query(operationQueries.detailoperation);
 
         const resultat = result.recordset;
 
@@ -187,7 +196,7 @@ async function detailOperation(data){
     }
 }
 
-async function getLastOperation(caisses, date, page, limit){
+async function getLastOperation(caisses, date, page, limit) {
     page = parseInt(page) || 1;
     limit = parseInt(limit) || 6;
     const offset = (page - 1) * limit;
@@ -220,14 +229,14 @@ async function getLastOperation(caisses, date, page, limit){
                     typeoperation: r.typeoperation,
                     piece: r.operation,
                     montantop: r.montant_op,
-                    deviseop : r.devise_operation,
+                    deviseop: r.devise_operation,
                     caisses: new Map() // important
                 });
             }
 
             const operation = map.get(piece);
 
-           // ================= NIVEAU CAISSE =================
+            // ================= NIVEAU CAISSE =================
             const keyCaisse = r.codecaisse;
 
             if (!operation.caisses.has(keyCaisse)) {
@@ -257,7 +266,7 @@ async function getLastOperation(caisses, date, page, limit){
     }
 }
 
-async function history(caisses, date, page, limit){
+async function history(caisses, date, page, limit) {
     page = parseInt(page) || 1;
     limit = parseInt(limit) || 6;
     const offset = (page - 1) * limit;
@@ -324,7 +333,7 @@ async function history(caisses, date, page, limit){
     }
 }
 
-async function Allpaiement(){
+async function Allpaiement() {
     const pool = await connectDB();
 
     try {
@@ -338,49 +347,147 @@ async function Allpaiement(){
 }
 
 async function getEtatCloture({ idcaisse, datedebut, datefin }) {
-  try {
+    try {
+        const pool = await connectDB();
+
+        const result = await pool.request()
+            .input('idcaisse', sql.UniqueIdentifier, idcaisse || null)
+            .input('datedebut', sql.DateTime, datedebut || null)
+            .input('datefin', sql.DateTime, datefin || null)
+            .query(operationQueries.etatcloture);
+
+        const resultat = result.recordset;
+
+        const data = resultat.map(item => ({
+            idperiode: item.idperiode,
+            caisse: {
+                id: item.idcaisse,
+                libelle: item.caisse_libelle,
+                code: item.codecaisse
+            },
+            date: item.dateperiode,
+            devise: item.codedevise,
+            codesociete: item.codesociete,
+            societe: item.raisonsociale,
+            codesite: item.codesite,
+            site: item.site_lib,
+            soldes: {
+                ouverture: Number(item.soldeouverture),
+                fermeture: Number(item.soldefermeture),
+                physique: Number(item.montantphysique),
+                ecart: Number(item.ecart)
+            },
+            statut: item.statut,
+            validation: {
+                date: item.validatedat,
+                user: item.validatedby
+            }
+        }));
+
+        return { success: true, data: data };
+
+    } catch (error) {
+        console.log(`Erreur de recuperation: ${error}`.cyan.bold);
+        throw error;
+    }
+}
+
+async function getEncaissements(idcaisses, datedebut, datefin) {
     const pool = await connectDB();
+    console.log("les caisses ", idcaisses);
 
-    const result = await pool.request()
-      .input('idcaisse', sql.UniqueIdentifier, idcaisse || null)
-      .input('datedebut', sql.DateTime, datedebut || null)
-      .input('datefin', sql.DateTime, datefin || null)
-      .query(operationQueries.etatcloture);
+    try {
+        const result = await pool.request()
+        .input("idcaisses", sql.NVarChar(sql.MAX), idcaisses.join(","))
+        .input("datedebut", sql.Date, datedebut)
+        .input("datefin", sql.Date, datefin)
+        .query(operationQueries.journalencaissement);
 
-    const resultat =  result.recordset;
+        const resultat = result.recordset;
 
-    const data =  resultat.map(item => ({
-        idperiode: item.idperiode,
-        caisse: {
-            id: item.idcaisse,
-            libelle: item.caisse_libelle,
-            code: item.codecaisse
-        },
-        date: item.dateperiode,
-        devise: item.codedevise,
-        codesociete : item.codesociete,
-        societe: item.raisonsociale,
-        codesite: item.codesite,
-        site: item.site_lib,
-        soldes: {
-            ouverture: Number(item.soldeouverture),
-            fermeture: Number(item.soldefermeture),
-            physique: Number(item.montantphysique),
-            ecart: Number(item.ecart)
-        },
-        statut: item.statut,
-        validation: {
-            date: item.validatedat,
-            user: item.validatedby
+        const jours = new Map();
+
+    for (const row of resultat) {
+
+        const jour = row.jour.toISOString().substring(0,10);
+
+        if (!jours.has(jour)) {
+            jours.set(jour, {
+                jour,
+                caisses: new Map()
+            });
         }
-    }));
 
-    return { success: true, data: data };
+        const jourObj = jours.get(jour);
 
-  } catch (error) {
-    console.log(`Erreur de recuperation: ${error}`.cyan.bold);
-    throw error;
-  }
+        if (!jourObj.caisses.has(row.idcaisse)) {
+
+            jourObj.caisses.set(row.idcaisse, {
+                idcaisse: row.idcaisse,
+                codecaisse: row.codecaisse,
+                libellecaisse: row.libellecaisse,
+                devise: {
+                    iddevise: row.iddevisecaisse,
+                    code: row.codedevisecaisse,
+                    libelle: row.devisecaisse
+                },
+                operations: new Map()
+            });
+        }
+        const caisse = jourObj.caisses.get(row.idcaisse);
+        if (!caisse.operations.has(row.idoperation)) {
+            caisse.operations.set(row.idoperation, {
+                idoperation: row.idoperation,
+                codeoperation: row.codeoperation,
+                dateoperation: row.dateoperation,
+                beneficiaire: row.beneficiaire,
+                montantoperation: row.montantoperation,
+                tauxoperation: row.tauxoperation,
+                montantreference: row.montantreference,
+                montantcaisse: row.montantcaisse,
+                deviseoperation: {
+                    iddevise: row.iddeviseoperation,
+                    code: row.codedeviseoperation,
+                    libelle: row.deviseoperation
+                },
+                lignes: []
+            });
+        }
+
+        caisse.operations.get(row.idoperation).lignes.push({
+            idligneoperation: row.idligneoperation,
+            libelle: row.libelleligne,
+            montant: row.montantoperationligne,
+            comptabilise: row.comptabilise,
+            nature: {
+                idnature: row.idnature,
+                code: row.codenature,
+                libelle: row.libellenature
+            },
+
+            centre: {
+                idcentre: row.idcentreanalytique,
+                code: row.codecentre,
+                libelle: row.libellecentre
+            },
+
+            tiers: {
+                idtiers: row.idtiers,
+                code: row.codetiers,
+                nom: row.nomtiers
+            }
+        });
+    }
+
+    return [...jours.values()].map(j => ({...j,
+        caisses: [...j.caisses.values()].map(c => ({...c,
+            operations: [...c.operations.values()]
+        }))
+      }));
+    } catch (error) {
+        console.log(`Erreur de recuperation: ${error}`.cyan.bold);
+        throw error;
+    }
 }
 
 module.exports = {
@@ -390,5 +497,6 @@ module.exports = {
     getLastOperation,
     history,
     Allpaiement,
-    getEtatCloture
+    getEtatCloture,
+    getEncaissements
 };

@@ -10,15 +10,16 @@ const detailDemandeModel = require("../models/detaildemande.model");
 let ligneModel = new ligneDemandeModel();
 let detailModel = new detailDemandeModel();
 let enteteDemande = new enteteDemandeModel();
-let demandes = []; 
+let demandes = [];
 
-async function create_detaildemande(data){
+async function create_detaildemande(data) {
     const today = new Date();
-    if(!data.idlignedemande || !data.montant){
+    if (!data.idlignedemande || !data.montant) {
         throw new Error("Detail sans ligne, sans montant.");
-    } 
+    }
+
     let demande = null;
-    if(data.iddemande){
+    if (data.iddemande) {
         try {
             demande = await enteteDemande.get_demande_by_id(data.iddemande);
         } catch (error) {
@@ -27,7 +28,7 @@ async function create_detaildemande(data){
     }
 
     let lignedemande = null;
-    if(data.idlignedemande){
+    if (data.idlignedemande) {
         try {
             lignedemande = await ligneModel.get_oneLigne(data.idlignedemande);
         } catch (error) {
@@ -35,9 +36,12 @@ async function create_detaildemande(data){
         }
     }
 
+
     const newdetailDemande = new detailDemandeModel(uuidv4(), data.iddemande || demande.iddemande, data.idlignedemande || data.idlignedemande, data.idsociete, data.description, data.quantite || 0, data.montant, today, data.createdby || 'system');
+
+
     const recorded = await newdetailDemande.create_detailsDemande(newdetailDemande);
-    if(!recorded.success){
+    if (!recorded.success) {
         throw new Error(recorded.message);
     }
 
@@ -45,11 +49,11 @@ async function create_detaildemande(data){
 }
 
 async function update_detaildemande(iddetaildemande, data) {
-    if(!iddetaildemande){
+    if (!iddetaildemande) {
         throw new Error("Erreur de donnée.");
     }
 
-    if(!data.idlignedemande || !data.montant){
+    if (!data.idlignedemande || !data.montant) {
         throw new Error("Detail sans ligne, sans montant.");
     }
 
@@ -62,7 +66,7 @@ async function update_detaildemande(iddetaildemande, data) {
     }
 }
 
-async function delete_detaildemande(iddetaildemande){
+async function delete_detaildemande(iddetaildemande) {
     if (!iddetaildemande) {
         throw new Error("ID détail requis");
     }
@@ -70,7 +74,7 @@ async function delete_detaildemande(iddetaildemande){
     try {
         const detail_ = await detailModel.delete_detailsDemande(iddetaildemande);
         if (!detail_.success) {
-          throw new Error(detail_.message);
+            throw new Error(detail_.message);
         }
         return detail_;
     } catch (err) {
@@ -79,8 +83,10 @@ async function delete_detaildemande(iddetaildemande){
 }
 
 
+
+
 module.exports = {
     create_detaildemande,
     update_detaildemande,
-    delete_detaildemande
+    delete_detaildemande,
 }

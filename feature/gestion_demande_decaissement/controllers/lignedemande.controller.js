@@ -10,6 +10,7 @@ module.exports.delete = asyncHandler(async(req, res, next) => {
   try {
     const idligne = req.params.id;
     const ligne_ = await lignedemandeservice.delete_lignedemande(idligne);
+    console.log("ligne_:", ligne_)
     res.json({ success: true, message: "Detail supprimé" });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });

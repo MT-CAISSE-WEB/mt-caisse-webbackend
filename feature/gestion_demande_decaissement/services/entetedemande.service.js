@@ -13,13 +13,15 @@ const detaildemandeservice = require("../services/detaildemande.service");
 const userservice = require("../../gestion_users/services/users.service");
 const lignedemandeModel = require("../models/lignedemande.model");
 const compteurservice = require("../../gestion_paramètres/services/compteur.service");
+const { sql, connectInstance, connectDB } = require("../../../config/db");
 
 // pour gestion des pj
 const { upload } = require("../../../middlewares/upload/pjdemande");
 const path = require("path");
-const fs = require("fs");
-const fsPromises = require("fs").promises;
+const fs = require("fs").promises;
+const fs2 = require("fs");
 const sequelize = require("../../../config/database");
+const AdmZip = require("adm-zip");
 
 let demandeModel = new enteteDemandeModel();
 let demandesArray = [];
@@ -175,13 +177,9 @@ async function validateBudgetsForLines(societe, lignes, filterData) {
     const selectBudget = await lignedemandemodel.checktypebudget(filterData);
 
     if (!selectBudget || selectBudget.length === 0) {
-      console.warn(
-        "Aucun budget trouvé → pas de contrôle budgétaire",
-        filterData,
-      );
+      throw new DemandeError("Aucun budget trouvé → pas de contrôle budgétaire"
+        , "NO_VALID_BUDGETS", filterData);
       return;
-      // throw new DemandeError("Aucun budget valide trouvé pour prioriser le budget mensuel si plusieurs budgets sont retournés"
-      //   , "NO_VALID_BUDGETS", { filterData });
     }
 
     const budgetPriorise = prioriserBudget(selectBudget);
@@ -248,8 +246,7 @@ async function validateBudgetsAnalytique(lignes, filterData) {
       }
     } catch (error) {
       throw new DemandeError(
-        `Erreur de budget à la ligne ${index + 1} (centre: ${ligne.centre}): ${
-          error.message
+        `Erreur de budget à la ligne ${index + 1} (centre: ${ligne.centre}): ${error.message
         }`,
         "BUDGET_VALIDATION_ERROR",
         { lineIndex: index, lineCentre: ligne.centre },
@@ -276,6 +273,7 @@ async function validateBudgetsNature(lignes, filterData) {
         idlignebudget: ligne.codebudget.idbudgetdepartementnature,
       });
 
+
       if (budgetsAll && budgetsAll.length > 0) {
         const budgets = prioriserBudget(budgetsAll);
         // Vérifier le solde du budget
@@ -291,8 +289,7 @@ async function validateBudgetsNature(lignes, filterData) {
       }
     } catch (error) {
       throw new DemandeError(
-        `Erreur de budget à la ligne ${index + 1} (nature: ${
-          ligne.natureop
+        `Erreur de budget à la ligne ${index + 1} (nature: ${ligne.natureop
         }): ${error.message}`,
         "BUDGET_VALIDATION_ERROR",
         { lineIndex: index, lineNature: ligne.natureop },
@@ -640,7 +637,7 @@ async function createDemandeLines(
         idtiers: ligne.tiers || null,
         idbudget: budgetData.budget_ || null,
         montantref,
-        codebudget: ligne.codebudget.codebudgetaire,
+        codebudgetaire: ligne.codebudget.codebudgetaire,
         idlignebudget: ligne.codebudget.idbudgetdepartementnature,
         preengage: budgetData.preengage,
         engage: budgetData.engage,
@@ -662,7 +659,7 @@ async function createDemandeLines(
       if (Array.isArray(ligne.details) && ligne.details.length > 0) {
         const detailPromises = ligne.details.map((detail) =>
           detaildemandeservice.create_detaildemande({
-            iddemande,
+            iddemande: idDemande,
             idlignedemande: lignedemande.idlignedemande,
             idsociete: data.societe || societeObj.data.idsociete,
             description: detail.description,
@@ -769,6 +766,8 @@ async function create_demande(data) {
       today,
     );
 
+    console.log("Data:", data)
+
     // 8. Initialiser les validateurs du circuit
     await initializeCircuitValidators(entetedemande.data.iddemande, idCircuit);
 
@@ -789,6 +788,7 @@ async function create_demande(data) {
       message: "Demande créée avec succès",
     };
   } catch (error) {
+    console.log('Error', error)
     if (error instanceof DemandeError) {
       throw error;
     }
@@ -801,8 +801,10 @@ async function create_demande(data) {
   }
 }
 
+// Dans entetedemande.service.js, remplacez getAll :
+
 async function getAll({ page, limit, search, status, user }) {
-  //Récuperer les data de l'utilisateur connecté
+  // Récupérer les data de l'utilisateur connecté
   const userconnect = await userservice.getoneuser(user);
 
   const result = await demandeModel.get_allDemandes(
@@ -817,8 +819,19 @@ async function getAll({ page, limit, search, status, user }) {
     const demandes = {};
     result.data.forEach((row) => {
       const iddemande = row.iddemande;
-      //Si la demande n'existe pas encore dans le dictionnaire, on la crée
+
+      // Si la demande n'existe pas encore dans le dictionnaire, on la crée
       if (!demandes[iddemande]) {
+        // Parser les validateurs JSON
+        let validateurs = [];
+        if (row.validateurs_json) {
+          try {
+            validateurs = JSON.parse(row.validateurs_json);
+          } catch (e) {
+            console.error("Erreur parsing validateurs:", e);
+          }
+        }
+
         demandes[iddemande] = {
           iddemande: row.iddemande,
           codedemande: row.codedemande,
@@ -861,6 +874,14 @@ async function getAll({ page, limit, search, status, user }) {
             codedept: row.codedept,
             libelle: row.libelledept,
           },
+          circuit: {
+            idcircuit: row.circuit_idcircuit,
+            codecircuit: row.circuit_codecircuit,
+            typeentite: row.circuit_typeentite,
+            typeaction: row.circuit_typeaction,
+            actif: row.circuit_actif,
+            validateurs: validateurs,
+          },
           lignes: [],
           _lignesMap: {}, // interne
         };
@@ -896,7 +917,7 @@ async function getAll({ page, limit, search, status, user }) {
         const ligne = demande._lignesMap[row.idlignedemande];
 
         /* =========================
-          3️⃣ DÉTAIL DEMANDE
+          DÉTAIL DEMANDE
         ========================= */
 
         if (row.iddetailsdemande) {
@@ -911,7 +932,7 @@ async function getAll({ page, limit, search, status, user }) {
     });
 
     /* =========================
-     Netoyage des maps internes
+     Nettoyage des maps internes
     ========================= */
     demandesArray = Object.values(demandes).map((d) => {
       delete d._lignesMap;
@@ -928,6 +949,7 @@ async function getAll({ page, limit, search, status, user }) {
     demandesArray,
   );
 }
+// Dans entetedemande.service.js, remplacez get_demande_by_id :
 
 async function get_demande_by_id(iddemande) {
   if (!iddemande) {
@@ -945,6 +967,16 @@ async function get_demande_by_id(iddemande) {
 
     for (const row of rows) {
       if (!demande) {
+        // Parser les validateurs JSON
+        let validateurs = [];
+        if (row.validateurs_json) {
+          try {
+            validateurs = JSON.parse(row.validateurs_json);
+          } catch (e) {
+            console.error("Erreur parsing validateurs:", e);
+          }
+        }
+
         demande = {
           iddemande: row.iddemande,
           codedemande: row.codedemande,
@@ -957,6 +989,8 @@ async function get_demande_by_id(iddemande) {
           statut: row.statut,
           createdat: row.entete_createdat,
           updatedat: row.entete_updatedat,
+          createdby: row.entete_createdby,
+          updatedby: row.entete_updatedby,
           iddemandeur: row.idutilisateur,
           iddepartement: row.iddepartement,
           idsociete: row.idsociete,
@@ -968,6 +1002,7 @@ async function get_demande_by_id(iddemande) {
             idutilisateur: row.idutilisateur,
             nom: row.nom,
             prenom: row.prenom,
+            email: row.email,
           },
 
           devise: {
@@ -985,10 +1020,20 @@ async function get_demande_by_id(iddemande) {
             idsite: row.idsite,
             libelle: row.site,
           },
+
           departement: {
             iddepartement: row.iddepartement,
             codedept: row.codedept,
             libelle: row.libelledept,
+          },
+
+          circuit: {
+            idcircuitvalidation: row.circuit_idcircuit,
+            codecircuitvalidation: row.circuit_codecircuit,
+            typeentite: row.circuit_typeentite,
+            typeaction: row.circuit_typeaction,
+            actif: row.circuit_actif,
+            validateurs: validateurs,
           },
 
           lignes: [],
@@ -997,8 +1042,8 @@ async function get_demande_by_id(iddemande) {
       }
 
       /* =========================
-          2️⃣ LIGNE DEMANDE
-      ========================= */
+                LIGNE DEMANDE
+            ========================= */
       if (row.idlignedemande) {
         if (!lignesMap[row.idlignedemande]) {
           lignesMap[row.idlignedemande] = {
@@ -1028,13 +1073,12 @@ async function get_demande_by_id(iddemande) {
           };
 
           demande.lignes.push(lignesMap[row.idlignedemande]);
-          // total demande = somme des lignes
           demande.totaldemande += row.montantdemande || 0;
         }
 
         /* =========================
-            3️⃣ DÉTAIL DEMANDE
-        ========================= */
+                    DÉTAIL DEMANDE
+                ========================= */
         if (row.iddetailsdemande) {
           lignesMap[row.idlignedemande].details.push({
             iddetailsdemande: row.iddetailsdemande,
@@ -1047,6 +1091,7 @@ async function get_demande_by_id(iddemande) {
         }
       }
     }
+
     return demande;
   } catch (error) {
     throw error;
@@ -1152,6 +1197,7 @@ async function update_demande(iddemande, data) {
         idnature: ligne.natureop,
         idcentre: ligne.centre,
         idtiers: ligne.tiers || null,
+        codebudgetaire: ligne.codebudget.codebudgetaire,
         montantref: montantref,
         preengage: preengage,
         engage: engage,
@@ -1161,11 +1207,11 @@ async function update_demande(iddemande, data) {
         updatedby: data.updatedby || "system",
       };
 
+
       let idlignedemande = ligne.idlignedemande;
 
       if (idlignedemande) {
         try {
-          console.log(ligne);
           await lignedemandeservice.update_lignedemande(
             idlignedemande,
             dataligne,
@@ -1208,18 +1254,63 @@ async function update_demande(iddemande, data) {
   return { success: true };
 }
 
+// async function delete_demande(iddemande) {
+//   if (!iddemande) {
+//     throw new Error("ID Demande requis");
+//   }
+
+//   try {
+//     const demande_ = await demandeModel.delete_enteteDemande(iddemande);
+//     if (!demande_.success) {
+//       throw new Error(demande_.message);
+//     }
+//     return demande_;
+//   } catch (err) {
+//     throw err;
+//   }
+// }
+
+// Dans entetedemande.service.js
 async function delete_demande(iddemande) {
   if (!iddemande) {
     throw new Error("ID Demande requis");
   }
 
+  const pool = await connectDB();
+  const transaction = pool.transaction();
+
   try {
-    const demande_ = await demandeModel.delete_enteteDemande(iddemande);
-    if (!demande_.success) {
-      throw new Error(demande_.message);
-    }
-    return demande_;
+    await transaction.begin();
+
+    // 1. Supprimer les validations de la demande
+    await pool.request(transaction)
+      .input("iddemande", sql.UniqueIdentifier, iddemande)
+      .query("DELETE FROM ValidationDemande WHERE iddemande = @iddemande");
+
+    // 2. Supprimer les détails des lignes
+    await pool.request(transaction)
+      .input("iddemande", sql.UniqueIdentifier, iddemande)
+      .query(`
+        DELETE FROM DetailsDemande
+        WHERE idlignedemande IN (
+          SELECT idlignedemande FROM LigneDemande WHERE iddemande = @iddemande
+        )
+      `);
+
+    // 3. Supprimer les lignes de la demande
+    await pool.request(transaction)
+      .input("iddemande", sql.UniqueIdentifier, iddemande)
+      .query("DELETE FROM LigneDemande WHERE iddemande = @iddemande");
+
+    // 4. Supprimer l'entête de la demande
+    await pool.request(transaction)
+      .input("iddemande", sql.UniqueIdentifier, iddemande)
+      .query("DELETE FROM EnteteDemande WHERE iddemande = @iddemande");
+
+    await transaction.commit();
+    return { success: true, message: "Demande supprimée avec succès" };
   } catch (err) {
+    await transaction.rollback();
     throw err;
   }
 }
@@ -1575,6 +1666,7 @@ async function getDernierTaux(deviseorigine, devisedestination, date) {
 const {
   PieceJointe,
   DemandePieceJointe,
+  EnteteDemande,
 } = require("../../gestion_pj_demandes/models/index");
 
 /**
@@ -1768,48 +1860,6 @@ async function deleteFile(iddemande, idpiecejointe, userId) {
 }
 
 /**
- * Télécharge un fichier (stream direct)
- * @param {string} urlpiece - Chemin relatif du fichier (ex: uploads/demandes/xxx.pdf)
- * @returns {Promise<{stream: fs.ReadStream, stats: fs.Stats, mimetype: string, nomfichier: string}>}
- */
-async function downloadFile(urlpiece) {
-  // 1. Construire le chemin absolu
-  const absolutePath = path.join(process.cwd(), urlpiece);
-
-  // 2. Vérifier si le fichier existe
-  try {
-    await fs.access(absolutePath);
-  } catch (error) {
-    throw new DemandeError(
-      `Fichier introuvable: ${urlpiece}`,
-      "FILE_NOT_FOUND",
-      { urlpiece },
-    );
-  }
-
-  // 3. Récupérer les stats du fichier
-  const stats = await fs.stat(absolutePath);
-
-  // 4. Déterminer le mimetype depuis l'extension (fallback)
-  const mimetype = getmimetypeFromExtension(absolutePath);
-
-  // 5. Extraire le nom original depuis l'url (ou depuis la base selon ton besoin)
-  const nomfichier =
-    path.basename(urlpiece).split("_").slice(2).join("_") ||
-    path.basename(urlpiece);
-
-  // 6. Retourner le stream de lecture
-  const stream = fs.createReadStream(absolutePath);
-
-  return {
-    stream,
-    stats,
-    mimetype,
-    nomfichier,
-  };
-}
-
-/**
  * Détermine le mimetype depuis l'extension du fichier
  * @param {string} filepath - Chemin du fichier
  * @returns {string}
@@ -1837,9 +1887,9 @@ async function downloadFile(urlpiece) {
   // 1. Construire le chemin absolu
   const absolutePath = path.join(process.cwd(), urlpiece);
 
-  // 2. Vérifier si le fichier existe (utiliser fs.promises.access)
+  // 2. Vérifier si le fichier existe (utiliser fs.access)
   try {
-    await fs.promises.access(absolutePath);
+    await fs.access(absolutePath);
   } catch (error) {
     throw new DemandeError(
       `Fichier introuvable: ${urlpiece}`,
@@ -1848,8 +1898,8 @@ async function downloadFile(urlpiece) {
     );
   }
 
-  // 3. Récupérer les stats du fichier (utiliser fs.promises.stat)
-  const stats = await fs.promises.stat(absolutePath);
+  // 3. Récupérer les stats du fichier (utiliser fs.stat)
+  const stats = await fs.stat(absolutePath);
 
   // 4. Déterminer le mimetype depuis l'extension (fallback)
   const mimetype = getmimetypeFromExtension(absolutePath);
@@ -1860,7 +1910,7 @@ async function downloadFile(urlpiece) {
     path.basename(urlpiece);
 
   // 6. Retourner le stream de lecture (utiliser fs.createReadStream)
-  const stream = fs.createReadStream(absolutePath);
+  const stream = fs2.createReadStream(absolutePath);
 
   stream.on("error", (err) => {
     console.error("❌ Erreur stream:", err);
@@ -1899,6 +1949,73 @@ function getmimetypeFromExtension(filepath) {
   return mimetypes[ext] || "application/octet-stream";
 }
 
+// Télécharger toutes les pièces jointes
+const downloadAllFiles = async (iddemande) => {
+  const piecesJointes = await getFiles(iddemande);
+
+  if (!piecesJointes || piecesJointes.length === 0) {
+    throw new Error("Aucune pièce jointe trouvée pour cette demande");
+  }
+
+  // Cas d'un seul fichier
+  if (piecesJointes.length === 1) {
+    const piece = piecesJointes[0];
+    const filePath = path.join(process.cwd(), piece.urlpiece);
+
+    try {
+      await fs.access(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+
+      return {
+        buffer: fileBuffer,
+        filename: piece.nomfichier,
+        totalFiles: 1,
+        isZip: false,
+      };
+    } catch (err) {
+      console.error(`❌ Fichier introuvable: ${filePath}`, err.message);
+      throw new Error(`Fichier introuvable: ${piece.nomfichier}`);
+    }
+  }
+
+  // Cas de plusieurs fichiers → ZIP
+
+  const zip = new AdmZip();
+  let addedFiles = 0;
+
+  for (const piece of piecesJointes) {
+    const filePath = path.join(process.cwd(), piece.urlpiece);
+
+    try {
+      await fs.access(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+      zip.addFile(piece.nomfichier, fileBuffer);
+      addedFiles++;
+    } catch (err) {
+      console.error(`   ❌ Erreur: ${err.message}`);
+    }
+  }
+
+  if (addedFiles === 0) {
+    throw new Error("Aucun fichier valide n'a pu être ajouté au ZIP");
+  }
+
+  const zipBuffer = zip.toBuffer();
+
+  const demandeInfo = await EnteteDemande.findByPk(iddemande, {
+    attributes: ["codedemande", "libelledemande"],
+  });
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+  const filename = `demande_${demandeInfo?.codedemande}_${demandeInfo?.libelledemande}_${timestamp}.zip`;
+
+  return {
+    buffer: zipBuffer,
+    filename: filename,
+    totalFiles: addedFiles,
+    isZip: true,
+  };
+};
+
 module.exports = {
   getAll,
   create_demande,
@@ -1916,4 +2033,5 @@ module.exports = {
   getFiles,
   deleteFile,
   downloadFile,
+  downloadAllFiles,
 };

@@ -15,7 +15,7 @@ const queryupsert = `
     IF EXISTS (SELECT 1 FROM NatureOperation WHERE codenature = @codenature)
     BEGIN
         UPDATE NatureOperation SET libelle = @libelle, typeoperation = @typeoperation,
-        decajustifier = @decajustifier, imputationtiers = @imputationtiers,
+        decajustifier = @decajustifier, imputationtiers = @imputationtiers, typetiers = @typetiers,
         actif = @actif, demandedecaissement = @demandedecaissement, 
         idsociete = @idsociete, idcompte = @idcompte, 
         updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE codenature = @codenature
@@ -23,28 +23,28 @@ const queryupsert = `
     ELSE
     BEGIN
         INSERT INTO NatureOperation (idnature, codenature, libelle, typeoperation, decajustifier, 
-        imputationtiers, actif, demandedecaissement, idsociete, idcompte,
+        imputationtiers, typetiers, actif, demandedecaissement, idsociete, idcompte,
         createdat, createdby)
         OUTPUT INSERTED.*
         VALUES (@idnature, @codenature, @libelle, @typeoperation, @decajustifier, @imputationtiers,
-        @actif, @demandedecaissement, @idsociete, @idcompte,
+        @typetiers, @actif, @demandedecaissement, @idsociete, @idcompte,
         @createdat, @createdby)
     END
 `;
 
 const queryInsert = `
         INSERT INTO NatureOperation (idnature, codenature, libelle, typeoperation, decajustifier, 
-        imputationtiers, actif, demandedecaissement, idsociete, idcompte,
+        imputationtiers, typetiers, actif, demandedecaissement, idsociete, idcompte,
         createdat, createdby)
         OUTPUT INSERTED.*
         VALUES (@idnature, @codenature, @libelle, @typeoperation, @decajustifier, @imputationtiers,
-        @actif, @demandedecaissement, @idsociete, @idcompte,
+        @typetiers, @actif, @demandedecaissement, @idsociete, @idcompte,
         @createdat, @createdby)
         `;
 
 const queryUpdate = `UPDATE NatureOperation SET libelle = @libelle, typeoperation = @typeoperation,
  decajustifier = @decajustifier, imputationtiers = @imputationtiers,
-  actif = @actif, demandedecaissement = @demandedecaissement, 
+  typetiers = @typetiers, actif = @actif, demandedecaissement = @demandedecaissement, 
   idsociete = @idsociete, idcompte = @idcompte, 
   updatedat = @updatedat, updatedby = @updatedby OUTPUT INSERTED.* WHERE idnature = @idnature
   `;
@@ -68,7 +68,7 @@ const query = `
 // Model natureoperation
 class NatureOperationModel {
     constructor(idnature, codenature, libelle, typeoperation, decajustifier, imputationtiers, 
-        actif, demandedecaissement, idsociete, idcompte,
+        typetiers, actif, demandedecaissement, idsociete, idcompte,
         createdat, updatedat, createdby, updatedby, compte = null)
     {
         this.idnature = idnature;
@@ -77,6 +77,7 @@ class NatureOperationModel {
         this.typeoperation = typeoperation;
         this.decajustifier = decajustifier;
         this.imputationtiers = imputationtiers;
+        this.typetiers = typetiers;
         this.actif = actif;
         this.demandedecaissement = demandedecaissement;
         this.idsociete = idsociete;
@@ -101,6 +102,7 @@ class NatureOperationModel {
             .input('typeoperation', sql.NVarChar(50), this.typeoperation)
             .input('decajustifier', sql.Int, this.decajustifier)
             .input('imputationtiers', sql.Int, this.imputationtiers)
+            .input('typetiers', sql.NVarChar(50), this.typetiers)
             .input('actif', sql.Int, this.actif)
             .input('demandedecaissement', sql.Int, this.demandedecaissement)
             .input('idsociete', sql.UniqueIdentifier, this.idsociete)
@@ -168,6 +170,7 @@ class NatureOperationModel {
                     .input('typeoperation', sql.NVarChar(50), data.typeoperation)
                     .input('decajustifier', sql.Int, data.decajustifier)
                     .input('imputationtiers', sql.Int, data.imputationtiers)
+                    .input('typetiers', sql.NVarChar(50), data.typetiers)
                     .input('actif', sql.Int, data.actif)
                     .input('demandedecaissement', sql.Int, data.demandedecaissement)
                     .input('idsociete', sql.UniqueIdentifier, data.idsociete)
@@ -185,6 +188,7 @@ class NatureOperationModel {
                     .input('typeoperation', sql.NVarChar(50), data.typeoperation)
                     .input('decajustifier', sql.Int, data.decajustifier)
                     .input('imputationtiers', sql.Int, data.imputationtiers)
+                    .input('typetiers', sql.NVarChar(50), data.typetiers)
                     .input('actif', sql.Int, data.actif)
                     .input('demandedecaissement', sql.Int, data.demandedecaissement)
                     .input('idsociete', sql.UniqueIdentifier, data.idsociete)
@@ -249,7 +253,7 @@ class NatureOperationModel {
             .input('debut', sql.VarChar, debut || null)
             .input('fin', sql.VarChar, fin || null)
             .query(`SELECT n.codenature, n.libelle, n.typeoperation, n.decajustifier, n.imputationtiers, 
-                n.demandedecaissement, c.numcompte, c.libelle AS compte_libelle, n.actif
+            n.typetiers, n.demandedecaissement, c.numcompte, c.libelle AS compte_libelle, n.actif
             FROM NatureOperation AS n
             LEFT JOIN PlanComptable c ON n.idcompte = c.idcompte
             WHERE 

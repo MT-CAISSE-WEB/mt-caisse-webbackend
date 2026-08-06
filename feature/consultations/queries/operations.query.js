@@ -1,5 +1,5 @@
 module.exports = {
-    journalpaiement : `
+    journalpaiement: `
         SELECT
             C.codecaisse AS codecaisse,
             C.libelle            AS caisse,
@@ -52,7 +52,7 @@ module.exports = {
             C.libelle,
             EOC.dateoperation;
     `,
-    detailoperation : `
+    detailoperation: `
         SELECT
             NA.idnature        AS idnature,
             NA.libelle          AS nature_operation,
@@ -104,7 +104,7 @@ module.exports = {
 
         ORDER BY O.dateoperation, O.codeoperation;
     `,
-    lastoperation : `
+    lastoperation: `
         SELECT
             C.codecaisse              AS codecaisse,
             C.libelle                 AS caisse,
@@ -143,7 +143,7 @@ module.exports = {
             OFFSET @offset ROWS
             FETCH NEXT @limit ROWS ONLY;
     `,
-    history : `
+    history: `
         SELECT
             C.codecaisse AS codecaisse,
             C.libelle            AS caisse,
@@ -179,7 +179,7 @@ module.exports = {
         ORDER BY
             EOC.dateoperation;
     `,
-    totalOperation : `
+    totalOperation: `
         SELECT 
             E.iddemande,
             E.idoperation,
@@ -215,7 +215,7 @@ module.exports = {
        
         GROUP BY E.iddemande, E.idoperation, E.dateoperation, t.idperiode, c.idcaisse, c.codecaisse, c.libelle, c.iddevise, d.codedevise, c.seuilmnimal, c.soldeinitialisation;
     `,
-    totalOperationJour : `
+    totalOperationJour: `
         SELECT 
             E.idoperation,
             E.dateoperation,
@@ -256,43 +256,44 @@ module.exports = {
         GROUP BY E.idoperation, E.dateoperation, t.idperiode, c.idcaisse, c.codecaisse, c.libelle, c.iddevise, d.codedevise, c.seuilmnimal, c.soldeinitialisation;
     `,
 
-    editionjournal : `
+    editionjournal: `
         SELECT Soc.codesociete, Soc.raisonsociale,
-        Site.codesite, Site.libelle as lib_site,
+        S.codesite, S.libelle as lib_site,
+		J.codejournal, J.designation,
+        C.idcaisse,
         C.codecaisse, C.libelle as lib_caisse,
-        J.codejournal, J.designation,
-        TOPE.codtypeoperation      AS typeoperation, OPE.idoperation,
-        OPE.codeoperation, OPE.dateoperation,
-        NOP.codenature, NOP.libelle as lib_nature,
-        CAN.codecentreanalytique AS codecentre, CAN.libelle as lib_centre,
-        T.codetiers, T.designation AS nom_tiers,
-        OPL.libelle, TOPE.montant,  D.codedevise AS devise_caisse,
-        OPE.montant AS total_ope, DevO.codedevise,
+        TOPE.codtypeoperation AS typeoperation
+		, EOC.codeoperation, EOC.dateoperation,
+        L.libelle, TOPE.montant AS montantligne
+		,  DC.codedevise AS devise_caisse,
+		TOPE.montantref AS montant_ref,
+        EOC.montant AS total_ope,
         CP.soldeouverture, CP.soldefermeture
 
-        FROM EnteteOperationCaisse OPE
-        INNER JOIN TypeOperation TOPE ON TOPE.idoperation = OPE.idoperation
-        INNER JOIN Caisse C ON TOPE.idcaisse = C.idcaisse
-        INNER JOIN Journal J ON C.idjournal = J.idjournal
-        INNER JOIN Devise D ON D.iddevise = C.iddevise
-        INNER JOIN Devise DevO ON DevO.iddevise = OPE.iddevise
-        INNER JOIN Societe Soc ON C.idsociete = Soc.idsociete
-        INNER JOIN Site ON Site.idsite = C.idsite
-        LEFT JOIN LigneOperationCaisse OPL ON OPE.idoperation = OPL.idoperation
-        LEFT JOIN NatureOperation NOP ON NOP.idnature = OPL.idnature
-        LEFT JOIN CentreAnalytique CAN ON CAN.idcentreanalytique = OPL.idcentre
-        LEFT JOIN Tiers T ON T.idtiers = OPL.idtiers
+        FROM EnteteOperationCaisse EOC
+        INNER JOIN TypeOperation TOPE ON TOPE.idoperation = EOC.idoperation
+        OUTER APPLY (
+			SELECT TOP 1 libelle
+			FROM ligneoperationCaisse L
+			WHERE L.idoperation = TOPE.idoperation
+		) L
+        INNER JOIN Caisse C ON C.idcaisse = TOPE.idcaisse
+        INNER JOIN Devise DC ON DC.iddevise = C.iddevise
+        INNER JOIN Devise D ON D.iddevise = EOC.iddevise
+        INNER JOIN Site S ON S.idsite = EOC.idsite
+		INNER JOIN Societe Soc ON Soc.idsociete = EOC.idsociete
         LEFT JOIN CaissePeriode CP ON CP.idperiode = TOPE.idperiode
+		INNER JOIN Journal J ON C.idjournal = J.idjournal
 
-        WHERE OPE.dateoperation BETWEEN @datedebut AND @datefin 
-            AND ( @idcaisse IS NULL OR C.idcaisse = @idcaisse )
+        WHERE EOC.dateoperation BETWEEN @datedebut AND @datefin
+        AND ( @idcaisse IS NULL OR TOPE.idcaisse = @idcaisse )
             -- Sécurité utilisateur
-            --AND ( @typeentitesociete = 1 OR OPE.idsite = @idsite )
-            AND OPE.idsite = @idsite
+        AND EOC.idsite = @idsite
 
-        ORDER BY OPE.dateoperation, C.libelle
+        ORDER BY C.codecaisse,  EOC.dateoperation, C.libelle, EOC.codeoperation
     `,
-    etatcloture : `
+
+    etatcloture: `
         SELECT 
             cp.idperiode,
             cp.idcaisse,
@@ -321,5 +322,140 @@ module.exports = {
             AND (@datedebut IS NULL OR cp.dateperiode >= @datedebut)
             AND (@datefin IS NULL OR cp.dateperiode <= @datefin)
         ORDER BY cp.dateperiode DESC;
+    `,
+    journalencaissement: `
+        SELECT
+            /*====================================================
+            PERIODE
+            ====================================================*/
+            cp.idperiode,
+            cp.dateperiode,
+
+            /*====================================================
+            CAISSE
+            ====================================================*/
+            c.idcaisse,
+            c.codecaisse,
+            c.libelle AS libellecaisse,
+
+            /*====================================================
+            DEVISE DE LA CAISSE
+            ====================================================*/
+            dc.iddevise       AS iddevisecaisse,
+            dc.codedevise     AS codedevisecaisse,
+            dc.intitule        AS devisecaisse,
+
+            /*====================================================
+            OPERATION
+            ====================================================*/
+            e.idoperation,
+            e.codeoperation,
+            e.typeoperation,
+            e.dateoperation,
+            CAST(e.dateoperation AS DATE) AS jour,
+            e.beneficiaire,
+
+            /*====================================================
+            DEVISE DE L'OPERATION
+            ====================================================*/
+            do.iddevise       AS iddeviseoperation,
+            do.codedevise     AS codedeviseoperation,
+            do.intitule        AS deviseoperation,
+
+            /*====================================================
+            MONTANTS
+            ====================================================*/
+            e.montant         AS montantoperation,
+            e.tauxoperation,
+
+            t.montant         AS montantcaisse,
+            t.taux            AS tauxreference,
+            t.montantref      AS montantreference,
+
+            /*====================================================
+            LIGNE D'OPERATION
+            ====================================================*/
+            l.idligneoperation,
+            l.libelle         AS libelleligne,
+            l.montantoperation AS montantoperationligne,
+
+            l.comptabilise,
+            l.numpiececomptable,
+            l.datecomptabilisation,
+
+            /*====================================================
+            NATURE OPERATION
+            ====================================================*/
+            n.idnature,
+            n.codenature,
+            n.libelle         AS libellenature,
+
+            /*====================================================
+            CENTRE ANALYTIQUE
+            ====================================================*/
+            ca.idcentreanalytique,
+            ca.codecentreanalytique,
+            ca.libelle        AS libellecentre,
+
+            /*====================================================
+            TIERS
+            ====================================================*/
+            tr.idtiers,
+            tr.codetiers,
+            tr.designation
+
+        FROM TypeOperation t
+
+        INNER JOIN EnteteOperationCaisse e
+            ON e.idoperation = t.idoperation
+
+        INNER JOIN LigneOperationCaisse l
+            ON l.idoperation = e.idoperation
+
+        INNER JOIN Caisse c
+            ON c.idcaisse = t.idcaisse
+
+        INNER JOIN CaissePeriode cp
+            ON cp.idperiode = t.idperiode
+
+        /* Devise de la caisse */
+        INNER JOIN Devise dc
+            ON dc.iddevise = c.iddevise
+
+        /* Devise de l'opération */
+        INNER JOIN Devise do
+            ON do.iddevise = e.iddevise
+
+        /* Nature */
+        LEFT JOIN NatureOperation n
+            ON n.idnature = l.idnature
+
+        /* Centre analytique */
+        LEFT JOIN CentreAnalytique ca
+            ON ca.idcentreanalytique = l.idcentre
+
+        /* Tiers */
+        LEFT JOIN Tiers tr
+            ON tr.idtiers = l.idtiers
+
+        WHERE
+
+            t.codtypeoperation = 'encaissement'
+
+            AND t.idcaisse IN
+            (
+                SELECT value
+                FROM STRING_SPLIT(@idcaisses, ',')
+            )
+
+            AND CAST(e.dateoperation AS DATE)
+                BETWEEN @datedebut AND @datefin
+
+        ORDER BY
+
+            cp.dateperiode,
+            e.dateoperation,
+            e.codeoperation,
+            l.idligneoperation;
     `
 }

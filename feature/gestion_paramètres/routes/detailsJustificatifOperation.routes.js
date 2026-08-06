@@ -4,12 +4,13 @@ const router = express.Router();
 const controller = require(
   "../controllers/detailsJustificatifOperation.controller"
 );
+const authmiddleware = require("../../../middlewares/auth.middlewre");
 
 /* CRUD complet */
-router.post("/create", controller.create);
-router.get("/", controller.findAll);
-router.get("/:id", controller.findOne);
-router.put("/update/:id", controller.update);
-router.delete("/delete/:id", controller.delete);
+router.post("/create", authmiddleware.authentificatetoken, controller.create);
+router.get("/", authmiddleware.authentificatetoken, controller.findAll);
+router.get("/:id", authmiddleware.authentificatetoken, controller.findOne);
+router.put("/update/:id", authmiddleware.authentificatetoken, controller.update);
+router.delete("/delete/:id", authmiddleware.authentificatetoken, controller.delete);
 
 module.exports = router;

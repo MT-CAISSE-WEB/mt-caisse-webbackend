@@ -19,7 +19,6 @@ class enteteOperationModel {
     idsociete,
     idsite,
     iddevise,
-    codedevise,
     dateoperation,
     montant,
     tauxoperation,
@@ -36,7 +35,6 @@ class enteteOperationModel {
     this.idsociete = idsociete;
     this.idsite = idsite;
     this.iddevise = iddevise;
-    this.codedevise = codedevise;
     this.dateoperation = dateoperation;
     this.montant = montant;
     this.tauxoperation = tauxoperation;

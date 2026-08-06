@@ -66,6 +66,8 @@ class detailsDemandeModel {
     return result.recordset[0]
   }
 
+  
+
   async update_detailsDemande(iddetailsdemande, data) {
     const pool = await connectDB()
     const result = await pool.request()

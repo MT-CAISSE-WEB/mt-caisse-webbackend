@@ -26,6 +26,7 @@ module.exports.EnteteOperationCaisse = sequelize.define(
     },
     codeoperation: DataTypes.STRING,
     montant: DataTypes.DECIMAL,
+    tauxoperation: DataTypes.DECIMAL,
     justifiee: DataTypes.INTEGER,
   },
   {

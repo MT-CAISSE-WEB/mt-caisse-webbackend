@@ -76,7 +76,7 @@ module.exports = function encaissementRule(enteteoperation,typeoperation, ligneo
         iddevise : typeoperation[0][0].caisse_iddevise,
         devise : typeoperation[0][0].codedevise,
         montantdevise : l.montantoperation,
-        taux : null,
+        taux : typeoperation[0][0].taux,
         montantref :null,
         numligne : result.length + 1,
         typeecriture : 'caisse',

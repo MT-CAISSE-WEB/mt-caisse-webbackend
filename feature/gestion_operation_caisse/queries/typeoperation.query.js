@@ -70,7 +70,7 @@ module.exports = {
         WHERE t.idperiode = @idperiode
         GROUP BY t.idcaisse, c.codecaisse, c.libelle, c.idjournal, c.idcompte, c.iddevise, c.seuilmnimal;
     `,
-    plus_couteux : `
+    plus_couteux: `
         SELECT TOP 1
             t.idtypeoperation,
             t.codtypeoperation,
@@ -90,7 +90,7 @@ module.exports = {
         ORDER BY
             t.montantref DESC;
     `,
-    moins_couteux : `
+    moins_couteux: `
         SELECT TOP 1
             t.idtypeoperation,
             t.codtypeoperation,
@@ -112,7 +112,7 @@ module.exports = {
         ORDER BY
             t.montantref ASC;
     `,
-    total_caisse : `
+    total_caisse: `
         SELECT
             SUM(t.montantref) AS total_decaissement_jour
         FROM TypeOperation t
@@ -121,7 +121,7 @@ module.exports = {
             t.codtypeoperation = @codetypeoperation
             AND t.idperiode = @periode
     `,
-    total_par_caisse : `
+    total_par_caisse: `
         SELECT
             t.idcaisse,
             c.codecaisse,
@@ -141,7 +141,7 @@ module.exports = {
         ORDER BY
             total_decaissement DESC;
     `,
-    operation : `
+    operation: `
         SELECT
             t.idtypeoperation,
             t.codtypeoperation,
@@ -178,7 +178,7 @@ module.exports = {
             ED.iddemande,
             ED.codedemande;
     `,
-    decaissBydemandeDevCaisse : `
+    decaissBydemandeDevCaisse: `
         SELECT
             ED.codedemande,
             C.codecaisse,
@@ -268,37 +268,263 @@ module.exports = {
             FORMAT(EOC.dateoperation, 'yyyy-MM');
 
     `,
-    reçucaisse : `
+    reçucaisse: `
         SELECT
-            S.raisonsociale        AS societe,
-            SI.libelle             AS site,
-            C.libelle               AS caisse,
-            E.codeoperation         AS numero,
-            E.dateoperation,
-            D.codedevise            AS deviseoperation,
-            DC.codedevise            AS devisecaisse,
-            CP.soldeouverture,
-            CP.soldefermeture,
+    S.raisonsociale        AS societe,
+    SI.libelle             AS site,
+    C.libelle               AS caisse,
+    C.codecaisse            AS codecaisse,
+    E.codeoperation         AS numero,
+    ED.codedemande          AS numeroDemande,  -- Sera NULL si pas de demande
+    E.dateoperation,
+    D.codedevise            AS deviseoperation,
+    DC.codedevise           AS devisecaisse,
+    CP.soldeouverture,
+    CP.soldefermeture,
+    TOPE.codtypeoperation   AS typeoperation,
+    TOPE.createdby          AS caissier,
+    E.beneficiaire,
+    N.libelle               AS nature,
+    T.designation           AS tiers,
+    CA.libelle              AS libelleCentre,
+    CA.codecentreanalytique AS codecentreanalytique,
+    DP.libelle              AS libelleDep,  
+    DP.codedept             AS codeDep,      
+    L.montantoperation      AS montantoperation,
+    L.libelle               AS libelleoperation,
+    TOPE.montant            AS montantpaye
+FROM EnteteOperationCaisse E
+JOIN TypeOperation TOPE ON TOPE.idoperation = E.idoperation
+JOIN Caisse C ON C.idcaisse = TOPE.idcaisse
+JOIN Societe S ON S.idsociete = E.idsociete
+JOIN Site SI ON SI.idsite = E.idsite
+JOIN Devise DC ON DC.iddevise = C.iddevise
+JOIN Devise D ON D.iddevise = E.iddevise
+JOIN CaissePeriode CP ON CP.idperiode = TOPE.idperiode
+LEFT JOIN EnteteDemande ED ON E.iddemande = ED.iddemande
+LEFT JOIN Departement DP ON ED.iddepartement = DP.iddepartement
+LEFT JOIN ligneoperationCaisse L ON L.idoperation = E.idoperation
+LEFT JOIN NatureOperation N ON N.idnature = L.idnature
+LEFT JOIN Tiers T ON T.idtiers = L.idtiers
+LEFT JOIN CentreAnalytique CA ON L.idcentre = CA.idcentreanalytique
+WHERE E.idoperation = @idoperation
+    `,
+    getByCodeOperation: `
+    SELECT idoperation, codeoperation, iddemande, idsociete, idsite, iddevise,
+           dateoperation, montant, tauxoperation, typeoperation, beneficiaire
+    FROM EnteteOperationCaisse
+    WHERE codeoperation = @codeoperation
+  `,
+    validateurOp: `
+        SELECT
+                VD.idvalidationdemande,
+                VD.rang,
+                VD.datevalidation,
+                VD.commentaire,
+                VD.decision,
+                U.nom,
+                U.prenom
 
-            TOPE.codtypeoperation   AS typeoperation,
-            N.libelle               AS nature,
-            T.designation              AS tiers,
-            L.montantoperation      AS montantoperation,
-            L.libelle      AS libelleoperation,
-            TOPE.montant            AS montantpaye
+            FROM EnteteOperationCaisse E
+            INNER JOIN EnteteDemande ED ON ED.iddemande = E.iddemande
+            INNER JOIN ValidationDemande VD ON VD.iddemande = ED.iddemande
+            INNER JOIN Utilisateur U ON U.idutilisateur = VD.idutilisateur
+            WHERE E.idoperation = @idoperation
 
-        FROM EnteteOperationCaisse E
-        JOIN TypeOperation TOPE ON TOPE.idoperation = E.idoperation
-        JOIN Caisse C ON C.idcaisse = TOPE.idcaisse
-        JOIN Societe S ON S.idsociete = E.idsociete
-        JOIN Site SI ON SI.idsite = E.idsite
-        JOIN Devise DC ON DC.iddevise = C.iddevise
-        JOIN Devise D ON D.iddevise = E.iddevise
-        JOIN CaissePeriode CP ON CP.idperiode = TOPE.idperiode
-        LEFT JOIN ligneoperationCaisse L ON L.idoperation = E.idoperation
-        LEFT JOIN NatureOperation N ON N.idnature = L.idnature
-        LEFT JOIN Tiers T ON T.idtiers = L.idtiers
+            ORDER BY
+                VD.rang ASC,
+                VD.datevalidation ASC;
+    `,
+    operationJustificatif: `
+        SELECT
+            e.idoperation,
+            e.codeoperation,
+            e.dateoperation,
+            e.beneficiaire,
 
-        WHERE E.idoperation = @idoperation
+            SUM(CASE
+                    WHEN t.codtypeoperation = 'decaissementaj'
+                    THEN t.montant
+                    ELSE 0
+                END) AS montant_decaissement,
+
+            SUM(CASE
+                    WHEN t.codtypeoperation = 'decaissementaj'
+                    THEN t.montantref
+                    ELSE 0
+                END) AS montant_decaissement_ref,
+
+            SUM(CASE
+                    WHEN t.codtypeoperation = 'encaissement'
+                    THEN t.montant
+                    ELSE 0
+                END) AS montant_encaissement,
+
+            SUM(CASE
+                    WHEN t.codtypeoperation = 'encaissement'
+                    THEN t.montantref
+                    ELSE 0
+                END) AS montant_encaissement_ref,
+
+            ISNULL(j.total_justificatif,0) AS montant_justifie,
+
+            ISNULL(j.total_justificatif_ref,0) AS montant_justifie_ref,
+
+            SUM(CASE
+                    WHEN t.codtypeoperation = 'decaissementaj'
+                    THEN t.montant
+                    ELSE 0
+                END)
+            - ISNULL(j.total_justificatif,0)
+            - SUM(CASE
+                        WHEN t.codtypeoperation ='encaissement'
+                        THEN t.montant
+                        ELSE 0
+                    END) AS reste_a_justifier,
+
+            SUM(CASE
+                    WHEN t.codtypeoperation = 'decaissementaj'
+                    THEN t.montantref
+                    ELSE 0
+                END)
+            - ISNULL(j.total_justificatif_ref,0)
+            - SUM(CASE
+                        WHEN t.codtypeoperation ='encaissement'
+                        THEN t.montantref
+                        ELSE 0
+                    END) AS reste_a_justifier_ref
+
+        FROM EnteteOperationCaisse e
+
+        INNER JOIN TypeOperation t
+            ON t.idoperation = e.idoperation
+
+        LEFT JOIN
+        (
+            SELECT
+                idoperation,
+                SUM(montantjustificatif) AS total_justificatif,
+                SUM(montantjustificatif * taux) AS total_justificatif_ref
+            FROM JustificatifOperation
+            GROUP BY idoperation
+        ) j
+            ON j.idoperation = e.idoperation
+
+        WHERE e.idoperation = @idoperation
+
+        GROUP BY
+            e.idoperation,
+            e.codeoperation,
+            e.dateoperation,
+            e.beneficiaire,
+            j.total_justificatif,
+            j.total_justificatif_ref;
+    `,
+
+    detailsJustificatif: `
+        SELECT
+            jo.idjustificatifoperation,
+            jo.codejustificatif,
+            jo.date,
+            jo.commentaire,
+            dv.codedevise,
+            jo.taux,
+            jo.tauxinverse,
+            jo.montantjustificatif,
+            d.iddetailsjustificatifoperation,
+            d.montantdetail,
+            d.montantref,
+
+            n.libelle AS natureoperation,
+            ca.libelle AS centreanalytique,
+            ca.codecentreanalytique
+
+        FROM JustificatifOperation jo
+
+        LEFT JOIN Devise dv
+            ON dv.iddevise = jo.iddevise
+
+        LEFT JOIN DetailsJustificatifOperation d
+            ON d.idjustificatif = jo.idjustificatifoperation
+
+        LEFT JOIN NatureOperation n
+            ON n.idnature = d.idnature
+
+        LEFT JOIN CentreAnalytique ca
+            ON ca.idcentreanalytique = d.idcentreanalytique
+
+        WHERE jo.idoperation = @idoperation
+
+        ORDER BY jo.date, jo.codejustificatif;
+    `,
+    encaissementJustif: `
+        SELECT
+            eo.idoperation,
+            eo.codeoperation,
+            eo.dateoperation,
+            eo.beneficiaire,
+
+            tp.montant,
+            tp.montantref,
+            tp.taux,
+
+            c.idcaisse,
+            c.codecaisse,
+            c.libelle AS libellecaisse,
+            d.codedevise
+
+        FROM EnteteOperationCaisse eo
+
+        INNER JOIN TypeOperation tp
+            ON tp.idoperation = eo.idoperation
+        AND tp.codtypeoperation = 'encaissement'
+
+        INNER JOIN Caisse c
+            ON c.idcaisse = tp.idcaisse
+
+        INNER JOIN Devise d
+            ON d.iddevise = c.iddevise
+
+        WHERE eo.idoperationorigine = @idoperation
+
+        ORDER BY eo.dateoperation, eo.codeoperation;
+    `,
+
+    decaissementInit: `
+        SELECT
+            l.idligneoperation,
+            l.libelle,
+            n.libelle nature,
+            ca.codecentreanalytique,
+            ca.libelle centreanalytique,
+            l.montantoperation,
+            c.codecaisse,
+            c.libelle libellecaisse,
+            d.codedevise
+
+        FROM LigneOperationCaisse l
+
+        INNER JOIN EnteteOperationCaisse e
+        ON e.idoperation=l.idoperation
+
+        INNER JOIN TypeOperation tp
+        ON tp.idoperation=e.idoperation
+        AND tp.codtypeoperation='decaissementaj'
+
+        INNER JOIN Caisse c
+        ON c.idcaisse=tp.idcaisse
+
+        INNER JOIN Devise d
+        ON d.iddevise=c.iddevise
+
+        LEFT JOIN NatureOperation n
+        ON n.idnature=l.idnature
+
+        LEFT JOIN CentreAnalytique ca
+        ON ca.idcentreanalytique=l.idcentre
+
+        WHERE e.idoperation=@idoperation
+
+        ORDER BY n.libelle;
     `
 };

@@ -1,4 +1,4 @@
-const {sql, connectInstance, connectDB} = require('../../../config/db');
+const { sql, connectInstance, connectDB } = require('../../../config/db');
 const { v4: uuidv4 } = require('uuid');
 const { parametreComptableQueries } = require('../queries/queryIndex');
 const fieldMap = {
@@ -18,7 +18,7 @@ const fieldMap = {
 
 
 class ParametreComptableModel {
-    constructor( idparametrecomptable,idsociete, idjournal ,idcompte, urldossier, createdat, createdby, updatedat, updatedby) {
+    constructor(idparametrecomptable, idsociete, idjournal, idcompte, urldossier, createdat, createdby, updatedat, updatedby) {
         this.idparametrecomptable = idparametrecomptable;
         this.idsociete = idsociete;
         this.idjournal = idjournal;
@@ -68,10 +68,10 @@ class ParametreComptableModel {
     async get_parametrecomptable_bysociete(idsociete) {
         const pool = await connectDB();
         try {
-            const result = await pool.request() 
-            .input('idsociete', sql.UniqueIdentifier, idsociete)
-            .query(parametreComptableQueries.getBySociete);
-        
+            const result = await pool.request()
+                .input('idsociete', sql.UniqueIdentifier, idsociete)
+                .query(parametreComptableQueries.getBySociete);
+
             return result.recordset;
         } catch (error) {
             console.error(`Error fetching parametre for societe ${idsociete}:`, error);
@@ -82,7 +82,7 @@ class ParametreComptableModel {
     async save(data) {
         const pool = await connectDB();
 
-        try{
+        try {
             const { societe, type, value, createdby, updatedby } = data;
 
             const field = fieldMap[type];
@@ -97,7 +97,7 @@ class ParametreComptableModel {
                     FROM ParametreComptable 
                     WHERE idsociete = @idsociete
                 `);
-            
+
             const exists = check.recordset[0].count > 0;
             let result;
 
@@ -126,8 +126,8 @@ class ParametreComptableModel {
                     `);
             }
 
-            return {success: true, data: result.recordset[0]};
-        }catch (error) {
+            return { success: true, data: result.recordset[0] };
+        } catch (error) {
             console.log(`Erreur save parametre: ${error}`);
             throw error;
         }
@@ -140,6 +140,180 @@ class ParametreComptableModel {
             .query(parametreComptableQueries.delete);
         return { success: true };
     }
+
+    // Récupérer toutes les correspondances actives (actif = 1)
+    async findAllCorrespondance() {
+        const pool = await connectDB();
+        const result = await pool.request().query(parametreComptableQueries.findAllcorrespondance);
+
+        return result.recordset;
+    }
+
+    // Récupérer une correspondance par son ID (même inactive)
+    async findById(id) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input('idcorrespondance', sql.UniqueIdentifier, id)
+            .query(parametreComptableQueries.findCorrespondanceById);
+
+        return result.recordset[0] || null;
+    }
+
+    // Créer une nouvelle correspondance
+    async createCorrespondance(data, userId = 'system') {
+        const pool = await connectDB();
+        const { idcorrespondance, idcentreanalytique, correspondance, actif = 1 } = data;
+
+        try {
+            const result = await pool.request()
+                .input('idcorrespondance', sql.UniqueIdentifier, idcorrespondance || null)
+                .input('idcentreanalytique', sql.UniqueIdentifier, idcentreanalytique || null)
+                .input('correspondance', sql.NVarChar(255), correspondance || null)
+                .input('actif', sql.Int, actif)
+                .input('createdby', sql.NVarChar(50), userId)
+                .input('createdat', sql.DateTime, new Date())
+                .query(parametreComptableQueries.insertCorrespondance);
+
+            return result.recordset[0];
+        } catch (error) {
+            console.log("Error ", error);
+        }
+    }
+
+    // Mettre à jour une correspondance
+    async updateCorrespondance(id, data, userId = 'system') {
+        const pool = await connectDB();
+        const {
+            idcentreanalytique,
+            correspondance
+        } = data;
+
+        let setClause = `
+            updatedby = @updatedby,
+            updatedat = GETDATE()
+        `;
+
+        const request = pool.request().input('idcorrespondance', sql.UniqueIdentifier, id)
+            .input('updatedby', sql.NVarChar(50), userId);
+
+        if (idcentreanalytique !== undefined) {
+            setClause += `,idcentreanalytique = @idcentreanalytique`;
+            request.input('idcentreanalytique', sql.UniqueIdentifier,idcentreanalytique);
+        }
+
+        if (correspondance !== undefined) {
+            setClause += `,correspondance = @correspondance`;
+            request.input('correspondance',sql.NVarChar(255),correspondance);
+        }
+
+        const query = `
+            UPDATE CorrespondanceAnalytique
+            SET ${setClause}
+            OUTPUT INSERTED.*
+            WHERE idcorrespondance = @idcorrespondance
+        `;
+
+        const result = await request.query(query);
+        return result.recordset[0] || null;
+    }
+
+    async hardDelete(id) {
+        const pool = await connectDB();
+        await pool.request()
+            .input('id', sql.UniqueIdentifier, id)
+            .query(`
+            DELETE FROM CorrespondanceAnalytique
+            WHERE idcorrespondance = @id
+        `);
+        return true;
+    }
+
+    async getCentreAnalytiqueById(idcentreanalytique) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input(
+                'idcentreanalytique',
+                sql.UniqueIdentifier,
+                idcentreanalytique
+            )
+            .query(`
+                SELECT idcentreanalytique
+                FROM CentreAnalytique
+                WHERE idcentreanalytique = @idcentreanalytique
+            `);
+
+        return result.recordset[0];
+    }
+
+    async getCorrespondanceByCode(correspondance) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input(
+                'correspondance',
+                sql.NVarChar(255),
+                correspondance
+            )
+            .query(`
+                SELECT *
+                FROM CorrespondanceAnalytique
+                WHERE correspondance = @correspondance
+            `);
+
+        return result.recordset[0];
+    }
+
+    async getCorrespondanceByCentre(centre) {
+
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input(
+                'idcentreanalytique',
+                sql.UniqueIdentifier,
+                centre
+            )
+            .query(`
+                SELECT *
+                FROM CorrespondanceAnalytique
+                WHERE idcentreanalytique = @idcentreanalytique
+            `);
+
+        return result.recordset[0];
+    }
+
+    async updateParametreComptable(idsociete, champ, valeur) {
+        const champsAutorises = [
+            'analytiquesite',
+            'axesecond',
+            'analytiquetable'
+        ];
+
+        if (!champsAutorises.includes(champ)) {
+            throw new Error('Champ non autorisé');
+        }
+
+        const pool = await connectDB();
+        const query = `
+            UPDATE ParametreComptable
+            SET ${champ} = @valeur,
+                updatedat = GETDATE()
+            OUTPUT INSERTED.*
+            WHERE idsociete = @idsociete
+        `;
+
+        const result = await pool.request()
+            .input('idsociete', sql.UniqueIdentifier, idsociete)
+            .input('valeur', sql.Int, valeur)
+            .query(query);
+
+        if (result.recordset.length === 0) {
+            throw new Error(
+                'Aucun paramètre comptable trouvé pour cette société.'
+            );
+        }
+
+        return result.recordset[0];
+    }
+
 }
 
 module.exports = ParametreComptableModel;

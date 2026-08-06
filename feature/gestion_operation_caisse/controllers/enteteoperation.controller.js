@@ -84,6 +84,7 @@ module.exports.delete_enteteoperation = asyncHandler(async (req, res, next) => {
 module.exports.cancel_enteteoperation = asyncHandler(async (req, res, next) => {
   try {
     const data = req.body;
+    console.log("Data to cancel", data)
     const new_enteteoperation =
       await enteteoperationservice.cancel_enteteoperation(data);
     res.status(201).json({ success: true, data: new_enteteoperation });
@@ -221,3 +222,129 @@ module.exports.downloadFile = asyncHandler(async (req, res, next) => {
     });
   }
 });
+
+// Télécharger tous les fichiers
+module.exports.downloadAllFiles = asyncHandler(async (req, res) => {
+  try {
+    const idoperation = req.params.id;
+
+    const result = await enteteoperationservice.downloadAllFiles(idoperation);
+
+    if (result.isZip) {
+      // Cas ZIP (plusieurs fichiers)
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${encodeURIComponent(result.filename)}"`,
+      );
+      res.setHeader("Content-Length", result.buffer.length);
+      res.setHeader("X-Total-Files", result.totalFiles);
+      res.send(result.buffer);
+    } else {
+      // Cas fichier unique
+      res.setHeader("Content-Type", result.mimetype);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${encodeURIComponent(result.filename)}"`,
+      );
+      res.setHeader("Content-Length", result.buffer.length);
+      res.send(result.buffer);
+    }
+  } catch (error) {
+    console.error("❌ Erreur downloadAllFiles:", error);
+
+    if (error.message.includes("Aucune pièce jointe")) {
+      res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Erreur lors du téléchargement",
+        error: error.message,
+      });
+    }
+  }
+});
+
+/**
+ * Télécharge toutes les pièces jointes d'une opération (opération + demande sélectionnée)
+ * GET /api/operations/:id/operation-pieces-jointes/download-all?iddemande=xxx
+ */
+module.exports.downloadAllOperationFiles = async (req, res) => {
+  try {
+    // Récupérer l'idoperation depuis le param OU depuis le query param
+    const idoperation = req.params.id || req.query.idoperation || null;
+    const iddemande = req.query.iddemande || null;
+
+    console.log("📥 downloadAllFiles - ID opération:", idoperation);
+    console.log("📥 downloadAllFiles - ID demande (query):", iddemande);
+
+    // Au moins un ID doit être fourni
+    if (!idoperation && !iddemande) {
+      return res.status(400).json({
+        success: false,
+        message: "Au moins un ID (opération ou demande) est requis",
+      });
+    }
+
+    const result = await enteteoperationservice.downloadAllOperationFiles(
+      idoperation,
+      iddemande,
+    );
+
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${encodeURIComponent(result.filename)}"`,
+    );
+    res.setHeader("X-Total-Files", result.totalFiles);
+    res.setHeader("X-Operation-Files", result.operationFiles);
+    res.setHeader("X-Demande-Files", result.demandeFiles);
+    res.setHeader("X-Has-Demande", result.hasDemande);
+
+    res.send(result.buffer);
+  } catch (error) {
+    console.error("❌ Erreur downloadAllFiles:", error);
+    res.status(error.message.includes("Aucune") ? 404 : 500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+/**
+ * Récupère toutes les pièces jointes d'une opération et de sa demande
+ * GET /api/entete_operation/:idoperation/operation-demande-pieces-jointes
+ */
+module.exports.getOperationWithDemandePieces = async (req, res) => {
+  try {
+    const idoperation = req.params.id;
+   
+
+    const result = await enteteoperationservice.getOperationWithDemandePieces(
+      idoperation,
+    );
+
+    res.json({
+      success: true,
+      data: {
+        operationPJ: result.operationPJ,
+        demandePJ: result.demandePJ,
+        operationCount: result.operationCount,
+        demandeCount: result.demandeCount,
+        totalCount: result.totalCount,
+        hasDemande: result.hasDemande,
+        demandeInfo: result.demandeInfo,
+        operationInfo: result.operationInfo,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Erreur getOperationWithDemandePieces:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

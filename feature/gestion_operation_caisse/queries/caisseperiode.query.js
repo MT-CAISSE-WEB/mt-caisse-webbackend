@@ -348,5 +348,41 @@ module.exports = {
         LEFT JOIN last_solde ls ON ls.idcaisse = comb.idcaisse AND ls.dateperiode = comb.dateperiode
         LEFT JOIN operations_agg oa ON oa.idcaisse = comb.idcaisse AND oa.dateperiode = comb.dateperiode
         ORDER BY comb.dateperiode, comb.codecaisse;
+    `,
+    SOLDE_DATE : `
+        WITH last_period AS (
+            SELECT 
+                idcaisse,
+                dateperiode,
+                soldeouverture,
+                ROW_NUMBER() OVER (PARTITION BY idcaisse ORDER BY dateperiode DESC) AS rn
+            FROM CaissePeriode
+        ),
+        operations_last AS (
+            SELECT 
+                cp.idcaisse,
+                cp.dateperiode,
+                SUM(CASE WHEN tope.codtypeoperation = 'encaissement' THEN tope.montant ELSE 0 END) AS total_encaissement,
+                SUM(CASE WHEN tope.codtypeoperation IN ('decaissement','decaissementaj') THEN tope.montant ELSE 0 END) AS total_decaissement
+            FROM CaissePeriode cp
+            LEFT JOIN TypeOperation tope ON tope.idperiode = cp.idperiode
+            INNER JOIN last_period lp ON lp.idcaisse = cp.idcaisse AND lp.dateperiode = cp.dateperiode
+            GROUP BY cp.idcaisse, cp.dateperiode
+        )
+        SELECT 
+            c.idcaisse,
+            c.codecaisse,
+            c.libelle,
+            d.codedevise,
+            ISNULL(lp.soldeouverture, 0) AS soldeouverture,
+            lp.dateperiode AS derniere_date_periode,
+            ISNULL(ol.total_encaissement, 0) AS total_encaissement,
+            ISNULL(ol.total_decaissement, 0) AS total_decaissement,
+            ISNULL(lp.soldeouverture, 0) + ISNULL(ol.total_encaissement, 0) - ISNULL(ol.total_decaissement, 0) AS solde_theorique
+        FROM Caisse c
+        INNER JOIN Devise d ON d.iddevise = c.iddevise
+        LEFT JOIN last_period lp ON lp.idcaisse = c.idcaisse AND lp.rn = 1
+        LEFT JOIN operations_last ol ON ol.idcaisse = c.idcaisse AND ol.dateperiode = lp.dateperiode
+        ORDER BY c.codecaisse;
     `
 }

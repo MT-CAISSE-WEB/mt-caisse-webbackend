@@ -27,3 +27,100 @@ module.exports.saveParametreComptable = asyncHandler(async(req, res, next) => {
     res.status(400).json({ success: false, message: error.message });
   }         
 });
+
+
+module.exports.getAllCorrespondance = asyncHandler(async(req, res) => {
+  try {
+    const items = await parametereservice.findAllcorrespondance();
+    res.status(200).json({ success: true, data: items });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+module.exports.getCorrespondanceById = asyncHandler(async(req, res) => {
+  try {
+    const { id } = req.params;
+    const item = await parametereservice.findCorrespondanceById(id);
+    res.status(200).json({success: true, data: item});
+  } catch (error) {
+    if (error.message === 'Correspondance non trouvée') {
+      return res.status(404).json({ message: error.message });
+    }
+    res.status(500).json({ message: error.message });
+  }
+});
+
+module.exports.createCorrespondance = asyncHandler(async(req, res) => {
+  try {
+    const userId = req.user?.id || 'system';
+    const newItem = await parametereservice.createCorrespondance(req.body, userId);
+    res.status(201).json({success: true, data : newItem});
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+module.exports.updateCorrespondance = asyncHandler(async(req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id || 'system';
+    const updated = await parametereservice.updateCorrespondance(id, req.body, userId);
+    res.status(200).json({success: true, data: updated});
+  } catch (error) {
+    if (error.message === 'Correspondance non trouvée') {
+      return res.status(404).json({ message: error.message });
+    }
+    res.status(400).json({ message: error.message });
+  }
+});
+
+
+module.exports.hardDelete = asyncHandler(async(req, res) => {
+  try {
+    const { id } = req.params;
+    await parametereservice.hardDeleteCorrespondance(id);
+    res.status(204).send({success: true});
+  } catch (error) {
+    if (error.message === 'Correspondance non trouvée') {
+      return res.status(404).json({ message: error.message });
+    }
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * Save paramètre analytique entite-site */
+module.exports.saveAnalytiqueEntiteSite = asyncHandler(async(req, res, next) => {
+  try {    
+    const data = req.body;
+    const parametre = await parametereservice.saveAnalytiqueEntiteSite(data);
+    res.status(201).json({ success: true, data: parametre });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }         
+});
+
+/**
+ * Save paramètre analytique table correspondance */
+module.exports.saveAnalytiqueTable = asyncHandler(async(req, res, next) => {
+  try {    
+    const data = req.body;
+    const parametre = await parametereservice.saveAnalytiqueTable(data);
+    res.status(201).json({ success: true, data: parametre });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }         
+});
+
+/**
+ * Save paramètre analytique axe second */
+module.exports.saveAxeSecond = asyncHandler(async(req, res, next) => {
+  try {    
+    const data = req.body;
+    const parametre = await parametereservice.saveAxeSecond(data);
+    res.status(201).json({ success: true, data: parametre });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }         
+});

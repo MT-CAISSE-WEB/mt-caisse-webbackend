@@ -9,7 +9,7 @@ const config = {
   password: process.env.DB_PASSWORD,
   server: process.env.DB_SERVER, // ou l’adresse IP du serveur
   database: process.env.DB_NAME,
-  port: Number(process.env.DB_PORT),
+  port: 1433,
   options: {
     encrypt: process.env.DB_ENCRYPT === 'true', // true si Azure
     trustServerCertificate: true,
@@ -66,28 +66,28 @@ const poolPromise = new sql.ConnectionPool(config)
   });
 
 
-const initdatabase = async () => {
-    try {
-        const masterpool = await sql.connect(config);
-        await masterpool.request().query(`
-        IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '${config.database}')
-        BEGIN
-          CREATE DATABASE ${config.database} ;
-        END
-      `);
+  const initdatabase = async () => {
+      try {
+         const masterpool = await sql.connect(config);
+          await masterpool.request().query(`
+          IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '${config.database}')
+          BEGIN
+            CREATE DATABASE ${config.database} ;
+          END
+        `);
 
-        console.log("Base  vérifiée/créée");
+         console.log("Base  vérifiée/créée");
 
-        const dbPool = await sql.connect({ ...config, database: config.database });
-        const tablesScript = fs.readFileSync("./config/init.sql", "utf8");
-        await dbPool.request().batch(tablesScript);
+         const dbPool = await sql.connect({ ...config, database: config.database });
+         const tablesScript = fs.readFileSync("./config/init.sql", "utf8");
+         await dbPool.request().batch(tablesScript);
 
-        console.log("Tables initialisées");
-        await sql.close();
-    } catch (error) {
-        console.error("Erreur initDatabase :", error);
-        await sql.close();
-    }
-}
+          console.log("Tables initialisées");
+          await sql.close();
+      } catch (error) {
+         console.error("Erreur initDatabase :", error);
+         await sql.close();
+      }
+  }
 
-module.exports =  {connectInstance,connectDB, initdatabase, sql, poolPromise};
+module.exports =  {connectInstance,connectDB, initdatabase, poolPromise, sql};

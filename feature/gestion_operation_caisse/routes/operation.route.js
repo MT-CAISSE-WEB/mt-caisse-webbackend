@@ -15,4 +15,7 @@ router.delete("/delete/:id", authmiddleware.authentificatetoken, operation_contr
 router.get('/recu-caisse/:id', authmiddleware.authentificatetoken, operation_controller.get_recudecaisse);
 router.post("/cancel/", authmiddleware.authentificatetoken, operation_controller.cancel_enteteoperation);
 
+// Route pour récupérer les données d'un reçu
+router.get('/data/:numero', operation_controller.getRecuData);
+
 module.exports = router;

@@ -37,7 +37,7 @@ class AffectationDepartementNatureModel {
             // Natures affectées
             const resultAffectes = await pool.request()
                 .input("iddepartement", sql.UniqueIdentifier, iddepartement)
-                .query(`SELECT n.idnature, n.codenature, n.libelle, n.decajustifier, n.actif, n.demandedecaissement, n.imputationtiers
+                .query(`SELECT n.idnature, n.codenature, n.libelle, n.decajustifier, n.actif, n.demandedecaissement, n.imputationtiers, n.typetiers
                     FROM NatureOperation n INNER JOIN AffectationDepartementNature a
                     ON a.idnature = n.idnature
                     WHERE a.iddepartement = @iddepartement

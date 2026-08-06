@@ -96,3 +96,17 @@ module.exports.getEtatcloturePdf = asyncHandler(async (req, res) => {
         res.status(500).json({ message: 'Erreur génération PDF' });
     }
 });
+
+/**
+ * Get Etat encaissement caisse
+ */
+module.exports.journalencaissementcontroller = asyncHandler(async(req, res, next) => {
+  try {
+    const {idcaisses, datedebut, datefin} = req.body;
+    console.log("Data sended:", req.body)
+    const result = await consultationservice.getEncaissements(idcaisses, datedebut, datefin);
+    res.status(201).json({ success: true, data: result });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});

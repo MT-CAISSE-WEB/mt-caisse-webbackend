@@ -76,6 +76,7 @@ module.exports.delete = asyncHandler(async (req, res, next) => {
     const demande_ = await demandeservice.delete_demande(iddemande);
     res.json({ success: true, message: "demande supprimé" });
   } catch (error) {
+    console.log("Erreur", error)
     res.status(404).json({ success: false, message: error.message });
   }
 });
@@ -286,5 +287,51 @@ module.exports.downloadFile = asyncHandler(async (req, res, next) => {
       success: false,
       message: error.message,
     });
+  }
+});
+
+// Fonction de download de plusieurs fichiers
+
+module.exports.downloadAllFiles = asyncHandler(async (req, res) => {
+  try {
+    const iddemande = req.params.id;
+
+    const result = await demandeservice.downloadAllFiles(iddemande);
+
+    if (result.isZip) {
+      // Cas ZIP (plusieurs fichiers)
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${encodeURIComponent(result.filename)}"`,
+      );
+      res.setHeader("Content-Length", result.buffer.length);
+      res.setHeader("X-Total-Files", result.totalFiles);
+      res.send(result.buffer);
+    } else {
+      // Cas fichier unique
+      res.setHeader("Content-Type", result.mimetype);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${encodeURIComponent(result.filename)}"`,
+      );
+      res.setHeader("Content-Length", result.buffer.length);
+      res.send(result.buffer);
+    }
+  } catch (error) {
+    console.error("❌ Erreur downloadAllFiles:", error);
+
+    if (error.message.includes("Aucune pièce jointe")) {
+      res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Erreur lors du téléchargement",
+        error: error.message,
+      });
+    }
   }
 });

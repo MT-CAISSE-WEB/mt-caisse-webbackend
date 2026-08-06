@@ -479,8 +479,9 @@ module.exports = {
             elc.debit,
             elc.credit,
             (elc.debit + elc.credit) AS montant_ecriture,
-            elc.iddevise,
-            elc.devise
+            elc.iddevise AS iddevise_ecriture,
+            elc.devise AS devise_ecriture,
+            elc.taux AS taux_ecriture
 
         FROM Ops o
             JOIN EnteteOperationCaisse e ON e.idoperation = o.idoperation

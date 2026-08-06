@@ -46,39 +46,38 @@ module.exports = function decaissementRule(enteteoperation,typeoperation, ligneo
         total += l.montantoperation;
 
         result.push({
-        idligneoperation : l.idligneoperation,
-        idtypeoperation : typeoperation[0][0].idtypeoperation,
-        typeoperation : typeoperation[0][0].codtypeoperation,
+            idligneoperation : l.idligneoperation,
+            idtypeoperation : typeoperation[0][0].idtypeoperation,
+            typeoperation : typeoperation[0][0].codtypeoperation,
 
-        idnature : l.idnature,
-        codenature : l.nature_code,
-        libellenature : l.nature_libelle,
+            idnature : l.idnature,
+            codenature : l.nature_code,
+            libellenature : l.nature_libelle,
 
-        idcompte : l.compte_id,
-        compte : l.numcompte,
+            idcompte : l.compte_id,
+            compte : l.numcompte,
 
-        idjournal : typeoperation[0][0].idjournal,
-        journal : typeoperation[0][0].codejournal,
+            idjournal : typeoperation[0][0].idjournal,
+            journal : typeoperation[0][0].codejournal,
 
-        idcentreanalytique : l.centre_id,
-        centreanalytique : l.codecentreanalytique,
+            idcentreanalytique : l.centre_id,
+            centreanalytique : l.codecentreanalytique,
 
-        idtiers : l.tiers_id,
-        tiers : l.codetiers,
-        libelle : l.libelle,
-        credit : 0,
-        debit : l.montantoperation,
-        etat : 'en attente',
-        
-        iddevise : typeoperation[0][0].caisse_iddevise,
-        devise : typeoperation[0][0].codedevise,
-        montantdevise : l.montantoperation,
-        taux : null,
-        montantref :null,
-        numligne : result.length + 1,
-        typeecriture : 'caisse',
-        date : enteteoperation.dateoperation
-         
+            idtiers : l.tiers_id,
+            tiers : l.codetiers,
+            libelle : l.libelle,
+            credit : 0,
+            debit : l.montantoperation,
+            etat : 'en attente',
+            
+            iddevise : typeoperation[0][0].caisse_iddevise,
+            devise : typeoperation[0][0].codedevise,
+            montantdevise : l.montantoperation,
+            taux : typeoperation[0][0].taux,
+            montantref :null,
+            numligne : result.length + 1,
+            typeecriture : 'caisse',
+            date : enteteoperation.dateoperation
         })
     }
 

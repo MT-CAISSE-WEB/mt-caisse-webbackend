@@ -1,4 +1,4 @@
-module.exports = function justificatifRule(
+module.exports = function  justificatifRule(
   paramcomptable,
   natureoperationdecaj,
   justificatif,
@@ -24,11 +24,11 @@ module.exports = function justificatifRule(
     codenature: natureoperationdecaj[0].codenature,
     libellenature: natureoperationdecaj[0].libelle,
 
-    idcentreanalytique: null,
-    centreanalytique: null,
+    idcentreanalytique: natureoperationdecaj[0].idcentreanalytique || null,
+    centreanalytique: natureoperationdecaj[0].codecentreanalytique || null,
 
-    idtiers: null,
-    tiers: null,
+    idtiers: natureoperationdecaj[0].idtiers || null,
+    tiers: natureoperationdecaj[0].codetiers || null,
 
     credit: justificatif.data[0].montantjustificatif,
     debit: 0,

@@ -43,37 +43,37 @@ module.exports = function multiCaisseRule(
     
     for (ref in lignes){
         result.push({
-        idcompte: ref.compte_id,
-        compte: ref.numcompte,
+            idcompte: ref.compte_id,
+            compte: ref.numcompte,
 
-        idnature: ref.nature_id,
-        libellenature: ref.nature_libelle,
+            idnature: ref.nature_id,
+            libellenature: ref.nature_libelle,
 
-        idjournal: mouvements[0].idjournal,
-        journal: mouvements[0].codejournal,
+            idjournal: mouvements[0].idjournal,
+            journal: mouvements[0].codejournal,
 
-        debit: isDecaissement ? total : 0,
-        credit: isEncaissement ? total : 0,
+            debit: isDecaissement ? total : 0,
+            credit: isEncaissement ? total : 0,
 
-        idcentreanalytique: ref.centre_id,
-        centreanalytique: ref.codecentreanalytique,
+            idcentreanalytique: ref.centre_id,
+            centreanalytique: ref.codecentreanalytique,
 
-        idtiers: ref.tiers_id,
-        tiers: ref.codetiers,
+            idtiers: ref.tiers_id,
+            tiers: ref.codetiers,
 
-        iddevise: mouvements[0].caisse_iddevise,
-        devise: mouvements[0].codedevise,
+            iddevise: mouvements[0].caisse_iddevise,
+            devise: mouvements[0].codedevise,
 
-        montantdevise: total,
-        taux: 1,
-        montantref: total,
+            montantdevise: total,
+            taux: 1,
+            montantref: total,
 
-        etat: 'en attente',
-        numligne: result.length + 1,
-        typeecriture: 'charge',
-        date : enteteoperation.dateoperation,
-        libelle_ecriture : ref.libelle
-    });
+            etat: 'en attente',
+            numligne: result.length + 1,
+            typeecriture: 'charge',
+            date : enteteoperation.dateoperation,
+            libelle_ecriture : ref.libelle
+        });
     }
     
 

@@ -5,6 +5,7 @@ const conversionRule = require('./conversion.rule');
 const transfertRule = require('./transfert.rule');
 const decaissementajRule = require('./decaissementaj.rule');
 const justificatifRule = require('./justificatif.rule');
+const retourRule = require('./retourencaisse.rule');
 
 module.exports = {
     encaissement: encaissementRule,
@@ -12,5 +13,6 @@ module.exports = {
     conversion: conversionRule,
     transfert : transfertRule,
     justificatif : justificatifRule,
-    decaissementaj : decaissementajRule
+    decaissementaj : decaissementajRule,
+    retourencaisse : retourRule
 };

@@ -56,43 +56,47 @@ const queryinsert = `
         try {
             const pool = await connectDB();
             const query = `SELECT 
-    elc.idligneecriture,
-    elc.numligne,
-    ec.ref_ecriture,
-    ec.num_piece,
-    ec.journal,
-    ec.date_operation,
-    elc.idcentreanalytique,
-    elc.centreanalytique,
-    elc.typeecriture,
-    elc.etat,
-    elc.idcompte,
-    elc.compte,
-    elc.idtiers,
-    elc.tiers,
-    elc.libelle,
-    elc.debit,
-    elc.credit,
-    (elc.debit + elc.credit) AS montant,
-    elc.iddevise,
-    elc.devise,
-    st.idsite,
-    st.codesite,
-    st.libelle as site_libelle
-FROM EcritureLigneComptable elc
-INNER JOIN EcritureComptable ec 
-    ON ec.idecriture = elc.idecriture
-inner join TypeOperation ty on ty.idtypeoperation=ec.idtypeoperation
-inner join site st on st.idsite = ty.idsite
+                elc.idligneecriture,
+                elc.numligne,
+                ec.ref_ecriture,
+                ec.num_piece,
+                ec.journal,
+                ec.date_operation,
+                elc.idcentreanalytique,
+                elc.centreanalytique,
+                elc.idcentreanalytiquesecond,
+                elc.centreanalytiquesecond,
+                elc.typeecriture,
+                elc.etat,
+                elc.idcompte,
+                elc.compte,
+                elc.idtiers,
+                elc.tiers,
+                elc.libelle,
+                elc.debit,
+                elc.credit,
+                elc.taux,
+                (elc.debit + elc.credit) AS montant,
+                (elc.taux * elc.montantdevise) AS montantref,
+                elc.iddevise,
+                elc.devise,
+                st.idsite,
+                st.codesite,
+                st.libelle as site_libelle
+            FROM EcritureLigneComptable elc
+            INNER JOIN EcritureComptable ec 
+                ON ec.idecriture = elc.idecriture
+            inner join TypeOperation ty on ty.idtypeoperation=ec.idtypeoperation
+            inner join site st on st.idsite = ty.idsite
 
-WHERE
-    (@idsite IS NULL OR ty.idsite = @idsite)
-AND (@datedebut IS NULL OR ec.date_operation >= @datedebut)
-AND (@datefin IS NULL OR ec.date_operation < DATEADD(DAY, 1, @datefin))
-AND (@etat is null or @etat ='' or elc.etat=@etat)
-AND (@journal is null or @journal='' or ec.journal=@journal)
-AND (@typeecriture is null or @typeecriture='' or elc.typeecriture=@typeecriture)
-order by ec.date_operation desc, ec.ref_ecriture desc, elc.numligne asc`;
+            WHERE
+                (@idsite IS NULL OR ty.idsite = @idsite)
+            AND (@datedebut IS NULL OR ec.date_operation >= @datedebut)
+            AND (@datefin IS NULL OR ec.date_operation < DATEADD(DAY, 1, @datefin))
+            AND (@etat is null or @etat ='' or elc.etat=@etat)
+            AND (@journal is null or @journal='' or ec.journal=@journal)
+            AND (@typeecriture is null or @typeecriture='' or elc.typeecriture=@typeecriture)
+            order by ec.date_operation desc, ec.ref_ecriture desc, elc.numligne asc`;
             const result = await pool.request()
             .input('idsite', sql.UniqueIdentifier, idsite || null)
             .input('datedebut', sql.DateTime, datedebut || null)

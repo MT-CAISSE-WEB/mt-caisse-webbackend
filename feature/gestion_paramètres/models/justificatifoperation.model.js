@@ -29,9 +29,7 @@ const JustificatifOperation = sequelize.define(
     },
 
     date: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-      allowNull: false,
+      type: DataTypes.DATE
     },
 
     montantjustificatif: {

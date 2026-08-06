@@ -126,6 +126,7 @@ async function exportPDF(data, res) {
       <td>${d.typeoperation}</td>
       <td>${d.decajustifier}</td>
       <td>${d.imputationtiers}</td>
+      <td>${d.typetiers}</td>
       <td>${d.demandedecaissement}</td>
       <td>${d.numcompte}</td>
       <td>${d.actif ? 'Actif' : 'Inactif'}</td>
@@ -141,6 +142,7 @@ async function exportPDF(data, res) {
         <th>Type d'opération</th>
         <th>Déc. à justifier</th>
         <th>Imputation Tiers</th>
+        <th>Type Tiers</th>
         <th>Dem. Décaissement</th>
         <th>Compte</th>
         <th>Statut</th>
@@ -173,6 +175,7 @@ async function exportExcel(data, res) {
     { header: 'Type d\'opération', key: 'typeoperation' },
     { header: 'Déc. à justifier', key: 'decajustifier' },
     { header: 'Imputation Tiers', key: 'imputationtiers' },
+    { header: 'Type Tiers', key: 'typetiers' },
     { header: 'Dem. Décaissement', key: 'demandedecaissement' },
     { header: 'Compte', key: 'numcompte' },
     // { header: 'Lib. Compte', key: 'compte_libelle' },
@@ -186,6 +189,7 @@ async function exportExcel(data, res) {
       typeoperation: d.typeoperation,
       decajustifier: d.decajustifier,
       imputationtiers: d.imputationtiers,
+      typetiers: d.typetiers,
       demandedecaissement: d.demandedecaissement,
       numcompte: d.numcompte,
       // compte_libelle: d.compte_libelle,

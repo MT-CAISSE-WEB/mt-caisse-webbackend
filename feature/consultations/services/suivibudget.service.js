@@ -55,7 +55,7 @@ async function evolutionBudgetaireBynature (data) {
         .input('idbudget', sql.UniqueIdentifier, data.idbudget || null)
         .input('iddepartement', sql.UniqueIdentifier, data.iddepartement || null)
         .input('idnature', sql.UniqueIdentifier, data.idnature || null)
-        .input('centre', sql.UniqueIdentifier, data.centre || null)
+        // .input('centre', sql.UniqueIdentifier, data.centre || null)
         .query(budgetQueries.suivibudgetBynature);
 
         const dataRows = result.recordsets[0];            // données paginées

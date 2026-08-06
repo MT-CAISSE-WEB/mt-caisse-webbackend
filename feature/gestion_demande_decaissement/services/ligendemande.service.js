@@ -11,14 +11,15 @@ let enteteDemande = new enteteDemandeModel();
 let demandes = [];
 
 async function create_lignedemande(data) {
+    console.log("Lignedata:", data)
     const today = new Date();
 
-    if(!data.iddemande || !data.montantdemande){
+    if (!data.iddemande || !data.montantdemande) {
         throw new Error("Ligne sans entête, sans montant.");
     }
 
     let entetedemande = null;
-    if(data.iddemande){
+    if (data.iddemande) {
         try {
             entetedemande = await enteteDemande.get_demande_by_id(data.iddemande);
         } catch (error) {
@@ -26,15 +27,16 @@ async function create_lignedemande(data) {
         }
     }
 
-    if(!data.idnature){
+    if (!data.idnature) {
         throw new Error("Nature operation non renseigné.");
     }
 
+
     const newLignedemande = new ligneDemandeModel(uuidv4(), data.iddemande || entetedemande.data.iddemande, data.numligne, data.libellelignedemande, data.montantref, data.montantdemande, data.engage, data.preengage, data.engage, data.realise,
-    data.idnature, data.idbudget || null, data.codebudget || null, data.idlignebudget || null, data.idcentre, data.idtiers, data.idsociete, data.idsite, data.createdat, data.createdby);
+        data.idnature, data.idbudget || null, data.codebudgetaire || null, data.idlignebudget || null, data.idcentre, data.idtiers, data.idsociete, data.idsite, data.createdat, data.createdby);
 
     const recorded = await newLignedemande.create_ligneDemande(newLignedemande);
-    if(!recorded.success){
+    if (!recorded.success) {
         throw new Error(recorded.message);
     }
 
@@ -42,11 +44,11 @@ async function create_lignedemande(data) {
 }
 
 async function update_lignedemande(idlignedemande, data) {
-    if(!idlignedemande || !data.idnature){
+    if (!idlignedemande || !data.idnature) {
         throw new Error("Erreur de donnée.");
     }
 
-    if(!data.iddemande || !data.montantdemande){
+    if (!data.iddemande || !data.montantdemande) {
         throw new Error("Ligne sans entête, sans montant.");
     }
 
@@ -59,7 +61,7 @@ async function update_lignedemande(idlignedemande, data) {
     }
 }
 
-async function delete_lignedemande(idlignedemande){
+async function delete_lignedemande(idlignedemande) {
     if (!idlignedemande) {
         throw new Error("ID Ligne requis");
     }
@@ -67,10 +69,11 @@ async function delete_lignedemande(idlignedemande){
     try {
         const ligne_ = await ligneModel.delete_ligneDemande(idlignedemande);
         if (!ligne_.success) {
-          throw new Error(ligne_.message);
+            throw new Error(ligne_.message);
         }
         return ligne_;
     } catch (err) {
+        console.log("Erreur:", error)
         throw err;
     }
 }

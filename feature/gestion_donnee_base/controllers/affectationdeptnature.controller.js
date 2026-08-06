@@ -1,15 +1,14 @@
 const affectationdepartementnature = require("../services/affectationdeptnature.service");
 const asyncHandler = require("../../../shared/middlewares/async");
 const ErrorResponse = require("../../../shared/utils/errorResponse");
-
 const ExcelJS = require('exceljs');
 const puppeteer = require('puppeteer');
 
 
 // Récupère les natures non affectées à une nature
-module.exports.getAllNatures = asyncHandler(async(req, res, next) => {
+module.exports.getAllNatures = asyncHandler(async (req, res, next) => {
   try {
-    const iddepartement  = req.params.iddepartement;
+    const iddepartement = req.params.iddepartement;
     const natures = await affectationdepartementnature.getAllNatures(iddepartement);
     res.json({ success: true, data: natures });
   } catch (error) {
@@ -19,9 +18,9 @@ module.exports.getAllNatures = asyncHandler(async(req, res, next) => {
 
 
 // Sauvegarde les affectations des natures à une nature
-module.exports.saveAffectations = asyncHandler(async(req, res, next) => {
+module.exports.saveAffectations = asyncHandler(async (req, res, next) => {
   try {
-    const iddepartement  = req.params.iddepartement;
+    const iddepartement = req.params.iddepartement;
     const { idsNatures, info } = req.body;
     const affectation_ = await affectationdepartementnature.saveAffectations(iddepartement, idsNatures, info);
     res.json({ success: true, data: affectation_ });
@@ -50,7 +49,8 @@ module.exports.exportAffDepartements = asyncHandler(async (req, res) => {
       success: false,
       message: err.message
     });
-}});
+  }
+});
 
 async function exportPDF(data, res) {
 
@@ -122,14 +122,15 @@ async function exportExcel(data, res) {
 
 module.exports.import_affectations = asyncHandler(async (req, res) => {
   if (!req.file) {
-    return res.status(400).json({success: false, message: 'Aucun fichier reçu'});
+    return res.status(400).json({ success: false, message: 'Aucun fichier reçu' });
   }
   try {
     const info = req.body;
+    console.log("AffDeptNature:", info)
     const result = await affectationdepartementnature.import_affectations(req.file.path, info);
-    res.status(201).json({success: true, data: result});
+    res.status(201).json({ success: true, data: result });
   } catch (err) {
     console.log(err.message);
-    res.status(500).json({success: false, message: err.message});
+    res.status(500).json({ success: false, message: err.message });
   }
 });

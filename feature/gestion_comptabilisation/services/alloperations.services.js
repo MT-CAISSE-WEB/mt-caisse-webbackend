@@ -26,13 +26,17 @@ async function getparamcomptable() {
   }
 }
 
-async function getnatureoperationdecaj() {
+async function getnatureoperationdecaj(idoperation) {
   try {
     const pool = await connectDB();
     const result = await pool.request()
-      .query(`select n.*,pl.numcompte from NatureOperation n
-                inner join PlanComptable pl on pl.idcompte = n.idcompte
-                where n.decajustifier=1`);
+      .input("idoperation", sql.UniqueIdentifier, idoperation)
+      .query(`select n.*, lo.idoperation, ca.idcentreanalytique, ca.codecentreanalytique, tr.codetiers, pl.numcompte from NatureOperation n
+				        inner join ligneoperationCaisse lo on n.idnature = lo.idnature
+						    inner join PlanComptable pl on pl.idcompte = n.idcompte
+						    inner join CentreAnalytique ca on lo.idcentre = ca.idcentreanalytique
+						    inner join Tiers tr on lo.idtiers = tr.idtiers
+                where lo.idoperation = @idoperation and n.decajustifier = 1`);
     return {
       success: true,
       status: 200,
@@ -80,6 +84,29 @@ async function gettypeoperationbyid(idoperation) {
       .request()
       .input("idoperation", sql.UniqueIdentifier, idoperation)
       .query(query.querytypeoperation);
+
+    return {
+      success: true,
+      status: 200,
+      message: "Opération récupérée avec succès !",
+      data: result.recordsets,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      status: 500,
+      message: `Erreur de recuperation: ${error}`.cyan.bold,
+    };
+  }
+}
+
+async function typeoperationbyid(idtypeoperation) {
+  try {
+    const pool = await connectDB();
+    const result = await pool
+      .request()
+      .input("idtypeoperation", sql.UniqueIdentifier, idtypeoperation)
+      .query(query.querytypeoperationbyid);
 
     return {
       success: true,
@@ -177,7 +204,6 @@ async function getecriturecomptablebyid(idtypeoperation) {
         "select * from EcritureComptable where  idtypeoperation=@idtypeoperation",
       );
 
-    console.log("resultat:", result);
     return {
       success: true,
       status: 200,
@@ -185,7 +211,29 @@ async function getecriturecomptablebyid(idtypeoperation) {
       data: result.recordsets,
     };
   } catch (error) {
-    console.log(error);
+    return {
+      success: false,
+      status: 500,
+      message: `Erreur de recuperation: ${error}`.cyan.bold,
+    };
+  }
+}
+
+async function getligneoperationbyidoperationretour(idoperation) {
+  try {
+    const pool = await connectDB();
+    const result = await pool
+      .request()
+      .input("idoperation", sql.UniqueIdentifier, idoperation)
+      .query(query.queryligneoperationbyidoperationretour);
+
+    return {
+      success: true,
+      status: 200,
+      message: "Opération récupérée avec succès !",
+      data: result.recordsets,
+    };
+  } catch (error) {
     return {
       success: false,
       status: 500,
@@ -203,4 +251,6 @@ module.exports = {
   getligneoperationbyidoperation,
   getjustificatifbyid,
   getjustificatifdetailsbyid,
+  typeoperationbyid,
+  getligneoperationbyidoperationretour
 };

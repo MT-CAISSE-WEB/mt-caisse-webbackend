@@ -1,5 +1,5 @@
 module.exports = {
-    getDemandes : `
+  getDemandes: `
         SELECT
             -- ================= ENTETE =================
             E.iddemande,
@@ -83,130 +83,152 @@ module.exports = {
           WHERE 1 = 1 AND (@search IS NULL OR codedemande LIKE @search)
             AND (@search IS NULL OR libelledemande = @search);
     `,
-    demandes : `
-        WITH EntetesPaged AS (
-            SELECT
-                E.iddemande
-            FROM EnteteDemande E
-            WHERE 1 = 1
-
-            -- Sécurité utilisateur
-            AND (
-                @typeentitesociete = 1
-                OR E.idsite = @idsite
-            )
-
-            AND (
-                @search IS NULL
-                OR E.codedemande LIKE @search
-                OR E.libelledemande LIKE @search
-            )
-            ORDER BY E.createdat DESC
-            OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
-        )
-        
+  demandes: `
+    WITH EntetesPaged AS (
         SELECT
-            -- ================= ENTETE =================
-            E.iddemande,
-            E.codedemande,
-            E.typedemande,
-            E.libelledemande,
-            E.datedemande,
-            E.decaisse,
-            E.solde,
-            E.statut,
-            E.idcircuit,
-            E.createdat AS entete_createdat,
-            E.createdby AS entete_createdby,
-            E.updatedat AS entete_updatedat,
-            E.updatedby AS entete_updatedby,
-            CASE 
-                WHEN E.idcircuit IS NOT NULL THEN 1
-                ELSE 0
-            END AS circuitExist,
-
-            -- ================= DEMANDEUR =================
-            U.idutilisateur,
-            U.nom,
-            U.prenom,
-
-            -- ================= DEVISE =================
-            DE.iddevise,
-            DE.codedevise,
-
-            -- ================= DEPARTEMENT =================
-            DEP.iddepartement,
-            DEP.codedept,
-            DEP.libelle AS libelledept,
-
-            -- ================= CIRCUIT =================
-            CI.idcircuitvalidation AS circuit_idcircuit,
-            CI.codecircuitvalidation AS circuit_codecircuit,
-            CI.typeentite AS circuit_typeentite,
-            CI.typeaction AS circuit_typeaction,
-            CI.idsociete AS circuit_idsociete,
-            CI.idsite AS circuit_idsite,
-            CI.actif AS circuit_actif,
-
-            -- ================= SOCIETE / SITE =================
-            S.idsociete,
-            S.codesociete,
-            S.raisonsociale AS societe,
-            SI.idsite,
-            SI.libelle AS site,
-
-            -- ================= LIGNE =================
-            L.idlignedemande,
-            L.numligne,
-            L.libellelignedemande,
-            L.montantdemande,
-
-            -- ================= NATURE / CENTRE =================
-            N.idnature AS idnatureop,
-            N.libelle AS natureoperation,
-            C.idcentreanalytique AS idcentreana,
-            C.libelle AS centreanalytique,
-
-            -- ================= DETAILS =================
-            D.iddetailsdemande,
-            D.quantite,
-            D.montant,
-            D.description
-
-        FROM EntetesPaged EP
-        JOIN EnteteDemande E ON E.iddemande = EP.iddemande
-
-        LEFT JOIN Utilisateur U ON U.idutilisateur = E.iddemandeur
-        LEFT JOIN Societe S ON S.idsociete = E.idsociete
-        LEFT JOIN Site SI ON SI.idsite = E.idsite
-        LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
-        LEFT JOIN Departement DEP ON DEP.iddepartement = E.iddepartement
-        LEFT JOIN CircuitValidation CI ON CI.idcircuitvalidation = E.idcircuit
-
-        LEFT JOIN LigneDemande L ON L.iddemande = E.iddemande
-        LEFT JOIN NatureOperation N ON N.idnature = L.idnature
-        LEFT JOIN CentreAnalytique C ON C.idcentreanalytique = L.idcentre
-        LEFT JOIN DetailsDemande D ON D.idlignedemande = L.idlignedemande
-
-        ORDER BY E.createdat DESC, L.numligne;
-
-        SELECT COUNT(*) AS total
+            E.iddemande
         FROM EnteteDemande E
         WHERE 1 = 1
 
         -- Sécurité utilisateur
         AND (
             @typeentitesociete = 1
-            OR E.idsite = @idsite
+            OR e.idsite = @idsite
         )
-            
+
         AND (
             @search IS NULL
             OR E.codedemande LIKE @search
             OR E.libelledemande LIKE @search
-        );
-    `,
-    insert : `
+        )
+        ORDER BY E.createdat DESC
+        OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
+    )
+    
+    SELECT
+        -- ================= ENTETE =================
+        E.iddemande,
+        E.codedemande,
+        E.typedemande,
+        E.libelledemande,
+        E.datedemande,
+        E.decaisse,
+        E.solde,
+        E.statut,
+        E.idcircuit,
+        E.createdat AS entete_createdat,
+        E.createdby AS entete_createdby,
+        E.updatedat AS entete_updatedat,
+        E.updatedby AS entete_updatedby,
+        CASE 
+            WHEN E.idcircuit IS NOT NULL THEN 1
+            ELSE 0
+        END AS circuitExist,
+
+        -- ================= DEMANDEUR =================
+        U.idutilisateur,
+        U.nom,
+        U.prenom,
+
+        -- ================= DEVISE =================
+        DE.iddevise,
+        DE.codedevise,
+
+        -- ================= DEPARTEMENT =================
+        DEP.iddepartement,
+        DEP.codedept,
+        DEP.libelle AS libelledept,
+
+        -- ================= CIRCUIT =================
+        CI.idcircuitvalidation AS circuit_idcircuit,
+        CI.codecircuitvalidation AS circuit_codecircuit,
+        CI.typeentite AS circuit_typeentite,
+        CI.typeaction AS circuit_typeaction,
+        CI.idsociete AS circuit_idsociete,
+        CI.idsite AS circuit_idsite,
+        CI.actif AS circuit_actif,
+
+        -- ================= SOCIETE / SITE =================
+        S.idsociete,
+        S.codesociete,
+        S.raisonsociale AS societe,
+        SI.idsite,
+        SI.libelle AS site,
+
+        -- ================= LIGNE =================
+        L.idlignedemande,
+        L.numligne,
+        L.libellelignedemande,
+        L.montantdemande,
+
+        -- ================= NATURE / CENTRE =================
+        N.idnature AS idnatureop,
+        N.libelle AS natureoperation,
+        C.idcentreanalytique AS idcentreana,
+        C.libelle AS centreanalytique,
+
+        -- ================= DETAILS =================
+        D.iddetailsdemande,
+        D.quantite,
+        D.montant,
+        D.description,
+
+        -- ================= VALIDATEURS (en JSON) =================
+        (
+            SELECT 
+                CE.rang AS etape_rang,
+                CE.nombrevalidateur,
+                (
+                    SELECT 
+                        EV2.idutilisateur,
+                        U2.nom,
+                        U2.prenom
+                    FROM Etapevalidateur EV2
+                    INNER JOIN Utilisateur U2 ON U2.idutilisateur = EV2.idutilisateur
+                    WHERE EV2.idcircuitetape = CE.idcircuitetape
+                    ORDER BY U2.nom
+                    FOR JSON PATH
+                ) AS validateurs
+            FROM Circuitetape CE
+            WHERE CE.idcircuitvalidation = CI.idcircuitvalidation
+            ORDER BY CE.rang
+            FOR JSON PATH
+        ) AS validateurs_json
+
+    FROM EntetesPaged EP
+    JOIN EnteteDemande E ON E.iddemande = EP.iddemande
+
+    LEFT JOIN Utilisateur U ON U.idutilisateur = E.iddemandeur
+    LEFT JOIN Societe S ON S.idsociete = E.idsociete
+    LEFT JOIN Site SI ON SI.idsite = E.idsite
+    LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
+    LEFT JOIN Departement DEP ON DEP.iddepartement = E.iddepartement
+    LEFT JOIN CircuitValidation CI ON CI.idcircuitvalidation = E.idcircuit
+
+    LEFT JOIN LigneDemande L ON L.iddemande = E.iddemande
+    LEFT JOIN NatureOperation N ON N.idnature = L.idnature
+    LEFT JOIN CentreAnalytique C ON C.idcentreanalytique = L.idcentre
+    LEFT JOIN DetailsDemande D ON D.idlignedemande = L.idlignedemande
+
+    ORDER BY E.createdat DESC, L.numligne;
+
+    SELECT COUNT(*) AS total
+    FROM EnteteDemande E
+    WHERE 1 = 1
+
+    -- Sécurité utilisateur
+    AND (
+        @typeentitesociete = 1
+        OR e.idsite = @idsite
+    )
+        
+    AND (
+        @search IS NULL
+        OR E.codedemande LIKE @search
+        OR E.libelledemande LIKE @search
+    );
+`,
+  insert: `
         INSERT INTO EnteteDemande ( iddemande, codedemande, iddemandeur, typedemande, taux,
             libelledemande, datedemande, decaisse, solde, statut, idcircuit, idsociete, idsite, iddepartement, iddevise, niveauactuel,
             createdat, createdby )
@@ -214,7 +236,7 @@ module.exports = {
           VALUES ( @iddemande, @codedemande, @iddemandeur, @typedemande, @taux, @libelledemande, @datedemande, @decaisse, @solde, @statut,
             @idcircuit, @idsociete, @idsite, @iddepartement, @iddevise, @niveauactuel, @createdat, @createdby)
     `,
-    getAll : `
+  getAll: `
         SELECT *
           FROM EnteteDemande
           WHERE (@search IS NULL OR codedemande LIKE @search)
@@ -227,103 +249,136 @@ module.exports = {
           WHERE (@search IS NULL OR codedemande LIKE @search)
             AND (@statut IS NULL OR statut = @statut);
     `,
-    getOne : `
-        SELECT
-            -- ================= ENTETE =================
-            E.iddemande,
-            E.codedemande,
-            E.typedemande,
-            E.libelledemande,
-            E.datedemande,
-            E.decaisse,
-            E.solde,
-            E.statut,
-            E.taux,
-            E.niveauactuel,
-            E.createdat AS entete_createdat,
+  // Dans entetedemande.query.js, remplacez getOne par :
 
-            -- ================= DEMANDEUR =================
-            U.idutilisateur,
-            U.nom,
-            U.prenom,
+  getOne: `
+    SELECT
+        -- ================= ENTETE =================
+        E.iddemande,
+        E.codedemande,
+        E.typedemande,
+        E.libelledemande,
+        E.datedemande,
+        E.decaisse,
+        E.solde,
+        E.statut,
+        E.taux,
+        E.niveauactuel,
+        E.createdat AS entete_createdat,
+        E.createdby AS entete_createdby,
+        E.updatedat AS entete_updatedat,
+        E.updatedby AS entete_updatedby,
 
-            -- ================= CIRCUIT ================= 
-            CI.idcircuitvalidation AS circuit_idcircuit, 
-            CI.codecircuitvalidation AS circuit_codecircuit, 
-            CI.typeentite AS circuit_typeentite, 
-            CI.typeaction AS circuit_typeaction, 
-            CI.idsociete AS circuit_idsociete, 
-            CI.idsite AS circuit_idsite, 
-            CI.actif AS circuit_actif,
+        -- ================= DEMANDEUR =================
+        U.idutilisateur,
+        U.nom,
+        U.prenom,
+        U.email,
 
-            -- ================= SOCIETE / SITE =================
-            S.idsociete,
-            S.raisonsociale AS societe,
-            SI.idsite,
-            SI.libelle AS site,
+        -- ================= CIRCUIT ================= 
+        CI.idcircuitvalidation AS circuit_idcircuit, 
+        CI.codecircuitvalidation AS circuit_codecircuit,
+        CI.typeentite AS circuit_typeentite, 
+        CI.typeaction AS circuit_typeaction, 
+        CI.idsociete AS circuit_idsociete, 
+        CI.idsite AS circuit_idsite, 
+        CI.actif AS circuit_actif,
 
-            -- ================= DEVISE ================= 
-            DE.iddevise, 
-            DE.codedevise,
+        -- ================= SOCIETE / SITE =================
+        S.idsociete,
+        S.raisonsociale AS societe,
+        SI.idsite,
+        SI.libelle AS site,
 
-            -- ================= DEPARTEMENT =================
-            DEP.iddepartement,
-            DEP.codedept,
-            DEP.libelle AS libelledept,
+        -- ================= DEVISE ================= 
+        DE.iddevise, 
+        DE.codedevise,
 
-            -- ================= LIGNE =================
-            L.idlignedemande,
-            L.numligne,
-            L.libellelignedemande,
-            L.montantdemande,
-            L.codebudgetaire,
-            L.idlignebudget,
+        -- ================= DEPARTEMENT =================
+        DEP.iddepartement,
+        DEP.codedept,
+        DEP.libelle AS libelledept,
 
-            -- ================= NATURE / CENTRE =================
-            N.idnature AS idnatureop,
-            N.libelle AS natureoperation,
-            C.idcentreanalytique AS idcentreana,
-            C.libelle AS centreanalytique,
+        -- ================= LIGNE =================
+        L.idlignedemande,
+        L.numligne,
+        L.libellelignedemande,
+        L.montantdemande,
+        L.codebudgetaire,
+        L.idlignebudget,
 
-            -- ================= Tiers =================
-            T.idtiers AS idtiers,
-            T.codetiers AS codetiers,
-            T.designation AS designationtiers,
+        -- ================= NATURE / CENTRE =================
+        N.idnature AS idnatureop,
+        N.libelle AS natureoperation,
+        C.idcentreanalytique AS idcentreana,
+        C.libelle AS centreanalytique,
 
-            -- ================= DETAILS =================
-            D.iddetailsdemande,
-            D.quantite,
-            D.montant,
-            D.description
+        -- ================= Tiers =================
+        T.idtiers AS idtiers,
+        T.codetiers AS codetiers,
+        T.designation AS designationtiers,
 
-        FROM EnteteDemande E
-        LEFT JOIN Utilisateur U ON U.idutilisateur = E.iddemandeur
-        LEFT JOIN Societe S ON S.idsociete = E.idsociete
-        LEFT JOIN Site SI ON SI.idsite = E.idsite
-        LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
-        LEFT JOIN Departement DEP ON DEP.iddepartement = E.iddepartement
-        LEFT JOIN CircuitValidation CI ON CI.idcircuitvalidation = E.idcircuit
+        -- ================= DETAILS =================
+        D.iddetailsdemande,
+        D.quantite,
+        D.montant,
+        D.description,
 
-        LEFT JOIN LigneDemande L 
-            ON L.iddemande = E.iddemande
+        -- ================= VALIDATEURS (en JSON) =================
+        (
+            SELECT 
+                CE.rang AS etape_rang,
+                CE.nombrevalidateur,
+                (
+                    SELECT 
+                        EV2.idutilisateur,
+                        U2.nom,
+                        U2.prenom,
+                        U2.email,
+                        VD2.decision,
+                        VD2.commentaire
+                    FROM Etapevalidateur EV2
+                    INNER JOIN Utilisateur U2 ON U2.idutilisateur = EV2.idutilisateur
+                    LEFT JOIN ValidationDemande VD2 ON VD2.idutilisateur = EV2.idutilisateur 
+                        AND VD2.iddemande = E.iddemande
+                        AND VD2.idcircuitetape = CE.idcircuitetape
+                    WHERE EV2.idcircuitetape = CE.idcircuitetape
+                    ORDER BY U2.nom
+                    FOR JSON PATH
+                ) AS validateurs
+            FROM Circuitetape CE
+            WHERE CE.idcircuitvalidation = CI.idcircuitvalidation
+            ORDER BY CE.rang
+            FOR JSON PATH
+        ) AS validateurs_json
 
-        LEFT JOIN NatureOperation N 
-            ON N.idnature = L.idnature
+    FROM EnteteDemande E
+    LEFT JOIN Utilisateur U ON U.idutilisateur = E.iddemandeur
+    LEFT JOIN Societe S ON S.idsociete = E.idsociete
+    LEFT JOIN Site SI ON SI.idsite = E.idsite
+    LEFT JOIN Devise DE ON DE.iddevise = E.iddevise
+    LEFT JOIN Departement DEP ON DEP.iddepartement = E.iddepartement
+    LEFT JOIN CircuitValidation CI ON CI.idcircuitvalidation = E.idcircuit
 
-        LEFT JOIN CentreAnalytique C 
-            ON C.idcentreanalytique = L.idcentre
-        
-        LEFT JOIN Tiers T 
-            ON T.idtiers = L.idtiers
+    LEFT JOIN LigneDemande L 
+        ON L.iddemande = E.iddemande
 
-        -- ⚠️ JOINTURE DÉTAIL SANS FILTRAGE
-        LEFT JOIN DetailsDemande D 
-            ON D.idlignedemande = L.idlignedemande
-            AND D.iddemande = E.iddemande
+    LEFT JOIN NatureOperation N 
+        ON N.idnature = L.idnature
 
-        WHERE E.iddemande = @iddemande
-    `,
-    update : `
+    LEFT JOIN CentreAnalytique C 
+        ON C.idcentreanalytique = L.idcentre
+    
+    LEFT JOIN Tiers T 
+        ON T.idtiers = L.idtiers
+
+    LEFT JOIN DetailsDemande D 
+        ON D.idlignedemande = L.idlignedemande
+        AND D.iddemande = E.iddemande
+
+    WHERE E.iddemande = @iddemande
+`,
+  update: `
         UPDATE EnteteDemande
         SET libelledemande = @libelledemande,
             typedemande = @typedemande,
@@ -336,15 +391,15 @@ module.exports = {
             updatedby = @updatedby
         WHERE iddemande = @iddemande
     `,
-    delete : `
+  delete: `
         DELETE FROM EnteteDemande WHERE iddemande = @iddemande
     `,
-    decaisse : `
+  decaisse: `
         UPDATE EnteteDemande
         SET decaisse = @decaisse
         WHERE iddemande = @iddemande
     `,
-    circuitDemande: `
+  circuitDemande: `
         Select CV.*
         From CircuitValidation CV
         Where CV.typeaction = 'decaissement' 
@@ -352,7 +407,7 @@ module.exports = {
         AND CV.typeentite = 'site'
         AND CV.idsite = @idsite
     `,
-    validateurCircuit : `
+  validateurCircuit: `
         Select CE.*,
             CV.typeaction,
             CV.typeentite,
@@ -366,13 +421,13 @@ module.exports = {
         LEFT JOIN Utilisateur U ON U.idutilisateur = EV.idutilisateur
         WHERE CE.idcircuitvalidation = @idcircuitvalidation
     `,
-    initvalidationDemande: `
+  initvalidationDemande: `
         INSERT INTO ValidationDemande
         (iddemande, idcircuitvalidation, idcircuitetape, idutilisateur, decision, rang)
         OUTPUT INSERTED.*
         VALUES (@iddemande, @idcircuitvalidation ,@idcircuitetape ,@idutilisateur , 'en attente', @rang)
     `,
-    getDemandeAvalider : `
+  getDemandeAvalider: `
         SELECT DISTINCT
             ED.iddemande,
             ED.codedemande,
@@ -395,7 +450,7 @@ module.exports = {
 
         WHERE ED.statut < 2;
     `,
-    circuitValidateur: `
+  circuitValidateur: `
         Select VD.*,
             U.nom,
             U.prenom,
@@ -411,7 +466,7 @@ module.exports = {
         Where VD.iddemande = @iddemande
         ORDER BY VD.rang ASC;
     `,
-    detailBudget: `
+  detailBudget: `
         Select E.iddemande, E.codedemande, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
 			LD.idbudget, SUM(LD.montantref) AS montant_demande
         From EnteteDemande E
@@ -422,7 +477,7 @@ module.exports = {
         Group By E.iddemande, E.codedemande, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
                 LD.idbudget
     `,
-    bydetailLigneBudgetnature : `
+  bydetailLigneBudgetnature: `
         Select E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle as dept_libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide, BU.isanalytique,
 			LD.idbudget, N.idnature, N.codenature, N.libelle AS nature_lib, LD.budgetconso, LD.preengage, LD.engage, LD.realise, LD.idlignebudget, LD.codebudgetaire, BDN.montantprevisionsociete, SUM(LD.montantdemande) AS montant_demande, SUM(LD.montantref) AS montant_ref
         From EnteteDemande E
@@ -436,7 +491,7 @@ module.exports = {
         Group By E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide, BU.isanalytique,
 			LD.idbudget, N.idnature, N.codenature, N.libelle, LD.budgetconso, LD.budgetconso, LD.preengage, LD.engage, LD.realise, LD.idlignebudget, LD.codebudgetaire, BDN.montantprevisionsociete
     `,
-    bydetailLigneBudgetcentre : `
+  bydetailLigneBudgetcentre: `
         Select E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle as dept_libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
 			LD.idbudget, CA.idcentre, CA.codecentre, CA.libelle as centre_lib, BDN.idnature, N.codenature, N.libelle AS nature_lib, LD.budgetconso, LD.preengage, LD.engage, LD.realise, LD.idlignebudget, LD.codebudgetaire, BDN.montantprevisionsociete, SUM(LD.montantdemande) AS montant_demande, SUM(LD.montantref) AS montant_ref
         From EnteteDemande E
@@ -451,7 +506,7 @@ module.exports = {
         Group By E.iddemande, E.codedemande, E.iddepartement, DP.codedept, DP.libelle, E.datedemande, E.decaisse, E.solde, E.statut, E.idsite, DE.codedevise, BU.codebudget, BU.libelle, BU.typebudget, BU.datedebut, BU.datefin, BU.cloture, BU.valide,
 			LD.idbudget, CA.idcentre, CA.codecentre, CA.libelle, BDN.idnature, N.codenature, N.libelle, LD.budgetconso, LD.budgetconso, LD.preengage, LD.engage, LD.realise, LD.idlignebudget, LD.codebudgetaire, BDN.montantprevisionsociete
     `,
-    checkDroit : `
+  checkDroit: `
         SELECT 1
         FROM ValidationDemande
         WHERE iddemande = @iddemande
@@ -459,7 +514,7 @@ module.exports = {
             AND idutilisateur = @iduser
             AND decision = 'en attente'
     `,
-    saveDecision : `
+  saveDecision: `
         UPDATE ValidationDemande
         SET decision = @decision,
             commentaire = @commentaire,
@@ -468,22 +523,22 @@ module.exports = {
         WHERE iddemande = @iddemande
         AND idutilisateur = @iduser
     `,
-    updateStatut : `
+  updateStatut: `
         UPDATE EnteteDemande
         SET statut = @statut
         WHERE iddemande = @iddemande
     `,
-    dernierNiveau: `
+  dernierNiveau: `
         SELECT MAX(rang) AS dernierRang
         FROM ValidationDemande
         WHERE iddemande = @iddemande;
     `,
-    niveauActuel: `
+  niveauActuel: `
         UPDATE EnteteDemande
         SET niveauactuel = niveauactuel + 1
         WHERE iddemande = @iddemande
     `,
-    dernierTaux : `
+  dernierTaux: `
         SELECT TOP 1
             coefficient,
             coefficientinverse,
@@ -495,11 +550,11 @@ module.exports = {
             AND datecours <= @date
         ORDER BY datecours DESC;
     `,
-    resetCircuit : `
+  resetCircuit: `
         DELETE FROM ValidationDemande
         WHERE iddemande = @iddemande
     `,
-    getbudget : `
+  getbudget: `
         SELECT
             -- ================= ENTETE =================
             E.iddemande,
@@ -578,4 +633,4 @@ module.exports = {
 
         WHERE E.iddemande = @iddemande
     `,
-}
+};

@@ -3,6 +3,7 @@ const asyncHandler = require("../../../shared/middlewares/async");
 const ErrorResponse = require("../../../shared/utils/errorResponse");
 const pdfjs = require("../../../shared/utils/pdf");
 
+
 /**
  * Liste toutes les types operations
  */
@@ -52,11 +53,7 @@ module.exports.get_onetypeoperation = asyncHandler(async (req, res, next) => {
 module.exports.create_typeoperation = asyncHandler(async (req, res, next) => {
   try {
     const data = req.body;
-
-    const new_typeoperation = await typeoperationservice.create_typeoperation(
-      data,
-    );
-
+    const new_typeoperation = await typeoperationservice.create_typeoperation(data);
     res.status(201).json({ success: true, data: new_typeoperation });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -136,11 +133,36 @@ module.exports.get_recudecaisse = asyncHandler(async (req, res) => {
  */
 module.exports.cancel_enteteoperation = asyncHandler(async (req, res, next) => {
   try {
+    
     const data = req.body;
-    const new_enteteoperation =
-      await typeoperationservice.cancel_enteteoperation(data);
+    const new_enteteoperation = await typeoperationservice.cancel_enteteoperation(data);
     res.status(201).json({ success: true, data: new_enteteoperation });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @desc    Récupère les données d'un reçu par son numéro
+ * @route   GET /api/recu/data/:numero
+ * @access  Private (à ajuster selon tes besoins)
+ */
+module.exports.getRecuData = asyncHandler(async (req, res, next) => {
+  const { numero } = req.params;
+
+  try {
+    const data = await typeoperationservice.getRecuDataByNumero(numero);
+    const pdfBuffer = await pdfjs.genererPdfRecu(data, 2);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename=recu-${numero}.pdf`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    // Gestion fine des erreurs
+    console.error("[getRecuPdfByNumero] Erreur:", error);
+    // Gestion fine des erreurs
+    if (error.message.includes("Reçu non trouvé")) {
+      return res.status(404).send("Reçu non trouvé");
+    }
+    res.status(500).send("Erreur lors de la génération du PDF");
   }
 });
