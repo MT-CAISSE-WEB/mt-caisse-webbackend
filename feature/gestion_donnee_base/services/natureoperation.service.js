@@ -1,44 +1,52 @@
 const natureoperationmodel = require("../models/natureoperation.model");
-const { v4: uuidv4 } = require('uuid');
-const fs = require('fs');
+const { v4: uuidv4 } = require("uuid");
+const fs = require("fs");
 const { parse } = require("csv-parse");
 
 const plancomptablemodel = require("../models/plancomptable.model");
 
 let nature = new natureoperationmodel();
 
-let natures = []; 
-
+let natures = [];
 
 // OK
 async function get_all_natures() {
-    const result = await nature.get_allnatures();
-    natures = result.data.map(item => new natureoperationmodel(
-    item.idnature,
-    item.codenature,
-    item.libelle,
-    item.typeoperation,
-    item.decajustifier,
-    item.imputationtiers,
-    item.typetiers,
-    item.actif,
-    item.demandedecaissement,
-    item.idsociete,
-    item.idcompte,
-    item.createdat,
-    item.updatedat, 
-    item.createdby, 
-    item.updatedby,
-    item.idcompte ? new plancomptablemodel(
-      item.compte_idcompte, item.compte_numcompte, item.compte_libelle, item.compte_ventillable, 
-      item.compte_auxiliaire, item.compte_actif, item.compte_suivibudgetaire, 
-      item.compte_suivibudgetairemensuel) : null,
-  ));
+  const result = await nature.get_allnatures();
+  natures = result.data.map(
+    (item) =>
+      new natureoperationmodel(
+        item.idnature,
+        item.codenature,
+        item.libelle,
+        item.typeoperation,
+        item.decajustifier,
+        item.imputationtiers,
+        item.typetiers,
+        item.actif,
+        item.demandedecaissement,
+        item.idsociete,
+        item.idcompte,
+        item.createdat,
+        item.updatedat,
+        item.createdby,
+        item.updatedby,
+        item.idcompte
+          ? new plancomptablemodel(
+              item.compte_idcompte,
+              item.compte_numcompte,
+              item.compte_libelle,
+              item.compte_ventillable,
+              item.compte_auxiliaire,
+              item.compte_actif,
+              item.compte_suivibudgetaire,
+              item.compte_suivibudgetairemensuel,
+            )
+          : null,
+      ),
+  );
 
   return natures;
-
 }
-
 
 // OK
 async function create_nature(data) {
@@ -48,21 +56,22 @@ async function create_nature(data) {
 
   const today = new Date();
   const newnature = new natureoperationmodel(
-    uuidv4(), 
-    data.codenature, 
+    uuidv4(),
+    data.codenature,
     data.libelle,
     data.typeoperation,
-    data.decajustifier, 
+    data.decajustifier,
     data.imputationtiers,
     data.typetiers,
-    data.actif, 
+    data.actif,
     data.demandedecaissement,
     data.idsociete,
     data.idcompte,
-    data.createdat || today, 
-    data.updatedat || null, 
-    data.createdby || 'System',
-    data.updatedby || null);
+    data.createdat || today,
+    data.updatedat || null,
+    data.createdby || "System",
+    data.updatedby || null,
+  );
 
   const recorded = await newnature.create_nature(newnature);
   // si le modèle renvoie une erreur
@@ -71,7 +80,6 @@ async function create_nature(data) {
   }
   return recorded.data;
 }
-
 
 // OK
 async function get_by_idnature(idnature) {
@@ -87,7 +95,6 @@ async function get_by_idnature(idnature) {
     throw err;
   }
 }
-
 
 // OK
 async function update_nature(idnature, data) {
@@ -106,16 +113,16 @@ async function update_nature(idnature, data) {
 
 // OK
 async function delete_nature(idnature) {
-   try {
+  try {
     const nature_ = await nature.delete_nature(idnature);
     if (!nature_.success) {
       throw new Error(nature_.message);
     }
     return nature_;
-   } catch (err) {
+  } catch (err) {
     console.log(`Aucune donnée: ${err.message}`.cyan.bold);
     throw err;
-   }
+  }
 }
 
 // OK
@@ -129,7 +136,6 @@ async function import_nature(filePath, info) {
   try {
     for await (const row of parser) {
       try {
-
         const numcompte = row[6]?.trim();
 
         // 🔍 récupérer idcompte
@@ -147,18 +153,17 @@ async function import_nature(filePath, info) {
           decajustifier: Number(row[3]),
           imputationtiers: Number(row[4]),
           typetiers: row[5]?.trim(),
-          demandedecaissement: Number(row[6]),
+          demandedecaissement: 0,
           idcompte: idcompte, // ✅ GUID ici
           actif: Number(row[8]),
           idsociete: info.idsociete,
           createdby: info.createdby,
           updatedby: info.createdby,
           createdat: today,
-          updatedat: today
+          updatedat: today,
         };
 
         await create_nature(data);
-
       } catch (error) {
         console.error("Erreur ligne :", row, error.message);
       }
@@ -169,20 +174,17 @@ async function import_nature(filePath, info) {
   }
 }
 
-
 // OK
 async function exportNatures(debut, fin) {
   try {
     const data = await nature.exportNatures(debut, fin);
 
     return data;
-    
   } catch (err) {
     console.log(`Aucune donnée: ${err.message}`);
     throw err;
   }
 }
-
 
 module.exports = {
   get_all_natures,
@@ -191,5 +193,5 @@ module.exports = {
   update_nature,
   delete_nature,
   import_nature,
-  exportNatures
+  exportNatures,
 };

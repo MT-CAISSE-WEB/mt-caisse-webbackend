@@ -1179,6 +1179,8 @@ BEGIN
         idcompte UNIQUEIDENTIFIER NULL,
         idnatureretourencaisse UNIQUEIDENTIFIER NULL,
         urldossier NVARCHAR(255),
+        libelleaxe1 NVARCHAR(50),
+        libelleaxe2 NVARCHAR(50),
         analytiquesite INT DEFAULT 0, 
         analytiquetable INT DEFAULT 0, 
         axesecond INT DEFAULT 0,

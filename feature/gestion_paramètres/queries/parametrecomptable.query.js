@@ -1,38 +1,38 @@
 module.exports = {
-    insert : `
+  insert: `
         INSERT INTO ParametreComptable (idparametrecomptable, idsociete, idjournal, idcompte, urldossier, createdby, createdat )
             OUTPUT INSERTED.*
         VALUES (@idparametrecomptable, @idsociete, @idjournal, @idcompte, @urldossier, @createdby, @createdat) ;
     `,
-    getall : `
+  getall: `
         SELECT * FROM ParametreComptable ;
     `,
-    update : `
+  update: `
         UPDATE ParametreComptable
         SET idsociete = @idsociete, idjournal = @idjournal, idcompte = @idcompte, urldossier = @urldossier,
             updatedat = @updatedat, updatedby = @updatedby
         WHERE idparametrecomptable = @idparametrecomptable ;
     `,
-    delete : `
+  delete: `
         DELETE FROM ParametreComptable
         WHERE idparametrecomptable = @idparametrecomptable ;
     `,
-    updateJournal : `
+  updateJournal: `
         UPDATE ParametreComptable
         SET idjournal = @idjournal, updatedat = @updatedat, updatedby = @updatedby
         WHERE idsociete = @idsociete ;
     `,
-    updateCompte : `
+  updateCompte: `
         UPDATE ParametreComptable
         SET idcompte = @idcompte, updatedat = @updatedat, updatedby = @updatedby
         WHERE idsociete = @idsociete ;
     `,
-    updateUrldossier : `
+  updateUrldossier: `
         UPDATE ParametreComptable
         SET urldossier = @urldossier, updatedat = @updatedat, updatedby = @updatedby
         WHERE idsociete = @idsociete ;
     `,
-    getBySociete : `
+  getBySociete: `
         SELECT 
             pc.idsociete,
             s.codesociete,
@@ -49,7 +49,9 @@ module.exports = {
             pc.urldossier,
             pc.analytiquesite,
             pc.analytiquetable,
-            pc.axesecond
+            pc.axesecond,
+            pc.libelleaxe1,
+            pc.libelleaxe2
 
         FROM ParametreComptable pc
 
@@ -64,7 +66,7 @@ module.exports = {
 
         WHERE pc.idsociete = @idsociete;
     `,
-    findAllcorrespondance: `
+  findAllcorrespondance: `
         SELECT 
         c.idcorrespondance,
         c.idcentreanalytique AS idcentre_co,
@@ -79,14 +81,14 @@ module.exports = {
       LEFT JOIN CentreAnalytique ca ON c.idcentreanalytique = ca.idcentreanalytique
       ORDER BY c.createdat DESC
     `,
-    findCorrespondanceById : `
+  findCorrespondanceById: `
         SELECT C.*, CA.libelle AS centreAnalytiqueNom,
         CA.actif
         FROM CorrespondanceAnalytique C
         LEFT JOIN CentreAnalytique CA ON C.idcentreanalytique = CA.idcentreanalytique
         WHERE idcorrespondance = @idcorrespondance
     `,
-    insertCorrespondance : `
+  insertCorrespondance: `
         INSERT INTO CorrespondanceAnalytique (
           idcorrespondance, idcentreanalytique, correspondance, actif, createdby, createdat
         )
@@ -94,20 +96,71 @@ module.exports = {
         VALUES ( @idcorrespondance, @idcentreanalytique, @correspondance,
           @actif, @createdby, @createdat )
     `,
-    // updateCorrespondance : `
-    //     UPDATE CorrespondanceAnalytique
-    //     SET ${setClause}
-    //     WHERE idcorrespondance = @id
-    //     SELECT * FROM CorrespondanceAnalytique WHERE idcorrespondance = @id
-    // `
-    updateCorrespondance : `
+  // updateCorrespondance : `
+  //     UPDATE CorrespondanceAnalytique
+  //     SET ${setClause}
+  //     WHERE idcorrespondance = @id
+  //     SELECT * FROM CorrespondanceAnalytique WHERE idcorrespondance = @id
+  // `
+  updateCorrespondance: `
         UPDATE CorrespondanceAnalytique
         SET actif = 0, updatedby = @updatedby, updatedat = GETDATE()
         WHERE idcorrespondance = @id
         SELECT * FROM CorrespondanceAnalytique WHERE idcorrespondance = @id
     `,
-    hardDelete : `
+  hardDelete: `
         DELETE FROM CorrespondanceAnalytique
         WHERE idcorrespondance = @id
-    `
-}
+    `,
+  // Query pour rechercher un centre analytique par son code
+  getCentreAnalytiqueByCode: `
+        SELECT 
+            idcentreanalytique,
+            idsociete,
+            codecentreanalytique,
+            libelle,
+            actif,
+            createdat,
+            createdby
+        FROM CentreAnalytique
+        WHERE codecentreanalytique = @codecentreanalytique
+            AND (@idsociete IS NULL OR idsociete = @idsociete)
+            AND actif = 1
+    `,
+
+  // Query pour vérifier si une correspondance existe déjà pour un centre
+  getCorrespondanceByCentre: `
+        SELECT 
+            idcorrespondance,
+            idcentreanalytique,
+            correspondance,
+            actif
+        FROM CorrespondanceAnalytique
+        WHERE idcentreanalytique = @idcentreanalytique
+    `,
+
+  // Query pour vérifier si une correspondance existe déjà (par code)
+  getCorrespondanceByCode: `
+        SELECT 
+            idcorrespondance,
+            idcentreanalytique,
+            correspondance,
+            actif
+        FROM CorrespondanceAnalytique
+        WHERE correspondance = @correspondance
+            AND actif = 1
+    `,
+
+  // Query pour vérifier si un couple (centre + correspondance) existe déjà
+  getCorrespondanceByCentreAndCode: `
+        SELECT 
+            idcorrespondance,
+            idcentreanalytique,
+            correspondance,
+            actif
+        FROM CorrespondanceAnalytique
+        WHERE idcentreanalytique = @idcentreanalytique
+            AND correspondance = @correspondance
+            AND actif = 1
+    `,
+};
