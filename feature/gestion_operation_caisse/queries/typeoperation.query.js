@@ -1,19 +1,19 @@
 module.exports = {
-    getAll: `
+  getAll: `
         SELECT * FROM TypeOperation
     `,
 
-    getById: `
+  getById: `
         SELECT * FROM TypeOperation WHERE idtypeoperation = @idtypeoperation
     `,
 
-    insert: `
+  insert: `
         INSERT INTO TypeOperation (idtypeoperation, codtypeoperation, idoperation, idperiode, idsociete, idsite, idcaisse, montant, taux, montantref, createdat, createdby, updatedat, updatedby)
         OUTPUT INSERTED.*
         VALUES (@idtypeoperation, @codtypeoperation, @idoperation, @idperiode, @idsociete, @idsite, @idcaisse, @montant, @taux, @montantref, @createdat, @createdby, @updatedat, @updatedby)
     `,
 
-    update: `
+  update: `
         UPDATE TypeOperation 
         SET codtypeoperation = @codtypeoperation, 
         idoperation = @idoperation, 
@@ -26,10 +26,10 @@ module.exports = {
         OUTPUT INSERTED.* 
         WHERE idtypeoperation = @idtypeoperation`,
 
-    delete: `
+  delete: `
         DELETE FROM TypeOperation WHERE idtypeoperation = @idtypeoperation
     `,
-    solde_calcul: `
+  solde_calcul: `
         SELECT 
             t.idcaisse,
             c.codecaisse,
@@ -50,7 +50,7 @@ module.exports = {
         LEFT JOIN Devise d ON d.iddevise = c.iddevise
         GROUP BY t.idcaisse, c.codecaisse, c.libelle, c.idjournal, c.idcompte, c.iddevise, d.codedevise, c.seuilmnimal;
     `,
-    solde_caisse_periode: `
+  solde_caisse_periode: `
         SELECT 
             t.idcaisse,
             c.codecaisse,
@@ -70,7 +70,7 @@ module.exports = {
         WHERE t.idperiode = @idperiode
         GROUP BY t.idcaisse, c.codecaisse, c.libelle, c.idjournal, c.idcompte, c.iddevise, c.seuilmnimal;
     `,
-    plus_couteux: `
+  plus_couteux: `
         SELECT TOP 1
             t.idtypeoperation,
             t.codtypeoperation,
@@ -90,7 +90,7 @@ module.exports = {
         ORDER BY
             t.montantref DESC;
     `,
-    moins_couteux: `
+  moins_couteux: `
         SELECT TOP 1
             t.idtypeoperation,
             t.codtypeoperation,
@@ -112,7 +112,7 @@ module.exports = {
         ORDER BY
             t.montantref ASC;
     `,
-    total_caisse: `
+  total_caisse: `
         SELECT
             SUM(t.montantref) AS total_decaissement_jour
         FROM TypeOperation t
@@ -121,7 +121,7 @@ module.exports = {
             t.codtypeoperation = @codetypeoperation
             AND t.idperiode = @periode
     `,
-    total_par_caisse: `
+  total_par_caisse: `
         SELECT
             t.idcaisse,
             c.codecaisse,
@@ -141,7 +141,7 @@ module.exports = {
         ORDER BY
             total_decaissement DESC;
     `,
-    operation: `
+  operation: `
         SELECT
             t.idtypeoperation,
             t.codtypeoperation,
@@ -161,7 +161,7 @@ module.exports = {
         ORDER BY
             t.montantref DESC;
     `,
-    decaissBydemandeDevRef: `
+  decaissBydemandeDevRef: `
         SELECT
             ED.iddemande,
             ED.codedemande,
@@ -178,7 +178,7 @@ module.exports = {
             ED.iddemande,
             ED.codedemande;
     `,
-    decaissBydemandeDevCaisse: `
+  decaissBydemandeDevCaisse: `
         SELECT
             ED.codedemande,
             C.codecaisse,
@@ -201,7 +201,7 @@ module.exports = {
             D.codedevise;
 
     `,
-    decaissBydemandeNature: `
+  decaissBydemandeNature: `
         SELECT
             ED.codedemande,
             NO.codenature,
@@ -223,7 +223,7 @@ module.exports = {
             NO.libelle;
 
     `,
-    decaissBydempandeBudget: `
+  decaissBydempandeBudget: `
         SELECT
             ED.codedemande,
             B.codebudget,
@@ -250,7 +250,7 @@ module.exports = {
             B.libelle;
 
     `,
-    decaisseBudgetPeriode: `
+  decaisseBudgetPeriode: `
         SELECT
             B.codebudget,
             FORMAT(EOC.dateoperation, 'yyyy-MM') AS periode,
@@ -268,7 +268,7 @@ module.exports = {
             FORMAT(EOC.dateoperation, 'yyyy-MM');
 
     `,
-    reçucaisse: `
+  reçucaisse: `
         SELECT
     S.raisonsociale        AS societe,
     SI.libelle             AS site,
@@ -285,7 +285,7 @@ module.exports = {
     TOPE.createdby          AS caissier,
     E.beneficiaire,
     N.libelle               AS nature,
-    T.designation           AS tiers,
+    T.designation           AS tiersDesignation,
     CA.libelle              AS libelleCentre,
     CA.codecentreanalytique AS codecentreanalytique,
     DP.libelle              AS libelleDep,  
@@ -309,13 +309,13 @@ LEFT JOIN Tiers T ON T.idtiers = L.idtiers
 LEFT JOIN CentreAnalytique CA ON L.idcentre = CA.idcentreanalytique
 WHERE E.idoperation = @idoperation
     `,
-    getByCodeOperation: `
+  getByCodeOperation: `
     SELECT idoperation, codeoperation, iddemande, idsociete, idsite, iddevise,
            dateoperation, montant, tauxoperation, typeoperation, beneficiaire
     FROM EnteteOperationCaisse
     WHERE codeoperation = @codeoperation
   `,
-    validateurOp: `
+  validateurOp: `
         SELECT
                 VD.idvalidationdemande,
                 VD.rang,
@@ -335,7 +335,7 @@ WHERE E.idoperation = @idoperation
                 VD.rang ASC,
                 VD.datevalidation ASC;
     `,
-    operationJustificatif: `
+  operationJustificatif: `
         SELECT
             e.idoperation,
             e.codeoperation,
@@ -421,7 +421,7 @@ WHERE E.idoperation = @idoperation
             j.total_justificatif_ref;
     `,
 
-    detailsJustificatif: `
+  detailsJustificatif: `
         SELECT
             jo.idjustificatifoperation,
             jo.codejustificatif,
@@ -457,7 +457,7 @@ WHERE E.idoperation = @idoperation
 
         ORDER BY jo.date, jo.codejustificatif;
     `,
-    encaissementJustif: `
+  encaissementJustif: `
         SELECT
             eo.idoperation,
             eo.codeoperation,
@@ -490,7 +490,7 @@ WHERE E.idoperation = @idoperation
         ORDER BY eo.dateoperation, eo.codeoperation;
     `,
 
-    decaissementInit: `
+  decaissementInit: `
         SELECT
             l.idligneoperation,
             l.libelle,
@@ -526,5 +526,5 @@ WHERE E.idoperation = @idoperation
         WHERE e.idoperation=@idoperation
 
         ORDER BY n.libelle;
-    `
+    `,
 };

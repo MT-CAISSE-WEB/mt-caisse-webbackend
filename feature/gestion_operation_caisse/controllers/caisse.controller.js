@@ -12,7 +12,12 @@ module.exports.get_caisses = asyncHandler(async (req, res, next) => {
     const limit = req.query.limit || null;
     const actif = req.query.actif || null;
 
-    const caisses = await caisseservice.get_all_caisses({ page, limit, search, actif });
+    const caisses = await caisseservice.get_all_caisses({
+      page,
+      limit,
+      search,
+      actif,
+    });
     res.json({ success: true, data: caisses });
   } catch (error) {
     res.status(500).json({ success: false, message: "Erreur serveur", error });

@@ -1,7 +1,6 @@
-
-const { DateTime, UniqueIdentifier } = require('mssql');
-const {db, sql, connectInstance, connectDB} = require('../../../config/db');
-const { v4: uuidv4 } = require('uuid');
+const { DateTime, UniqueIdentifier } = require("mssql");
+const { db, sql, connectInstance, connectDB } = require("../../../config/db");
+const { v4: uuidv4 } = require("uuid");
 
 const today = new Date();
 
@@ -11,51 +10,67 @@ const queryinsert = `
         VALUES (@idligneecriture, @idecriture, @idcentreanalytique, @centreanalytique, @idcompte, @compte, @idtiers, @tiers, @numligne, @typeecriture, @libelle, @debit, @credit, @etat, @iddevise, @devise, @montantdevise, @taux, @montantbase, @createdby, @createdat)
         `;
 
-    //Create Ecriture
-    async function createligneEcriture(data){
-        try {
-            const pool = await connectDB()
-            const idligneecriture = uuidv4();
-            const result = await pool.request()
-            .input('idligneecriture', sql.UniqueIdentifier,idligneecriture)
-            .input ('idecriture', sql.UniqueIdentifier,data.idecriture)
-            .input ('idcentreanalytique', sql.UniqueIdentifier,data.idcentreanalytique)
-            .input ('centreanalytique', sql.NVarChar(50),data.centreanalytique)
-            .input ('idcompte', sql.UniqueIdentifier,data.idcompte)
-            .input ('compte', sql.NVarChar(50),data.compte)
-            .input ('idtiers', sql.UniqueIdentifier,data.idtiers)
-            .input ('tiers', sql.NVarChar(50),data.tiers)
-            .input ('numligne', sql.Int,data.numligne)
-            .input ('typeecriture', sql.NVarChar(50),data.typeecriture)
-            .input ('libelle', sql.NVarChar(100),data.libelle)
-            .input ('debit', sql.Decimal(18,2),data.debit)
-            .input ('credit', sql.Decimal(18,2),data.credit)
-            .input ('etat', sql.NVarChar(20),data.etat)
-            .input ('iddevise', sql.UniqueIdentifier,data.iddevise)
-            .input ('devise', sql.NVarChar(50),data.devise)
-            .input ('montantdevise', sql.Decimal(18,2),data.montantdevise)
-            .input ('taux', sql.Decimal(18,2),data.taux)
-            .input ('montantbase', sql.Decimal(18,2),data.montantbase)
-            .input ('createdat', sql.DateTime,today)
-            .input ('createdby', sql.NVarChar(50),data.createdby)
-            .query(queryinsert);
+//Create Ecriture
+async function createligneEcriture(data) {
+  try {
+    const pool = await connectDB();
+    const idligneecriture = uuidv4();
+    const result = await pool
+      .request()
+      .input("idligneecriture", sql.UniqueIdentifier, idligneecriture)
+      .input("idecriture", sql.UniqueIdentifier, data.idecriture)
+      .input(
+        "idcentreanalytique",
+        sql.UniqueIdentifier,
+        data.idcentreanalytique,
+      )
+      .input("centreanalytique", sql.NVarChar(50), data.centreanalytique)
+      .input("idcompte", sql.UniqueIdentifier, data.idcompte)
+      .input("compte", sql.NVarChar(50), data.compte)
+      .input("idtiers", sql.UniqueIdentifier, data.idtiers)
+      .input("tiers", sql.NVarChar(50), data.tiers)
+      .input("numligne", sql.Int, data.numligne)
+      .input("typeecriture", sql.NVarChar(50), data.typeecriture)
+      .input("libelle", sql.NVarChar(100), data.libelle)
+      .input("debit", sql.Decimal(18, 2), data.debit)
+      .input("credit", sql.Decimal(18, 2), data.credit)
+      .input("etat", sql.NVarChar(20), data.etat)
+      .input("iddevise", sql.UniqueIdentifier, data.iddevise)
+      .input("devise", sql.NVarChar(50), data.devise)
+      .input("montantdevise", sql.Decimal(18, 2), data.montantdevise)
+      .input("taux", sql.Decimal(18, 2), data.taux)
+      .input("montantbase", sql.Decimal(18, 2), data.montantbase)
+      .input("createdat", sql.DateTime, today)
+      .input("createdby", sql.NVarChar(50), data.createdby)
+      .query(queryinsert);
 
-            return {
-                success:true,
-                status:201,
-                data: result.recordset[0],
-                message: "Création effectuée avec succès!"
-            }
-        } catch (error) {
-            return { success: false, status:500, message:`Erreur lors de la création : ${error}`.cyan.bold};
-        }
-    }
+    return {
+      success: true,
+      status: 201,
+      data: result.recordset[0],
+      message: "Création effectuée avec succès!",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      status: 500,
+      message: `Erreur lors de la création : ${error}`.cyan.bold,
+    };
+  }
+}
 
-   // Get all
-    async function getallLigneEcriture(idsite, datedebut, datefin, etat, journal,typeecriture){
-        try {
-            const pool = await connectDB();
-            const query = `SELECT 
+// Get all
+async function getallLigneEcriture(
+  idsite,
+  datedebut,
+  datefin,
+  etat,
+  journal,
+  typeecriture,
+) {
+  try {
+    const pool = await connectDB();
+    const query = `SELECT 
                 elc.idligneecriture,
                 elc.numligne,
                 ec.ref_ecriture,
@@ -94,46 +109,58 @@ const queryinsert = `
             AND (@datedebut IS NULL OR ec.date_operation >= @datedebut)
             AND (@datefin IS NULL OR ec.date_operation < DATEADD(DAY, 1, @datefin))
             AND (@etat is null or @etat ='' or elc.etat=@etat)
-            AND (@journal is null or @journal='' or ec.journal=@journal)
+            AND (@journal is null or @journal='' or ec.idjournal=@journal)
             AND (@typeecriture is null or @typeecriture='' or elc.typeecriture=@typeecriture)
             order by ec.date_operation desc, ec.ref_ecriture desc, elc.numligne asc`;
-            const result = await pool.request()
-            .input('idsite', sql.UniqueIdentifier, idsite || null)
-            .input('datedebut', sql.DateTime, datedebut || null)
-            .input('datefin', sql.DateTime, datefin || null)
-            .input('etat', sql.NVarChar(20), etat || null)
-            .input('journal', sql.NVarChar(50), journal || null)
-            .input('typeecriture', sql.NVarChar(50), typeecriture || null)
-            .query(query);
+    const result = await pool
+      .request()
+      .input("idsite", sql.UniqueIdentifier, idsite || null)
+      .input("datedebut", sql.DateTime, datedebut || null)
+      .input("datefin", sql.DateTime, datefin || null)
+      .input("etat", sql.NVarChar(20), etat || null)
+      .input("journal", sql.NVarChar(50), journal || null)
+      .input("typeecriture", sql.NVarChar(50), typeecriture || null)
+      .query(query);
 
-            return {
-                success :true,
-                status:200, 
-                data : result.recordsets[0],
-                message : "Eléments trouvés avec succès!"}
-        } catch (error) {
-            return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
-        }
-    }
+    return {
+      success: true,
+      status: 200,
+      data: result.recordsets[0],
+      message: "Eléments trouvés avec succès!",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      status: 500,
+      message: `Erreur de recuperation: ${error}`.cyan.bold,
+    };
+  }
+}
 
-    async function comptabilisationEcriture (idoperation,idsite, datedebut, datefin, journal){
-        const pool = await connectDB();
-        const transaction = new sql.Transaction(pool);
-        try {
-            await transaction.begin();
+async function comptabilisationEcriture(
+  idoperation,
+  idsite,
+  datedebut,
+  datefin,
+  journal,
+) {
+  const pool = await connectDB();
+  const transaction = new sql.Transaction(pool);
+  try {
+    await transaction.begin();
 
-            const request = transaction.request();
+    const request = transaction.request();
 
-            // ==============================
-            // PARAMÈTRES
-            // ==============================
-            request.input("idoperation", sql.UniqueIdentifier, idoperation || null);
-            request.input("idsite", sql.UniqueIdentifier, idsite || null);
-            request.input("datedebut", sql.DateTime, datedebut || null);
-            request.input("datefin", sql.DateTime, datefin || null);
-            request.input("journal", sql.NVarChar, journal || null);
+    // ==============================
+    // PARAMÈTRES
+    // ==============================
+    request.input("idoperation", sql.UniqueIdentifier, idoperation || null);
+    request.input("idsite", sql.UniqueIdentifier, idsite || null);
+    request.input("datedebut", sql.DateTime, datedebut || null);
+    request.input("datefin", sql.DateTime, datefin || null);
+    request.input("journal", sql.NVarChar, journal || null);
 
-            const ecritures = await request.query(`SELECT 
+    const ecritures = await request.query(`SELECT 
             ec.idecriture,
                 SUM(elc.debit) AS totalDebit,
                 SUM(elc.credit) AS totalCredit
@@ -151,25 +178,25 @@ const queryinsert = `
 
             GROUP BY ec.idecriture`);
 
-        if (!ecritures.recordset.length) {
-                throw new Error("Aucune écriture à comptabiliser");
-        }
+    if (!ecritures.recordset.length) {
+      throw new Error("Aucune écriture à comptabiliser");
+    }
 
-        // ==============================
-            // 2. CONTRÔLE ÉQUILIBRE
-            // ==============================
-            for (const e of ecritures.recordset) {
-                if (Number(e.totalDebit) !== Number(e.totalCredit)) {
-                    throw new Error(
-                        `Écriture déséquilibrée (${e.idecriture}) : D=${e.totalDebit} C=${e.totalCredit}`
-                    );
-                }
-            }
+    // ==============================
+    // 2. CONTRÔLE ÉQUILIBRE
+    // ==============================
+    for (const e of ecritures.recordset) {
+      if (Number(e.totalDebit) !== Number(e.totalCredit)) {
+        throw new Error(
+          `Écriture déséquilibrée (${e.idecriture}) : D=${e.totalDebit} C=${e.totalCredit}`,
+        );
+      }
+    }
 
-            // ==============================
-            // 3. VALIDATION DES LIGNES
-            // ==============================
-            await request.query(`
+    // ==============================
+    // 3. VALIDATION DES LIGNES
+    // ==============================
+    await request.query(`
                 UPDATE elc
                     SET 
                         elc.etat = 'validee',
@@ -187,75 +214,85 @@ const queryinsert = `
                     AND (@journal IS NULL OR @journal = '' OR ec.journal = @journal)
                     AND elc.etat = 'en attente'`);
 
-            await transaction.commit();
+    await transaction.commit();
 
-                return {
-                    success: true,
-                    status: 200,
-                    message: "Comptabilisation effectuée avec succès !"
-                };
+    return {
+      success: true,
+      status: 200,
+      message: "Comptabilisation effectuée avec succès !",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      status: 500,
+      message: `Erreur de recuperation: ${error}`.cyan.bold,
+    };
+  }
+}
 
-
-        }
-        catch (error) {
-            return {success:false,status:500,message:`Erreur de recuperation: ${error}`.cyan.bold};
-        }
-
-    }
-
-    async function validerParIds(ids) {
-        const pool = await connectDB();
-        const transaction = new sql.Transaction(pool);
-        try {
-            await transaction.begin();
-            const request = transaction.request();
-            // Créer une table temporaire ou utiliser un IN avec des paramètres multiples
-            const idsPlaceholders = ids.map((_, i) => `@id${i}`).join(',');
-            ids.forEach((id, i) => {
-                request.input(`id${i}`, sql.UniqueIdentifier, id);
-            });
-            const updateQuery = `
+async function validerParIds(ids) {
+  const pool = await connectDB();
+  const transaction = new sql.Transaction(pool);
+  try {
+    await transaction.begin();
+    const request = transaction.request();
+    // Créer une table temporaire ou utiliser un IN avec des paramètres multiples
+    const idsPlaceholders = ids.map((_, i) => `@id${i}`).join(",");
+    ids.forEach((id, i) => {
+      request.input(`id${i}`, sql.UniqueIdentifier, id);
+    });
+    const updateQuery = `
                 UPDATE elc
                 SET elc.etat = 'validee', elc.typeecriture = 'normale'
                 FROM EcritureLigneComptable elc
                 WHERE elc.idligneecriture IN (${idsPlaceholders})
                 AND elc.etat = 'en attente'
             `;
-            const result = await request.query(updateQuery);
-            await transaction.commit();
-            return { success: true, status: 200, message: `${result.rowsAffected[0]} écriture(s) validée(s)` };
-        } catch (error) {
-            await transaction.rollback();
-            return { success: false, status: 500, message: error.message };
-        }
+    const result = await request.query(updateQuery);
+    await transaction.commit();
+    return {
+      success: true,
+      status: 200,
+      message: `${result.rowsAffected[0]} écriture(s) validée(s)`,
+    };
+  } catch (error) {
+    await transaction.rollback();
+    return { success: false, status: 500, message: error.message };
+  }
+}
+
+async function comptabiliserOperations(filters) {
+  const pool = await connectDB();
+  const transaction = new sql.Transaction(pool);
+  try {
+    await transaction.begin();
+    const request = transaction.request();
+
+    // Paramètres
+    request.input("idsite", sql.UniqueIdentifier, filters.idsite || null);
+    request.input("datedebut", sql.DateTime, filters.datedebut || null);
+    request.input("datefin", sql.DateTime, filters.datefin || null);
+    request.input(
+      "idoperation",
+      sql.UniqueIdentifier,
+      filters.idoperation || null,
+    );
+
+    // Construction dynamique du WHERE
+    let whereClause = `elc.etat = 'en attente'`;
+
+    if (filters.idoperation) {
+      // Filtrage par opération : on joint TypeOperation pour récupérer idoperation
+      whereClause += ` AND ty.idoperation = @idoperation`;
+    } else {
+      if (filters.idsite) whereClause += ` AND ty.idsite = @idsite`;
+      if (filters.datedebut)
+        whereClause += ` AND ec.dateoperation >= @datedebut`;
+      if (filters.datefin)
+        whereClause += ` AND ec.dateoperation < DATEADD(DAY, 1, @datefin)`;
     }
 
-    async function comptabiliserOperations(filters) {
-        const pool = await connectDB();
-        const transaction = new sql.Transaction(pool);
-        try {
-            await transaction.begin();
-            const request = transaction.request();
-
-            // Paramètres
-            request.input("idsite", sql.UniqueIdentifier, filters.idsite || null);
-            request.input("datedebut", sql.DateTime, filters.datedebut || null);
-            request.input("datefin", sql.DateTime, filters.datefin || null);
-            request.input("idoperation", sql.UniqueIdentifier, filters.idoperation || null);
-
-            // Construction dynamique du WHERE
-            let whereClause = `elc.etat = 'en attente'`;
-
-            if (filters.idoperation) {
-                // Filtrage par opération : on joint TypeOperation pour récupérer idoperation
-                whereClause += ` AND ty.idoperation = @idoperation`;
-            } else {
-                if (filters.idsite) whereClause += ` AND ty.idsite = @idsite`;
-                if (filters.datedebut) whereClause += ` AND ec.dateoperation >= @datedebut`;
-                if (filters.datefin) whereClause += ` AND ec.dateoperation < DATEADD(DAY, 1, @datefin)`;
-            }
-
-            const updateQuery = `
+    const updateQuery = `
                 UPDATE elc
                 SET elc.etat = 'validee', elc.typeecriture = 'normale'
                 FROM EcritureLigneComptable elc
@@ -264,25 +301,24 @@ const queryinsert = `
                 WHERE ${whereClause}
             `;
 
-            const result = await request.query(updateQuery);
-            await transaction.commit();
+    const result = await request.query(updateQuery);
+    await transaction.commit();
 
-            return {
-                success: true,
-                status: 200,
-                message: `${result.rowsAffected[0]} écriture(s) comptabilisée(s)`
-            };
-        } catch (error) {
-            await transaction.rollback();
-            console.error("Erreur comptabilisation:", error);
-            return { success: false, status: 500, message: error.message };
-        }
-    }
-
+    return {
+      success: true,
+      status: 200,
+      message: `${result.rowsAffected[0]} écriture(s) comptabilisée(s)`,
+    };
+  } catch (error) {
+    await transaction.rollback();
+    console.error("Erreur comptabilisation:", error);
+    return { success: false, status: 500, message: error.message };
+  }
+}
 
 module.exports = {
-    getallLigneEcriture,
-    comptabilisationEcriture,
-    validerParIds,
-    comptabiliserOperations
-}
+  getallLigneEcriture,
+  comptabilisationEcriture,
+  validerParIds,
+  comptabiliserOperations,
+};

@@ -15,7 +15,6 @@ const enteteDemandeModel = require("../../gestion_demande_decaissement/models/en
 let demandemodel = new enteteDemandeModel();
 const ecritureservice = require("../../gestion_comptabilisation/services/ecriture.service");
 
-
 let typeoperation = new typeoperationmodel();
 let typeoperations = [];
 
@@ -71,54 +70,55 @@ async function get_all_typeoperations({
           // Devise
           devise: row.iddevise
             ? new devisemodel(
-              row.devise_iddevise,
-              row.devise_codedevise,
-              row.devise_intitule,
-              row.devise_codeiso,
-              row.devise_actif,
-              row.devise_createdat,
-              row.devise_createdby,
-              row.devise_updatedat,
-              row.devise_updatedby,
-            )
+                row.devise_iddevise,
+                row.devise_codedevise,
+                row.devise_intitule,
+                row.devise_codeiso,
+                row.devise_actif,
+                row.devise_createdat,
+                row.devise_createdby,
+                row.devise_updatedat,
+                row.devise_updatedby,
+              )
             : null,
           // Site
           site: row.idsite
             ? new sitemodel(
-              row.site_idsite,
-              row.site_idsociete,
-              null,
-              row.site_idcentreanalytique,
-              row.site_libelle,
-              row.site_email,
-              row.site_telephone,
-              row.site_adresse,
-              row.site_estcentreanalytique,
-              row.site_createdat,
-              row.site_updatedat,
-              row.site_createdby,
-              row.site_updatedby,
-            )
+                row.site_idsite,
+                row.site_idsociete,
+                null,
+                row.site_idcentreanalytique,
+                row.site_libelle,
+                row.site_email,
+                row.site_telephone,
+                row.site_adresse,
+                row.site_estcentreanalytique,
+                row.site_createdat,
+                row.site_updatedat,
+                row.site_createdby,
+                row.site_updatedby,
+              )
             : null,
 
           societe: row.idsociete
             ? new societemodel(
-              row.societe_idsociete,
-              row.societe_codesociete,
-              null, null,
-              row.societe_raisonsociale,
-              row.societe_rccm,
-              row.societe_numnui,
-              row.societe_email,
-              row.societe_telephone,
-              row.societe_logo,
-              row.societe_adresse,
-              row.societe_suivibudgetaire,
-              row.societe_createdat,
-              row.societe_updatedat,
-              row.societe_createdby,
-              row.societe_updatedby,
-            )
+                row.societe_idsociete,
+                row.societe_codesociete,
+                null,
+                null,
+                row.societe_raisonsociale,
+                row.societe_rccm,
+                row.societe_numnui,
+                row.societe_email,
+                row.societe_telephone,
+                row.societe_logo,
+                row.societe_adresse,
+                row.societe_suivibudgetaire,
+                row.societe_createdat,
+                row.societe_updatedat,
+                row.societe_createdby,
+                row.societe_updatedby,
+              )
             : null,
         };
       }
@@ -143,29 +143,29 @@ async function get_all_typeoperations({
             //Nature incluse
             nature: row.nature_idnature
               ? {
-                idnature: row.nature_idnature,
-                codenature: row.nature_codenature,
-                libelle: row.nature_libelle,
-                idcompte: row.nature_idcompte,
-                typeoperation: row.nature_typeoperation,
-              }
+                  idnature: row.nature_idnature,
+                  codenature: row.nature_codenature,
+                  libelle: row.nature_libelle,
+                  idcompte: row.nature_idcompte,
+                  typeoperation: row.nature_typeoperation,
+                }
               : null,
             // Centre inclus
             centre: row.centre_idcentreanalytique
               ? {
-                idcentreanalytique: row.centre_idcentreanalytique,
-                code: row.centre_codecentreanalytique,
-                libelle: row.centre_libelle,
-              }
+                  idcentreanalytique: row.centre_idcentreanalytique,
+                  code: row.centre_codecentreanalytique,
+                  libelle: row.centre_libelle,
+                }
               : null,
             //Tiers inclus
             tiers: row.tiers_idtiers
               ? {
-                idtiers: row.tiers_idtiers,
-                codetiers: row.tiers_codetiers,
-                designation: row.tiers_designation,
-                typetiers: row.tiers_typetiers,
-              }
+                  idtiers: row.tiers_idtiers,
+                  codetiers: row.tiers_codetiers,
+                  designation: row.tiers_designation,
+                  typetiers: row.tiers_typetiers,
+                }
               : null,
           });
         }
@@ -207,23 +207,23 @@ async function get_all_typeoperations({
 
             compte: row.idcompte
               ? {
-                idcompte: row.idcompte,
-                compte: row.compte,
-              }
+                  idcompte: row.idcompte,
+                  compte: row.compte,
+                }
               : null,
 
             tiers: row.idtiers
               ? {
-                idtiers: row.idtiers,
-                tiers: row.tiers,
-              }
+                  idtiers: row.idtiers,
+                  tiers: row.tiers,
+                }
               : null,
 
             centreanalytique: row.idcentreanalytique
               ? {
-                idcentreanalytique: row.idcentreanalytique,
-                centreanalytique: row.centreanalytique,
-              }
+                  idcentreanalytique: row.idcentreanalytique,
+                  centreanalytique: row.centreanalytique,
+                }
               : null,
 
             libelle: row.libelle,
@@ -234,9 +234,9 @@ async function get_all_typeoperations({
 
             devise: row.iddevise_ecriture
               ? {
-                iddevise: row.iddevise_ecriture,
-                devise: row.devise_ecriture,
-              }
+                  iddevise: row.iddevise_ecriture,
+                  devise: row.devise_ecriture,
+                }
               : null,
           });
         }
@@ -264,10 +264,10 @@ async function get_all_typeoperations({
             solde: solde,
             caisse: row.caisse_idcaisse
               ? {
-                devise: row.devise_caisse,
-                codecaisse: row.caisse_codecaisse,
-                libelle: row.caisse_libelle,
-              }
+                  devise: row.devise_caisse,
+                  codecaisse: row.caisse_codecaisse,
+                  libelle: row.caisse_libelle,
+                }
               : null,
           });
         }
@@ -676,7 +676,6 @@ async function cancel_enteteoperation(data) {
         throw new Error("Type de paiement non reconnu.");
     }
 
-
     /* ======================================================
        2. Création de l'entête inverse
     ====================================================== */
@@ -798,23 +797,23 @@ async function getDataRecu(idoperation) {
       throw new Error("Aucune donnée pour ce reçu");
     }
     // récupération des validateurs
-    const validateurs = await typeoperation.getValidateursByOperation(idoperation);
+    const validateurs = await typeoperation.getValidateursByOperation(
+      idoperation,
+    );
 
     const head = rows[0];
     const total = rows.reduce((sum, r) => sum + (r.montantoperation || 0), 0);
     const caissesMap = {};
-    rows.forEach(r => {
+    rows.forEach((r) => {
       if (!caissesMap[r.caisse]) {
         caissesMap[r.caisse] = {
           libelle: r.caisse,
           codecaisse: r.codecaisse,
           montant: r.montantpaye ?? 0,
-          devise: r.devisecaisse
+          devise: r.devisecaisse,
         };
       }
     });
-
-
 
     const data = {
       societe: head.societe,
@@ -833,29 +832,31 @@ async function getDataRecu(idoperation) {
       beneficiaire: head.beneficiaire,
       caissier: head.caissier,
       type: head.typeoperation,
-      lignes: rows.map(r => ({
+      lignes: rows.map((r) => ({
         libelle: r.nature,
         montant: r.montantoperation,
+        tiers: r.tiersDesignation,
         libelleCentre: r.libelleCentre,
       })),
       caisses: Object.values(caissesMap),
-      validateurs: validateurs.map(v => ({
+      validateurs: validateurs.map((v) => ({
         ordre: v.rang,
         nom: `${v.nom} ${v.prenom}`,
         commentaire: v.commentaire,
         statut: v.decision,
-        dateValidation: v.datevalidation ? new Date(v.datevalidation).toLocaleString("fr-FR") : null
-      }))
+        dateValidation: v.datevalidation
+          ? new Date(v.datevalidation).toLocaleString("fr-FR")
+          : null,
+      })),
     };
     return data;
-  }
-  catch (err) {
-    console.log("Err:", err)
+  } catch (err) {
+    console.log("Err:", err);
     throw err;
   }
 }
 
-const typeoperationModel = require('../models/operation.model');
+const typeoperationModel = require("../models/operation.model");
 
 /**
  * Récupère les données d'un reçu via son numéro (codeoperation)
@@ -888,17 +889,13 @@ async function getDataDocumentJustificatif(idoperation) {
   }
 
   try {
-    const [
-      operationRows,
-      detailsJustifRows,
-      encaissementRows,
-      decInitRows
-    ] = await Promise.all([
-      typeoperation.get_dataOperationJustif(idoperation),
-      typeoperation.get_dataDetailJustif(idoperation),
-      typeoperation.get_dataOpEncaissement(idoperation),
-      typeoperation.get_dataDecInit(idoperation)
-    ]);
+    const [operationRows, detailsJustifRows, encaissementRows, decInitRows] =
+      await Promise.all([
+        typeoperation.get_dataOperationJustif(idoperation),
+        typeoperation.get_dataDetailJustif(idoperation),
+        typeoperation.get_dataOpEncaissement(idoperation),
+        typeoperation.get_dataDecInit(idoperation),
+      ]);
 
     if (!operationRows.length) {
       throw new Error("Aucune opération trouvée");
@@ -917,13 +914,13 @@ async function getDataDocumentJustificatif(idoperation) {
       montantEncaissement: head.montant_encaissement,
       montantEncaissementRef: head.montant_encaissement_ref,
       resteAJustifier: head.reste_a_justifier,
-      resteAJustifierRef: head.reste_a_justifier_ref
+      resteAJustifierRef: head.reste_a_justifier_ref,
     };
 
     // =========================
     // 2. DÉCAISSEMENT INITIAL
     // =========================
-    const decaissement = decInitRows.map(r => ({
+    const decaissement = decInitRows.map((r) => ({
       idligne: r.idligneoperation,
       libelle: r.libelle,
       nature: r.nature,
@@ -931,7 +928,7 @@ async function getDataDocumentJustificatif(idoperation) {
       codecentre: r.codecentreanalytique,
       montant: r.montantoperation,
       caisse: r.libellecaisse,
-      devise: r.codedevise
+      devise: r.codedevise,
     }));
 
     // =========================
@@ -939,7 +936,7 @@ async function getDataDocumentJustificatif(idoperation) {
     // =========================
     const justifMap = {};
 
-    detailsJustifRows.forEach(r => {
+    detailsJustifRows.forEach((r) => {
       if (!justifMap[r.idjustificatifoperation]) {
         justifMap[r.idjustificatifoperation] = {
           id: r.idjustificatifoperation,
@@ -951,7 +948,7 @@ async function getDataDocumentJustificatif(idoperation) {
           tauxinverse: r.tauxinverse,
           montant: r.montantjustificatif,
           montantRef: r.montantjustificatifref,
-          details: []
+          details: [],
         };
       }
 
@@ -961,7 +958,7 @@ async function getDataDocumentJustificatif(idoperation) {
         centre: r.centreanalytique,
         codecentre: r.codecentreanalytique,
         montant: r.montantdetail,
-        montantRef: r.montantref
+        montantRef: r.montantref,
       });
     });
 
@@ -970,7 +967,7 @@ async function getDataDocumentJustificatif(idoperation) {
     // =========================
     // 4. ENCAISSEMENTS (CAISSE)
     // =========================
-    const encaissements = encaissementRows.map(r => ({
+    const encaissements = encaissementRows.map((r) => ({
       idoperation: r.idoperation,
       code: r.codeoperation,
       date: r.dateoperation,
@@ -978,7 +975,7 @@ async function getDataDocumentJustificatif(idoperation) {
       montantRef: r.montantref,
       caisse: r.libellecaisse,
       codecaisse: r.codecaisse,
-      devise: r.codedevise
+      devise: r.codedevise,
     }));
 
     // =========================
@@ -989,12 +986,12 @@ async function getDataDocumentJustificatif(idoperation) {
         id: head.idoperation,
         code: head.codeoperation,
         date: new Date(head.dateoperation).toLocaleDateString("fr-FR"),
-        beneficiaire: head.beneficiaire
+        beneficiaire: head.beneficiaire,
       },
       synthese,
       decaissement,
       justificatifs,
-      encaissements
+      encaissements,
     };
 
     return data;
@@ -1015,5 +1012,5 @@ module.exports = {
   get_operationmax,
   getDataRecu,
   getDataDocumentJustificatif,
-  getRecuDataByNumero
+  getRecuDataByNumero,
 };

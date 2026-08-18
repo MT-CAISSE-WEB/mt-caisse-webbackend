@@ -173,13 +173,12 @@ app.use(errorHandler);
 // PORT DEFINI OU PORT PAR DEFAUT 7000
 const PORT = process.env.PORT || 7000;
 // LANCEMENT DU SERVEUR
-const server = app.listen(
-  PORT,
+const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(
     `Serveur lancer en mode ${process.env.NODE_ENV} sur le port ${PORT}`.yellow
       .bold,
-  ),
-);
+  );
+});
 
 //API
 app.use("/API", deviseroute);

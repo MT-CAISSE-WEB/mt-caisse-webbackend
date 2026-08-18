@@ -29,13 +29,14 @@ async function getparamcomptable() {
 async function getnatureoperationdecaj(idoperation) {
   try {
     const pool = await connectDB();
-    const result = await pool.request()
+    const result = await pool
+      .request()
       .input("idoperation", sql.UniqueIdentifier, idoperation)
       .query(`select n.*, lo.idoperation, ca.idcentreanalytique, ca.codecentreanalytique, tr.codetiers, pl.numcompte from NatureOperation n
 				        inner join ligneoperationCaisse lo on n.idnature = lo.idnature
 						    inner join PlanComptable pl on pl.idcompte = n.idcompte
 						    inner join CentreAnalytique ca on lo.idcentre = ca.idcentreanalytique
-						    inner join Tiers tr on lo.idtiers = tr.idtiers
+						    left join Tiers tr on lo.idtiers = tr.idtiers
                 where lo.idoperation = @idoperation and n.decajustifier = 1`);
     return {
       success: true,
@@ -252,5 +253,5 @@ module.exports = {
   getjustificatifbyid,
   getjustificatifdetailsbyid,
   typeoperationbyid,
-  getligneoperationbyidoperationretour
+  getligneoperationbyidoperationretour,
 };
