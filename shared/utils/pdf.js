@@ -198,11 +198,11 @@ function generateTableOrSummary(lignes, devise) {
       <table class="operation-table">
         <thead>
           <tr>
-            <th class="center">N°</th>
+            <th>N°</th>
             <th>Désignation</th>
             <th>Centre analytique</th>
             <th>Tiers</th>
-            <th class="right">Montant</th>
+            <th>Montant</th>
           </tr>
         </thead>
         <tbody>
@@ -778,8 +778,13 @@ async function genererPdfRecu(data, copies = 2) {
   // =========================
   let qrCodeBase64 = "";
   try {
-    const qrData = `http://192.168.1.72:4200/app/verification?op=${data.numero}`;
-    qrCodeBase64 = await QRCode.toDataURL(qrData);
+    const BACKEND_URL = "http://192.168.1.86:5000";
+    const qrData = `${BACKEND_URL}/api/operation/recu/pdf/${data.numero}`;
+    qrCodeBase64 = await QRCode.toDataURL(qrData, {
+      width: 150,
+      margin: 1,
+      errorCorrectionLevel: "M", // Tolérance moyenne aux erreurs
+    });
   } catch (e) {
     console.error("Erreur QR Code:", e);
   }
@@ -794,302 +799,370 @@ async function genererPdfRecu(data, copies = 2) {
   // =========================
   const ticketTemplate = `
 <div class="page">
-  <div class="content">
-    <!-- ========== EN-TÊTE ========== -->
-    <div class="header">
-      <div class="header-left">
-        <div class="logo-placeholder">${(data.societe || "E")
-          .charAt(0)
-          .toUpperCase()}</div>
-        <div class="company-info">
-          <div class="company-name">${data.societe || "Entreprise"}</div>
-          ${data.site ? `<div class="company-site">${data.site}</div>` : ""}
-          ${
-            data.adresse
-              ? `<div class="company-details">${data.adresse}</div>`
-              : ""
-          }
-          ${
-            data.contact
-              ? `<div class="company-details">${data.contact}</div>`
-              : ""
-          }
-        </div>
-      </div>
-      <div class="header-right">
-        <div class="receipt-title">${
-          data.typeOperation === "encaissement"
-            ? "REÇU D'ENCAISSEMENT"
-            : "REÇU DE DÉCAISSEMENT"
-        }</div>
-        <div class="receipt-subtitle">N° <strong>${
-          data.numero || ""
-        }</strong></div>
-        ${
-          data.date
-            ? `<div class="receipt-date">Date: ${formaterDate(data.date)}</div>`
-            : ""
-        }
+  <!-- ========== EN-TÊTE ========== -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-initial">${(data.societe || "E")
+        .charAt(0)
+        .toUpperCase()}</div>
+      <div class="company-info">
+        <div class="company-name">${data.societe || ""}</div>
+        <div class="company-site">${data.site || ""}</div>
       </div>
     </div>
-
-    <!-- ========== INFOS PRINCIPALES ========== -->
-    <div class="main-info">
-      ${
-        data.numeroDemande
-          ? `<div class="info-section">
-          <div class="info-section-title">Informations de la demande</div>
-          <div class="info-grid">
-            ${
-              data.numeroDemande
-                ? `<div class="info-item"><span class="info-label">N° Demande:</span><span class="info-value"><strong>${data.numeroDemande}</strong></span></div>`
-                : ""
-            }
-            <div class="info-item"><span class="info-label">Département:</span><span class="info-value">${
-              data.libelleDep || ""
-            }</span></div>
-            ${
-              data.tiers
-                ? `<div class="info-item"><span class="info-label">Tiers:</span><span class="info-value">${data.tiers}</span></div>`
-                : ""
-            }
-          </div>
-        </div>`
-          : ""
-      }
-
-      <div class="info-section">
-        <div class="info-section-title">Montant</div>
-        <div class="info-grid">
-          <div class="info-item"><span class="info-label">Type:</span><span class="info-value">${
-            data.type || "-"
-          }</span></div>
-          <div class="info-item"><span class="info-label">Devise:</span><span class="info-value">${
-            data.devise || "XAF"
-          }</span></div>
-          <div class="info-item"><span class="info-label">Total:</span><span class="info-value info-value-highlight">${formaterMontant(
-            data.total || 0,
-            data.devise,
-          )}</span></div>
+    <div class="header-right">
+      <div class="receipt-title">RECU DE ${
+        data.type === "encaissement" ? "ENCAISSEMENT" : "DECAISSEMENT"
+      }</div>
+  
+      <div class="receipt-info-grid">
+        <div class="receipt-info-row">
+          <span class="receipt-info-label">N°:</span>
+          <span class="receipt-info-value">${data.numero || ""}</span>
         </div>
-        <div class="amount-in-words">${montantEnLettres(
-          data.total || 0,
-          data.devise || "XAF",
-        )}</div>
-      </div>
-    </div>
-
-    <!-- ========== DÉTAILS OPÉRATION ========== -->
-    <div class="operation-section">
-      <div class="operation-header">
-        <span class="operation-icon">📋</span>
-        <span class="operation-title">Détails de l'opération</span>
-      </div>
-      <div class="operation-details">
-        <div class="operation-item"><span class="operation-item-label">Libellé:</span><span class="operation-item-value">${
-          data.libelleOperation || data.description || ""
-        }</span></div>
-        <div class="operation-item"><span class="operation-item-label">Bénéficiaire:</span><span class="operation-item-value">${
-          data.beneficiaire || ""
-        }</span></div>
-        <div class="operation-item"><span class="operation-item-label">Caissier:</span><span class="operation-item-value">${
-          data.caissier || ""
-        }</span></div>
-      </div>
-    </div>
-
-    <!-- ========== BLOC RÉCAPITULATIF (UNIQUEMENT SUR PAGE 1) ========== -->
-    <!-- START_RECAP_SECTION -->
-    <div class="total-section">
-      <div class="total-section-title">Récapitulatif</div>
-      <div class="total-line"><span class="total-label">Type:</span><span class="total-amount">${
-        data.type === "encaissement" ? "ENCAISSEMENT" : "DÉCAISSEMENT"
-      }</span></div>
-      <div class="total-line"><span class="total-label">Date:</span><span class="total-amount">${formaterDate(
-        data.date,
-      )}</span></div>
-      ${
-        data.numeroDemande
-          ? `<div class="total-line"><span class="total-label">N° Demande:</span><span class="total-amount">${data.numeroDemande}</span></div>`
-          : ""
-      }
-      ${
-        data.libelleDep
-          ? `<div class="total-line"><span class="total-label">Département:</span><span class="total-amount">${
-              data.libelleDep
-            } ${data.codeDep ? `(${data.codeDep})` : ""}</span></div>`
-          : ""
-      }
-      ${
-        data.soldeouverture !== undefined
-          ? `<div class="total-line"><span class="total-label">Solde avant:</span><span class="total-amount">${formaterMontant(
-              data.soldeouverture,
-              data.devise,
-            )}</span></div>`
-          : ""
-      }
-      ${
-        data.soldefermeture !== undefined
-          ? `<div class="total-line"><span class="total-label">Solde après:</span><span class="total-amount">${formaterMontant(
-              data.soldefermeture,
-              data.devise,
-            )}</span></div>`
-          : ""
-      }
-      <div class="total-line total-line-main"><span class="total-label">TOTAL:</span><span class="total-amount">${formaterMontant(
-        data.total || 0,
-        data.devise,
-      )}</span></div>
-      <div class="total-line"><span class="total-label">Caissier:</span><span class="total-amount">${
-        data.caissier || "-"
-      }</span></div>
-      <div class="total-line"><span class="total-label">Bénéficiaire:</span><span class="total-amount">${
-        data.beneficiaire || "-"
-      }</span></div>
-    </div>
-    <!-- END_RECAP_SECTION -->
-
-    <!-- ========== TABLEAU DES LIGNES (PAGINÉ AUTOMATIQUEMENT) ========== -->
-    ${tableHtml}
-
-    <!-- ========== QR CODE ========== -->
-    ${
-      qrCodeBase64
-        ? `
-    <div class="qrcode-section">
-      <div class="qrcode-title">🔍 Vérification</div>
-      <img src="${qrCodeBase64}" class="qrcode-image" alt="QR Code">
-      <div class="qrcode-text">${data.numero || "N/A"}</div>
-    </div>`
-        : ""
-    }
-
-    <!-- ========== APPROBATIONS ========== -->
-    ${
-      data.validateurs && data.validateurs.length > 0
-        ? `<div class="approval-section">
-        <div class="approval-title">✅ Approbations</div>
-        <div class="approval-grid">
-          ${data.validateurs
-            .map(
-              (v) => `
-            <div class="approval-item">
-              <div class="approval-name">${v.nom}</div>
-              <div class="approval-status">${
-                v.statut === "approuve" ? "✔️" : "❌"
-              } ${v.statut.toUpperCase()}</div>
-              ${
-                v.dateValidation
-                  ? `<div class="approval-date">Le ${v.dateValidation}</div>`
-                  : ""
-              }
-            </div>
-          `,
-            )
-            .join("")}
+        <div class="receipt-info-row">
+          <span class="receipt-info-label">Date:</span>
+          <span class="receipt-info-value">${data.date || ""}</span>
         </div>
-      </div>`
-        : ""
-    }
-
-    <!-- ========== SIGNATURES ========== -->
-    <div class="signature-section">
-      <div class="signature-title">Signatures</div>
-      <div class="signature-grid">
-        <div class="signature-block">
-          <div class="signature-block-title">Caissier</div>
-          <div class="signature-block-name">${
-            data.emetteur || data.caissier || "N/A"
-          }</div>
-          <div class="signature-line"></div>
-          ${
-            data.dateEmetteur
-              ? `<div class="signature-date">Le ${formaterDate(
-                  data.dateEmetteur,
-                )}</div>`
-              : ""
-          }
-        </div>
-        <div class="signature-block">
-          <div class="signature-block-title">Bénéficiaire</div>
-          <div class="signature-block-name">${data.beneficiaire || "N/A"}</div>
-          <div class="signature-line"></div>
-          ${
-            data.dateBeneficiaire
-              ? `<div class="signature-date">Le ${formaterDate(
-                  data.dateBeneficiaire,
-                )}</div>`
-              : ""
-          }
-        </div>
-      </div>
-    </div>
-
-    <!-- ========== PIED DE PAGE ========== -->
-    <div class="footer">
-      <div class="footer-text">
-        Document généré le ${formaterDate(
-          new Date(),
-        )} à ${new Date().toLocaleTimeString("fr-FR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  })}
-      </div>
-      ${data.mention ? `<div class="footer-mention">${data.mention}</div>` : ""}
-      <div class="footer-warning">
-        REÇU LA SOMME DE (EN LETTRES): <strong>${montantEnLettres(
-          data.total || 0,
-          data.devise || "XAF",
-        )}</strong>
-      </div>
-      <div class="footer-note" style="margin-top: 8px; font-size: 10px;">
-        A REMPLIR À LA CAISSE PAR LE BÉNÉFICIAIRE
       </div>
     </div>
   </div>
+
+  <!-- ========== MONTANT PRINCIPAL ========== -->
+  <div class="main-amount">
+    ${formaterMontant(data.total || 0, data.devise)}
+  </div>
+
+  <!-- ========== SECTION PRINCIPALE ========== -->
+  <div class="main-section">
+    <div class="left-column">
+      ${
+        data.numeroDemande
+          ? `
+      <div class="info-row">
+        <span class="info-label">N° demande</span>
+        <span class="info-separator">:</span>
+        <span class="info-value">${data.numeroDemande}</span>
+      </div>`
+          : ""
+      }
+      
+      <div class="info-row">
+        <span class="info-label">Caisse(s)</span>
+        <span class="info-separator">:</span>
+        <span class="info-value">${
+          data.caisses && data.caisses.length > 0
+            ? data.caisses.map((c) => `${c.libelle} (${c.devise})`).join(", ")
+            : ""
+        }</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Type</span>
+        <span class="info-separator">:</span>
+        <span class="info-value">${
+          data.type === "encaissement" ? "ENCAISSEMENT" : "DECAISSEMENT"
+        }</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Date</span>
+        <span class="info-separator">:</span>
+        <span class="info-value">${data.date || ""}</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Caissier</span>
+        <span class="info-separator">:</span>
+        <span class="info-value">${data.caissier || ""}</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Montant Global</span>
+        <span class="info-separator">:</span>
+        <span class="info-value">${formaterMontant(
+          data.total || 0,
+          data.devise,
+        )}</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Montant en lettre</span>
+        <span class="info-separator">:</span>
+        <span class="info-value">${montantEnLettres(
+          data.total || 0,
+          data.devise || "XAF",
+        )}</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Libellé Opération</span>
+        <span class="info-separator">:</span>
+        <span class="info-value">${data.description || ""}</span>
+      </div>
+    </div>
+
+   
+
+    <div class="right-column">
+      ${
+        data.numeroDemande && data.demandeur
+          ? `
+      <div class="demandeur-info" style="border: 1px solid #000; padding: 8px; margin-bottom: 8px;">
+        <div style="font-weight: bold; text-transform: uppercase; font-size: 10px; margin-bottom: 8px; text-align: center;">
+          Informations du Demandeur
+        </div>
+        <div style="font-size: 9px; line-height: 1.8;">
+          <div><strong>Nom :</strong> ${data.demandeur.nom || ""}</div>
+          <div><strong>Prénom :</strong> ${data.demandeur.prenom || ""}</div>
+          ${
+            data.demandeur.email
+              ? `<div><strong>Email :</strong> ${data.demandeur.email}</div>`
+              : ""
+          }
+          ${
+            data.demandeur.telephone
+              ? `<div><strong>Tél. :</strong> ${data.demandeur.telephone}</div>`
+              : ""
+          }
+          ${
+            data.libelleDep
+              ? `<div><strong>Départ. :</strong> ${data.libelleDep}</div>`
+              : ""
+          }
+        </div>
+      </div>`
+          : ""
+      }
+
+            <table class="validation-table">
+        <thead>
+          <tr>
+            <th style="width: 60%;">Répartition par Caisse</th>
+            <th class="right" style="width: 40%;">Montant</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${
+            data.caisses && data.caisses.length > 0
+              ? data.caisses
+                  .map(
+                    (c) => `
+          <tr>
+            <td>${c.libelle} <small>(${c.devise || "XAF"})</small></td>
+            <td class="right">${formaterMontant(c.montant || 0, "")}</td>
+          </tr>`,
+                  )
+                  .join("")
+              : `
+          <tr>
+            <td>${data.devise || "XAF"}</td>
+            <td class="right">${formaterMontant(data.total || 0, "")}</td>
+          </tr>`
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+   <!-- ========== COMMENTAIRE (NOUVEAU) ========== -->
+   <div class="comment-row">
+        <span class="info-label">Commentaire</span>
+        <span class="info-separator">:</span>
+        <div class="comment-value"></div>
+      </div>
+  
+
+  <!-- ========== TABLEAU PRINCIPAL (DÉTAIL OPÉRATION) ========== -->
+  <div class="main-table-container">
+    <table class="main-table">
+      <thead>
+        <tr>
+          <!-- MODIFIÉ : Largeurs ajustées pour donner plus d'espace au Montant (25%) -->
+          <th class="center" width="5%">N°</th>
+          <th width="25%">Désignation</th>
+          <th width="20%">Centre Analytique</th>
+          <th width="15%">Tiers</th>
+          <th class="center" width="10%">Devise</th>
+          <th class="right" width="25%">Montant</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${
+          data.lignes && data.lignes.length > 0
+            ? data.lignes
+                .map(
+                  (l, index) => `
+        <tr>
+          <td class="center">${index + 1}</td>
+          <td>${l.libelle || ""}</td>
+          <td>${l.libelleCentre || "-"}</td>
+          <td>${l.tiers || "-"}</td>
+          <td class="center">${l.devise || data.devise || "XAF"}</td>
+          <td class="right">${formaterMontant(l.montant || 0, "")}</td>
+        </tr>`,
+                )
+                .join("")
+            : `
+        <tr><td class="center">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td class="center">&nbsp;</td><td class="right">&nbsp;</td></tr>
+        <tr><td class="center">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td class="center">&nbsp;</td><td class="right">&nbsp;</td></tr>
+        <tr><td class="center">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td class="center">&nbsp;</td><td class="right">&nbsp;</td></tr>
+        <tr><td class="center">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td class="center">&nbsp;</td><td class="right">&nbsp;</td></tr>
+        <tr><td class="center">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td class="center">&nbsp;</td><td class="right">&nbsp;</td></tr>`
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ========== TOTAL OPERATION ========== -->
+  <div class="total-operation">
+    <div class="total-label">Total de l'opération</div>
+    <div>
+      <span class="total-amount">${formaterMontant(
+        data.total || 0,
+        data.devise,
+      )}</span>
+    </div>
+  </div>
+
+  
+
+  <!-- ========== SECTION BAS (SIGNATURES) ========== -->
+<div class="bottom-section">
+  <!-- CADRE 1 : Signature du Caissier -->
+  <div class="bottom-box">
+    <div class="bottom-box-title">Signature du Caissier</div>
+    <div class="bottom-box-signature"><span style="font-weight: bold;">Caissier : </span>${
+      data.caissier || ""
+    }</div>
+    <div class="stamp-box">CACHET DE LA CAISSE</div>
+  </div>
+
+  <!-- CADRE 2 : Autorisation -->
+  ${
+    data.numeroDemande
+      ? `
+  <div class="bottom-box" style="flex: 1.2;">
+    <div class="authorization-box">
+      <div class="authorization-title">AUTORISATION DE</div>
+      ${
+        data.validateurs && data.validateurs.length > 0
+          ? data.validateurs
+              .map(
+                (v) => `
+          <div class="auth-line" style="font-weight: bold;">${v.nom || ""}</div>
+          ${
+            v.dateValidation
+              ? `<div class="auth-line">${v.dateValidation || ""}</div>`
+              : ""
+          }
+        `,
+              )
+              .join("")
+          : ""
+      }
+
+       <!-- INJECTION DU QR CODE TOUT EN BAS -->
+        ${
+          qrCodeBase64
+            ? `
+        <div class="qr-code-container">
+          <img src="${qrCodeBase64}" class="qr-code-image" alt="QR Code Reçu" />
+        </div>`
+            : ""
+        }
+    </div>
+  </div>`
+      : '<div class="bottom-box" style="flex: 1.2;"><div class="authorization-box"><div class="authorization-title">AUTORISATION DE</div></div></div>'
+  }
+
+    <!-- CADRE 3 : Reçu la somme de -->
+  <div class="bottom-box">
+    <div class="recu-sum-box">
+      <div class="recu-sum-title">RECU LA SOMME DE<br>(Chiffre / Lettre)</div>
+      <div class="recu-sum-content" style="text-align: center;">
+        ${
+          data.caisses && data.caisses.length > 1
+            ? data.caisses
+                .map(
+                  (c) =>
+                    `<div style="font-weight:bold;">${formaterMontant(
+                      c.montant || 0,
+                      c.devise || data.devise,
+                    )}</div>`,
+                )
+                .join("") + "<br>"
+            : `<span style="font-weight:bold; font-size: 12px;">${formaterMontant(
+                data.total || 0,
+                data.devise,
+              )}</span><br>`
+        }
+        <em style="font-size: 9px;">${montantEnLettres(
+          data.total || 0,
+          data.devise || "XAF",
+        )}</em>
+      </div>
+      
+      <!-- ZONE BÉNÉFICIAIRE ET SIGNATURE RÉORGANISÉE -->
+      <div style="text-align: center; margin-top: auto;">
+        <div style="font-size: 9px; font-weight: bold; margin-bottom: 55px;">
+          Signature du bénéficiaire
+        </div>
+        <div class="signature-line"></div>
+      </div>
+      <div style="font-size: 9px; margin-bottom: 5px;">
+          <span style="font-weight: bold;">Bénéficiaire : </span>${
+            data.beneficiaire || ""
+          }
+        </div>
+      
+    </div>
+  </div>
 </div>
-`;
+
+</div>`;
 
   // =========================
   // DUPLICATION POUR COPIES (MODIFIÉ)
   // =========================
-  const ticketsHtml = Array.from({ length: copies }, (_, i) => {
-    const isCopy = i > 0;
-    let copyTemplate = ticketTemplate
-      .replace("Original", isCopy ? `Copie ${i + 1}` : "Original")
-      .replace(
-        "background: linear-gradient(135deg, rgba(30, 64, 175, 0.1), rgba(59, 130, 246, 0.1))",
-        isCopy
-          ? "background: rgba(239, 68, 68, 0.05)"
-          : "background: linear-gradient(135deg, rgba(30, 64, 175, 0.1), rgba(59, 130, 246, 0.1))",
-      )
-      .replace(
-        "border: 2px solid var(--primary-light)",
-        isCopy
-          ? "border: 2px solid rgba(239, 68, 68, 0.2)"
-          : "border: 2px solid var(--primary-light)",
-      );
+  // const ticketsHtml = Array.from({ length: copies }, (_, i) => {
+  //   const isCopy = i > 0;
+  //   let copyTemplate = ticketTemplate
+  //     .replace("Original", isCopy ? `Copie ${i + 1}` : "Original")
+  //     .replace(
+  //       "background: linear-gradient(135deg, rgba(30, 64, 175, 0.1), rgba(59, 130, 246, 0.1))",
+  //       isCopy
+  //         ? "background: rgba(239, 68, 68, 0.05)"
+  //         : "background: linear-gradient(135deg, rgba(30, 64, 175, 0.1), rgba(59, 130, 246, 0.1))",
+  //     )
+  //     .replace(
+  //       "border: 2px solid var(--primary-light)",
+  //       isCopy
+  //         ? "border: 2px solid rgba(239, 68, 68, 0.2)"
+  //         : "border: 2px solid var(--primary-light)",
+  //     );
 
-    // 🔥 SUPPRIME LE BLOC RÉCAPITULATIF POUR LES COPIES
-    if (isCopy) {
-      copyTemplate = copyTemplate.replace(
-        /<!-- START_RECAP_SECTION -->[\s\S]*?<!-- END_RECAP_SECTION -->/,
-        "",
-      );
-    }
+  //   // 🔥 SUPPRIME LE BLOC RÉCAPITULATIF POUR LES COPIES
+  //   if (isCopy) {
+  //     copyTemplate = copyTemplate.replace(
+  //       /<!-- START_RECAP_SECTION -->[\s\S]*?<!-- END_RECAP_SECTION -->/,
+  //       "",
+  //     );
+  //   }
 
-    return (
-      (i > 0
-        ? '<div class="copy-separator"><span>COPIE ' + (i + 1) + "</span></div>"
-        : "") + copyTemplate
-    );
-  }).join("");
+  //   return (
+  //     (i > 0
+  //       ? '<div class="copy-separator"><span>COPIE ' + (i + 1) + "</span></div>"
+  //       : "") + copyTemplate
+  //   );
+  // }).join("");
 
   // =========================
   // INJECTION DANS TEMPLATE (inchangé)
   // =========================
   html = html.replace(/{{societe}}/g, data.societe || "Entreprise");
-  html = html.replace("{{tickets}}", ticketsHtml);
+  // html = html.replace("{{tickets}}", ticketsHtml);
+  html = html.replace("{{tickets}}", ticketTemplate);
 
   // =========================
   // GÉNÉRATION PDF (MODIFIÉ : AJOUT CSS PAGINATION)
@@ -1106,37 +1179,50 @@ async function genererPdfRecu(data, copies = 2) {
   });
 
   // 🔥 AJOUTE LES STYLES DE PAGINATION
+  // await page.addStyleTag({
+  //   content: `
+  //     @page {
+  //       size: A4;
+  //       margin: 10mm;
+  //     }
+  //     body {
+  //       -webkit-print-color-adjust: exact !important;
+  //       print-color-adjust: exact !important;
+  //     }
+  //     /* ===== STYLES POUR LA PAGINATION ===== */
+  //     .table-container {
+  //       margin: 3px 0;
+  //       page-break-inside: avoid;
+  //     }
+  //     .operation-table {
+  //       width: 100%;
+  //       border-collapse: collapse;
+  //       font-size: 9px;
+  //       table-layout: fixed;
+  //     }
+  //     .operation-table thead {
+  //       display: table-header-group;
+  //     }
+  //     .operation-table tr {
+  //       page-break-inside: avoid;
+  //     }
+  //     .page-break {
+  //       page-break-before: always;
+  //       height: 0;
+  //       overflow: hidden;
+  //     }
+  //   `,
+  // });
+
   await page.addStyleTag({
     content: `
       @page {
         size: A4;
-        margin: 10mm;
+        margin: 3mm; /* RÉDUIT : de 10mm à 5mm */
       }
       body {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-      }
-      /* ===== STYLES POUR LA PAGINATION ===== */
-      .table-container {
-        margin: 3px 0;
-        page-break-inside: avoid;
-      }
-      .operation-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 9px;
-        table-layout: fixed;
-      }
-      .operation-table thead {
-        display: table-header-group;
-      }
-      .operation-table tr {
-        page-break-inside: avoid;
-      }
-      .page-break {
-        page-break-before: always;
-        height: 0;
-        overflow: hidden;
       }
     `,
   });
@@ -1144,10 +1230,10 @@ async function genererPdfRecu(data, copies = 2) {
   const buffer = await page.pdf({
     format: "A4",
     margin: {
-      top: "3mm",
-      bottom: "3mm",
-      left: "4mm",
-      right: "4mm",
+      top: "1mm" /* Réduit */,
+      bottom: "1mm" /* Réduit */,
+      left: "2mm" /* Réduit */,
+      right: "2mm" /* Réduit */,
     },
     printBackground: true,
     preferCSSPageSize: true,

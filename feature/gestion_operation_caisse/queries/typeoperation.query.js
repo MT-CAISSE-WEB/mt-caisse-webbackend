@@ -269,13 +269,13 @@ module.exports = {
 
     `,
   reçucaisse: `
-        SELECT
+SELECT
     S.raisonsociale        AS societe,
     SI.libelle             AS site,
     C.libelle               AS caisse,
     C.codecaisse            AS codecaisse,
     E.codeoperation         AS numero,
-    ED.codedemande          AS numeroDemande,  -- Sera NULL si pas de demande
+    ED.codedemande          AS numeroDemande,
     E.dateoperation,
     D.codedevise            AS deviseoperation,
     DC.codedevise           AS devisecaisse,
@@ -288,11 +288,17 @@ module.exports = {
     T.designation           AS tiersDesignation,
     CA.libelle              AS libelleCentre,
     CA.codecentreanalytique AS codecentreanalytique,
-    DP.libelle              AS libelleDep,  
-    DP.codedept             AS codeDep,      
+    DP.libelle              AS libelleDep,
+    DP.codedept             AS codeDep,
     L.montantoperation      AS montantoperation,
     L.libelle               AS libelleoperation,
-    TOPE.montant            AS montantpaye
+    TOPE.montant            AS montantpaye,
+    -- Informations du demandeur
+    U.nom                   AS nomDemandeur,
+    U.prenom                AS prenomDemandeur,
+    U.email                 AS emailDemandeur,
+    U.telephone             AS telephoneDemandeur,
+    U.adresse               AS adresseDemandeur
 FROM EnteteOperationCaisse E
 JOIN TypeOperation TOPE ON TOPE.idoperation = E.idoperation
 JOIN Caisse C ON C.idcaisse = TOPE.idcaisse
@@ -307,8 +313,9 @@ LEFT JOIN ligneoperationCaisse L ON L.idoperation = E.idoperation
 LEFT JOIN NatureOperation N ON N.idnature = L.idnature
 LEFT JOIN Tiers T ON T.idtiers = L.idtiers
 LEFT JOIN CentreAnalytique CA ON L.idcentre = CA.idcentreanalytique
+LEFT JOIN Utilisateur U ON U.idutilisateur = ED.iddemandeur
 WHERE E.idoperation = @idoperation
-    `,
+`,
   getByCodeOperation: `
     SELECT idoperation, codeoperation, iddemande, idsociete, idsite, iddevise,
            dateoperation, montant, tauxoperation, typeoperation, beneficiaire

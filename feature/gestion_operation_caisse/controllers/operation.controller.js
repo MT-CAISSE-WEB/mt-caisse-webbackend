@@ -3,7 +3,6 @@ const asyncHandler = require("../../../shared/middlewares/async");
 const ErrorResponse = require("../../../shared/utils/errorResponse");
 const pdfjs = require("../../../shared/utils/pdf");
 
-
 /**
  * Liste toutes les types operations
  */
@@ -53,7 +52,9 @@ module.exports.get_onetypeoperation = asyncHandler(async (req, res, next) => {
 module.exports.create_typeoperation = asyncHandler(async (req, res, next) => {
   try {
     const data = req.body;
-    const new_typeoperation = await typeoperationservice.create_typeoperation(data);
+    const new_typeoperation = await typeoperationservice.create_typeoperation(
+      data,
+    );
     res.status(201).json({ success: true, data: new_typeoperation });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -133,9 +134,9 @@ module.exports.get_recudecaisse = asyncHandler(async (req, res) => {
  */
 module.exports.cancel_enteteoperation = asyncHandler(async (req, res, next) => {
   try {
-    
     const data = req.body;
-    const new_enteteoperation = await typeoperationservice.cancel_enteteoperation(data);
+    const new_enteteoperation =
+      await typeoperationservice.cancel_enteteoperation(data);
     res.status(201).json({ success: true, data: new_enteteoperation });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -164,5 +165,53 @@ module.exports.getRecuData = asyncHandler(async (req, res, next) => {
       return res.status(404).send("Reçu non trouvé");
     }
     res.status(500).send("Erreur lors de la génération du PDF");
+  }
+});
+
+/**
+ * @desc    Télécharge directement le PDF du reçu (route publique pour QR code)
+ * @route   GET /api/operations/recu/pdf/:numero
+ * @access  Public (pas d'authentification)
+ */
+module.exports.downloadRecuPdf = asyncHandler(async (req, res, next) => {
+  const { numero } = req.params;
+
+  try {
+    // Récupère les données du reçu
+    const data = await typeoperationservice.getRecuDataByNumero(numero);
+
+    // Génère le PDF (1 seule copie pour le téléchargement)
+    const pdfBuffer = await pdfjs.genererPdfRecu(data, 1);
+
+    // Envoie le PDF en téléchargement (pas inline)
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="recu-${numero}.pdf"`,
+    );
+    res.setHeader("Content-Length", pdfBuffer.length);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error("[downloadRecuPdf] Erreur:", error);
+
+    if (error.message.includes("Reçu non trouvé")) {
+      return res.status(404).send(`
+        <html>
+          <body style="font-family: Arial; text-align: center; padding: 50px;">
+            <h1>❌ Reçu non trouvé</h1>
+            <p>Le numéro <strong>${numero}</strong> ne correspond à aucun reçu.</p>
+          </body>
+        </html>
+      `);
+    }
+
+    res.status(500).send(`
+      <html>
+        <body style="font-family: Arial; text-align: center; padding: 50px;">
+          <h1>⚠️ Erreur</h1>
+          <p>Impossible de générer le reçu.</p>
+        </body>
+      </html>
+    `);
   }
 });

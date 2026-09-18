@@ -1639,11 +1639,11 @@ SELECT
     @idDeviseXAF,
     @idDeviseXAF,
     'SOC001',
-    'Gestion Nouvelle des Chantiers et Ateliers du Congo',
-    'GNCAC',
-    'contact@gncac.net',
-    '+242 05 530 0301',
-    'Boulevard de Loango, B.P.1155 Pointe-Noire',
+    'MT Informatique',
+    'MTI',
+    'contact@mti-congo.com',
+    '+242 06 518 10 10',
+    '159, Av. Moe Vangoula, B.P 1690 centre ville Pointe-Noire',
     0,
     GETDATE(),
     'SYSTEM'
@@ -1729,7 +1729,7 @@ INSERT INTO Site (
 )
 SELECT * FROM (
     VALUES 
-    (@idSociete, 'SIEGE', 'Siège Pointe-Noire', 'contact@gncac.net', '+242 05 530 0301', 'Boulevard de Loango, B.P.1155 Pointe-Noire', @now, @user)
+    (@idSociete, 'SIEGE', 'Siège Pointe-Noire', 'contact@mti-congo.com', '+242 06 518 10 10', '159, Av. Moe Vangoula, B.P 1690 centre ville Pointe-Noire', @now, @user)
 ) AS s(idsociete, codesite, libelle, email, telephone, adresse, createdat, createdby)
 WHERE NOT EXISTS (
     SELECT 1 FROM Site st WHERE st.codesite = s.codesite
@@ -1768,7 +1768,7 @@ SELECT
     'SYSTEM',
     'Pointe-Noire',
     null,
-    'admin@gncac.net',
+    'admin@mti-congo.com',
     'dolimex',
     '$argon2id$v=19$m=65536,t=3,p=4$g1WSR4kLiWhMf++eCPxxQA$VgLI0gAU+spJ8A/7H9PVmcGg8UH3CPzgl/6Dqe+S0Zs',
     1,
@@ -2139,4 +2139,22 @@ IF NOT EXISTS (
 BEGIN
     CREATE INDEX IX_JustificatifPieceJointe_Piece
     ON JustificatifPieceJointe(idpiecejointe);
+END
+
+-- ============================================
+-- Table de Gestion des Licences
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Licence')
+BEGIN
+    CREATE TABLE Licence (
+        idlicence UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        licensekey NVARCHAR(255) UNIQUE NOT NULL,      -- Clé unique générée
+        machineid NVARCHAR(255) NOT NULL,              -- Empreinte matérielle du poste (hash)
+        clientname NVARCHAR(150),                      -- Nom du client (ex: MT Informatique)
+        startdate DATETIME NOT NULL,                   -- Date d'activation (installation)
+        enddate DATETIME NOT NULL,                     -- Date d'expiration (startdate + 1 an)
+        isactive INT DEFAULT 1,                        -- 1 = Active, 0 = Révoquée
+        createdat DATETIME DEFAULT GETDATE(),
+        createdby NVARCHAR(50) DEFAULT 'SYSTEM'
+    );
 END

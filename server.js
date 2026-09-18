@@ -98,6 +98,8 @@ const transfertroute = require("./feature/gestion_operation_caisse/routes/transf
 const ecritureRoutes = require("./feature/gestion_comptabilisation/routes/ecriture.route");
 const ligneecritureRoutes = require("./feature/gestion_comptabilisation/routes/ligneecriture.route");
 
+const licenseRoute = require("./feature/licence/routes/license.route");
+
 const db = require("./config/db");
 //connexion db Richard
 const { connectInstance } = require("./config/db");
@@ -109,6 +111,11 @@ const app = express();
 app.use(express.json());
 // TRAITER DES REQ EXTERIEUR
 app.use(cors());
+
+const licenseCheckMiddleware = require("./middlewares/license.middleware");
+// MIDDLEWARE DE BLOCAGE GLOBAL (protège tout le reste)
+app.use(licenseCheckMiddleware);
+
 // GET INFO DEVICE
 app.use(device.capture());
 
@@ -257,6 +264,9 @@ app.use("/api/mouvements-caisse", mouvementsCaisseRoute);
 //comptabilisation
 app.use("/api/comptabilisation", ecritureRoutes);
 app.use("/api/comptabilisation", ligneecritureRoutes);
+
+// licence routes
+app.use("/api/license", licenseRoute);
 
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (err, promise) => {

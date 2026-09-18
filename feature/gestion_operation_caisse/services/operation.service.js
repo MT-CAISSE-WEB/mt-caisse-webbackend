@@ -796,52 +796,97 @@ async function getDataRecu(idoperation) {
     if (!rows.length) {
       throw new Error("Aucune donnée pour ce reçu");
     }
-    // récupération des validateurs
+
     const validateurs = await typeoperation.getValidateursByOperation(
       idoperation,
     );
-
     const head = rows[0];
-    const total = rows.reduce((sum, r) => sum + (r.montantoperation || 0), 0);
-    const caissesMap = {};
+
+    // ========================================================================
+    // ÉTAPE 1 : DÉDUPLIQUER LES LIGNES D'OPÉRATION
+    // ========================================================================
+    const uniqueLignesMap = new Map();
+
     rows.forEach((r) => {
-      if (!caissesMap[r.caisse]) {
-        caissesMap[r.caisse] = {
-          libelle: r.caisse,
-          codecaisse: r.codecaisse,
-          montant: r.montantpaye ?? 0,
-          devise: r.devisecaisse,
-        };
+      // Clé unique robuste pour éviter les doublons de jointure SQL
+      const lineKey = `${r.nature || "N/A"}|${r.libelleCentre || "N/A"}|${
+        r.tiersDesignation || "N/A"
+      }|${r.montantoperation || 0}`;
+
+      if (!uniqueLignesMap.has(lineKey)) {
+        uniqueLignesMap.set(lineKey, {
+          libelle: r.nature || r.libelleoperation || "Opération",
+          montant: Number(r.montantoperation) || 0,
+          tiers: r.tiersDesignation || "-",
+          libelleCentre: r.libelleCentre || "-",
+          // CORRECTION MAJEURE : La devise de la ligne est celle de l'opération, PAS celle de la caisse
+          devise: head.deviseoperation,
+        });
       }
     });
 
+    const lignesUniques = Array.from(uniqueLignesMap.values());
+
+    // ========================================================================
+    // ÉTAPE 2 : CALCULER LE TOTAL RÉEL À PARTIR DES LIGNES UNIQUES
+    // ========================================================================
+    const totalReel = lignesUniques.reduce(
+      (sum, ligne) => sum + ligne.montant,
+      0,
+    );
+
+    // ========================================================================
+    // ÉTAPE 3 : DÉDUPLIQUER LES CAISSES (Moyens de règlement)
+    // ========================================================================
+    const caissesMap = new Map();
+    rows.forEach((r) => {
+      if (r.codecaisse && !caissesMap.has(r.codecaisse)) {
+        caissesMap.set(r.codecaisse, {
+          libelle: r.caisse || "Caisse inconnue",
+          codecaisse: r.codecaisse,
+          montant: Number(r.montantpaye) || 0,
+          // Ici, on garde la devise de la caisse car c'est un moyen de paiement
+          devise: r.devisecaisse || head.deviseoperation,
+        });
+      }
+    });
+    const caissesUniques = Array.from(caissesMap.values());
+
+    // ========================================================================
+    // ÉTAPE 4 : CONSTRUIRE L'OBJET DE DONNÉES FINAL
+    // ========================================================================
     const data = {
       societe: head.societe,
       site: head.site,
       numero: head.numero,
       date: new Date(head.dateoperation).toLocaleDateString("fr-FR"),
-      devise: head.deviseoperation,
+      devise: head.deviseoperation, // Devise principale du reçu
       description: head.libelleoperation,
-      soldeouverture: head.soldeouverture,
-      soldefermeture: head.soldefermeture,
-      total,
+      soldeouverture: Number(head.soldeouverture) || 0,
+      soldefermeture: Number(head.soldefermeture) || 0,
+      total: totalReel,
       numeroDemande: head.numeroDemande,
-      libelleCentre: head.libelleCentre,
-      codecentreanalytique: head.codecentreanalytique,
       libelleDep: head.libelleDep,
       beneficiaire: head.beneficiaire,
       caissier: head.caissier,
       type: head.typeoperation,
-      lignes: rows.map((r) => ({
-        libelle: r.nature,
-        montant: r.montantoperation,
-        tiers: r.tiersDesignation,
-        libelleCentre: r.libelleCentre,
-      })),
-      caisses: Object.values(caissesMap),
+
+      demandeur: head.numeroDemande
+        ? {
+            nom: head.nomDemandeur || "",
+            prenom: head.prenomDemandeur || "",
+            email: head.emailDemandeur || "",
+            telephone: head.telephoneDemandeur || "",
+            adresse: head.adresseDemandeur || "",
+          }
+        : null,
+
+      lignes: lignesUniques,
+      caisses: caissesUniques,
+
       validateurs: validateurs.map((v) => ({
         ordre: v.rang,
-        nom: `${v.nom} ${v.prenom}`,
+        nom: `${v.nom || ""} ${v.prenom || ""}`.trim(),
         commentaire: v.commentaire,
         statut: v.decision,
         dateValidation: v.datevalidation
@@ -849,9 +894,10 @@ async function getDataRecu(idoperation) {
           : null,
       })),
     };
+
     return data;
   } catch (err) {
-    console.log("Err:", err);
+    console.error("Erreur critique getDataRecu:", err);
     throw err;
   }
 }
