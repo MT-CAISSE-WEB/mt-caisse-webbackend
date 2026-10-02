@@ -967,10 +967,10 @@ async function genererPdfRecu(data, copies = 2) {
 
    <!-- ========== COMMENTAIRE (NOUVEAU) ========== -->
    <div class="comment-row">
-        <span class="info-label">Commentaire</span>
-        <span class="info-separator">:</span>
-        <div class="comment-value"></div>
-      </div>
+      <span class="info-label">Commentaire</span>
+      <span class="info-separator">:</span>
+      <div class="comment-value"></div>
+    </div>
   
 
   <!-- ========== TABLEAU PRINCIPAL (DÉTAIL OPÉRATION) ========== -->
