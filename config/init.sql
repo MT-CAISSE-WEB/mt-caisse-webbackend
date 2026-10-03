@@ -1941,17 +1941,17 @@ BEGIN
     ON DemandePieceJointe(idpiecejointe);
 END
 
-ALTER TABLE PieceJointe
-ADD nomfichier NVARCHAR(255);
+-- ALTER TABLE PieceJointe
+-- ADD nomfichier NVARCHAR(255);
 
-ALTER TABLE PieceJointe
-ADD mimetype NVARCHAR(100);
+-- ALTER TABLE PieceJointe
+-- ADD mimetype NVARCHAR(100);
 
-ALTER TABLE PieceJointe
-ADD taille BIGINT;
+-- ALTER TABLE PieceJointe
+-- ADD taille BIGINT;
 
-Alter table PieceJointe 
-alter column urlpiece nvarchar(900);
+-- Alter table PieceJointe 
+-- alter column urlpiece nvarchar(900);
 
 IF NOT EXISTS (
     SELECT *
