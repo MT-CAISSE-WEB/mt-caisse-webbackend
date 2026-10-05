@@ -42,10 +42,11 @@ class ligneoperationModel {
         this.updatedby = updatedby;
     }
 
-    async create_ligneoperationmodel() {
-        const pool = await connectDB();
+    async create_ligneoperationmodel(transaction = null) {
         try {
-            const result = await pool.request()
+            const pool = transaction ? null : await connectDB();
+            const request = transaction ? transaction.request() : pool.request();
+            const result = await request
             .input('idligneoperation', sql.UniqueIdentifier, this.idligneoperation)
             .input('idoperation', sql.UniqueIdentifier, this.idoperation)
             .input('idsociete', sql.UniqueIdentifier, this.idsociete)

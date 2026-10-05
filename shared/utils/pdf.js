@@ -171,7 +171,9 @@ async function genererPdfJournal(data, datedebut, datefin, utilisateur){
 
 
     // Sécurité si aucune ligne
-    const lignes = donnees.lignes || [];
+    const lignes = [...(donnees.lignes || [])].sort(
+        (ligneA, ligneB) => new Date(ligneA.date) - new Date(ligneB.date)
+    );
 
     // Construction des lignes
     const lignesHtml = lignes.map(jour => {
@@ -186,7 +188,17 @@ async function genererPdfJournal(data, datedebut, datefin, utilisateur){
         .reduce((sum, o) => sum + Number(o.montant || 0), 0);
         // 
 
-    const operations = jour.operations.map(op => `
+    const operations = [...(jour.operations || [])]
+    .sort((operationA, operationB) => {
+        const dateA = new Date(operationA.dateoperation || jour.date);
+        const dateB = new Date(operationB.dateoperation || jour.date);
+        return dateA - dateB || String(operationA.codeoperation || '').localeCompare(
+            String(operationB.codeoperation || ''),
+            'fr',
+            { numeric: true, sensitivity: 'base' }
+        );
+    })
+    .map(op => `
         <tr>
             <td>${op.codeoperation || ''}</td>
                 <td>${op.nature || ''}</td>

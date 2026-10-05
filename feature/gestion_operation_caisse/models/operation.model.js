@@ -26,10 +26,11 @@ class typeoperationModel {
         this.updatedby = updatedby;
     }
 
-    async create_typeoperationmodel() {
-        const pool = await connectDB();
+    async create_typeoperationmodel(transaction = null) {
         try {
-            const result = await pool.request()
+            const pool = transaction ? null : await connectDB();
+            const request = transaction ? transaction.request() : pool.request();
+            const result = await request
             .input('idtypeoperation', sql.UniqueIdentifier, this.idtypeoperation)
             .input('codtypeoperation', sql.NVarChar(24), this.codetypeoperation)
             .input('idoperation', sql.UniqueIdentifier, this.idoperation)

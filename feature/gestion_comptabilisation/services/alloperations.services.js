@@ -3,10 +3,11 @@ const { db, sql, connectInstance, connectDB } = require("../../../config/db");
 const { v4: uuidv4 } = require("uuid");
 const query = require("../query/requete.query");
 
-async function getparamcomptable() {
+async function getparamcomptable(transaction = null) {
   try {
-    const pool = await connectDB();
-    const result = await pool.request()
+    const pool = transaction ? null : await connectDB();
+    const request = transaction ? transaction.request() : pool.request();
+    const result = await request
       .query(`select p.*,j.codejournal,pl.numcompte
                 from parametreComptable p
                 inner join journal j on j.idjournal = p.idjournal
@@ -48,11 +49,11 @@ async function getnatureoperationdecaj() {
   }
 }
 
-async function getenteteoperationbyid(idoperation) {
+async function getenteteoperationbyid(idoperation, transaction = null) {
   try {
-    const pool = await connectDB();
-    const result = await pool
-      .request()
+    const pool = transaction ? null : await connectDB();
+    const request = transaction ? transaction.request() : pool.request();
+    const result = await request
       .input("idoperation", sql.UniqueIdentifier, idoperation)
       .query(
         "select * from EnteteOperationCaisse where idoperation=@idoperation",
@@ -73,11 +74,11 @@ async function getenteteoperationbyid(idoperation) {
   }
 }
 
-async function gettypeoperationbyid(idoperation) {
+async function gettypeoperationbyid(idoperation, transaction = null) {
   try {
-    const pool = await connectDB();
-    const result = await pool
-      .request()
+    const pool = transaction ? null : await connectDB();
+    const request = transaction ? transaction.request() : pool.request();
+    const result = await request
       .input("idoperation", sql.UniqueIdentifier, idoperation)
       .query(query.querytypeoperation);
 
@@ -96,11 +97,11 @@ async function gettypeoperationbyid(idoperation) {
   }
 }
 
-async function getligneoperationbyidoperation(idoperation) {
+async function getligneoperationbyidoperation(idoperation, transaction = null) {
   try {
-    const pool = await connectDB();
-    const result = await pool
-      .request()
+    const pool = transaction ? null : await connectDB();
+    const request = transaction ? transaction.request() : pool.request();
+    const result = await request
       .input("idoperation", sql.UniqueIdentifier, idoperation)
       .query(query.queryligneoperationbyidoperation);
 

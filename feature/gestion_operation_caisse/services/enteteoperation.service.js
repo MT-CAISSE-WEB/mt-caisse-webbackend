@@ -25,7 +25,7 @@ async function get_all_enteteoperations() {
   return enteteoperations;
 }
 
-async function create_enteteoperation(data) {
+async function create_enteteoperation(data, transaction = null) {
   if (!data.dateoperation) {
     throw new Error("Tous les champs (dateoperation) est requis.");
   }
@@ -75,7 +75,7 @@ async function create_enteteoperation(data) {
 
   //Générer le numero d'operation
   //const prefix = "NUM";
-  const numerogenere = await enteteoperation.create_numoperation(prefixe, datePeriode);
+  const numerogenere = await enteteoperation.create_numoperation(prefixe, datePeriode, transaction);
   const newenteteoperation = new enteteoperationmodel(
     uuidv4(),   
     data.codeoperation || numerogenere, 
@@ -91,7 +91,7 @@ async function create_enteteoperation(data) {
     data.beneficiaire || null,
     data.createdat || today,
     data.createdby || 'System');
-  const recorded = await newenteteoperation.create_enteteoperationmodel(newenteteoperation);
+  const recorded = await newenteteoperation.create_enteteoperationmodel(transaction);
   // si le modèle renvoie une erreur
   if (!recorded.success) {
     throw new Error(recorded.message);

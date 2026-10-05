@@ -118,10 +118,10 @@ class enteteDemandeModel {
     return result
   }
 
-  async decaisse_enteteDemande(iddemande, decaisse) {
-    console.log(decaisse)
-    const pool = await connectDB();
-    const result = await pool.request()
+  async decaisse_enteteDemande(iddemande, decaisse, transaction = null) {
+    const pool = transaction ? null : await connectDB();
+    const request = transaction ? transaction.request() : pool.request();
+    const result = await request
       .input('decaisse', sql.Int, decaisse)
       .input('iddemande', sql.UniqueIdentifier, iddemande)
       .query(entetedemandeQuery.decaisse);
