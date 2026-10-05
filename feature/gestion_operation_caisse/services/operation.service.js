@@ -14,6 +14,7 @@ const userservice = require("../../gestion_users/services/users.service")
 const enteteDemandeModel = require("../../gestion_demande_decaissement/models/entetedemande.model");
 let demandemodel = new enteteDemandeModel();
 const ecritureservice = require("../../gestion_comptabilisation/services/ecriture.service");
+const { sql, connectDB } = require("../../../config/db");
 
 let typeoperation = new typeoperationmodel();
 let typeoperations = [];
@@ -217,6 +218,9 @@ async function create_typeoperation(data) {
   if (!Array.isArray(data.caisses) || data.caisses.length === 0) {
     throw new Error("Aucune caisse fournie.");
   }
+  if (!Array.isArray(data.lignes) || data.lignes.length === 0) {
+    throw new Error("Aucune ligne fournie.");
+  }
 
   //Récuperer la societe
   let societe = null;
@@ -242,68 +246,84 @@ async function create_typeoperation(data) {
     throw new Error("Site de utilisateur invalide");
   }
 
-  let enteteoperation = null;
-  enteteoperation = await enteteoperationservice.create_enteteoperation(data);
-  if (!enteteoperation?.idoperation) {
-    throw new Error("Échec de création de l'entête d'opération (idoperation manquant).");
-  }
+  const pool = await connectDB();
+  const transaction = new sql.Transaction(pool);
+  await transaction.begin();
 
-  if (!Array.isArray(data.lignes) || data.lignes.length === 0) {
-    throw new Error("Aucune ligne fournie.");
-  }
-
-  for (const ligne of data.lignes){
-    const dataligne = {idoperation : enteteoperation.idoperation, idnature: ligne.natureop, idcentre: ligne.centre, idtiers: ligne.tiers, libelle: data.libelle, montantoperation: Number(ligne.montantligne), createdby: ligne.created};
-    try {
-      const ligneoperation = await ligneoperationservice.create_ligneoperation(dataligne);
-    } catch (error) {
-      throw new Error(error);
+  try {
+    const enteteoperation = await enteteoperationservice.create_enteteoperation(
+      data,
+      transaction,
+    );
+    if (!enteteoperation?.idoperation) {
+      throw new Error(
+        "Échec de création de l'entête d'opération (idoperation manquant).",
+      );
     }
-  }
 
-  for (const caisse of data.caisses){
-    if(caisse.montantcaisse && Number(caisse.montantcaisse) != 0){
-      let caisse1 = null;
-      try {
-        caisse1 = await caisseservice.get_by_idcaisse(caisse.idcaisse);
-      } catch (error) {
-        throw new Error(error);
+    for (const ligne of data.lignes) {
+      const dataligne = {
+        idoperation: enteteoperation.idoperation,
+        idnature: ligne.natureop,
+        idcentre: ligne.centre,
+        idtiers: ligne.tiers,
+        libelle: data.libelle,
+        montantoperation: Number(ligne.montantligne),
+        createdby: ligne.created,
+      };
+      await ligneoperationservice.create_ligneoperation(dataligne, transaction);
+    }
+
+    for (const caisse of data.caisses) {
+      if (caisse.montantcaisse && Number(caisse.montantcaisse) !== 0) {
+        const caisse1 = await caisseservice.get_by_idcaisse(caisse.idcaisse);
+        const newtypeoperation1 = new typeoperationmodel(
+          uuidv4(),
+          data.typepaiement,
+          enteteoperation.idoperation,
+          caisse.idperiode,
+          societe.data.idsociete || null,
+          site.data.idsite || null,
+          caisse1.idcaisse || null,
+          Number(caisse.montantcaisse),
+          caisse.taux,
+          caisse.montantref,
+          data.createdat || today,
+          data.createdby || "System",
+          data.updatedat,
+          data.updatedby,
+        );
+        const recorded1 =
+          await newtypeoperation1.create_typeoperationmodel(transaction);
+
+        if (!recorded1.success) {
+          throw new Error(recorded1.message);
+        }
       }
-      
-      const newtypeoperation1 = new typeoperationmodel( uuidv4(), data.typepaiement, enteteoperation.idoperation, caisse.idperiode, societe.data.idsociete ? societe.data.idsociete : null, site.data.idsite ? site.data.idsite : null, caisse1.idcaisse ? caisse1.idcaisse : null, 
-      Number(caisse.montantcaisse), caisse.taux, caisse.montantref, data.createdat || today, data.createdby || 'System', data.updatedat, data.updatedby);
-      let recorded1 = null;
-  
-      try {
-        recorded1 = await newtypeoperation1.create_typeoperationmodel(newtypeoperation1);
-      } catch (error) {
-        throw new Error(error);
-      }
-      
-      // si le modèle renvoie une erreur
-      if (!recorded1.success) {
-        throw new Error(recorded1.message);
-      }
     }
-  }
 
-  if(data.demande !== undefined && data.demande !== null && data.demande !== ''){
+    if (data.demande !== undefined && data.demande !== null && data.demande !== "") {
+      await demandemodel.decaisse_enteteDemande(data.demande, 1, transaction);
+    }
+
+    const ecriture = await ecritureservice.GenererEcriture(
+      enteteoperation.idoperation,
+      transaction,
+    );
+    if (!ecriture.success) {
+      throw new Error(ecriture.message);
+    }
+
+    await transaction.commit();
+    return enteteoperation;
+  } catch (error) {
     try {
-      const decaisse = await demandemodel.decaisse_enteteDemande(data.demande, 1);
-    } catch (error) {
-      throw new Error(error);
+      await transaction.rollback();
+    } catch (rollbackError) {
+      console.error("Erreur lors du rollback de la création d'opération :", rollbackError);
     }
+    throw error;
   }
-
-  if(enteteoperation){
-    try {
-      await ecritureservice.GenererEcriture(enteteoperation.idoperation);
-    } catch (error) {
-      throw new Error(error);
-    }
-  }
-
-  return enteteoperation;
 }
 
 async function get_by_idtypeoperation(idtypeoperation) {
@@ -621,10 +641,7 @@ async function cancel_enteteoperation(data) {
             null
           );
 
-        const recorded =
-          await newtypeoperation.create_typeoperationmodel(
-            newtypeoperation
-          );
+        const recorded = await newtypeoperation.create_typeoperationmodel();
 
         if (!recorded.success) {
           throw new Error(recorded.message);

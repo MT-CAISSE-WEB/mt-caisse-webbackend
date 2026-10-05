@@ -85,9 +85,46 @@ module.exports = {
         Delete from UtilisateurCaisse WHERE idutilisateurcaisse = @idutilisateurcaisse;
     `,
     getcaisseByUser : `
-        SELECT *
-        FROM UtilisateurCaisse
-        WHERE idutilisateur = @idutilisateur  AND  actif = 1 
+        DECLARE @idsite UNIQUEIDENTIFIER;
+        DECLARE @isCaissier BIT = 0;
+        DECLARE @isSiteRole BIT = 0;
+
+        SELECT @idsite = u.idsite
+        FROM Utilisateur u
+        WHERE u.idutilisateur = @idutilisateur;
+
+        SELECT
+            @isCaissier = COALESCE(MAX(CASE WHEN r.code = '04' THEN 1 ELSE 0 END), 0),
+            @isSiteRole = COALESCE(MAX(CASE WHEN r.code IN ('02', '03') THEN 1 ELSE 0 END), 0)
+        FROM utilisateur_role ur
+        INNER JOIN role r ON r.idrole = ur.idrole
+        WHERE ur.idutilisateur = @idutilisateur;
+
+        SELECT
+            CAST(CASE WHEN @isCaissier = 1 OR @isSiteRole = 1 THEN 1 ELSE 0 END AS BIT) AS autorise;
+
+        SELECT
+            CASE WHEN @isCaissier = 1 THEN uc.idutilisateurcaisse ELSE NULL END AS idutilisateurcaisse,
+            c.idcaisse,
+            c.codecaisse,
+            @idutilisateur AS idutilisateur,
+            c.idsociete,
+            CASE WHEN @isCaissier = 1 THEN uc.actif ELSE c.actif END AS actif,
+            CASE WHEN @isCaissier = 1 THEN uc.createdat ELSE NULL END AS createdat,
+            CASE WHEN @isCaissier = 1 THEN uc.createdby ELSE NULL END AS createdby,
+            CASE WHEN @isCaissier = 1 THEN uc.updatedat ELSE NULL END AS updatedat,
+            CASE WHEN @isCaissier = 1 THEN uc.updatedby ELSE NULL END AS updatedby
+        FROM Caisse c
+        LEFT JOIN UtilisateurCaisse uc
+            ON uc.idcaisse = c.idcaisse
+            AND uc.idutilisateur = @idutilisateur
+            AND uc.actif = 1
+        WHERE c.actif = 1
+        AND (
+            (@isCaissier = 1 AND uc.idutilisateurcaisse IS NOT NULL)
+            OR (@isCaissier = 0 AND @isSiteRole = 1 AND c.idsite = @idsite)
+        )
+        ORDER BY c.libelle;
     `,
     getRecentCaisseUser : `
         SELECT
@@ -136,7 +173,28 @@ module.exports = {
         AND UC.actif = 1;
     `,
     getLoadCaisseUser : `
-        WITH DernierePeriode AS (
+        DECLARE @idsite UNIQUEIDENTIFIER;
+        DECLARE @autoriseSite BIT = 0;
+        DECLARE @autoriseCaissier BIT = 0;
+
+        SELECT @idsite = u.idsite
+        FROM Utilisateur u
+        WHERE u.idutilisateur = @idutilisateur;
+
+        SELECT
+            @autoriseSite = COALESCE(MAX(CASE WHEN r.code IN ('02', '03') THEN 1 ELSE 0 END), 0),
+            @autoriseCaissier = COALESCE(MAX(CASE WHEN r.code = '04' THEN 1 ELSE 0 END), 0)
+        FROM utilisateur_role ur
+        INNER JOIN role r ON r.idrole = ur.idrole
+        WHERE ur.idutilisateur = @idutilisateur;
+
+        SELECT
+            CAST(CASE
+                WHEN @autoriseSite = 1 OR @autoriseCaissier = 1 THEN 1
+                ELSE 0
+            END AS BIT) AS autorise;
+
+        ;WITH DernierePeriode AS (
             SELECT
                 cp.idcaisse,
                 cp.idperiode,
@@ -151,7 +209,7 @@ module.exports = {
         )
 
         SELECT
-            uc.idutilisateur,
+            @idutilisateur AS idutilisateur,
 
             c.idcaisse,
             c.codecaisse,
@@ -211,10 +269,7 @@ module.exports = {
                 END
             ), 0)) * ISNULL(tx.coefficient, 1) AS soldedynamiqueconverti
 
-        FROM UtilisateurCaisse uc
-
-        INNER JOIN Caisse c
-            ON c.idcaisse = uc.idcaisse
+        FROM Caisse c
 
         INNER JOIN Devise d
             ON d.iddevise = c.iddevise
@@ -240,11 +295,22 @@ module.exports = {
             ORDER BY td.datecours DESC
         ) tx
 
-        WHERE uc.idutilisateur = @idutilisateur
-        AND uc.actif = 1
+        WHERE c.actif = 1
+        AND (
+            (@autoriseSite = 1 AND c.idsite = @idsite)
+            OR (
+                @autoriseCaissier = 1
+                AND EXISTS (
+                    SELECT 1
+                    FROM UtilisateurCaisse uc
+                    WHERE uc.idutilisateur = @idutilisateur
+                    AND uc.idcaisse = c.idcaisse
+                    AND uc.actif = 1
+                )
+            )
+        )
 
         GROUP BY
-            uc.idutilisateur,
             c.idcaisse,
             c.codecaisse,
             c.libelle,

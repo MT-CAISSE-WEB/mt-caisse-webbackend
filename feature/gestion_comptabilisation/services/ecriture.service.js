@@ -36,23 +36,29 @@ function getCommonFields(arr) {
   return common;
 }
 
-async function GenererEcriture(idoperation) {
-  const pool = await connectDB();
-  const transaction = new sql.Transaction(pool);
-  await transaction.begin();
-
+async function GenererEcriture(idoperation, existingTransaction = null) {
+  let transaction = existingTransaction;
+  const ownsTransaction = !existingTransaction;
   try {
+    if (ownsTransaction) {
+      const pool = await connectDB();
+      transaction = new sql.Transaction(pool);
+      await transaction.begin();
+    }
+
     // Récupération opération et lignes
     const enteteoperation = await alloperationservice.getenteteoperationbyid(
       idoperation,
+      transaction,
     );
     const typeoperation = await alloperationservice.gettypeoperationbyid(
       idoperation,
+      transaction,
     );
     const ligneoperation =
-      await alloperationservice.getligneoperationbyidoperation(idoperation);
+      await alloperationservice.getligneoperationbyidoperation(idoperation, transaction);
 
-    const paramcomptable = await alloperationservice.getparamcomptable();
+    const paramcomptable = await alloperationservice.getparamcomptable(transaction);
 
 
     if (
@@ -134,7 +140,11 @@ async function GenererEcriture(idoperation) {
         headers.journal,
       );
 
-      const numecr = await enteteoperations.create_numecriture(headers.journal, typeData.date);
+      const numecr = await enteteoperations.create_numecriture(
+        headers.journal,
+        typeData.date,
+        transaction,
+      );
      
       await transaction
         .request()
@@ -226,13 +236,16 @@ async function GenererEcriture(idoperation) {
       }
     }
 
-    //Commit transaction
-    await transaction.commit();
+    if (ownsTransaction) {
+      await transaction.commit();
+    }
 
     return { success: true, message: "Écriture générée avec succès" };
   } catch (error) {
     console.log("Erreur au niveau de la comptabilisation :", error);
-    await transaction.rollback();
+    if (ownsTransaction && transaction) {
+      await transaction.rollback();
+    }
     return { success: false, message: error.message };
   }
 }

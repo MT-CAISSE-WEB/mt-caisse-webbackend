@@ -140,6 +140,20 @@ module.exports = {
     `,
 
     solde: `
+        WITH MouvementsCaisse AS (
+            SELECT
+                t.idcaisse,
+                SUM(CASE
+                    WHEN t.codtypeoperation = 'encaissement' THEN t.montant
+                    ELSE 0
+                END) AS encaissement,
+                SUM(CASE
+                    WHEN t.codtypeoperation <> 'encaissement' THEN t.montant
+                    ELSE 0
+                END) AS decaissement
+            FROM TypeOperation t
+            GROUP BY t.idcaisse
+        )
         SELECT 
             c.idcaisse,
             c.codecaisse,
@@ -149,26 +163,12 @@ module.exports = {
             c.iddevise,
             d.codedevise,
             c.seuilmnimal,
-			c.soldeinitialisation,
-            SUM(
-                CASE 
-                    WHEN codtypeoperation = 'encaissement' THEN montant
-                END
-            ) AS encaissement,
-            SUM(
-                CASE 
-                    WHEN codtypeoperation <> 'encaissement' THEN montant
-                END
-            ) AS decaissement,
-            SUM(
-                CASE 
-                    WHEN codtypeoperation = 'encaissement' THEN montant
-                    ELSE -montant
-                END
-            ) AS solde
+            c.soldeinitialisation,
+            ISNULL(m.encaissement, 0) AS encaissement,
+            ISNULL(m.decaissement, 0) AS decaissement,
+            ISNULL(m.encaissement, 0) - ISNULL(m.decaissement, 0) AS solde
         FROM Caisse c 
-        LEFT JOIN TypeOperation t ON t.idcaisse = c.idcaisse
+        LEFT JOIN MouvementsCaisse m ON m.idcaisse = c.idcaisse
         LEFT JOIN Devise d ON d.iddevise = c.iddevise
-        GROUP BY c.idcaisse, c.codecaisse, c.libelle, c.idjournal, c.idcompte, c.iddevise, d.codedevise, c.seuilmnimal, c.soldeinitialisation;
     `
 };

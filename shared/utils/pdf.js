@@ -1,7 +1,1699 @@
-const fs = require('fs');
-const path = require('path');
-const puppeteer = require('puppeteer');
+const fs = require("fs");
+const path = require("path");
+const puppeteer = require("puppeteer");
+const ExcelJS = require("exceljs");
+const QRCode = require("qrcode");
+const { table } = require("console");
 
+// ============================================
+// UTILITAIRES POUR LE REÇU DE CAISSE PROFESSIONNEL
+// ============================================
+
+/**
+ * Convertit un montant numérique en lettres (français)
+ * @param {number} montant - Le montant à convertir
+ * @param {string} devise - La devise (ex: 'XAF', 'FCFA', 'EUR')
+ * @returns {string} Le montant en toutes lettres
+ */
+function montantEnLettres(montant, devise = "XAF") {
+  const units = [
+    "",
+    "UN",
+    "DEUX",
+    "TROIS",
+    "QUATRE",
+    "CINQ",
+    "SIX",
+    "SEPT",
+    "HUIT",
+    "NEUF",
+  ];
+  const teens = [
+    "DIX",
+    "ONZE",
+    "DOUZE",
+    "TREIZE",
+    "QUATORZE",
+    "QUINZE",
+    "SEIZE",
+    "DIX-SEPT",
+    "DIX-HUIT",
+    "DIX-NEUF",
+  ];
+  const tens = [
+    "",
+    "DIX",
+    "VINGT",
+    "TRENTE",
+    "QUARANTE",
+    "CINQUANTE",
+    "SOIXANTE",
+    "SOIXANTE-DIX",
+    "QUATRE-VINGT",
+    "QUATRE-VINGT-DIX",
+  ];
+
+  function convertLessThanOneThousand(n) {
+    let result = "";
+    const hundred = Math.floor(n / 100);
+    const remainder = n % 100;
+
+    if (hundred > 0) {
+      result += units[hundred] + " CENT";
+      if (hundred > 1) result += "S";
+      if (remainder > 0) result += " ";
+    }
+
+    if (remainder > 0) {
+      if (remainder < 10) {
+        result += units[remainder];
+      } else if (remainder < 20) {
+        result += teens[remainder - 10];
+      } else {
+        const ten = Math.floor(remainder / 10);
+        const unit = remainder % 10;
+        result += tens[ten];
+        if (unit > 0) {
+          if (ten === 7 || ten === 9) {
+            result += "-" + units[unit + 1];
+          } else {
+            result += "-" + units[unit];
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
+  if (montant === 0) {
+    return `ZÉRO ${
+      devise === "EUR"
+        ? "EURO"
+        : devise === "USD"
+        ? "DOLLAR"
+        : devise === "CDF"
+        ? "FRANCS CONGOLAIS"
+        : "FRANCS CFA"
+    }`;
+  }
+
+  const isNegative = montant < 0;
+  montant = Math.abs(Math.round(montant));
+
+  const scales = [
+    { value: 1000000000, name: "MILLIARD" },
+    { value: 1000000, name: "MILLION" },
+    { value: 1000, name: "MILLE" },
+  ];
+
+  let result = "";
+  let remaining = montant;
+
+  for (const scale of scales) {
+    const count = Math.floor(remaining / scale.value);
+    if (count > 0) {
+      const part = convertLessThanOneThousand(count);
+      result += (result ? " " : "") + part + " " + scale.name;
+      if (count > 1 && scale.name !== "MILLE") {
+        result += "S";
+      }
+      remaining %= scale.value;
+    }
+  }
+
+  if (remaining > 0) {
+    const part = convertLessThanOneThousand(remaining);
+    result += (result ? " " : "") + part;
+  }
+
+  const currencyName =
+    devise === "EUR"
+      ? "EURO"
+      : devise === "USD"
+      ? "DOLLAR"
+      : devise === "XAF" || devise === "FCFA"
+      ? "FRANCS CFA"
+      : devise === "CDF"
+      ? "FRANCS CONGOLAIS"
+      : "UNITÉ";
+
+  result +=
+    " " +
+    (montant === 1
+      ? currencyName
+      : currencyName + (currencyName === "FRANCS CFA" ? "" : "S"));
+
+  if (isNegative) {
+    result = "MOINS " + result;
+  }
+
+  return result;
+}
+
+/**
+ * Formate une date au format français
+ * @param {Date|string} date - La date à formater
+ * @returns {string} La date formatée
+ */
+function formaterDate(date) {
+  if (!date) return "";
+  const d = new Date(date);
+  return d.toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+/**
+ * Formate un montant avec séparateurs de milliers
+ * @param {number} montant - Le montant à formater
+ * @param {string} devise - La devise
+ * @returns {string} Le montant formaté
+ */
+function formaterMontant(montant, devise = "") {
+  if (montant === null || montant === undefined)
+    return "0" + (devise ? " " + devise : "");
+  return (
+    new Intl.NumberFormat("fr-FR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(montant) + (devise ? " " + devise : "")
+  );
+}
+
+/**
+ * Génère un tableau ou un résumé si > 5 lignes
+ * @param {Array} lignes - Les lignes du tableau
+ * @param {string} devise - La devise (XAF, EUR, etc.)
+ * @returns {string} HTML du tableau ou du résumé
+ */
+function generateTableOrSummary(lignes, devise) {
+  if (!lignes || lignes.length === 0) return "";
+
+  // 🔹 Si 5 lignes ou moins : affiche le tableau complet
+  if (lignes.length <= 5) {
+    return `
+    <div class="table-container">
+      <table class="operation-table">
+        <thead>
+          <tr>
+            <th>N°</th>
+            <th>Désignation</th>
+            <th>Centre analytique</th>
+            <th>Tiers</th>
+            <th>Montant</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lignes
+            .map(
+              (l, index) => `
+            <tr>
+              <td class="center">${index + 1}</td>
+              <td>${l.libelle || l.nature || l.designation || ""}</td>
+              <td>${l.libelleCentre || "-"}</td>
+              <td>${l.tiers || "-"}</td>
+              <td class="right bold">${formaterMontant(
+                l.montant || 0,
+                devise,
+              )}</td>
+            </tr>
+          `,
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>
+    `;
+  }
+
+  // 🔹 Si plus de 5 lignes : génère un résumé par centre analytique
+  else {
+    // Regroupe les lignes par centre analytique
+    const summaryByCentre = {};
+    lignes.forEach((l) => {
+      const centre = l.libelleCentre || "Non spécifié";
+      if (!summaryByCentre[centre]) {
+        summaryByCentre[centre] = { count: 0, total: 0 };
+      }
+      summaryByCentre[centre].count++;
+      summaryByCentre[centre].total += l.montant || 0;
+    });
+
+    // Calcul du total général
+    const totalGeneral = lignes.reduce((sum, l) => sum + (l.montant || 0), 0);
+
+    return `
+    <div class="table-container">
+      <table class="operation-table">
+        <thead>
+          <tr>
+            <th>Centre analytique</th>
+            <th class="center">Nombre d'éléments</th>
+            <th class="right">Montant total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${Object.entries(summaryByCentre)
+            .map(
+              ([centre, data]) => `
+            <tr>
+              <td>${centre}</td>
+              <td class="center">${data.count}</td>
+              <td class="right bold">${formaterMontant(data.total, devise)}</td>
+            </tr>
+          `,
+            )
+            .join("")}
+          <tr style="background: #f8fafc; font-weight: bold;">
+            <td>Total général</td>
+            <td class="center">${lignes.length}</td>
+            <td class="right">${formaterMontant(totalGeneral, devise)}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="font-size: 8px; color: #6b7280; margin-top: 3px; text-align: right;">
+        * ${lignes.length} éléments regroupés par centre analytique
+      </div>
+    </div>
+    `;
+  }
+}
+
+/**
+ * Génère un reçu de caisse professionnel en PDF
+ * @param {Object} data - Les données du reçu
+ * @param {number} copies - Nombre de copies à générer
+ * @returns {Promise<Buffer>} Le buffer PDF
+ */
+// async function genererPdfRecu(data, copies = 2) {
+//   const templatePath = path.join(
+//     __dirname,
+//     "../../views/templates/recu-caisse.html",
+//   );
+//   let html = fs.readFileSync(templatePath, "utf8");
+
+//   // =========================
+//   // GÉNÉRATION DU QR CODE
+//   // =========================
+//   let qrCodeBase64 = "";
+
+//   try {
+//     const qrData = `http://192.168.1.72:4200/app/verification?op=${data.numero}`;
+//     qrCodeBase64 = await QRCode.toDataURL(qrData);
+//   } catch (e) {
+//     console.error("Erreur QR Code:", e);
+//   }
+
+//   // =========================
+//   // TEMPLATE D'UN TICKET
+//   // =========================
+//   const ticketTemplate = `
+// <div class="page">
+//   <div class="content">
+//     <!-- ========== EN-TÊTE ========== -->
+//   <div class="header">
+//     <div class="header-left">
+//       <div class="logo-container">
+//         <div class="logo-placeholder">${(data.societe || "E")
+//           .charAt(0)
+//           .toUpperCase()}</div>
+//       </div>
+//       <div class="company-info">
+//         <div class="company-name">${data.societe || "Entreprise"}</div>
+//         ${data.site ? `<div class="company-site">${data.site}</div>` : ""}
+//         ${
+//           data.adresse
+//             ? `<div class="company-details">${data.adresse}</div>`
+//             : ""
+//         }
+//         ${
+//           data.contact
+//             ? `<div class="company-details">${data.contact}</div>`
+//             : ""
+//         }
+//       </div>
+//     </div>
+//     <div class="header-right">
+//       <div class="receipt-title">${
+//         data.typeOperation === "encaissement"
+//           ? "REÇU D'ENCAISSEMENT"
+//           : "REÇU DE DÉCAISSEMENT"
+//       }</div>
+//       <div class="receipt-subtitle">N° <strong>${
+//         data.numero || ""
+//       }</strong></div>
+//       ${
+//         data.date
+//           ? `<div class="receipt-date">Date: ${formaterDate(data.date)}</div>`
+//           : ""
+//       }
+//     </div>
+//   </div>
+
+//   <!-- ========== INFOS PRINCIPALES ========== -->
+//   <div class="main-info">
+//     <!-- Section 1: Informations de la demande (si demande existe) -->
+//     ${
+//       data.numeroDemande
+//         ? `
+//     <div class="info-section">
+//       <div class="info-section-title">Informations de la demande</div>
+//       <div class="info-grid">
+//       ${
+//         data.numeroDemande
+//           ? `<div class="info-item">
+//             <span class="info-label">N° Demande:</span>
+//           <span class="info-value"><strong>${data.numeroDemande}</strong></span>
+//         </div>`
+//           : ""
+//       }
+//         <div class="info-item">
+//           <span class="info-label">Département:</span>
+//           <span class="info-value">${data.libelleDep || ""}</span>
+//         </div>
+//         ${
+//           data.tiers
+//             ? `
+//         <div class="info-item">
+//           <span class="info-label">Tiers:</span>
+//           <span class="info-value">${data.tiers}</span>
+//         </div>`
+//             : ""
+//         }
+//       </div>
+//     </div>`
+//         : ""
+//     }
+
+//     <!-- Section 2: Montant et devise -->
+//     <div class="info-section">
+//       <div class="info-section-title">Montant</div>
+//       <div class="info-grid">
+//         <div class="info-item">
+//           <span class="info-label">Type:</span>
+//           <span class="info-value">${data.type || "-"}</span>
+//         </div>
+//         <div class="info-item">
+//           <span class="info-label">Devise:</span>
+//           <span class="info-value">${data.devise || "XAF"}</span>
+//         </div>
+//         <div class="info-item">
+//           <span class="info-label">Total:</span>
+//           <span class="info-value info-value-highlight">${formaterMontant(
+//             data.total || 0,
+//             data.devise,
+//           )}</span>
+//         </div>
+//       </div>
+//       <div class="amount-in-words">
+//         ${montantEnLettres(data.total || 0, data.devise || "XAF")}
+//       </div>
+//     </div>
+//   </div>
+
+//   <!-- ========== DÉTAILS OPÉRATION ========== -->
+//   <div class="operation-section">
+//     <div class="operation-header">
+//       <span class="operation-icon">📋</span>
+//       <span class="operation-title">Détails de l'opération</span>
+//     </div>
+//     <div class="operation-details">
+//       <div class="operation-item">
+//         <span class="operation-item-label">Libellé:</span>
+//         <span class="operation-item-value">${
+//           data.libelleOperation || data.description || ""
+//         }</span>
+//       </div>
+//       <div class="operation-item">
+//         <span class="operation-item-label">Bénéficiaire:</span>
+//         <span class="operation-item-value">${data.beneficiaire || ""}</span>
+//       </div>
+//       <div class="operation-item">
+//         <span class="operation-item-label">Caissier:</span>
+//         <span class="operation-item-value">${data.caissier || ""}</span>
+//       </div>
+//     </div>
+//   </div>
+
+//   <!-- ========== TABLEAUX ========== -->
+//   ${
+//     data.lignes && data.lignes.length > 0
+//       ? `
+//   <div class="table-container">
+//     <table class="operation-table">
+//       <thead>
+//         <tr>
+//           <th class="center">N°</th>
+//           <th>Désignation</th>
+//           <th>Centre analytique</th>
+//           <th class="right">Montant</th>
+//         </tr>
+//       </thead>
+//       <tbody>
+//         ${data.lignes
+//           .map(
+//             (l, index) => `
+//           <tr>
+//             <td class="center">${index + 1}</td>
+//             <td>${l.libelle || l.nature || l.designation || ""}</td>
+//             <td>${l.libelleCentre || "-"}</td>
+//             <td class="right bold">${formaterMontant(
+//               l.montant || 0,
+//               data.devise,
+//             )}</td>
+//           </tr>
+//         `,
+//           )
+//           .join("")}
+//       </tbody>
+//     </table>
+//   </div>`
+//       : ""
+//   }
+
+//   ${
+//     data.caisses && data.caisses.length > 0
+//       ? `
+//   <div class="table-container">
+//     <table class="caisse-table">
+//       <thead>
+//         <tr>
+//           <th>Caisse</th>
+//           <th class="center">Code</th>
+//           <th class="right">Montant</th>
+//         </tr>
+//       </thead>
+//       <tbody>
+//         ${data.caisses
+//           .map(
+//             (c) => `
+//           <tr>
+//             <td>${c.libelle || c.caisse || ""}</td>
+//             <td class="center">${c.code || c.codecaisse || "N/A"}</td>
+//             <td class="right bold">${formaterMontant(
+//               c.montant || 0,
+//               c.devise || data.devise,
+//             )}</td>
+//           </tr>
+//         `,
+//           )
+//           .join("")}
+//       </tbody>
+//     </table>
+//   </div>`
+//       : ""
+//   }
+
+//   <!-- ========== APPROBATIONS (Validateurs) ========== -->
+//   ${
+//     data.validateurs && data.validateurs.length > 0
+//       ? `
+//   <div class="approval-section">
+//     <div class="approval-title">✅ Approbations</div>
+//     <div class="approval-grid">
+//       ${data.validateurs
+//         .map(
+//           (v) => `
+//         <div class="approval-item">
+//           <div class="approval-name">${v.nom}</div>
+//           <div class="approval-status">${
+//             v.statut === "approuve" ? "✔️" : "❌"
+//           } ${v.statut.toUpperCase()}</div>
+//           ${
+//             v.dateValidation
+//               ? `<div class="approval-date">Le ${v.dateValidation}</div>`
+//               : ""
+//           }
+//         </div>
+//       `,
+//         )
+//         .join("")}
+//     </div>
+//   </div>`
+//       : ""
+//   }
+
+//   <!-- ========== RÉCAPITULATIF + QR CODE ========== -->
+//         <div class="total-section">
+//           <div class="total-section-title">Récapitulatif</div>
+
+//           <!-- Infos opération -->
+//           <div class="total-line">
+//             <span class="total-label">Type:</span>
+//             <span class="total-amount">${
+//               data.type === "encaissement" ? "ENCAISSEMENT" : "DÉCAISSEMENT"
+//             }</span>
+//           </div>
+//           <div class="total-line">
+//             <span class="total-label">Date:</span>
+//             <span class="total-amount">${data.date}</span>
+//           </div>
+//           ${
+//             data.numeroDemande
+//               ? `
+//           <div class="total-line">
+//             <span class="total-label">N° Demande:</span>
+//             <span class="total-amount">${data.numeroDemande}</span>
+//           </div>`
+//               : ""
+//           }
+//           ${
+//             data.libelleDep
+//               ? `
+//           <div class="total-line">
+//             <span class="total-label">Département:</span>
+//             <span class="total-amount">${data.libelleDep} ${
+//                   data.codeDep ? `(${data.codeDep})` : ""
+//                 }</span>
+//           </div>`
+//               : ""
+//           }
+
+//           <!-- Soldes -->
+//           ${
+//             data.soldeouverture !== undefined
+//               ? `
+//           <div class="total-line">
+//             <span class="total-label">Solde avant:</span>
+//             <span class="total-amount">${formaterMontant(
+//               data.soldeouverture,
+//               data.devise,
+//             )}</span>
+//           </div>`
+//               : ""
+//           }
+//           ${
+//             data.soldefermeture !== undefined
+//               ? `
+//           <div class="total-line">
+//             <span class="total-label">Solde après:</span>
+//             <span class="total-amount">${formaterMontant(
+//               data.soldefermeture,
+//               data.devise,
+//             )}</span>
+//           </div>`
+//               : ""
+//           }
+
+//           <!-- Total principal -->
+//           <div class="total-line total-line-main">
+//             <span class="total-label">TOTAL:</span>
+//             <span class="total-amount">${formaterMontant(
+//               data.total || 0,
+//               data.devise,
+//             )}</span>
+//           </div>
+
+//           <!-- Acteurs -->
+//           <div class="total-line">
+//             <span class="total-label">Caissier:</span>
+//             <span class="total-amount">${data.caissier || "-"}</span>
+//           </div>
+//           <div class="total-line">
+//             <span class="total-label">Bénéficiaire:</span>
+//             <span class="total-amount">${data.beneficiaire || "-"}</span>
+//           </div>
+//         </div>
+
+//         <!-- ========== QR CODE ========== -->
+//         ${
+//           qrCodeBase64
+//             ? `
+//         <div class="qrcode-section">
+//           <div class="qrcode-title">🔍 Vérification</div>
+//           <img src="${qrCodeBase64}" class="qrcode-image" alt="QR Code">
+//           <div class="qrcode-text">${data.numero || "N/A"}</div>
+//         </div>`
+//             : ""
+//         }
+
+//   <!-- ========== SIGNATURES ========== -->
+//   <div class="signature-section">
+//     <div class="signature-title">Signatures</div>
+//     <div class="signature-grid">
+//       <div class="signature-block">
+//         <div class="signature-block-title">Caissier</div>
+//         <div class="signature-block-name">${
+//           data.emetteur || data.caissier || "N/A"
+//         }</div>
+//         <div class="signature-line"></div>
+//         ${
+//           data.dateEmetteur
+//             ? `<div class="signature-date">Le ${formaterDate(
+//                 data.dateEmetteur,
+//               )}</div>`
+//             : ""
+//         }
+//       </div>
+//       <div class="signature-block">
+//         <div class="signature-block-title">Bénéficiaire</div>
+//         <div class="signature-block-name">${data.beneficiaire || "N/A"}</div>
+//         <div class="signature-line"></div>
+//         ${
+//           data.dateBeneficiaire
+//             ? `<div class="signature-date">Le ${formaterDate(
+//                 data.dateBeneficiaire,
+//               )}</div>`
+//             : ""
+//         }
+//       </div>
+//     </div>
+//   </div>
+
+//   <!-- ========== PIED DE PAGE ========== -->
+//   <div class="footer">
+//     <div class="footer-text">
+//       Document généré le ${formaterDate(
+//         new Date(),
+//       )} à ${new Date().toLocaleTimeString("fr-FR", {
+//     hour: "2-digit",
+//     minute: "2-digit",
+//   })}
+//     </div>
+//     ${data.mention ? `<div class="footer-mention">${data.mention}</div>` : ""}
+//     <div class="footer-warning">
+//       REÇU LA SOMME DE (EN LETTRES): <strong>${montantEnLettres(
+//         data.total || 0,
+//         data.devise || "XAF",
+//       )}</strong>
+//     </div>
+//     <div class="footer-note" style="margin-top: 8px; font-size: 10px;">
+//       A REMPLIR À LA CAISSE PAR LE BÉNÉFICIAIRE
+//     </div>
+//   </div>
+//   </div>
+// </div>
+// `;
+
+//   // =========================
+//   // DUPLICATION POUR COPIES
+//   // =========================
+//   const ticketsHtml = Array.from({ length: copies }, (_, i) => {
+//     const isCopy = i > 0;
+//     const copyTemplate = ticketTemplate
+//       .replace("Original", isCopy ? `Copie ${i + 1}` : "Original")
+//       .replace(
+//         "background: linear-gradient(135deg, rgba(30, 64, 175, 0.1), rgba(59, 130, 246, 0.1))",
+//         isCopy
+//           ? "background: rgba(239, 68, 68, 0.05)"
+//           : "background: linear-gradient(135deg, rgba(30, 64, 175, 0.1), rgba(59, 130, 246, 0.1))",
+//       )
+//       .replace(
+//         "border: 2px solid var(--primary-light)",
+//         isCopy
+//           ? "border: 2px solid rgba(239, 68, 68, 0.2)"
+//           : "border: 2px solid var(--primary-light)",
+//       );
+
+//     return (
+//       (i > 0
+//         ? '<div class="copy-separator"><span>COPIE ' + (i + 1) + "</span></div>"
+//         : "") + copyTemplate
+//     );
+//   }).join("");
+
+//   // =========================
+//   // INJECTION DANS TEMPLATE
+//   // =========================
+//   html = html.replace(/{{societe}}/g, data.societe || "Entreprise");
+//   html = html.replace("{{tickets}}", ticketsHtml);
+
+//   // =========================
+//   // GÉNÉRATION PDF
+//   // =========================
+//   const browser = await puppeteer.launch({
+//     args: ["--no-sandbox", "--disable-setuid-sandbox"],
+//     headless: true,
+//   });
+
+//   const page = await browser.newPage();
+
+//   // Configuration pour un rendu optimal
+//   await page.setContent(html, {
+//     waitUntil: "networkidle0",
+//     timeout: 30000,
+//   });
+
+//   // Appliquer des styles supplémentaires pour le PDF
+//   await page.addStyleTag({
+//     content: `
+//       @page {
+//         size: A4;
+//         margin: 10mm;
+//       }
+//       body {
+//         -webkit-print-color-adjust: exact !important;
+//         print-color-adjust: exact !important;
+//       }
+//     `,
+//   });
+
+//   const buffer = await page.pdf({
+//     format: "A4",
+//     margin: {
+//       top: "3mm",
+//       bottom: "3mm",
+//       left: "4mm",
+//       right: "4mm",
+//     },
+//     printBackground: true,
+//     preferCSSPageSize: true,
+//   });
+
+//   await browser.close();
+//   return buffer;
+// }
+
+async function genererPdfRecu(data, copies = 2) {
+  const templatePath = path.join(
+    __dirname,
+    "../../views/templates/recu-caisse.html",
+  );
+  let html = fs.readFileSync(templatePath, "utf8");
+
+  // =========================
+  // GÉNÉRATION DU QR CODE (inchangé)
+  // =========================
+  let qrCodeBase64 = "";
+  try {
+    const BACKEND_URL = "http://192.168.1.86:5000";
+    const qrData = `${BACKEND_URL}/api/operation/recu/pdf/${data.numero}`;
+    qrCodeBase64 = await QRCode.toDataURL(qrData, {
+      width: 150,
+      margin: 1,
+      errorCorrectionLevel: "M", // Tolérance moyenne aux erreurs
+    });
+  } catch (e) {
+    console.error("Erreur QR Code:", e);
+  }
+
+  // =========================
+  // GÉNÉRATION DU TABLEAU PAGINÉ
+  // =========================
+  const tableHtml = generateTableOrSummary(data.lignes, data.devise);
+
+  // =========================
+  // TEMPLATE D'UN TICKET (MODIFIÉ)
+  // =========================
+  const ticketTemplate = `
+<div class="page">
+  <!-- ========== EN-TÊTE ========== -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-initial">${(data.societe || "E")
+        .charAt(0)
+        .toUpperCase()}</div>
+      <div class="company-info">
+        <div class="company-name">${data.societe || ""}</div>
+        <div class="company-site">${data.site || ""}</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="receipt-title">RECU DE ${
+        data.type === "encaissement" ? "ENCAISSEMENT" : "DECAISSEMENT"
+      }</div>
+  
+      <div class="receipt-info-grid">
+        <div class="receipt-info-row">
+          <span class="receipt-info-label">N°:</span>
+          <span class="receipt-info-value">${data.numero || ""}</span>
+        </div>
+        <div class="receipt-info-row">
+          <span class="receipt-info-label">Date:</span>
+          <span class="receipt-info-value">${data.date || ""}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MONTANT PRINCIPAL ========== -->
+  <div class="main-amount">
+    ${formaterMontant(data.total || 0, data.devise)}
+  </div>
+
+  <!-- ========== SECTION PRINCIPALE ========== -->
+  <div class="main-section">
+    <div class="left-column">
+      ${
+        data.numeroDemande
+          ? `
+      <div class="info-row">
+        <span class="info-label">N° demande</span>
+        <span class="info-separator">:</span>
+        <span class="info-value">${data.numeroDemande}</span>
+      </div>`
+          : ""
+      }
+      
+      <div class="info-row">
+        <span class="info-label">Caisse(s)</span>
+        <span class="info-separator">:</span>
+        <span class="info-value">${
+          data.caisses && data.caisses.length > 0
+            ? data.caisses.map((c) => `${c.libelle} (${c.devise})`).join(", ")
+            : ""
+        }</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Type</span>
+        <span class="info-separator">:</span>
+        <span class="info-value">${
+          data.type === "encaissement" ? "ENCAISSEMENT" : "DECAISSEMENT"
+        }</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Date</span>
+        <span class="info-separator">:</span>
+        <span class="info-value">${data.date || ""}</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Caissier</span>
+        <span class="info-separator">:</span>
+        <span class="info-value">${data.caissier || ""}</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Montant Global</span>
+        <span class="info-separator">:</span>
+        <span class="info-value">${formaterMontant(
+          data.total || 0,
+          data.devise,
+        )}</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Montant en lettre</span>
+        <span class="info-separator">:</span>
+        <span class="info-value">${montantEnLettres(
+          data.total || 0,
+          data.devise || "XAF",
+        )}</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Libellé Opération</span>
+        <span class="info-separator">:</span>
+        <span class="info-value">${data.description || ""}</span>
+      </div>
+    </div>
+
+   
+
+    <div class="right-column">
+      ${
+        data.numeroDemande && data.demandeur
+          ? `
+      <div class="demandeur-info" style="border: 1px solid #000; padding: 8px; margin-bottom: 8px;">
+        <div style="font-weight: bold; text-transform: uppercase; font-size: 10px; margin-bottom: 8px; text-align: center;">
+          Informations du Demandeur
+        </div>
+        <div style="font-size: 9px; line-height: 1.8;">
+          <div><strong>Nom :</strong> ${data.demandeur.nom || ""}</div>
+          <div><strong>Prénom :</strong> ${data.demandeur.prenom || ""}</div>
+          ${
+            data.demandeur.email
+              ? `<div><strong>Email :</strong> ${data.demandeur.email}</div>`
+              : ""
+          }
+          ${
+            data.demandeur.telephone
+              ? `<div><strong>Tél. :</strong> ${data.demandeur.telephone}</div>`
+              : ""
+          }
+          ${
+            data.libelleDep
+              ? `<div><strong>Départ. :</strong> ${data.libelleDep}</div>`
+              : ""
+          }
+        </div>
+      </div>`
+          : ""
+      }
+
+            <table class="validation-table">
+        <thead>
+          <tr>
+            <th style="width: 60%;">Répartition par Caisse</th>
+            <th class="right" style="width: 40%;">Montant</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${
+            data.caisses && data.caisses.length > 0
+              ? data.caisses
+                  .map(
+                    (c) => `
+          <tr>
+            <td>${c.libelle} <small>(${c.devise || "XAF"})</small></td>
+            <td class="right">${formaterMontant(c.montant || 0, "")}</td>
+          </tr>`,
+                  )
+                  .join("")
+              : `
+          <tr>
+            <td>${data.devise || "XAF"}</td>
+            <td class="right">${formaterMontant(data.total || 0, "")}</td>
+          </tr>`
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+   <!-- ========== COMMENTAIRE (NOUVEAU) ========== -->
+   <div class="comment-row">
+      <span class="info-label">Commentaire</span>
+      <span class="info-separator">:</span>
+      <div class="comment-value"></div>
+    </div>
+  
+
+  <!-- ========== TABLEAU PRINCIPAL (DÉTAIL OPÉRATION) ========== -->
+  <div class="main-table-container">
+    <table class="main-table">
+      <thead>
+        <tr>
+          <!-- MODIFIÉ : Largeurs ajustées pour donner plus d'espace au Montant (25%) -->
+          <th class="center" width="5%">N°</th>
+          <th width="25%">Désignation</th>
+          <th width="20%">Centre Analytique</th>
+          <th width="15%">Tiers</th>
+          <th class="center" width="10%">Devise</th>
+          <th class="right" width="25%">Montant</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${
+          data.lignes && data.lignes.length > 0
+            ? data.lignes
+                .map(
+                  (l, index) => `
+        <tr>
+          <td class="center">${index + 1}</td>
+          <td>${l.libelle || ""}</td>
+          <td>${l.libelleCentre || "-"}</td>
+          <td>${l.tiers || "-"}</td>
+          <td class="center">${l.devise || data.devise || "XAF"}</td>
+          <td class="right">${formaterMontant(l.montant || 0, "")}</td>
+        </tr>`,
+                )
+                .join("")
+            : `
+        <tr><td class="center">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td class="center">&nbsp;</td><td class="right">&nbsp;</td></tr>
+        <tr><td class="center">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td class="center">&nbsp;</td><td class="right">&nbsp;</td></tr>
+        <tr><td class="center">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td class="center">&nbsp;</td><td class="right">&nbsp;</td></tr>
+        <tr><td class="center">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td class="center">&nbsp;</td><td class="right">&nbsp;</td></tr>
+        <tr><td class="center">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td class="center">&nbsp;</td><td class="right">&nbsp;</td></tr>`
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ========== TOTAL OPERATION ========== -->
+  <div class="total-operation">
+    <div class="total-label">Total de l'opération</div>
+    <div>
+      <span class="total-amount">${formaterMontant(
+        data.total || 0,
+        data.devise,
+      )}</span>
+    </div>
+  </div>
+
+  
+
+  <!-- ========== SECTION BAS (SIGNATURES) ========== -->
+<div class="bottom-section">
+  <!-- CADRE 1 : Signature du Caissier -->
+  <div class="bottom-box">
+    <div class="bottom-box-title">Signature du Caissier</div>
+    <div class="bottom-box-signature"><span style="font-weight: bold;">Caissier : </span>${
+      data.caissier || ""
+    }</div>
+    <div class="stamp-box">CACHET DE LA CAISSE</div>
+  </div>
+
+  <!-- CADRE 2 : Autorisation -->
+  ${
+    data.numeroDemande
+      ? `
+  <div class="bottom-box" style="flex: 1.2;">
+    <div class="authorization-box">
+      <div class="authorization-title">AUTORISATION DE</div>
+      ${
+        data.validateurs && data.validateurs.length > 0
+          ? data.validateurs
+              .map(
+                (v) => `
+          <div class="auth-line" style="font-weight: bold;">${v.nom || ""}</div>
+          ${
+            v.dateValidation
+              ? `<div class="auth-line">${v.dateValidation || ""}</div>`
+              : ""
+          }
+        `,
+              )
+              .join("")
+          : ""
+      }
+
+       <!-- INJECTION DU QR CODE TOUT EN BAS -->
+        ${
+          qrCodeBase64
+            ? `
+        <div class="qr-code-container">
+          <img src="${qrCodeBase64}" class="qr-code-image" alt="QR Code Reçu" />
+        </div>`
+            : ""
+        }
+    </div>
+  </div>`
+      : '<div class="bottom-box" style="flex: 1.2;"><div class="authorization-box"><div class="authorization-title">AUTORISATION DE</div></div></div>'
+  }
+
+    <!-- CADRE 3 : Reçu la somme de -->
+  <div class="bottom-box">
+    <div class="recu-sum-box">
+      <div class="recu-sum-title">RECU LA SOMME DE<br>(Chiffre / Lettre)</div>
+      <div class="recu-sum-content" style="text-align: center;">
+        ${
+          data.caisses && data.caisses.length > 1
+            ? data.caisses
+                .map(
+                  (c) =>
+                    `<div style="font-weight:bold;">${formaterMontant(
+                      c.montant || 0,
+                      c.devise || data.devise,
+                    )}</div>`,
+                )
+                .join("") + "<br>"
+            : `<span style="font-weight:bold; font-size: 12px;">${formaterMontant(
+                data.total || 0,
+                data.devise,
+              )}</span><br>`
+        }
+        <em style="font-size: 9px;">${montantEnLettres(
+          data.total || 0,
+          data.devise || "XAF",
+        )}</em>
+      </div>
+      
+      <!-- ZONE BÉNÉFICIAIRE ET SIGNATURE RÉORGANISÉE -->
+      <div style="text-align: center; margin-top: auto;">
+        <div style="font-size: 9px; font-weight: bold; margin-bottom: 55px;">
+          Signature du bénéficiaire
+        </div>
+        <div class="signature-line"></div>
+      </div>
+      <div style="font-size: 9px; margin-bottom: 5px;">
+          <span style="font-weight: bold;">Bénéficiaire : </span>${
+            data.beneficiaire || ""
+          }
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>`;
+
+  // =========================
+  // DUPLICATION POUR COPIES (MODIFIÉ)
+  // =========================
+  // const ticketsHtml = Array.from({ length: copies }, (_, i) => {
+  //   const isCopy = i > 0;
+  //   let copyTemplate = ticketTemplate
+  //     .replace("Original", isCopy ? `Copie ${i + 1}` : "Original")
+  //     .replace(
+  //       "background: linear-gradient(135deg, rgba(30, 64, 175, 0.1), rgba(59, 130, 246, 0.1))",
+  //       isCopy
+  //         ? "background: rgba(239, 68, 68, 0.05)"
+  //         : "background: linear-gradient(135deg, rgba(30, 64, 175, 0.1), rgba(59, 130, 246, 0.1))",
+  //     )
+  //     .replace(
+  //       "border: 2px solid var(--primary-light)",
+  //       isCopy
+  //         ? "border: 2px solid rgba(239, 68, 68, 0.2)"
+  //         : "border: 2px solid var(--primary-light)",
+  //     );
+
+  //   // 🔥 SUPPRIME LE BLOC RÉCAPITULATIF POUR LES COPIES
+  //   if (isCopy) {
+  //     copyTemplate = copyTemplate.replace(
+  //       /<!-- START_RECAP_SECTION -->[\s\S]*?<!-- END_RECAP_SECTION -->/,
+  //       "",
+  //     );
+  //   }
+
+  //   return (
+  //     (i > 0
+  //       ? '<div class="copy-separator"><span>COPIE ' + (i + 1) + "</span></div>"
+  //       : "") + copyTemplate
+  //   );
+  // }).join("");
+
+  // =========================
+  // INJECTION DANS TEMPLATE (inchangé)
+  // =========================
+  html = html.replace(/{{societe}}/g, data.societe || "Entreprise");
+  // html = html.replace("{{tickets}}", ticketsHtml);
+  html = html.replace("{{tickets}}", ticketTemplate);
+
+  // =========================
+  // GÉNÉRATION PDF (MODIFIÉ : AJOUT CSS PAGINATION)
+  // =========================
+  const browser = await puppeteer.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    headless: true,
+  });
+
+  const page = await browser.newPage();
+  await page.setContent(html, {
+    waitUntil: "networkidle0",
+    timeout: 30000,
+  });
+
+  // 🔥 AJOUTE LES STYLES DE PAGINATION
+  // await page.addStyleTag({
+  //   content: `
+  //     @page {
+  //       size: A4;
+  //       margin: 10mm;
+  //     }
+  //     body {
+  //       -webkit-print-color-adjust: exact !important;
+  //       print-color-adjust: exact !important;
+  //     }
+  //     /* ===== STYLES POUR LA PAGINATION ===== */
+  //     .table-container {
+  //       margin: 3px 0;
+  //       page-break-inside: avoid;
+  //     }
+  //     .operation-table {
+  //       width: 100%;
+  //       border-collapse: collapse;
+  //       font-size: 9px;
+  //       table-layout: fixed;
+  //     }
+  //     .operation-table thead {
+  //       display: table-header-group;
+  //     }
+  //     .operation-table tr {
+  //       page-break-inside: avoid;
+  //     }
+  //     .page-break {
+  //       page-break-before: always;
+  //       height: 0;
+  //       overflow: hidden;
+  //     }
+  //   `,
+  // });
+
+  await page.addStyleTag({
+    content: `
+      @page {
+        size: A4;
+        margin: 3mm; /* RÉDUIT : de 10mm à 5mm */
+      }
+      body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    `,
+  });
+
+  const buffer = await page.pdf({
+    format: "A4",
+    margin: {
+      top: "1mm" /* Réduit */,
+      bottom: "1mm" /* Réduit */,
+      left: "2mm" /* Réduit */,
+      right: "2mm" /* Réduit */,
+    },
+    printBackground: true,
+    preferCSSPageSize: true,
+  });
+
+  await browser.close();
+  return buffer;
+}
+
+// async function genererPdfJournal(data, datedebut, datefin, utilisateur) {
+//   const donnees = data.data;
+//   const getDateSortValue = (value) => {
+//     if (!value) return Number.MAX_SAFE_INTEGER;
+
+//     const timestamp = new Date(value).getTime();
+//     if (!Number.isNaN(timestamp)) return timestamp;
+
+//     const frenchDate = String(value).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+//     if (!frenchDate) return Number.MAX_SAFE_INTEGER;
+
+//     return new Date(
+//       Number(frenchDate[3]),
+//       Number(frenchDate[2]) - 1,
+//       Number(frenchDate[1]),
+//     ).getTime();
+//   };
+
+//   // Sécurité si aucune ligne
+//   if (!donnees) {
+//     throw new Error(
+//       "Aucune donnée disponible pour générer le PDF du journal de caisse.",
+//     );
+//   } else {
+//     const caisses = donnees.caisses;
+
+//     const today = new Date();
+
+//     // Entête
+//     const templatePath = path.join(
+//       __dirname,
+//       "../../views/templates/journal-caisse.html",
+//     );
+//     let html = fs.readFileSync(templatePath, "utf8");
+
+//     html = html
+//       .replace("{{codesociete}}", donnees.codesociete || "")
+//       .replace("{{societe}}", donnees.raisonsociale || "")
+//       .replace("{{codesite}}", donnees.codesite || "")
+//       .replace("{{site}}", donnees.lib_site || "")
+//       .replace(
+//         "{{datedebut}}",
+//         datedebut
+//           ? new Date(datedebut).toLocaleDateString("fr-FR", {
+//               day: "2-digit",
+//               month: "2-digit",
+//               year: "numeric",
+//             })
+//           : "",
+//       )
+//       .replace(
+//         "{{datefin}}",
+//         datefin
+//           ? new Date(datefin).toLocaleDateString("fr-FR", {
+//               day: "2-digit",
+//               month: "2-digit",
+//               year: "numeric",
+//             })
+//           : "",
+//       )
+//       .replace("{{dateimp}}", today.toLocaleDateString("fr-FR"))
+//       .replace("{{heureimp}}", today.toLocaleTimeString("fr-FR"))
+//       .replace("{{utilisateur}}", utilisateur || "");
+
+//     // Construction des tableaux par caisse
+//     const tableauxCaisses = caisses
+//       .map((caisse) => {
+//         // Récupere le solde de fermeture à chaque date
+//         const soldeFermeture = caisse.lignes.map((ligne) =>
+//           Number(ligne.solde_fermeture || 0.0).toLocaleString("fr-FR"),
+//         );
+
+//         let soldeCourant = Number(caisse.solde_initial || 0.0);
+
+//         // Récupère les dates uniques des opérations du jour pour les afficher dans le solde final
+//         const datesUniques = [
+//           ...new Set(
+//             caisse.lignes
+//               .flatMap((ligne) => ligne.operations || [])
+//               .map((o) => {
+//                 if (!o.dateoperation) return null;
+
+//                 return new Date(o.dateoperation).toLocaleDateString("fr-FR", {
+//                   day: "2-digit",
+//                   month: "2-digit",
+//                   year: "numeric",
+//                 });
+//               })
+//               .filter(Boolean),
+//           ),
+//         ];
+//         const dates = datesUniques.join(", ");
+
+//         // Calcul des cumuls encaissement et décaissement par caisse
+//         const totalEncaissement = caisse.lignes
+//           .flatMap((ligne) => ligne.operations || [])
+//           .filter((o) =>
+//             o.typeoperation?.toLowerCase().startsWith("encaissement"),
+//           )
+//           .reduce((sum, o) => sum + Number(o.montant || 0), 0);
+
+//         const totalDecaissement = caisse.lignes
+//           .flatMap((ligne) => ligne.operations || [])
+//           .filter((o) =>
+//             o.typeoperation?.toLowerCase().startsWith("decaissement"),
+//           )
+//           .reduce((sum, o) => sum + Number(o.montant || 0), 0);
+
+//         // Les opérations sont regroupées par date pour afficher le solde de fermeture à chaque date
+//         const operations = caisse.lignes.flatMap(
+//           (ligne) => ligne.operations || [],
+//         );
+
+//         const operationsParDate = {};
+
+//         caisse.lignes.forEach((ligne) => {
+//           const date = ligne.date; // la date de la journée
+
+//           if (!operationsParDate[date]) {
+//             operationsParDate[date] = {
+//               operations: [],
+//               soldeFermeture: Number(ligne.solde_fermeture || 0),
+//             };
+//           }
+
+//           operationsParDate[date].operations.push(...(ligne.operations || []));
+//         });
+
+//         // Construction des lignes d’opérations par date
+//         const lignes = Object.entries(operationsParDate)
+//           .sort(
+//             ([dateA], [dateB]) =>
+//               getDateSortValue(dateA) - getDateSortValue(dateB),
+//           )
+//           .map(([date, groupe]) => {
+//             let totalEncaissementJour = 0;
+//             let totalDecaissementJour = 0;
+
+//             const operationsHtml = groupe.operations
+//               .slice()
+//               .sort((operationA, operationB) => {
+//                 const dateDifference =
+//                   getDateSortValue(operationA.dateoperation || date) -
+//                   getDateSortValue(operationB.dateoperation || date);
+//                 if (dateDifference !== 0) return dateDifference;
+
+//                 return String(operationA.codeoperation || "").localeCompare(
+//                   String(operationB.codeoperation || ""),
+//                   "fr",
+//                   { numeric: true, sensitivity: "base" },
+//                 );
+//               })
+//               .map((operation) => {
+//                 const montant = Number(operation.montant || 0);
+
+//                 const estDecaissement = operation.typeoperation
+//                   ?.toLowerCase()
+//                   .startsWith("decaissement");
+
+//                 const estEncaissement = operation.typeoperation
+//                   ?.toLowerCase()
+//                   .startsWith("encaissement");
+
+//                 if (estDecaissement) totalDecaissementJour += montant;
+
+//                 if (estEncaissement) totalEncaissementJour += montant;
+
+//                 // Calcul du solde courant au fil des opérations
+//                 if (estDecaissement) {
+//                   soldeCourant -= montant;
+//                 } else if (estEncaissement) {
+//                   soldeCourant += montant;
+//                 }
+
+//                 return `
+//                     <tr>
+//                         <td>${new Date(
+//                           operation.dateoperation,
+//                         ).toLocaleDateString("fr-FR")}</td>
+//                         <td>${operation.codeoperation}</td>
+//                         <td>${operation.libelle || ""}</td>
+//                         <td class="right">${
+//                           estDecaissement
+//                             ? montant.toLocaleString("fr-FR")
+//                             : 0.0
+//                         }</td>
+//                         <td class="right">${
+//                           estEncaissement
+//                             ? montant.toLocaleString("fr-FR")
+//                             : 0.0
+//                         }</td>
+//                         <td class="right">${
+//                           Number(soldeCourant).toLocaleString("fr-FR") || 0
+//                         }</td>
+//                     </tr>
+//                     `;
+//               })
+//               .join("");
+
+//             return `
+//                     ${operationsHtml}
+
+//                     <tr class="ligne-solde">
+//                         <td colspan="3" align="right">
+//                             <strong>
+//                                 Solde au ${new Date(date).toLocaleDateString(
+//                                   "fr-FR",
+//                                 )}
+//                             </strong>
+//                         </td>
+
+//                         <td class="right">
+//                             <strong>${totalDecaissementJour.toLocaleString(
+//                               "fr-FR",
+//                             )}</strong>
+//                         </td>
+
+//                         <td class="right">
+//                             <strong>${totalEncaissementJour.toLocaleString(
+//                               "fr-FR",
+//                             )}</strong>
+//                         </td>
+
+//                         <td class="right">
+//                             <strong>${groupe.soldeFermeture.toLocaleString(
+//                               "fr-FR",
+//                             )}</strong>
+//                         </td>
+//                     </tr>
+//                 `;
+//           })
+//           .join("");
+
+//         // Restitution HTML du tableau par caisse
+//         return `
+//                 <table class="mouvements">
+    
+//                     <tr class="titre-caisse">
+//                         <td colspan="6">
+//                             <div class="entete-caisse">
+//                                 <div class="caisse">
+//                                     <strong>Caisse :</strong>
+//                                     ${caisse.codecaisse} - ${caisse.lib_caisse}
+//                                 </div>
+
+//                                 <div class="solde">
+//                                     Solde initial au ${
+//                                       caisse.lignes[0].date
+//                                         ? new Date(
+//                                             caisse.lignes[0].date,
+//                                           ).toLocaleDateString("fr-FR")
+//                                         : ""
+//                                     } : 
+//                                     <strong class="solde-initial">
+//                                         ${Number(
+//                                           caisse.solde_initial,
+//                                         ).toLocaleString("fr-FR")} ${
+//           caisse.devise
+//         }
+//                                     </strong>
+//                                 </div>
+//                             </div>
+//                         </td>
+//                     </tr>
+
+//                     <tr class="entete">
+//                         <th width="8%">Date</th>
+//                         <th width="21%">N° Pièce</th>
+//                         <th width="41%">Libellé</th>
+//                         <th width="10%">Dépenses</th>
+//                         <th width="10%">Recettes</th>
+//                         <th width="10%">Solde</th>
+//                     </tr>
+
+//                     ${lignes}
+
+//                 </table>
+
+//                 <br/>
+//             `;
+//       })
+//       .join("");
+
+//     html = html.replace("{{lignes}}", tableauxCaisses);
+
+//     const browser = await puppeteer.launch({
+//       args: ["--no-sandbox", "--disable-setuid-sandbox"],
+//     });
+
+//     const page = await browser.newPage();
+
+//     await page.setContent(html, { waitUntil: "networkidle0" });
+
+//     const buffer = await page.pdf({
+//       margin: {
+//         top: "12mm",
+//         bottom: "12mm",
+//         left: "12mm",
+//         right: "12mm",
+//       },
+//       printBackground: true,
+//     });
+
+//     await browser.close();
+
+//     return buffer;
+//   }
+// }
+
+// async function genererXlsxJournal(data, datedebut, datefin, utilisateur) {
+//   const donnees = data.data;
+
+//   if (!donnees) {
+//     throw new Error("Aucune donnée disponible.");
+//   }
+
+//   const workbook = new ExcelJS.Workbook();
+
+//   workbook.creator = utilisateur;
+//   workbook.created = new Date();
+
+//   const sheet = workbook.addWorksheet("Journal de caisse");
+
+//   sheet.addRow([
+//     "Société",
+//     donnees.codesociete + " - " + donnees.raisonsociale,
+//   ]);
+//   sheet.addRow(["Site", donnees.codesite + " - " + donnees.lib_site]);
+//   sheet.addRow(["Date début", datedebut]);
+//   sheet.addRow(["Date fin", datefin]);
+//   sheet.addRow(["Imprimé par", utilisateur]);
+
+//   sheet.addRow([]);
+
+//   donnees.caisses.forEach((caisse) => {
+//     sheet.addRow([`CAISSE : ${caisse.codecaisse} - ${caisse.lib_caisse}`]);
+
+//     sheet.lastRow.font = { bold: true, size: 12 };
+
+//     sheet.addRow(["Solde initial", caisse.solde_initial]);
+
+//     sheet.addRow([]);
+
+//     sheet.addRow([
+//       "Date",
+//       "N° Pièce",
+//       "Libellé",
+//       "Dépenses",
+//       "Recettes",
+//       "Solde",
+//     ]);
+
+//     sheet.lastRow.font = { bold: true };
+
+//     let soldeCourant = Number(caisse.solde_initial);
+
+//     const operationsParDate = {};
+
+//     caisse.lignes.forEach((ligne) => {
+//       if (!operationsParDate[ligne.date]) {
+//         operationsParDate[ligne.date] = {
+//           operations: [],
+//           soldeFermeture: Number(ligne.solde_fermeture),
+//         };
+//       }
+
+//       operationsParDate[ligne.date].operations.push(...ligne.operations);
+//     });
+
+//     Object.entries(operationsParDate).forEach(([date, groupe]) => {
+//       let totalDepenses = 0;
+//       let totalRecettes = 0;
+
+//       groupe.operations.forEach((op) => {
+//         const montant = Number(op.montant);
+
+//         const depense = op.typeoperation
+//           ?.toLowerCase()
+//           .startsWith("decaissement");
+
+//         const recette = op.typeoperation
+//           ?.toLowerCase()
+//           .startsWith("encaissement");
+
+//         if (depense) {
+//           totalDepenses += montant;
+//           soldeCourant -= montant;
+//         }
+
+//         if (recette) {
+//           totalRecettes += montant;
+//           soldeCourant += montant;
+//         }
+
+//         sheet.addRow([
+//           new Date(op.dateoperation),
+//           op.codeoperation,
+//           op.libelle,
+//           depense ? montant : "",
+//           recette ? montant : "",
+//           soldeCourant,
+//         ]);
+//       });
+
+//       const row = sheet.addRow([
+//         "",
+//         "",
+//         "SOLDE AU " + new Date(date).toLocaleDateString("fr-FR"),
+//         totalDepenses,
+//         totalRecettes,
+//         groupe.soldeFermeture,
+//       ]);
+
+//       row.font = {
+//         bold: true,
+//       };
+//     });
+
+//     sheet.addRow([]);
+//     sheet.addRow([]);
+//   });
+
+//   sheet.columns = [
+//     { width: 15 },
+//     { width: 25 },
+//     { width: 50 },
+//     { width: 18 },
+//     { width: 18 },
+//     { width: 18 },
+//   ];
+
+//   sheet.eachRow((row) => {
+//     row.eachCell((cell) => {
+//       if (typeof cell.value === "number") {
+//         cell.numFmt = "#,##0";
+//       }
+//     });
+//   });
+
+//   sheet.views = [
+//     {
+//       state: "frozen",
+//       ySplit: 7,
+//     },
+//   ];
+
+//   const buffer = await workbook.xlsx.writeBuffer();
+
+//   return buffer;
+// }
 
 async function genererPdfRecu(data, copies = 2) {
 
@@ -143,217 +1835,615 @@ async function genererPdfRecu(data, copies = 2) {
 async function genererPdfJournal(data, datedebut, datefin, utilisateur){
 
     const donnees = data.data;
-    const today = new Date();
-
-    // Récupere la première date d’opération pour l’afficher dans le solde initial
-    const premiereDate = donnees.lignes && donnees.lignes.length > 0 && donnees.lignes[0].operations && donnees.lignes[0].operations.length > 0
-        ? new Date(donnees.lignes[0].operations[0].dateoperation).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-        : '';
-
-    const templatePath = path.join(__dirname, '../../views/templates/journal-caisse.html');
-    let html = fs.readFileSync(templatePath, 'utf8');
-
-     // Soldes sécurisés
-    const soldeOuverture = Number(donnees.soldeouverture || 0).toLocaleString('fr-FR');
-    const soldeFermeture = Number(donnees.soldefermeture || 0).toLocaleString('fr-FR');
-
-    // Récupére la premiere valeur du champ soldeouverture pour l’afficher dans le solde initial
-    const soldeInitial = donnees.lignes && donnees.lignes.length > 0
-        ? Number(donnees.lignes[0].solde_ouverture || 0).toLocaleString('fr-FR')
-        : 'Aucun solde';
-
-
-    // Remplacement entête
-    html = html
-        .replace('{{codesociete}}', donnees.codesociete || '')
-        .replace('{{societe}}', donnees.raisonsociale || '')
-        .replace('{{codesite}}', donnees.codesite || '')
-        .replace('{{site}}', donnees.lib_site || '')
-        .replace('{{codejournal}}', donnees.codejournal || '')
-        .replace('{{journal}}', donnees.lib_journal || '')
-        .replace('{{codecaisse}}', donnees.codecaisse || '')
-        .replace('{{caisse}}', donnees.lib_caisse || '')
-        .replace(/{{devise}}/g, donnees.devise_caisse || '')
-        .replace('{{datedebut}}', datedebut? new Date(datedebut).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '')
-        .replace('{{datefin}}', datefin? new Date(datefin).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '')
-        .replace('{{dateimp}}', today.toLocaleDateString('fr-FR'))
-        .replace('{{heureimp}}', today.toLocaleTimeString('fr-FR'))
-        .replace('{{soldeouverture}}', soldeOuverture)
-        .replace('{{soldefermeture}}', soldeFermeture)
-        .replace('{{utilisateur}}', utilisateur || '')
-        .replace('{{date_solde}}', premiereDate)
-        .replace('{{solde_initial}}', soldeInitial);
-
 
     // Sécurité si aucune ligne
-    const lignes = donnees.lignes || [];
+    if (!donnees) {
+        throw new Error('Aucune donnée disponible pour générer le PDF du journal de caisse.');
+    }
+    else {
 
-    // Construction des lignes
-    const lignesHtml = lignes.map(jour => {
-        
-        // Calcul des cumuls encaissement et décaissement par jour
-         const totalEncaissement = jour.operations
-        .filter(o => o.typeoperation?.toLowerCase() === 'encaissement')
-        .reduce((sum, o) => sum + Number(o.montant || 0), 0);
+        const caisses = donnees.caisses;
 
-        const totalDecaissement = jour.operations
-        .filter(o => o.typeoperation?.substring(0, 12).toLowerCase() === 'decaissement')
-        .reduce((sum, o) => sum + Number(o.montant || 0), 0);
+        const today = new Date();
 
-        const soldeFinal = (Number(jour.solde_ouverture || 0) + totalEncaissement - totalDecaissement).toLocaleString('fr-FR');
+        // Entête
+        const templatePath = path.join(__dirname, '../../views/templates/journal-caisse.html');
+        let html = fs.readFileSync(templatePath, 'utf8');
 
-        // Calcul du solde courant au fil des opérations
-        let soldeCourant = Number(jour.solde_ouverture || 0);
+        html = html
+            .replace('{{codesociete}}', donnees.codesociete || '')
+            .replace('{{societe}}', donnees.raisonsociale || '')
+            .replace('{{codesite}}', donnees.codesite || '')
+            .replace('{{site}}', donnees.lib_site || '')
+            .replace('{{datedebut}}', datedebut? new Date(datedebut).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '')
+            .replace('{{datefin}}', datefin? new Date(datefin).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '')
+            .replace('{{dateimp}}', today.toLocaleDateString('fr-FR'))
+            .replace('{{heureimp}}', today.toLocaleTimeString('fr-FR'))
+            .replace('{{utilisateur}}', utilisateur || '');
 
-        // Construction des lignes d’opérations
-        const operations = jour.operations.map(op => {
 
-            const montant = Number(op.montant || 0);
 
-            if (op.typeoperation?.substring(0, 12).toLowerCase() === 'decaissement') {
-                soldeCourant -= montant;
-            } else if (op.typeoperation?.toLowerCase() === 'encaissement') {
-                soldeCourant += montant;
-            }
+        // Construction des tableaux par caisse
+        const tableauxCaisses = caisses.map(caisse => {
 
-            return `
-                <tr>
-                    <td>
-                        ${op.dateoperation
-                            ? new Date(op.dateoperation).toLocaleDateString('fr-FR', {
+            // Récupere le solde de fermeture à chaque date
+            const soldeFermeture = caisse.lignes.map(ligne => Number(ligne.solde_fermeture || 0.0).toLocaleString('fr-FR'));
+
+            let soldeCourant = Number(caisse.solde_initial || 0.0);
+
+            // Récupère les dates uniques des opérations du jour pour les afficher dans le solde final
+            const datesUniques = [
+                ...new Set(
+                    caisse.lignes.flatMap(ligne => ligne.operations || [])
+                        .map(o => {
+                            if (!o.dateoperation) return null;
+
+                            return new Date(o.dateoperation).toLocaleDateString('fr-FR', {
                                 day: '2-digit',
                                 month: '2-digit',
                                 year: 'numeric'
-                            })
-                            : ''}
-                    </td>
-                    <td>${op.codeoperation || ''}</td>
-                    <td>${op.libelle || ''}</td>
+                            });
+                        })
+                        .filter(Boolean)
+                )
+            ]
+            const dates = datesUniques.join(', ');
 
-                    <td class="right">
-                        ${op.typeoperation?.substring(0, 12).toLowerCase() === 'decaissement'
-                            ? montant.toLocaleString('fr-FR')
-                            : 0.0}
-                    </td>
 
-                    <td class="right">
-                        ${op.typeoperation?.toLowerCase() === 'encaissement'
-                            ? montant.toLocaleString('fr-FR')
-                            : 0.0}
-                    </td>
+            // Calcul des cumuls encaissement et décaissement par caisse
+            const totalEncaissement = caisse.lignes.flatMap(ligne => ligne.operations || [])
+                .filter(o => o.typeoperation?.toLowerCase().startsWith('encaissement'))
+                .reduce((sum, o) => sum + Number(o.montant || 0), 0);
 
-                    <td class="right">
-                        ${soldeCourant.toLocaleString('fr-FR')}
-                    </td>
+            const totalDecaissement = caisse.lignes.flatMap(ligne => ligne.operations || [])
+                .filter(o => o.typeoperation?.toLowerCase().startsWith('decaissement'))
+                .reduce((sum, o) => sum + Number(o.montant || 0), 0);
 
-                </tr>
+
+            // Les opérations sont regroupées par date pour afficher le solde de fermeture à chaque date
+            const operations = caisse.lignes.flatMap(ligne => ligne.operations || []);
+
+            const operationsParDate = {};
+
+            caisse.lignes.forEach(ligne => {
+
+                const date = ligne.date;           // la date de la journée
+
+                if (!operationsParDate[date]) {
+                    operationsParDate[date] = {
+                        operations: [],
+                        soldeFermeture: Number(ligne.solde_fermeture || 0)
+                    };
+                }
+
+                operationsParDate[date].operations.push(...(ligne.operations || []));
+            });
+
+            // Construction des lignes d’opérations par date
+            const lignes = Object.entries(operationsParDate).map(([date, groupe]) => {
+
+                let totalEncaissementJour = 0;
+                let totalDecaissementJour = 0;
+
+                const operationsHtml = groupe.operations.map(operation => {
+
+                    const montant = Number(operation.montant || 0);
+
+                    const estDecaissement =
+                        operation.typeoperation?.toLowerCase().startsWith('decaissement');
+
+                    const estEncaissement =
+                        operation.typeoperation?.toLowerCase().startsWith('encaissement');
+
+                    if(estDecaissement)
+                        totalDecaissementJour += montant;
+
+                    if(estEncaissement)
+                        totalEncaissementJour += montant;
+
+                    // Calcul du solde courant au fil des opérations
+                    if (estDecaissement) {
+                        soldeCourant -= montant;
+                    } else if (estEncaissement) {
+                        soldeCourant += montant;
+                    }
+
+                    return `
+                    <tr>
+                        <td>${new Date(operation.dateoperation).toLocaleDateString('fr-FR')}</td>
+                        <td>${operation.codeoperation}</td>
+                        <td>${operation.libelle || ''}</td>
+                        <td class="right">${estDecaissement ? montant.toLocaleString('fr-FR') : 0.0}</td>
+                        <td class="right">${estEncaissement ? montant.toLocaleString('fr-FR') : 0.0}</td>
+                        <td class="right">${Number(soldeCourant).toLocaleString('fr-FR') || 0}</td>
+                    </tr>
+                    `;
+                }).join('');
+
+                return `
+                    ${operationsHtml}
+
+                    <tr class="ligne-solde">
+                        <td colspan="3" align="right">
+                            <strong>
+                                Solde au ${new Date(date).toLocaleDateString('fr-FR')}
+                            </strong>
+                        </td>
+
+                        <td class="right">
+                            <strong>${totalDecaissementJour.toLocaleString('fr-FR')}</strong>
+                        </td>
+
+                        <td class="right">
+                            <strong>${totalEncaissementJour.toLocaleString('fr-FR')}</strong>
+                        </td>
+
+                        <td class="right">
+                            <strong>${groupe.soldeFermeture.toLocaleString('fr-FR')}</strong>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+
+            // Restitution HTML du tableau par caisse
+            return `
+                <table class="mouvements">
+    
+                    <tr class="titre-caisse">
+                        <td colspan="6">
+                            <div class="entete-caisse">
+                                <div class="caisse">
+                                    <strong>Caisse :</strong>
+                                    ${caisse.codecaisse} - ${caisse.lib_caisse}
+                                </div>
+
+                                <div class="solde">
+                                    Solde initial au ${
+                                        caisse.lignes[0].date
+                                            ? new Date(caisse.lignes[0].date).toLocaleDateString('fr-FR')
+                                            : ''
+                                    } : 
+                                    <strong class="solde-initial">
+                                        ${Number(caisse.solde_initial).toLocaleString('fr-FR')} ${caisse.devise}
+                                    </strong>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr class="entete">
+                        <th width="8%">Date</th>
+                        <th width="21%">N° Pièce</th>
+                        <th width="41%">Libellé</th>
+                        <th width="10%">Dépenses</th>
+                        <th width="10%">Recettes</th>
+                        <th width="10%">Solde</th>
+                    </tr>
+
+                    ${lignes}
+
+                </table>
+
+                <br/>
             `;
+
         }).join('');
 
-        // Récupère les dates uniques des opérations du jour pour les afficher dans le solde final
-        const datesUniques = [
-            ...new Set(
-                jour.operations
-                    .map(o => {
-                        if (!o.dateoperation) return null;
+        html = html.replace('{{lignes}}', tableauxCaisses);
 
-                        return new Date(o.dateoperation).toLocaleDateString('fr-FR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                        });
-                    })
-                    .filter(Boolean)
-            )
-        ];
+        const browser = await puppeteer.launch({
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
 
-        const dates = datesUniques.join(', ');
+        const page = await browser.newPage();
 
-        // Affiche les totaux du jour et le solde final
-        const totaux = `
-            <tr class="total-row">
-                <td colspan="3" class="right">
-                    Solde au ${jour.dateoperation || ''} ${dates}
-                </td>
-                <td class="num">
-                    ${Number(totalDecaissement || 0.0).toLocaleString('fr-FR')}
-                </td>
-                <td class="num">
-                    ${Number(totalEncaissement || 0.0).toLocaleString('fr-FR')}
-                </td>
-                <td class="num">${soldeFinal}</td>
-            </tr>
-            `;
+        await page.setContent(html, { waitUntil: 'networkidle0' });
 
-        return `
-            ${operations}
-            ${totaux}
-        `;
+        const buffer = await page.pdf({
+            margin: {
+                top: '12mm',
+                bottom: '12mm',
+                left: '12mm',
+                right: '12mm'
+            },
+            printBackground: true
+        });
 
-    }).join('');
+        await browser.close();
 
-    html = html.replace('{{lignes}}', lignesHtml);
+        return buffer;
+    }
+}
 
-     const browser = await puppeteer.launch({
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+async function genererXlsxJournal(data, datedebut, datefin, utilisateur) {
+
+    const donnees = data.data;
+
+    if (!donnees) {
+        throw new Error("Aucune donnée disponible.");
+    }
+
+    const workbook = new ExcelJS.Workbook();
+
+    workbook.creator = utilisateur;
+    workbook.created = new Date();
+
+    const sheet = workbook.addWorksheet("Journal de caisse");
+
+    sheet.addRow(["Société", donnees.codesociete + " - " + donnees.raisonsociale]);
+    sheet.addRow(["Site", donnees.codesite + " - " + donnees.lib_site]);
+    sheet.addRow(["Date début", datedebut]);
+    sheet.addRow(["Date fin", datefin]);
+    sheet.addRow(["Imprimé par", utilisateur]);
+
+    sheet.addRow([]);
+
+    donnees.caisses.forEach(caisse => {
+
+        sheet.addRow([`CAISSE : ${caisse.codecaisse} - ${caisse.lib_caisse}`]);
+
+        sheet.lastRow.font = {bold: true, size: 12};
+
+        sheet.addRow(["Solde initial", (caisse.solde_initial)]);
+
+        sheet.addRow([]);
+
+        sheet.addRow([
+            "Date",
+            "N° Pièce",
+            "Libellé",
+            "Dépenses",
+            "Recettes",
+            "Solde"
+        ]);
+
+        sheet.lastRow.font = { bold: true };
+
+        let soldeCourant = Number(caisse.solde_initial);
+
+        const operationsParDate = {};
+
+        caisse.lignes.forEach(ligne => {
+
+            if (!operationsParDate[ligne.date]) {
+
+                operationsParDate[ligne.date] = {
+                    operations: [],
+                    soldeFermeture: Number(ligne.solde_fermeture)
+                };
+
+            }
+
+            operationsParDate[ligne.date].operations.push(...ligne.operations);
+
+        });
+
+        Object.entries(operationsParDate).forEach(([date, groupe]) => {
+
+            let totalDepenses = 0;
+            let totalRecettes = 0;
+
+            groupe.operations.forEach(op => {
+
+                const montant = Number(op.montant);
+
+                const depense = op.typeoperation
+                    ?.toLowerCase()
+                    .startsWith("decaissement");
+
+                const recette = op.typeoperation
+                    ?.toLowerCase()
+                    .startsWith("encaissement");
+
+                if (depense) {
+                    totalDepenses += montant;
+                    soldeCourant -= montant;
+                }
+
+                if (recette) {
+                    totalRecettes += montant;
+                    soldeCourant += montant;
+                }
+
+                sheet.addRow([
+                    new Date(op.dateoperation),
+                    op.codeoperation,
+                    op.libelle,
+                    depense ? montant : "",
+                    recette ? montant : "",
+                    soldeCourant
+                ]);
+
+            });
+
+            const row = sheet.addRow([
+                "",
+                "",
+                "SOLDE AU " + new Date(date).toLocaleDateString("fr-FR"),
+                totalDepenses,
+                totalRecettes,
+                groupe.soldeFermeture
+            ]);
+
+            row.font = {
+                bold: true
+            };
+
+        });
+
+        sheet.addRow([]);
+        sheet.addRow([]);
+
     });
 
-    const page = await browser.newPage();
+    sheet.columns = [
+        { width: 15 },
+        { width: 25 },
+        { width: 50 },
+        { width: 18 },
+        { width: 18 },
+        { width: 18 }
+    ];
 
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    sheet.eachRow(row => {
 
-    const buffer = await page.pdf({
-        margin: {
-            top: '12mm',
-            bottom: '12mm',
-            left: '12mm',
-            right: '12mm'
-        },
-        printBackground: true
+        row.eachCell(cell => {
+
+            if (typeof cell.value === "number") {
+
+                cell.numFmt = '#,##0';
+
+            }
+
+        });
+
     });
 
-    console.log('PDF généré avec succès');
+    sheet.views = [
+        {
+            state: 'frozen',
+            ySplit: 7
+        }
+    ];
 
-    await browser.close();
+    const buffer = await workbook.xlsx.writeBuffer();
 
     return buffer;
 }
 
-async function genererPdfCloture(data, datedebut, datefin,){
-    const donnees = data.data;
-    const today = new Date();
 
-    const templatePath = path.join(__dirname, '../../views/templates/etat-cloture.html');
-    let html = fs.readFileSync(templatePath, 'utf8');
 
-    // Remplacement entête
-    html = html
-        .replace('{{codesociete}}', donnees.codesociete || '')
-        .replace('{{societe}}', donnees.raisonsociale || '')
-        .replace('{{codesite}}', donnees.codesite || '')
-        .replace('{{site}}', donnees.site || '')
-        .replace('{{codecaisse}}', donnees.codecaisse || '')
-        .replace('{{caisse}}', donnees.caisse.libelle || '')
-        .replace(/{{devise}}/g, donnees.devise || '')
-        .replace('{{datedebut}}', datedebut || '')
-        .replace('{{datefin}}', datefin || '');
+async function genererPdfCloture(data, datedebut, datefin) {
+  const donnees = data.data;
+  const today = new Date();
 
-    // Sécurité si aucune ligne
-    const lignes = donnees || [];
+  const templatePath = path.join(
+    __dirname,
+    "../../views/templates/etat-cloture.html",
+  );
+  let html = fs.readFileSync(templatePath, "utf8");
 
-    const operations = donnees.map(op => `
+  // Remplacement entête
+  html = html
+    .replace("{{codesociete}}", donnees.codesociete || "")
+    .replace("{{societe}}", donnees.raisonsociale || "")
+    .replace("{{codesite}}", donnees.codesite || "")
+    .replace("{{site}}", donnees.site || "")
+    .replace("{{codecaisse}}", donnees.codecaisse || "")
+    .replace("{{caisse}}", donnees.caisse.libelle || "")
+    .replace(/{{devise}}/g, donnees.devise || "")
+    .replace("{{datedebut}}", datedebut || "")
+    .replace("{{datefin}}", datefin || "");
+
+  // Sécurité si aucune ligne
+  const lignes = donnees || [];
+
+  const operations = donnees
+    .map(
+      (op) => `
         <tr>
-            <td>${op.date || ''}</td>
-            <td>${op.caisse.libelle || ''}</td>
-            <td>${op.devise || ''}</td>
-            <td class="right">${Number(op.soldes.ouverture || 0).toLocaleString('fr-FR')}</td>
-            <td class="right">${Number(soldes.fermeture || 0).toLocaleString('fr-FR')}</td>
-            <td class="right">${Number(op.soldes.physique || 0).toLocaleString('fr-FR')}</td>
-            <td class="right">${Number(op.soldes.ecart || 0).toLocaleString('fr-FR')}</td>
-            <td>${op.statut || ''}</td>
+            <td>${op.date || ""}</td>
+            <td>${op.caisse.libelle || ""}</td>
+            <td>${op.devise || ""}</td>
+            <td class="right">${Number(op.soldes.ouverture || 0).toLocaleString(
+              "fr-FR",
+            )}</td>
+            <td class="right">${Number(soldes.fermeture || 0).toLocaleString(
+              "fr-FR",
+            )}</td>
+            <td class="right">${Number(op.soldes.physique || 0).toLocaleString(
+              "fr-FR",
+            )}</td>
+            <td class="right">${Number(op.soldes.ecart || 0).toLocaleString(
+              "fr-FR",
+            )}</td>
+            <td>${op.statut || ""}</td>
         </tr>
-    `).join('');
-
+    `,
+    )
+    .join("");
 }
 
-module.exports = { genererPdfRecu , genererPdfJournal};
+async function genererDocPdf(data) {
+  const templatePath = path.join(
+    __dirname,
+    "../../views/templates/doc-justif.html",
+  );
+  let html = fs.readFileSync(templatePath, "utf8");
+
+  // Remplacement des données simples
+  html = html
+    .replace("{{logo}}", (data.operation.code || "O").charAt(0).toUpperCase())
+    .replace("{{societe}}", data.operation.code || "Entreprise")
+    .replace(
+      "{{site}}",
+      data.operation.beneficiaire
+        ? "Bénéficiaire : " + data.operation.beneficiaire
+        : "",
+    )
+    .replace("{{operation_code}}", data.operation.code || "")
+    .replace("{{operation_date}}", data.operation.date || "")
+    .replace("{{beneficiaire}}", data.operation.beneficiaire || "");
+
+  // Synthèse
+  const syntheseRows = `
+        <tr>
+            <td>Montant décaissement</td>
+            <td class="right">${(
+              data.synthese.montantDecaissement || 0
+            ).toLocaleString()}</td>
+            <td class="right">${(
+              data.synthese.montantDecaissementRef || 0
+            ).toLocaleString()}</td>
+        </tr>
+        <tr>
+            <td>Montant justifié</td>
+            <td class="right">${(
+              data.synthese.montantJustifie || 0
+            ).toLocaleString()}</td>
+            <td class="right">${(
+              data.synthese.montantJustifieRef || 0
+            ).toLocaleString()}</td>
+        </tr>
+        <tr>
+            <td>Montant encaissement</td>
+            <td class="right">${(
+              data.synthese.montantEncaissement || 0
+            ).toLocaleString()}</td>
+            <td class="right">${(
+              data.synthese.montantEncaissementRef || 0
+            ).toLocaleString()}</td>
+        </tr>
+        <tr style="font-weight:bold; background:#eef2ff;">
+            <td>Reste à justifier</td>
+            <td class="right">${(
+              data.synthese.resteAJustifier || 0
+            ).toLocaleString()}</td>
+            <td class="right">${(
+              data.synthese.resteAJustifierRef || 0
+            ).toLocaleString()}</td>
+        </tr>
+    `;
+  html = html.replace("{{synthese_rows}}", syntheseRows);
+
+  // Décaissement
+  html = html.replace(
+    "{{decaissement_rows}}",
+    data.decaissement
+      .map(
+        (d) => `
+        <tr>
+            <td>${d.nature || ""} - ${d.libelle || ""}</td>
+            <td>${d.codecentre || ""} ${d.centre || ""}</td>
+            <td class="right">${(d.montant || 0).toLocaleString()} ${
+          d.devise || ""
+        }</td>
+            <td>${d.caisse || ""}</td>
+        </tr>
+    `,
+      )
+      .join(""),
+  );
+
+  // Justificatifs (chaque bloc avec son tableau de détails)
+  const justifBlocks = data.justificatifs
+    .map(
+      (j) => `
+        <div class="justif-block">
+            <div class="justif-header">
+                <span>Code : ${j.code || ""}</span>
+                <span>Date : ${
+                  j.date ? new Date(j.date).toLocaleDateString("fr-FR") : ""
+                }</span>
+                <span>Montant : ${(j.montant || 0).toLocaleString()} ${
+        j.devise || ""
+      }</span>
+            </div>
+            ${
+              j.commentaire
+                ? `<div style="margin-bottom:6px; font-style:italic; color:#475569;">${j.commentaire}</div>`
+                : ""
+            }
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nature</th>
+                        <th>Centre</th>
+                        <th class="right">Montant</th>
+                        <th class="right">Montant Ref</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${j.details
+                      .map(
+                        (d) => `
+                        <tr>
+                            <td>${d.nature || ""}</td>
+                            <td>${d.codecentre || ""} ${d.centre || ""}</td>
+                            <td class="right">${(
+                              d.montant || 0
+                            ).toLocaleString()}</td>
+                            <td class="right">${(
+                              d.montantRef || 0
+                            ).toLocaleString()}</td>
+                        </tr>
+                    `,
+                      )
+                      .join("")}
+                </tbody>
+            </table>
+        </div>
+    `,
+    )
+    .join("");
+
+  html = html.replace(
+    "{{justificatifs_sections}}",
+    justifBlocks || "<p>Aucun justificatif</p>",
+  );
+
+  // Encaissements
+  html = html.replace(
+    "{{encaissement_rows}}",
+    data.encaissements
+      .map(
+        (e) => `
+        <tr>
+            <td>${e.code || ""}</td>
+            <td>${
+              e.date ? new Date(e.date).toLocaleDateString("fr-FR") : ""
+            }</td>
+            <td>${e.caisse || ""} (${e.codecaisse || ""})</td>
+            <td class="right">${(e.montant || 0).toLocaleString()} ${
+          e.devise || ""
+        }</td>
+            <td class="right">${(e.montantRef || 0).toLocaleString()}</td>
+        </tr>
+    `,
+      )
+      .join(""),
+  );
+
+  // Lancement du navigateur
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.setContent(html, { waitUntil: "networkidle0" });
+
+  const buffer = await page.pdf({
+    format: "A4",
+    margin: { top: "0mm", bottom: "0mm", left: "0mm", right: "0mm" },
+    printBackground: true,
+  });
+
+  await browser.close();
+  return buffer;
+}
+
+module.exports = {
+  genererPdfRecu,
+  genererPdfJournal,
+  genererXlsxJournal,
+  genererPdfCloture,
+  genererDocPdf,
+};

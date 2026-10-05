@@ -38,7 +38,7 @@ async function get_all_ligneoperations() {
   return ligneoperations;
 }
 
-async function create_ligneoperation(data) {
+async function create_ligneoperation(data, transaction = null) {
   if (!data.idoperation) {
     throw new Error("Tous les champs (codeoperation) sont requis.");
   }
@@ -52,7 +52,7 @@ async function create_ligneoperation(data) {
   let societe = null;
   //let site = null;
   if(data.idoperation){
-    enteteoperation = await operation.get_oneenteteoperation(data.idoperation);
+    enteteoperation = await operation.get_oneenteteoperation(data.idoperation, transaction);
     societe = await societeservice.getonesociete(enteteoperation.idsociete);
     // site = await siteservice.getonesite(enteteoperation.idsite);
   }
@@ -80,7 +80,7 @@ async function create_ligneoperation(data) {
     data.updatedat,
     data.updatedby
   );
-  const recorded = await newligneoperation.create_ligneoperationmodel(newligneoperation);
+  const recorded = await newligneoperation.create_ligneoperationmodel(transaction);
   // si le modèle renvoie une erreur
   if (!recorded.success) {
     throw new Error(recorded.message);

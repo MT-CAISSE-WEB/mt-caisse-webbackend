@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document justificatif</title>
+    <style>
+        /* ============================================
+       DOCUMENT JUSTIFICATIF – DESIGN PREMIUM
+       ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-size: 11px;
+            color: #1e293b;
+            background: white;
+            padding: 0;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 15mm 20mm;
+            margin: 0 auto;
+            background: white;
+            page-break-after: always;
+        }
+
+        .page:last-child {
+            page-break-after: auto;
+        }
+
+        /* En-tête */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-placeholder {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .company-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .company-sub {
+            font-size: 10px;
+            color: #64748b;
+        }
+
+        .header-right {
+            text-align: right;
+        }
+
+        .doc-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #1e40af;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .doc-subtitle {
+            font-size: 11px;
+            color: #475569;
+            margin-top: 2px;
+        }
+
+        /* Info opération */
+        .info-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 10px 15px;
+        }
+
+        .info-item {
+            flex: 1 1 180px;
+        }
+
+        .info-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            color: #94a3b8;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 12px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        /* Section */
+        .section {
+            margin: 20px 0;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title i {
+            font-size: 16px;
+            color: #3b82f6;
+        }
+
+        /* Tableaux */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 10px;
+        }
+
+        th {
+            background: #f1f5f9;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #334155;
+            border-bottom: 1px solid #cbd5e1;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        td {
+            padding: 7px 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .bold {
+            font-weight: 700;
+        }
+
+        .total-line {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 10px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .total-label {
+            margin-right: 10px;
+            color: #475569;
+        }
+
+        /* Synthèse tableau coloré */
+        .synthese-table th {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .montant-ref {
+            color: #64748b;
+            font-size: 9px;
+        }
+
+        /* Justificatif bloc */
+        .justif-block {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 15px;
+            background: #fafafa;
+        }
+
+        .justif-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        /* Pied de page (optionnel) */
+        .footer {
+            margin-top: 30px;
+            font-size: 9px;
+            color: #94a3b8;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 8px;
+        }
+
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+
+            .page {
+                box-shadow: none;
+                margin: 0;
+                padding: 12mm 15mm;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="page">
+
+        <!-- En-tête -->
+        <div class="header">
+            <div class="header-left">
+                <div class="logo-placeholder">{{logo}}</div>
+                <div>
+                    <div class="company-name">{{societe}}</div>
+                    <div class="company-sub">{{site}}</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="doc-title">Document justificatif</div>
+                <div class="doc-subtitle">N° opération : <strong>{{operation_code}}</strong></div>
+            </div>
+        </div>
+
+        <!-- Informations opération -->
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Date opération</div>
+                <div class="info-value">{{operation_date}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Bénéficiaire</div>
+                <div class="info-value">{{beneficiaire}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Code opération</div>
+                <div class="info-value">{{operation_code}}</div>
+            </div>
+        </div>
+
+        <!-- Section Synthèse -->
+        <div class="section">
+            <div class="section-title">
+                <span>📊</span> Synthèse de l'opération
+            </div>
+            <table class="synthese-table">
+                <thead>
+                    <tr>
+                        <th>Élément</th>
+                        <th class="right">Montant</th>
+                        <th class="right">Montant Ref</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{synthese_rows}}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section Décaissement initial -->
+        <div class="section">
+            <div class="section-title">
+                <span>📋</span> Décaissement initial
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nature</th>
+                        <th>Centre</th>
+                        <th class="right">Montant</th>
+                        <th>Caisse</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{decaissement_rows}}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section Justificatifs -->
+        <div class="section">
+            <div class="section-title">
+                <span>📁</span> Justificatifs
+            </div>
+            {{justificatifs_sections}}
+        </div>
+
+        <!-- Section Encaissements -->
+        <div class="section">
+            <div class="section-title">
+                <span>💰</span> Encaissements
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Code opération</th>
+                        <th>Date</th>
+                        <th>Caisse</th>
+                        <th class="right">Montant</th>
+                        <th class="right">Montant Ref</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{encaissement_rows}}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pied de page -->
+        <div class="footer">
+            Document généré automatiquement – Ce justificatif récapitule les dépenses et justificatifs associés à
+            l’opération.
+        </div>
+
+    </div>
+
+</body>
+
+</html>

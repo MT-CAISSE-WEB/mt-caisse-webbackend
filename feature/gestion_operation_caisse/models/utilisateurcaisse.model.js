@@ -99,10 +99,12 @@ class UtilisateurCaisseModel {
         const pool = await connectDB();
         try {
             const result = await pool.request().input("idutilisateur", idutilisateur).query(utilisateurcaisseQueries.getcaisseByUser);
-            const utilsateurcaisse = result.recordset;
-            return utilsateurcaisse;
+            return {
+                authorized: [true, 1].includes(result.recordsets[0]?.[0]?.autorise),
+                data: result.recordsets[1] ?? [],
+            };
         } catch (error) {
-            return { success: false, message: error.message };
+            throw error;
         }
     }
 
@@ -113,10 +115,12 @@ class UtilisateurCaisseModel {
                 .input("iddevisesociete", sql.UniqueIdentifier, data.iddeviserefsoc)
                 .input("idutilisateur", sql.UniqueIdentifier, data.idutilisateur)
                 .query(utilisateurcaisseQueries.getLoadCaisseUser);
-            const utilsateurcaisse = result.recordset ?? [];
-            return utilsateurcaisse;
+            return {
+                authorized: [true, 1].includes(result.recordsets[0]?.[0]?.autorise),
+                data: result.recordsets[1] ?? [],
+            };
         } catch (error) {
-            return { success: false, message: error.message };
+            throw error;
         }
     }
 

@@ -155,3 +155,15 @@ module.exports.get_caisse_tresorerie_by_date = asyncHandler(async(req, res, next
     res.status(404).json({ success: false, message: error.message });
   }
 });
+
+/**
+ * Liste toutes les soldes caisses
+ */
+module.exports.get_soldeAllcaisses = asyncHandler(async (req, res, next) => {
+  try {
+    const caisses = await caisseperiodeservice.get_solde_toutes_caisses();
+    res.json({ success: true, data: caisses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});

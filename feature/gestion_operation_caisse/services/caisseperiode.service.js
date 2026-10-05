@@ -648,6 +648,17 @@ function fillMissingDates(existingRows, startDate, endDate) {
     return filledRows;
 }
 
+// Récupérer le solde de toutes les caisses
+async function get_solde_toutes_caisses() {
+  try {
+    const solde_ = await periodemodel.get_solde_date();
+    return solde_;
+  } catch (err) {
+    console.log(`Aucune donnée: ${err}`.cyan.bold);
+    throw err;
+  }
+}
+
 module.exports = {
   get_all_caisseperiodes,
   get_by_idperiode,
@@ -660,5 +671,6 @@ module.exports = {
   delete_caisse,
   create_caisseBilletage,
   recalculate_solde,
-  get_caisse_tresorerie_by_date
+  get_caisse_tresorerie_by_date,
+  get_solde_toutes_caisses
 };

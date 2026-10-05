@@ -48,11 +48,11 @@ class enteteOperationModel {
     this.updatedby = updatedby;
   }
 
-  async create_enteteoperationmodel() {
-    const pool = await connectDB();
+  async create_enteteoperationmodel(transaction = null) {
     try {
-      const result = await pool
-        .request()
+      const pool = transaction ? null : await connectDB();
+      const request = transaction ? transaction.request() : pool.request();
+      const result = await request
         .input("idoperation", sql.UniqueIdentifier, this.idoperation)
         .input("codeoperation", sql.NVarChar(24), this.codeoperation)
         .input("iddemande", sql.UniqueIdentifier, this.iddemande)
@@ -76,14 +76,14 @@ class enteteOperationModel {
     }
   }
 
-  async create_numoperation(prefixe, dte) {
+  async create_numoperation(prefixe, dte, transaction = null) {
     const date = new Date(dte);
     const annee = String(date.getFullYear());
     const mois = String(date.getMonth() + 1).padStart(2, "0"); // +1 car les mois commencent à 0
     const jour = String(date.getDate()).padStart(2, "0");
-    const pool = await connectDB();
-    const result = await pool
-      .request()
+    const pool = transaction ? null : await connectDB();
+    const request = transaction ? transaction.request() : pool.request();
+    const result = await request
       .input("prefixe", sql.NVarChar, prefixe)
       .input("annee", sql.NVarChar, annee)
       .input("mois", sql.NVarChar, mois)
@@ -95,13 +95,13 @@ class enteteOperationModel {
     return numero;
   }
 
-  async create_numecriture(prefixe, dte) {
+  async create_numecriture(prefixe, dte, transaction = null) {
     const date = new Date(dte);
     const annee = String(date.getFullYear());
     const mois = String(date.getMonth() + 1).padStart(2, "0"); // +1 car les mois commencent à 0
-    const pool = await connectDB();
-    const result = await pool
-      .request()
+    const pool = transaction ? null : await connectDB();
+    const request = transaction ? transaction.request() : pool.request();
+    const result = await request
       .input("prefixe", sql.NVarChar, prefixe)
       .input("annee", sql.NVarChar, annee)
       .input("mois", sql.NVarChar, mois)
@@ -123,11 +123,11 @@ class enteteOperationModel {
     }
   }
 
-  async get_oneenteteoperation(idoperation) {
-    const pool = await connectDB();
+  async get_oneenteteoperation(idoperation, transaction = null) {
     try {
-      const result = await pool
-        .request()
+      const pool = transaction ? null : await connectDB();
+      const request = transaction ? transaction.request() : pool.request();
+      const result = await request
         .input("idoperation", sql.UniqueIdentifier, idoperation)
         .query(
           "SELECT * FROM EnteteOperationCaisse WHERE idoperation = @idoperation",

@@ -1,257 +1,173 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>LIVRE DE CAISSE</title>
+    <meta charset="UTF-8">
+    <title>LIVRE DE CAISSE</title>
 
-<style>
+    <style>
+        body{
+            font-family: Arial, Helvetica, sans-serif;
+            font-size:10px;
+            margin:12px;
+            color:#000;
+        }
 
-body{
-    font-family: Arial, Helvetica, sans-serif;
-    font-size:10px;
-    margin:12px;
-    color:#000;
-}
+        /* ENTETE PRINCIPAL */
+        .main-header{
+            border:1px solid #000;
+            padding:15px;
+            margin-bottom:5px;
+        }
 
-/* ===========================
-   ENTETE PRINCIPAL
-=========================== */
-.main-header{
-    border:1px solid #000;
-    padding:15px;
-    margin-bottom:5px;
-}
+        .header-table{
+            width:100%;
+        }
 
-.header-table{
-    width:100%;
-}
+        .header-table td{
+            border:none;
+            vertical-align:middle;
+        }
 
-.header-table td{
-    border:none;
-    vertical-align:middle;
-}
+        .company{
+            font-size:12px;
+            font-weight:bold;
+        }
 
-.company{
-    font-size:12px;
-    font-weight:bold;
-}
+        .title{
+            text-align:center;
+        }
 
-.title{
-    text-align:center;
-}
+        .title h1{
+            margin:0;
+            font-size:28px;
+            font-weight:bold;
+        }
 
-.title h1{
-    margin:0;
-    font-size:28px;
-    font-weight:bold;
-}
+        .title .journal{
+            margin-top:5px;
+            font-size:12px;
+            font-weight:bold;
+        }
 
-.title .journal{
-    margin-top:5px;
-    font-size:12px;
-    font-weight:bold;
-}
+        .period{
+            text-align:right;
+            font-size:10px;
+            font-weight:bold;
+        }
 
-.period{
-    text-align:right;
-    font-size:10px;
-    font-weight:bold;
-}
+        .center{
+            text-align:center;
+        }
 
-/* ===========================
-   INFOS
-=========================== */
+        .right{
+            text-align:right;
+        }
 
-.info-bar{
-    width:100%;
-    margin-bottom:20px;
-    font-size:8px;
-}
+        .bold{
+            font-weight:bold;
+        }
 
-.info-bar td{
-    border:none;
-    font-size:10px;
-}
+        .info{
+            text-align:center;
+            padding:10px;
+        }
 
-.center{
-    text-align:center;
-}
+        /* TABLEAU */
+        table.mouvements{
+            width:100%;
+            border-collapse:collapse;
+            margin-bottom:10px;
+        }
 
-.right{
-    text-align:right;
-}
+        table.mouvements th{
+            background:#b9c7e6;
+            border:1px solid #7f8fb2;
+            padding:8px;
+            font-size:12px;
+            font-weight:normal;
+            text-align:center;
+        }
 
-.bold{
-    font-weight:bold;
-}
+        table.mouvements td{
+            border:1px solid #999;
+            padding:6px;
+            font-size:10px;
+        }
 
-/* ===========================
-   CAISSE
-=========================== */
+        .titre-caisse td{
+            padding:8px 12px;
+        }
 
-.caisse-info{
-    width:100%;
-    margin-bottom:5px;
-}
+        .entete-caisse{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            width:100%;
+            gap:20px;
+            font-size:12px;
+        }
 
-.caisse-info td{
-    border:none;
-    font-size:10px;
-}
+        .caisse{
+            flex:1;
+            text-align:left;
+        }
 
-.solde-initial{
-    background:#b9c7e6;
-    padding:8px;
-    text-align:right;
-    min-width:120px;
-}
+        .solde{
+            text-align:right;
+            white-space:nowrap;
+        }
 
-/* ===========================
-   TABLEAU
-=========================== */
+        .caisse strong,
+        .solde strong{
+            font-weight:bold;
+        }
 
-table.mouvements{
-    width:100%;
-    border-collapse:collapse;
-}
 
-table.mouvements th{
-    background:#b9c7e6;
-    border:1px solid #7f8fb2;
-    padding:8px;
-    font-size:12px;
-    font-weight:normal;
-    text-align:center;
-}
+        .entete th{
+            text-align:center;
+            font-weight:bold;
+        }
 
-table.mouvements td{
-    border:1px solid #999;
-    padding:6px;
-    font-size:10px;
-}
+        .ligne-solde td{
+            font-weight:bold;
+        }
 
-.libelle{
-    font-weight:bold;
-}
-
-.num{
-    text-align:right;
-}
-
-.center{
-    text-align:center;
-}
-
-.total-row td{
-    font-weight:bold;
-    border-top:2px solid #000;
-}
-
-.total-row .num{
-    font-weight:normal;
-    font-weight:bold;
-}
-
-.footer{
-    margin-top:15px;
-    font-size:11px;
-}
-
-</style>
+        /* Footer */
+        .footer{
+            text-align:right;
+            font-size:10px;
+            margin-top:10px;
+        }
+    </style>
 </head>
 
 <body>
 
 <!-- ENTETE -->
 <div class="main-header">
-
     <table class="header-table">
         <tr>
-
-            <td width="25%" class="company">
-                {{societe}}
-            </td>
-
-            <td width="50%" class="title">
-                <h1>JOURNAL DE CAISSE</h1>
-                <div>journal</div>
-                <div class="journal">{{codejournal}}</div>
-            </td>
-
-            <td width="25%" class="period">
-                Période du {{datedebut}} au {{datefin}}
-            </td>
-
+            <td width="25%" class="company">{{societe}}</td>
+            <td width="50%" class="title"><h1>JOURNAL DE CAISSE</h1></td>
+            <td width="25%" class="period">Période du {{datedebut}} au {{datefin}}</td>
         </tr>
     </table>
-
 </div>
 
 <!-- Ligne informations -->
-<table class="info-bar">
-    <tr>
-        <td width="33%">
-            {{codecaisse}}
-        </td>
-
-        <td width="34%" class="center">
-            Date d'impression {{dateimp}} à {{heureimp}}
-        </td>
-
-        <td width="33%" class="right">
-        </td>
-    </tr>
-</table>
-
-<!-- Informations caisse -->
-<table class="caisse-info">
-    <tr>
-        <td width="35%">
-            <b>CAISSE :</b> {{caisse}}
-        </td>
-
-        <td width="35%" class="center bold">
-            Solde initial au {{date_solde}}
-        </td>
-
-        <td width="10%" class="right">
-            {{devise}}
-        </td>
-
-        <td width="20%" class="solde-initial">
-            {{solde_initial}}
-        </td>
-    </tr>
-</table>
+<div class="info">
+    Imprimé le {{dateimp}} à {{heureimp}} par {{utilisateur}}
+</div>
 
 <!-- Tableau -->
-<table class="mouvements">
-    <thead>
-        <tr>
-            <th width="10%">Date</th>
-            <th width="20%">N° Pièce</th>
-            <th width="32%">Libellé</th>
-            <th width="12%">Dépenses</th>
-            <th width="12%">Recettes</th>
-            <th width="14%">Solde</th>
-        </tr>
-    </thead>
+{{lignes}}
 
-    <tbody>
-        {{lignes}}
-    </tbody>
-
-</table>
-
-<div class="footer">
-    Imprimé par {{utilisateur}}
-</div>
 
 <!-- FOOTER -->
  <footer>
-        <div style="text-align:right; font-size:8px; margin-top:10px;">
-            MTCaisseWeb - v0.0.2
-        </div>
+    <div style="text-align:right; font-size:8px; margin-top:10px;">
+        MTWebCash - v0.0.2
+    </div>
 </footer>
 
 </body>

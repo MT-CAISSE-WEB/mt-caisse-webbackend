@@ -293,6 +293,19 @@ class caisseperiodeModel {
             console.log(`Erreur de récupération du solde caisse: ${error}`.cyan.bold);
         }
     }
+
+        async get_solde_date() {
+            const pool = await connectDB();
+            try {
+                const result = await pool.request().query(caisseperiodeQueries.SOLDE_DATE);
+                return result.recordset;
+            } catch (error) {
+                console.log(`Erreur de récupération du solde caisse: ${error}`.cyan.bold);
+                throw new Error(error);
+                
+            }
+        }
+
 }
 
 

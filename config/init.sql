@@ -24,7 +24,7 @@ BEGIN
 		createdat Datetime,
 		createdby NVARCHAR(50),
 		updatedat Datetime,
-		updatedby NVARCHAR(50),
+		updatedby NVARCHAR(50)
     );
 END
 
@@ -32,14 +32,17 @@ IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PieceJointe')
 BEGIN
     CREATE TABLE PieceJointe (
 		idpiecejointe UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-		urlpiece NVARCHAR(150) UNIQUE,
+		urlpiece nvarchar(900) UNIQUE,
 		nomtable NVARCHAR(50),
         idtable UNIQUEIDENTIFIER,
         dossier NVARCHAR(50),
+        nomfichier NVARCHAR(255),
+        mimetype NVARCHAR(100),
+        taille BIGINT,
 		createdat Datetime,
 		createdby NVARCHAR(50),
 		updatedat Datetime,
-		updatedby NVARCHAR(50),
+		updatedby NVARCHAR(50)
     );
 END
 
@@ -57,7 +60,7 @@ BEGIN
 		createdat Datetime,
 		createdby NVARCHAR(50),
 		updatedat Datetime,
-		updatedby NVARCHAR(50),
+		updatedby NVARCHAR(50)
     );
 END
 
@@ -113,6 +116,21 @@ BEGIN
     );
 END
 
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CentreAnalytique')
+BEGIN
+    CREATE TABLE CentreAnalytique (
+        idcentreanalytique UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idsociete UNIQUEIDENTIFIER,
+        codecentreanalytique NVARCHAR(50) UNIQUE,
+        libelle NVARCHAR(150),
+        actif INT DEFAULT 0,
+        createdat Datetime,
+        createdby NVARCHAR(50),
+        updatedat Datetime,
+        updatedby NVARCHAR(50),
+        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
+    );
+END
 
 -- OK
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Site')
@@ -293,6 +311,7 @@ BEGIN
         imputationtiers INT DEFAULT 0,
         actif INT DEFAULT 1,
         demandedecaissement INT DEFAULT 0,
+        typetiers nvarchar(50),
         typeoperation NVARCHAR(50),
         createdat Datetime,
         createdby NVARCHAR(50),
@@ -304,21 +323,7 @@ BEGIN
 END
 
 
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CentreAnalytique')
-BEGIN
-    CREATE TABLE CentreAnalytique (
-        idcentreanalytique UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
-        idsociete UNIQUEIDENTIFIER,
-        codecentreanalytique NVARCHAR(50) UNIQUE,
-        libelle NVARCHAR(150),
-        actif INT DEFAULT 0,
-        createdat Datetime,
-        createdby NVARCHAR(50),
-        updatedat Datetime,
-        updatedby NVARCHAR(50),
-        FOREIGN KEY (idsociete) REFERENCES Societe(idsociete)
-    );
-END
+
 
 
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Tiers')
@@ -457,6 +462,7 @@ BEGIN
         montantprevisionsociete DECIMAL(22, 9),
         totalconsocloture DECIMAL(22, 9),
         soldecloture DECIMAL(22, 9),
+        codebudgetaire NVARCHAR(20) UNIQUE,
         createdat Datetime DEFAULT GETDATE(),
         createdby NVARCHAR(50),
         updatedat Datetime,
@@ -1171,13 +1177,20 @@ BEGIN
         idsociete UNIQUEIDENTIFIER UNIQUE,
         idjournal UNIQUEIDENTIFIER NULL,
         idcompte UNIQUEIDENTIFIER NULL,
+        idnatureretourencaisse UNIQUEIDENTIFIER NULL,
         urldossier NVARCHAR(255),
+        libelleaxe1 NVARCHAR(50),
+        libelleaxe2 NVARCHAR(50),
+        analytiquesite INT DEFAULT 0, 
+        analytiquetable INT DEFAULT 0, 
+        axesecond INT DEFAULT 0,
         createdat Datetime default GETDATE(),
         createdby NVARCHAR(50),
         updatedat Datetime,
         updatedby NVARCHAR(50),
         FOREIGN KEY (idsociete) REFERENCES Societe(idsociete),
         FOREIGN KEY (idjournal) REFERENCES Journal(idjournal),
+        FOREIGN KEY (idnatureretourencaisse) REFERENCES NatureOperation(idnature),
         FOREIGN KEY (idcompte) REFERENCES PlanComptable(idcompte)
     );
 END
@@ -1599,19 +1612,15 @@ DECLARE @user NVARCHAR(50) = 'SYSTEM';
 INSERT INTO Devise (codedevise, intitule, codeiso, actif, createdat, createdby)
 SELECT * FROM (
     VALUES 
-    ('USD', 'Dollar américain', 'USD', 1, @now, @user),
-    ('CDF', 'Franc congolais', 'CDF', 1, @now, @user),
     ('XAF', 'Franc CFA', 'XAF', 1, @now, @user)
 ) AS d(codedevise, intitule, codeiso, actif, createdat, createdby)
 WHERE NOT EXISTS (
     SELECT 1 FROM Devise dv WHERE dv.codedevise = d.codedevise
 );
 
-DECLARE @idDeviseCDF UNIQUEIDENTIFIER;
-DECLARE @idDeviseUSD UNIQUEIDENTIFIER;
+DECLARE @idDeviseXAF UNIQUEIDENTIFIER;
 
-SELECT @idDeviseCDF = iddevise FROM Devise WHERE codedevise = 'CDF';
-SELECT @idDeviseUSD = iddevise FROM Devise WHERE codedevise = 'USD';
+SELECT @idDeviseXAF = iddevise FROM Devise WHERE codedevise = 'XAF';
 
 INSERT INTO Societe (
     iddevisereference,
@@ -1627,15 +1636,15 @@ INSERT INTO Societe (
     createdby
 )
 SELECT 
-    @idDeviseCDF,
-    @idDeviseUSD,
+    @idDeviseXAF,
+    @idDeviseXAF,
     'SOC001',
-    'Plantation et huilerie du congo',
-    'PHC',
-    'contactphc@phc-congo.com',
-    '000000000',
-    'Kinshasa Gombe sur le boulevard 30 juin',
-    1,
+    'MT Informatique',
+    'MTI',
+    'contact@mti-congo.com',
+    '+242 06 518 10 10',
+    '159, Av. Moe Vangoula, B.P 1690 centre ville Pointe-Noire',
+    0,
     GETDATE(),
     'SYSTEM'
 WHERE NOT EXISTS (
@@ -1720,8 +1729,7 @@ INSERT INTO Site (
 )
 SELECT * FROM (
     VALUES 
-    (@idSociete, 'SIEGE', 'Siège kinshasa', 'kinshasa@phc-congo.com', null, 'Kinshasa - Gombe', @now, @user),
-    (@idSociete, 'LOKUTU', 'Lokutu', 'lokutu@phc-congo.com', null, 'Lokutu - RDC', @now, @user)
+    (@idSociete, 'SIEGE', 'Siège Pointe-Noire', 'contact@mti-congo.com', '+242 06 518 10 10', '159, Av. Moe Vangoula, B.P 1690 centre ville Pointe-Noire', @now, @user)
 ) AS s(idsociete, codesite, libelle, email, telephone, adresse, createdat, createdby)
 WHERE NOT EXISTS (
     SELECT 1 FROM Site st WHERE st.codesite = s.codesite
@@ -1758,9 +1766,9 @@ SELECT
     @idSite,
     'ADMIN',
     'SYSTEM',
-    'Kinshasa',
+    'Pointe-Noire',
     null,
-    'admin@phc-congo.com',
+    'admin@mti-congo.com',
     'dolimex',
     '$argon2id$v=19$m=65536,t=3,p=4$g1WSR4kLiWhMf++eCPxxQA$VgLI0gAU+spJ8A/7H9PVmcGg8UH3CPzgl/6Dqe+S0Zs',
     1,
@@ -1844,6 +1852,9 @@ BEGIN
         idcentreanalytique UNIQUEIDENTIFIER null,
         centreanalytique nvarchar (255) null,
 
+        idcentreanalytiquesecond UNIQUEIDENTIFIER null,
+        centreanalytiquesecond nvarchar (255) null,
+
         idcompte UNIQUEIDENTIFIER,
         compte nvarchar(255),
 
@@ -1871,6 +1882,7 @@ BEGIN
 		FOREIGN KEY (idecriture) references ecriturecomptable,
         foreign key (iddevise) references Devise(iddevise),
         foreign key (idcentreanalytique) references CentreAnalytique(idcentreanalytique),
+        foreign key (idcentreanalytiquesecond) references CentreAnalytique(idcentreanalytique),
         foreign key (idcompte) references PlanComptable,
         foreign key (idtiers) references tiers(idtiers),
         foreign key (idnature) references NatureOperation(idnature)
@@ -2056,4 +2068,93 @@ IF NOT EXISTS (
 BEGIN
     CREATE INDEX IX_OperationPieceJointe_Piece
     ON OperationPieceJointe(idpiecejointe);
+END
+
+-- ============================================
+--  Table correspondance analytique
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CorrespondanceAnalytique')
+BEGIN
+    CREATE TABLE CorrespondanceAnalytique (
+		idcorrespondance UNIQUEIDENTIFIER,
+        idcentreanalytique UNIQUEIDENTIFIER null,
+        correspondance NVARCHAR(255) null,
+        actif INT DEFAULT 0,
+		createdby NVARCHAR(50),
+        createdat DATETIME,
+		updatedby NVARCHAR(50),
+        updatedat Datetime,
+        PRIMARY KEY (idcorrespondance),
+		foreign key (idcentreanalytique) references CentreAnalytique(idcentreanalytique),
+	);
+END
+
+-- PJ & justificatif
+IF NOT EXISTS (
+    SELECT *
+    FROM sys.tables
+    WHERE name = 'JustificatifPieceJointe'
+)
+BEGIN
+    CREATE TABLE JustificatifPieceJointe (
+        idjustificatifpiecejointe UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        idjustificatifoperation UNIQUEIDENTIFIER NOT NULL,
+        idpiecejointe UNIQUEIDENTIFIER NOT NULL,
+
+        createdat DATETIME DEFAULT GETDATE(),
+        createdby NVARCHAR(50),
+        updatedat DATETIME,
+        updatedby NVARCHAR(50),
+
+        CONSTRAINT FK_JustificatifPieceJointe_Justificatif
+            FOREIGN KEY (idjustificatifoperation)
+            REFERENCES JustificatifOperation(idjustificatifoperation)
+            ON DELETE CASCADE,
+
+        CONSTRAINT FK_JustificatifPieceJointe_PieceJointe
+            FOREIGN KEY (idpiecejointe)
+            REFERENCES PieceJointe(idpiecejointe)
+            ON DELETE CASCADE,
+
+        CONSTRAINT UQ_JustificatifPieceJointe
+            UNIQUE (idjustificatifoperation, idpiecejointe)
+    );
+END
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_JustificatifPieceJointe_Justificatif'
+)
+BEGIN
+    CREATE INDEX IX_JustificatifPieceJointe_Justificatif
+    ON JustificatifPieceJointe(idjustificatifoperation);
+END
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_JustificatifPieceJointe_Piece'
+)
+BEGIN
+    CREATE INDEX IX_JustificatifPieceJointe_Piece
+    ON JustificatifPieceJointe(idpiecejointe);
+END
+
+-- ============================================
+-- Table de Gestion des Licences
+-- ============================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Licence')
+BEGIN
+    CREATE TABLE Licence (
+        idlicence UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+        licensekey NVARCHAR(255) UNIQUE NOT NULL,      -- Clé unique générée
+        machineid NVARCHAR(255) NOT NULL,              -- Empreinte matérielle du poste (hash)
+        clientname NVARCHAR(150),                      -- Nom du client (ex: MT Informatique)
+        startdate DATETIME NOT NULL,                   -- Date d'activation (installation)
+        enddate DATETIME NOT NULL,                     -- Date d'expiration (startdate + 1 an)
+        isactive INT DEFAULT 1,                        -- 1 = Active, 0 = Révoquée
+        createdat DATETIME DEFAULT GETDATE(),
+        createdby NVARCHAR(50) DEFAULT 'SYSTEM'
+    );
 END

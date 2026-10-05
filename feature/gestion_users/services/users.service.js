@@ -388,8 +388,6 @@ try{
                 INSERT INTO REFRESH_TOKEN(idutilisateur, token)
                 VALUES (@userid, @token)
             `);  
-            
-            console.log(user);
 
         return {
             success: true,

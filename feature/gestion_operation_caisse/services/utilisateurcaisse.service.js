@@ -81,14 +81,18 @@ async function get_caisseByuser(idutilisateur) {
   }
 
   try {
-    const rows = await utilisateurcaisse.get_caisseByUser(idutilisateur);
+    const result = await utilisateurcaisse.get_caisseByUser(idutilisateur);
 
-    if (!rows || rows.length === 0) {
+    if (!result.authorized) {
+      throw new Error("L'utilisateur doit avoir le rôle caissier, comptable ou superviseur caisse.");
+    }
+
+    if (!result.data || result.data.length === 0) {
       return [];
     }
 
     const utilisateurcaisses = await Promise.all(
-      rows.map(async (row) => {
+      result.data.map(async (row) => {
         const caisse = await caissemodel.get_onecaisse(row.idcaisse);
 
         return {
@@ -122,13 +126,17 @@ async function get_loadcaisseuser(data) {
   }
 
   try {
-    const rows = await utilisateurcaisse.get_loadcaisseuser(data);
+    const result = await utilisateurcaisse.get_loadcaisseuser(data);
 
-    if (!rows || rows.length === 0) {
+    if (!result.authorized) {
+      throw new Error("L'utilisateur doit avoir le rôle caissier, comptable ou superviseur caisse.");
+    }
+
+    if (!result.data || result.data.length === 0) {
       return [];
     }
 
-    const utilisateurCaisses = rows.map(row => ({
+    const utilisateurCaisses = result.data.map(row => ({
       caisse: {
         idcaisse: row.idcaisse,
         code: row.codecaisse,
